@@ -3,9 +3,6 @@
 # (owners.tsv says who keeps the strong copy and why)
 mb_weaken(src/game/agent/agent_stats.cpp
     _ZNK5Agent9slot_pairEi)
-mb_weaken(src/game/agent/combat/agent_blows.cpp
-    _ZN8Animator6blood1Ej
-    _ZN8Animator6blood2Ej)
 mb_weaken(src/game/campaign/campaign_screen_init.cpp
     _ZN8PartyMgr13next_party_idEPi)
 mb_weaken(src/game/campaign/game_data_party_quest.cpp

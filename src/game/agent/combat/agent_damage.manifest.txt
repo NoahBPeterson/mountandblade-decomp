@@ -1,4 +1,0 @@
-../src/game/agent/combat/agent_damage.cpp  ?set_visible@FxDef@@QAEX_N@Z  00452f80  /O2 /MT /Gy /TP
-../src/game/agent/combat/agent_damage.cpp  ?log_message@Mission@@QAEXPBUtstring@@M@Z  00453020  /O2 /MT /Gy /TP
-../src/game/agent/combat/agent_damage.cpp  ?get_label_box@Agent@@QAEXPAUcapsule@@@Z  00453050  /O2 /MT /Gy /TP
-../src/game/agent/combat/agent_damage.cpp  ?on_removed@Agent@@QAEXXZ  00454320  /O2 /MT /Gy /TP

@@ -180,7 +180,7 @@ I did not find a module that contains two obviously separate original files with
 | game/agent2/agent_ai.cpp | 43b100-43e190 | 27 | 7168 | 1 |  |
 | game/agent/phys_set.cpp | 441360-441ff0 | 5 | 1811 | 1 |  |
 | game/agent3/agent_fx_sound.cpp | 441ff0-444c50 | 29 | 4834 | 1 |  |
-| game/agent/ai/agent_ai.cpp | 444c50-460160 | 65 | 77679 | 1 |  |
+| game/agent/agent_logic.cpp | 444c50-460160 | 65 | 77679 | 1 |  |
 | game/dialog/dialog_manager.cpp | 460160-461200 | 21 | 0 | 1 |  |
 | game/terrain/wind_helpers.cpp | 461200-461630 | 8 | 207 | 1 |  |
 | engine/render/renderer.cpp | 461630-4625d0 | 21 | 0 | 1 |  |

@@ -739,3 +739,20 @@ Carried out by `tools/migrate/restructure.py` (batch A: every 1:1 move, `git mv`
   `Font::draw_glyph` 17, `Agent::refresh_carried` 6, `gui_manager::add` 523, `Agent::update_attack` 282. Every row of script_interpreter and mission_5
   survived (`Operation::execute` kept its bytes). `ui_weapon_class_name` (0x43a280, a register-convention static whose only caller is
   `process_blow`) and two implicit COMDAT rows are emitted by the part that uses them now, so their rows moved there.
+
+## 10. Revision of the agent_logic split (2026-11-22, the follow-up to batch B)
+
+The nine rows batch B demoted (pick_front, pick_duel, fire_check, pick_threat, pick_reachable_goal, Font::draw_glyph, refresh_carried,
+gui_manager::add, update_attack) were the evidence that the cuts of section 3.1 sit inside one original object: `docs/original_tus.md` A1
+(register-convention statics called from several parts; the 2026-11-12 test that making 22 earlier functions opaque to the tail costs
+`Agent::update` its match) said so, and the rows confirm it. Bisecting the old file (`head -N` of the pre-split source, `chk.py` on
+`Agent::pick_front`) showed pick_front matches exactly when the text of `vector4::normalize`'s visible body (3,387 lines further down, in the
+part that became agent_ai.cpp) is in the object, although that body is defined AFTER pick_front; c2scope's `icount` showed the symptom
+(g_mission and `this` become Globregs candidates). So cl takes facts about callee bodies from the whole object, in either direction, and no
+part of it can be compiled without the others. docs/c2scope_evaluation.md, section "restructure rows", has the questions and answers.
+
+Decision (the user's rule: a file is one or more whole original TUs): the eleven parts are one file again,
+`src/game/agent/agent_logic.cpp` (0x43a280..0x460160 and the std::logic_error family; the pre-split text of 7d9c7934, 11,720 lines),
+including the rgl::mesh members that had been moved to `src/engine/render/mesh_edit_members.cpp` (they sit inside the same object, the
+first class run of TU 50 is not a TU boundary). All nine rows are byte-exact again (chk.py 9/9). Sections 3.1 and the agent_logic parts of
+sections 2 and 9 are superseded; script_interpreter.cpp and mission_5.cpp keep the split of section 3 (see their own notes).

@@ -1083,29 +1083,29 @@
 "size": 338
 },
 "0043a510": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PASS",
 "category": "pass",
 "size": 478
 },
 "0043ac40": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1202
 },
 "0043bdb0": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 3079
 },
 "0043c9c0": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PROVEN",
 "category": "proven",
 "size": 365,
@@ -1113,15 +1113,15 @@
 "proof": "region L1"
 },
 "0043cb30": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 249
 },
 "0043cc30": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PROVEN",
 "category": "proven",
 "size": 1026,
@@ -1129,15 +1129,15 @@
 "proof": "region L1"
 },
 "0043d040": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 2835
 },
 "0043db90": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PROVEN",
 "category": "proven",
 "size": 282,
@@ -1145,8 +1145,8 @@
 "proof": "angr L1"
 },
 "0043dcb0": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PROVEN",
 "category": "proven",
 "size": 191,
@@ -1154,36 +1154,36 @@
 "proof": "angr L1"
 },
 "0043dd70": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 481
 },
 "0043df60": {
-"module": "agent_targeting",
-"file": "src/game/agent/ai/agent_targeting.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PASS",
 "category": "pass",
 "size": 384
 },
 "0043e47a": {
-"module": "agent_attack_checks",
-"file": "src/game/agent/combat/agent_attack_checks.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "funclet",
 "size": 34
 },
 "0043ebc9": {
-"module": "agent_attack_checks",
-"file": "src/game/agent/combat/agent_attack_checks.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "funclet",
 "size": 34
 },
 "0043f560": {
-"module": "agent_attack_checks",
-"file": "src/game/agent/combat/agent_attack_checks.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PROVEN",
 "category": "proven",
 "size": 354,
@@ -1191,8 +1191,8 @@
 "proof": "rename L1"
 },
 "0043f6d0": {
-"module": "agent_attack_checks",
-"file": "src/game/agent/combat/agent_attack_checks.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PROVEN",
 "category": "proven",
 "size": 658,
@@ -1200,141 +1200,141 @@
 "proof": "rename L1"
 },
 "0043f970": {
-"module": "agent_attack_checks",
-"file": "src/game/agent/combat/agent_attack_checks.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 925
 },
 "0043fd10": {
-"module": "agent_attack_checks",
-"file": "src/game/agent/combat/agent_attack_checks.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 856
 },
 "00440070": {
-"module": "agent_attack_checks",
-"file": "src/game/agent/combat/agent_attack_checks.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1580
 },
 "004406a0": {
-"module": "agent_attack_checks",
-"file": "src/game/agent/combat/agent_attack_checks.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 911
 },
 "00440e30": {
-"module": "agent_attack_checks",
-"file": "src/game/agent/combat/agent_attack_checks.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 483
 },
 "004417d0": {
-"module": "agent_static_collision",
-"file": "src/game/agent/physics/agent_static_collision.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 2076
 },
 "004424c0": {
-"module": "agent_effects_sound",
-"file": "src/game/agent/agent_effects_sound.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 389
 },
 "00442650": {
-"module": "agent_effects_sound",
-"file": "src/game/agent/agent_effects_sound.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 591
 },
 "004428c0": {
-"module": "agent_effects_sound",
-"file": "src/game/agent/agent_effects_sound.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 988
 },
 "00443020": {
-"module": "agent_effects_sound",
-"file": "src/game/agent/agent_effects_sound.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PASS",
 "category": "pass",
 "size": 281
 },
 "00443140": {
-"module": "agent_effects_sound",
-"file": "src/game/agent/agent_effects_sound.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 293
 },
 "00443aa0": {
-"module": "agent_effects_sound",
-"file": "src/game/agent/agent_effects_sound.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 2243
 },
 "00444370": {
-"module": "agent_effects_sound",
-"file": "src/game/agent/agent_effects_sound.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 2117
 },
 "00444c50": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1682
 },
 "00445a90": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 978
 },
 "0044608f": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "funclet",
 "size": 34
 },
 "0044614e": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "funclet",
 "size": 35
 },
 "004465e0": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 10436
 },
 "00448eb0": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 11644
 },
 "0044bc30": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PROVEN",
 "category": "proven",
 "size": 543,
@@ -1342,29 +1342,29 @@
 "proof": "region L1"
 },
 "0044be50": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 949
 },
 "0044c210": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK-FP",
 "category": "weak",
 "size": 3443
 },
 "0044d000": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 3877
 },
 "0044df30": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PROVEN",
 "category": "proven",
 "size": 886,
@@ -1372,143 +1372,143 @@
 "proof": "region L1"
 },
 "0044e2b0": {
-"module": "agent_ai",
-"file": "src/game/agent/ai/agent_ai.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1726
 },
 "0044eb00": {
-"module": "mesh_edit_members",
-"file": "src/engine/render/mesh_edit_members.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1467
 },
 "0044f3c0": {
-"module": "mesh_edit_members",
-"file": "src/engine/render/mesh_edit_members.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PASS",
 "category": "pass",
 "size": 524
 },
 "0044f870": {
-"module": "agent_ragdoll_blood",
-"file": "src/game/agent/agent_ragdoll_blood.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 459
 },
 "0044fc60": {
-"module": "agent_ragdoll_blood",
-"file": "src/game/agent/agent_ragdoll_blood.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 6821
 },
 "00451710": {
-"module": "agent_ragdoll_blood",
-"file": "src/game/agent/agent_ragdoll_blood.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PASS",
 "category": "pass",
 "size": 728
 },
 "004519f0": {
-"module": "agent_ragdoll_blood",
-"file": "src/game/agent/agent_ragdoll_blood.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PASS",
 "category": "pass",
 "size": 600
 },
 "00451c50": {
-"module": "agent_ragdoll_blood",
-"file": "src/game/agent/agent_ragdoll_blood.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1107,
 "stale_proof": "stale proof: proof of 2026-11-13 is of an older build of src/game/agent4/agent_logic.cpp (build hash differs)"
 },
 "004520d0": {
-"module": "agent_ragdoll_blood",
-"file": "src/game/agent/agent_ragdoll_blood.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK-FP",
 "category": "weak",
 "size": 1112
 },
 "004525a0": {
-"module": "agent_ragdoll_blood",
-"file": "src/game/agent/agent_ragdoll_blood.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "PASS",
 "category": "pass",
 "size": 168
 },
 "004532f0": {
-"module": "agent_damage",
-"file": "src/game/agent/combat/agent_damage.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1054
 },
 "00453710": {
-"module": "agent_damage",
-"file": "src/game/agent/combat/agent_damage.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 3079
 },
 "004543a0": {
-"module": "agent_damage",
-"file": "src/game/agent/combat/agent_damage.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 2698
 },
 "00454e30": {
-"module": "agent_damage",
-"file": "src/game/agent/combat/agent_damage.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1159
 },
 "004552c0": {
-"module": "agent_damage",
-"file": "src/game/agent/combat/agent_damage.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 510
 },
 "004556d0": {
-"module": "agent_corpse_and_controls",
-"file": "src/game/agent/movement/agent_corpse_and_controls.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 8252,
 "stale_proof": "stale proof: proof of 2026-11-20 is of an older build of src/game/agent4/agent_logic.cpp (build hash differs)"
 },
 "00457b40": {
-"module": "agent_blows",
-"file": "src/game/agent/combat/agent_blows.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 9773
 },
 "0045a170": {
-"module": "agent_blows",
-"file": "src/game/agent/combat/agent_blows.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 8361
 },
 "0045d820": {
-"module": "agent_frame_update",
-"file": "src/game/agent/agent_frame_update.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 7733
 },
 "0045f660": {
-"module": "agent_frame_update",
-"file": "src/game/agent/agent_frame_update.nonmatching.txt",
+"module": "agent_logic",
+"file": "src/game/agent/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 2247

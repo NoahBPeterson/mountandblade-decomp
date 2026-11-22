@@ -1,6 +1,0 @@
-../src/game/agent/physics/agent_static_collision.cpp  ?destroy_world@PhysSet@@QAEXH@Z  00441360  /O2 /MT /Gy /TP
-../src/game/agent/physics/agent_static_collision.cpp  ?add_bone@PhysSet@@QAEPBUNewtonRagDollBone@@HPBU2@PBMUmatrix@rgl@@1121111@Z  004413e0  /O2 /MT /Gy /TP
-../src/game/agent/physics/agent_static_collision.cpp  ?begin_static_build@PhysSet@@QAEXH@Z  00441610  /O2 /MT /Gy /TP
-../src/game/agent/physics/agent_static_collision.cpp  ?add_capsule_body@PhysSet@@QAEPAUNewtonBody@@HPBM00PAUmatrix@rgl@@1_N@Z  004416c0  /O2 /MT /Gy /TP
-../src/game/agent/physics/agent_static_collision.cpp  _$E1  00547d80  /O2 /MT /Gy /TP
-../src/game/agent/physics/agent_static_collision.cpp  _$E2  005484b0  /O2 /MT /Gy /TP

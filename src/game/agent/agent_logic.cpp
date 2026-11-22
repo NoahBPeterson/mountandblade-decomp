@@ -1,0 +1,11720 @@
+//-----------------------------------------------------------------------------
+// File: agent_logic.cpp  (0x43a280..0x460160, and the std::logic_error family at 0x40c2c0..0x40c670)
+//
+// Desc: the agent logic object, one file in address order. The original compiled this block as one translation unit
+//       (docs/original_tus.md A1): 0x43a280 takes register arguments from 0x457b40, and first_used, next_used, vnorm and
+//       friends are shared across what used to be agent_stats' tail, agent_ai, agent_combat, phys_set and agent_fx_sound.
+// Desc: the agent's logic object: the navigation-mesh path search (PolyMesh::find_path, reachable), goal / path planning and
+//       class sounds, ammunition top-up (with the std::vector<PhysRec> helpers the linker kept from this object), weapon-mode choice
+//       and attack start, the AI order executor (update_ai) and control update, slot cycling, missile / scene-prop spawns, the AI
+//       decision (choose_action), the idle timers and the agent's shot; the mesh editing members of rgl::mesh (add_quad,
+//       append_skinned, scale, translate, transform, compute_normals, append_plain), the font glyph quad and text layout, the
+//       carried-item mesh, the placed-object append, Newton world creation, ragdoll start / update, blood and dust, the carried
+//       item refresh, the message log, label box, shield / blow damage, corpse spawn, death states, blow delivery, swing trace,
+//       attack update, movement step, the per-frame update and tick. The register-convention statics 0x4350c0 (slot_class_impl)
+//       and 0x43a280 (ui_weapon_class_name) are this object's (callers at 0x4385e0, 0x448eb0, 0x44e2b0, 0x453710, 0x457b40).
+//       Functions in ascending address order (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
+//-----------------------------------------------------------------------------
+#define ANIM_SLOT_SET_OUT_OF_LINE       // 0x4378a0 is a real call here (the body is game/agent/agent_stats.cpp's), written out at two sites of on_wield_changed
+#define STD_VECTOR_INT_INSTANTIATED_HERE   // std_vec_out_of_line.h: vector<int>::resize 0x43f310 and operator= 0x43f0a0 are this file's
+#define INT_HASH_LOWER_BOUND_INSTANTIATED_HERE   // glyph_hash.h: the glyph table's lookup 0x43b210 is this file's
+#include <vector>
+#include <deque>
+#include "engine/math/rgl_math.h"
+#include "engine/core/std_vec_out_of_line.h"
+#include "game/agent/ai/agent_types.h"
+#include "game/agent/combat/agent_types.h"
+#include "game/agent/ai/agent_ai.h"
+#include "game/agent/agent_logic.h"
+#include "game/common/game_globals.h"
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <new>
+#include <algorithm>
+#include <stdexcept>
+#include "game/dialog/dialog_manager.h"      // g_script 0xa70440 (g_ev_a / g_ev_b live in it; listed directly: the resolution audit reads only the source's own includes)
+#include "game/agent/agent_stats.h"
+#include "game/agent/anim_slot.h"      // (named here too for the resolution audit)
+#include "engine/fx/env_curve.h"      // Curve: the canonical class of the Skeleton record (Curve::recs +0x40 is Skeleton::chans)
+#include "engine/math/mat4_include.h"
+#include "engine/core/ptr_tag.h"
+#include "engine/core/timer.h"
+#include "engine/math/vec.h"
+#include "engine/physics/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "engine/physics/phys_set.h"
+#include "engine/physics/height_field.h"
+#include "engine/scene/world.h"
+#include "engine/physics/rigid_body_rgl_dynamic.h"      // rgl::dynamic_entity: a kind-7 prop's rigid body (spawn_prop 0x44c210)
+#include "engine/render/light.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "game/mission/placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/resource/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "game/data/item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/agent/agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/mission/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/terrain/poly_mesh.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/terrain/scene_file.h"     // SceneFile: GameData::scenes' record (flags)
+#include "game/data/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/party/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include <vector>
+#include "game/data/str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/config/options.h"   // g_options 0x5aa008
+#include "game/data/item_kind_include.h"   // g_items 0x5e29d0
+#include "game/input/slot.h"
+#include "game/agent/combat/agent_combat.h"
+#include "engine/core/tstring.h"
+#include "engine/render/font.h"
+#include "game/common/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/agent/physics/phys_set.h"
+#include "engine/math/quaternion.h"
+#include "game/data/env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
+#include "engine/resource/res_mgr.h"
+#include "game/config/config_block.h"
+#include "engine/fx/fx.h"
+#include "game/data/emit.h"
+#include "game/ui/gui_manager.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "engine/audio/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/render/mesh.h"
+#include "game/dialog/dialog_mgr.h"
+#include <memory>
+#include "game/agent/agent_queries.h"
+#include "game/input/key_names.h"      // g_keyboard (0xa170c8): pick_sound_ids
+#include "game/data/mode_rec.h"
+#include "engine/render/mesh_parts.h"
+#include "engine/render/mesh_prims.h"
+#include "engine/core/hnode.h"
+#include "game/agent/blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/script/script_state.h"   // ScriptState g_script (0xa70440): the one object
+#include "game/mission/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
+
+// visible bodies of callees another object defines (raises the match of the rows that call them; the calls stay calls)
+inline __declspec(noinline) ItemRef Agent::slot_pair(int idx) const
+{
+    const ItemRef* p = 0;
+    int i = slots[idx];
+    if (i >= 0 && (idx == 0 || slots[4] == 0)) p = &pairs[i];
+    ItemRef r;
+    r.item = -1;
+    if (p) r = *p;
+    return r;
+}
+inline __declspec(noinline) bool ItemKind::is_ranged()
+{
+    unsigned t = type_flags & 0xff;
+    return t == itp_type_bow || t == itp_type_crossbow || t == itp_type_thrown || t == itp_type_pistol || t == itp_type_musket;
+}
+// vector4::out_length 0x407c50: a header inline in the original, left out of line by cl. fire_check's g_mission survives the call, so the body was visible.
+inline __declspec(noinline) float rgl::vector4::out_length() const { return length(); }
+
+//=============================================================================
+// 0x43a280..0x43b100, from agent_stats.cpp
+// the weapon class names, the std::vector / std::_Uninit_* instantiations, the level queries, the agent's quiver and the light accumulator
+//=============================================================================
+// inline vector helpers of the original: rgl's operators are out-of-line in other objects
+static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+static __forceinline vector4 vneg(const vector4& a) { return vector4(-a.x, -a.y, -a.z); }
+static __forceinline float vdot(const vector4& a, const vector4& b) { return a.x * b.x + (a.z * b.z + a.y * b.y); }
+
+// @ 0x43a280
+static __declspec(noinline) void ui_weapon_class_name(int type, char* out)
+{
+    if (type == 0) {
+        tstring k("ui_one_handed_weapons");
+        const char* s = g_strtable.lookup(k)->c_str();
+        { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
+    } else if (type == 1) {
+        tstring k("ui_two_handed_weapons");
+        const char* s = g_strtable.lookup(k)->c_str();
+        { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
+    } else if (type == 2) {
+        tstring k("ui_polearms");
+        const char* s = g_strtable.lookup(k)->c_str();
+        { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
+    } else if (type == 3) {
+        tstring k("ui_archery");
+        const char* s = g_strtable.lookup(k)->c_str();
+        { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
+    } else if (type == 4) {
+        tstring k("ui_crossbows");
+        const char* s = g_strtable.lookup(k)->c_str();
+        { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
+    } else if (type == 5) {
+        tstring k("ui_throwing");
+        const char* s = g_strtable.lookup(k)->c_str();
+        { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
+    } else if (type == 6) {
+        tstring k("ui_firearms");
+        const char* s = g_strtable.lookup(k)->c_str();
+        { char* d = out; char c; do { c = *s++; *d++ = c; } while (c != 0); }
+    }
+}
+
+// the troop record's display name through the translation table (the record itself when absent)
+// @ 0x43a480
+tstring* Troop::display_name()
+{
+    tstring* t = g_strtable.find(&key);
+    return t ? t : (tstring*)this;
+}
+
+// ---- <vector> helpers (VC7.1) --------------------------------------------------------------------------------------------------------------
+// @ 0x43a4a0
+template E12* std::vector<E12>::_Ufill(E12*, size_t, const E12&);
+// @ 0x43a4d0
+template tstring* std::vector<tstring>::_Ucopy(tstring*, tstring*, tstring*);
+// @ 0x43a4f0
+template const NewtonRagDollBone** std::vector<const NewtonRagDollBone*>::_Ucopy(std::vector<const NewtonRagDollBone*>::const_iterator, std::vector<const NewtonRagDollBone*>::const_iterator, const NewtonRagDollBone**);
+
+// ---- the agent's hand position -----------------------------------------------------------------------------------------------------------------
+// @ 0x43a510
+void Agent::hand_pos(vector4* out)
+{
+    int c = team;
+    if (c < 0 || c >= 8) c = 7;
+    int h = 0;
+    if (troop >= 0) {
+        if (horse >= 0) h = 2;
+        else h = (g_game->chars[troop].flags30 & 0x4000000i64) != 0 ? 1 : 0;
+    }
+    ClassInfo* r = &g_mission->teams[c].cls[h];
+    float dy = r->dir.y;
+    float ndx = -r->dir.x;
+    bool left = false;
+    float k = 1.0f;
+    if (r->mode == 1) {
+        k = 0.7f;
+        if (class_rank & 1) left = true;
+    } else if (r->mode == 2) {
+        k = 1.0f;
+    } else if (r->mode == 3) {
+        k = 1.65f;
+    } else if (r->mode == 4) {
+        k = 2.5f;
+    }
+    if (horse != -1) k *= 1.6f;
+    *out = r->pos;
+    float px = r->dir.x * ai.hand_off.y;
+    float py = r->dir.y * ai.hand_off.y;
+    float nx = px * k + out->x;
+    float ny = py * k + out->y;
+    out->x = nx;
+    out->y = ny;
+    if (left) {
+        out->x = nx - k * r->dir.x;
+        out->y = ny - k * r->dir.y;
+    }
+    float pdy = dy * ai.hand_off.x;
+    float pndx = ndx * ai.hand_off.x;
+    float t8 = pdy * k;
+    float x2 = t8 + out->x;
+    out->x = x2;
+    float y2 = pndx * k + out->y;
+    float kk = k * 0.1f;
+    out->y = y2;
+    out->x = x2 + kk * ai.hand_off_z;
+    float t4 = kk * ai.hand_off_w;
+    out->y = y2 + t4;
+    float height = x2;
+    face* hit;
+    g_mission->scene->floor_at(out, &height, &hit);
+    out->z = height;
+}
+
+// 0x433770 (rgl::psys::set_placement, game/agent/agent_item_pick.cpp owns the row): the body
+// visible, so the frame EmitTable::setup (0x4424c0) passes does not escape and its origin stores are independent of the loads through d.
+inline __declspec(noinline) void rgl::psys::set_placement(const matrix* m, const vector4* a, const vector4* b, float c)
+{
+    unsigned f = flags & ~1u;
+    flags = f;
+    local = *m;
+    box = *a;
+    vel_base = *b;
+    vel_scale = c;
+    if (f & 2) {
+        spawn_left = spawn_total = 1000000000;
+        spawn_accum = 0;
+    }
+}
+
+// 0x40cd60 / 0x40cd00 (rgl::identity3 / rgl::identity_pos, engine/physics/collision_shapes.cpp owns the rows): the bodies visible, so a frame passed to
+// identity_pos does not escape and its later stores are independent of pointer loads (EmitTable::setup 0x4424c0).
+inline __declspec(noinline) rgl::mat3* __cdecl rgl::identity3(rgl::mat3* out)
+{
+    vector4 a(1.0f, 0.0f, 0.0f), b(0.0f, 1.0f, 0.0f), c(0.0f, 0.0f, 1.0f);
+    out->s = a;
+    out->f = b;
+    out->u = c;
+    return out;
+}
+inline __declspec(noinline) rgl::matrix* __cdecl rgl::identity_pos(rgl::matrix* out)
+{
+    vector4 o(0.0f, 0.0f, 0.0f);
+    rgl::mat3 m;
+    *(rgl::mat3*)out = *identity3(&m);
+    out->o = o;
+    return out;
+}
+
+// remove the entity of the agent's body from the scene
+// @ 0x43a6f0
+void Agent::release_body()
+{
+    g_mission->scene->remove_entity(body->id);       // the level is the rgl::world (world.h rows +0x28 = level::cells)
+    body = 0;
+}
+
+// Bodies the original's object saw for the box query chain (0x42aa50 strat_entity, 0x426500 / 0x426690 / 0x426700
+// world_collide): the shape array and the count passed to query_box do not escape
+// Body the original's object saw (row owner engine/scene/frustum_grid.cpp 0x41ed00): with it visible lo/hi do not escape,
+// so hi[1] is not reloaded after each cell walk and, with no callee-saved register left, stays in memory
+inline __declspec(noinline) void rgl::world::to_cell(const float* p, int* out)
+{
+    for (int i = 0; i < 2; i++) {
+        float f = (p[i] - lo[i]) / cell_size[i];
+        if (f <= 0.0f)
+            out[i] = 0;
+        else if ((float)(n[i] - 1) <= f)
+            out[i] = n[i] - 1;
+        else
+            out[i] = (int)f + 1;
+    }
+}
+
+inline __declspec(noinline) int box_overlap3(const vector4* a, const vector4* b, const vector4* c, const vector4* d)
+{
+    if (a->x <= d->x && c->x <= b->x && a->y <= d->y && c->y <= b->y && a->z <= d->z && c->z <= b->z)
+        return 1;
+    return 0;
+}
+
+inline __declspec(noinline) int box_overlap2(const vector4* a, const vector4* b, const vector4* c, const vector4* d)
+{
+    if (a->x <= d->x && c->x <= b->x && a->y <= d->y && c->y <= b->y)
+        return 1;
+    return 0;
+}
+
+inline __declspec(noinline) void rgl::cell::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsigned mask, shape_base** out, int* count)
+{
+    shape_base* buf[0x2000];
+    int n = 0;
+    unsigned i = 0;                 // lives in memory in the original (reloaded every iteration)
+    int k = 0;
+    while (i < a.size()) {
+        shape_base* sh = a[i];
+        if (sh->m8 & mask) {
+            i++;
+            continue;
+        }
+        vector4 tv[2];                  // both query temporaries live in one block (min below max)
+        const vector4* smax = sh->get_max(&tv[1]);
+        const vector4* smin = sh->get_min(&tv[0]);
+        char hit;
+        if (*use3d == 0)
+            hit = box_overlap2(bmin, bmax, smin, smax);
+        else
+            hit = box_overlap3(bmin, bmax, smin, smax);
+        if (!hit) {
+            i++;
+            continue;
+        }
+        if (k < *count) {
+            shape_base* o = out[k];
+            shape_base* cur = a[i];
+            if (cur >= o) {
+                k++;
+                if (cur == o) {
+                    i++;
+                    buf[n++] = cur;
+                } else {
+                    buf[n++] = o;
+                }
+                continue;
+            }
+        }
+        shape_base* cur2 = a[i];
+        i++;
+        buf[n++] = cur2;
+    }
+    if (k < *count) {
+        int m = *count - k;
+        memcpy(&buf[n], &out[k], m * sizeof(shape_base*));
+        n += m;
+    }
+    *count = n;
+    for (int j = 0; j < *count; j++)
+        out[j] = buf[j];
+}
+
+inline __declspec(noinline) void rgl::world::query_box(const vector4* bmin, const vector4* bmax, unsigned mask, shape_base** out, int* count)
+{
+    int lo[2], hi[2];
+    to_cell(&bmin->x, lo);
+    to_cell(&bmax->x, hi);
+    *count = 0;
+    int2 p;
+    for (p.x = lo[0]; p.x <= hi[0]; p.x++) {
+        if (lo[1] <= hi[1]) {
+            int flat = 1;
+            for (p.y = lo[1]; p.y <= hi[1]; p.y++)
+                cells[p.x][p.y].collect(bmin, bmax, &flat, mask, out, count);
+        }
+    }
+}
+
+// first shape in the box of s (mask 0x8116, or 0x811e when *flag) that touches it; its contact point goes to *out_point
+// @ 0x43a720
+int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag)
+{
+    vector4 mn, mx;
+    shape_base* found[0x2000];
+    int n;
+    contact c;
+    s->get_min(&mn);
+    s->get_max(&mx);
+    unsigned mask = 0x8116;
+    if (*flag)
+        mask = 0x811e;
+    g_mission->scene->query_box(&mn, &mx, mask, found, &n);
+    int count = n;
+    for (int i = 0; i < count; i++) {
+        if (shape_contact_count(s, found[i], 1, &c) != 0) {
+            *out_point = c.point;
+            *out_shape = found[i];
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// quiver display: the arrows left in each ammo slot drive the display mesh
+// @ 0x43a800
+void Agent::update_quiver()
+{
+    for (int i = 0; i < 4; i++) {
+        ItemRef& pr = pairs[i];
+        if (pr.item >= 0) {
+            ItemKind* ik = &g_items[pr.item];
+            if (((ik->type_flags & 0xff) == 5 || (ik->type_flags & 0xff) == 6 || (ik->type_flags & 0xff) == 10) && disp[i] != 0) {
+                int used = pr.m4 & 0xff;
+                int n = pr.max_amount() - used;
+                if (links[i] != 0 && links[i]->mask != 0) n--;
+                float v = (float)((n * 5 + 5) * 2);
+                disp[i]->cap_all(&v);
+            }
+        }
+    }
+}
+
+// ---- ragdoll / static physics bodies --------------------------------------------------------------------------------------------------------------------
+// @ 0x43a8a0
+bool PhysSet::none_sleeping(int idx)
+{
+    for (unsigned i = 0; i < recs[idx].bones.size(); i++) {
+        if (NewtonBodyGetSleepingState(NewtonRagDollBoneGetBody(recs[idx].bones[i])))
+            return false;
+    }
+    return true;
+}
+// @ 0x43a900
+void PhysSet::rebuild_static_body(int idx)
+{
+    NewtonTreeCollisionEndBuild(recs[idx].collision, 0);
+    recs[idx].body = NewtonCreateBody(recs[idx].world, recs[idx].collision);
+    NewtonReleaseCollision(recs[idx].world, recs[idx].collision);
+    matrix m;
+    float* mp = (float*)identity_pos((pos*)&m);
+    PhysRec& r = recs[idx];
+    NewtonBodySetMatrix(r.body, mp);
+}
+
+// start sub-animation `cmd` on channel idx (phase continuity from the previous sub-animation's flags and offset)
+// @ 0x43a980
+void Agent::start_channel(int idx, SubAnim* cmd, unsigned* flags_io, float* base)
+{
+    float cur = body->fx->rec_shaped_phase(idx);
+    float scale = cmd->scale;
+    float len = 1.5f;
+    if (cmd->flags & 0xff)
+        len = (float)(int)((cmd->flags & 0xff) - 1) * 0.1f;
+    if (anim[idx].events & 0x400000) {
+        float inv = 1.0f / anim[idx].rate;
+        scale = inv * scale;
+        len = inv * len;
+    }
+    body->fx->env[idx].period = scale;
+    body->fx->start_anim(idx, cmd->anim, cmd->a, cmd->b);
+    body->fx->env[idx].attack = len + 0.01f;
+    body->fx->reset_rec(idx);
+    if (cmd->flags & 0x10000000)
+        body->fx->env[idx].mode = 0x14;
+    else
+        body->fx->env[idx].mode = 0x15;
+    if (cmd->flags & 0xa0000000) {
+        float v = 0.0f;
+        unsigned fl = *flags_io;
+        if (fl & 0x40000000)
+            v = -*base;
+        else if (fl & 0x20000000)
+            v = cur - *base;
+        else if (fl & 0x80000000)
+            v = -cur - *base;
+        float res;
+        if (cmd->flags & 0x20000000)
+            res = v + cmd->offset;
+        else
+            res = cmd->offset - v;
+        body->fx->set_rec_phase(idx, res);
+    } else if (cmd->flags & 0x40000000) {
+        body->fx->set_rec_phase(idx, cmd->offset);
+    }
+}
+
+// std::_Uninit_fill_n for the 0x1c8-byte elements (catch funclet 0x43abbb: destroys [s, f) then `throw;`)
+// @ 0x43ab50
+template void std::_Uninit_fill_n(E1c8*, unsigned, const E1c8&, std::allocator<E1c8>&, std::_Nonscalar_ptr_iterator_tag);
+
+// nearest nav face to pos by a depth-limited neighbour search from *hint
+// @ 0x43abf0
+int rgl::world::locate_near(const vector4* pos, int* hint, int* mode)
+{
+    int face = -1;
+    float dist = 100000.0f;
+    nav->next_stamp();
+    nav_search(&pos->x, hint, mode, 0, &face, &dist);
+    return face;
+}
+
+// ---- scene light accumulator ---------------------------------------------------------------------------------------------------------------------------
+// @ 0x43ac40
+void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale)
+{
+    *out_dir = vector4(0.0f, 0.0f, 0.0f);
+    *out_col = vector4(0.0f, 0.0f, 0.0f);
+    std::vector<Light*>::iterator it = lights.begin();
+    if (it < lights.end()) {
+        unsigned skip_dir = flags & 2;
+        do {
+            if (skip_dir && (*it)->type == 2) goto next;
+            if ((flags & 4) && (*it)->type != 2) goto next;
+            {
+                Light* l = *it;
+                int type = l->type;
+                double dist;
+                vector4 d;
+                float k;
+                if (type == 2) {
+                    dist = 1000.0f;
+                    d = l->dir;
+                    k = scale;
+                } else {
+                    d = vsub(p, l->pos);
+                    dist = d.normalize();
+                    k = 1.0f;
+                }
+                float dp = vdot(n, vneg(d));
+                if (dp > 0.0f && (type == 2 || dist < l->range)) {
+                    vector4 hp = l->pos;
+                    if (type == 2) {
+                        vector4 t = vmul(d, (float)dist);
+                        hp = vsub(p, t);
+                    } else {
+                        k = (float)(1.0 / (dist * dist) * k);
+                    }
+                    bool nothing = (flags == 0);
+                    if (nothing) {
+                        vector4 p0 = vsub(p, vmul(d, 0.05f));
+                        if (!trace_ray(&p0, &hp, 150.0f, 0, 0)) goto next;
+                    }
+                    l = *it;
+                    if (l->flags & 1) k = k * 0.5f;
+                    float t = dp * 0.9f + 0.1f;
+                    float s = k * t;
+                    *out_col += l->color * s;
+                    l = *it;
+                    float br = (l->color.z + l->color.y) + l->color.x;
+                    *out_dir += d * k * t * 0.33f * br;
+                }
+            }
+        next:
+            it++;
+        } while (it < lights.end());
+    }
+    float len = (float)sqrt(out_dir->x * out_dir->x + (out_dir->y * out_dir->y + out_dir->z * out_dir->z));
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        out_dir->x = inv * out_dir->x;
+        out_dir->y = inv * out_dir->y;
+        out_dir->z = inv * out_dir->z;
+    } else {
+        out_dir->x = 0.0f; out_dir->y = 1.0f; out_dir->z = 0.0f;
+    }
+}
+
+//=============================================================================
+// 0x43b100..0x43e190, from agent_ai.cpp
+// Desc: the record table accessors, the agent table iteration, the int hash lookup, the nearest-enemy list and
+//       target pickers, the aim-error update, the input queue, nav-face tracking and the movement animation
+//       chooser, the animation blend update and the path goals. Functions in ascending address order.
+//       Flags: /O2 /MT /Gy /TP. Names provisional.
+//=============================================================================
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+
+static __forceinline float clampf(float v, float lo, float hi)
+{
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+
+enum { skl_horse_archery = 23, skl_riding = 24, skl_power_draw = 33, skl_power_throw = 34 };   // header_skills.py
+
+
+// ---- the skins' blood effects (Animator g_anim: the skin table) --------------------------------------------------------------------------------------------------------------------
+// @ 0x43b100
+__declspec(noinline) int Animator::blood1(unsigned skin)
+{
+    if (skin < (unsigned)char_count) return skin_vec[skin].blood1;
+    return 0;
+}
+// @ 0x43b130
+__declspec(noinline) int Animator::blood2(unsigned skin)
+{
+    if (skin < (unsigned)char_count) return skin_vec[skin].blood2;
+    return 0;
+}
+
+// ---- the agent table (agents are 0x5928-byte records in pages of 16) --------------------------------------------------------------------------------------------
+// @ 0x43b160
+inline void AgentTable::next_used(unsigned* i)
+{
+    ++*i;
+    while ((int)*i < count) {
+        unsigned v = *i;
+        if (pages[v >> 4][v & 0xf].in_use != 0) break;
+        ++*i;
+    }
+}
+// @ 0x43b1b0
+inline int AgentTable::first_used()
+{
+    unsigned v = 0;
+    if (0 < count) {
+        Agent** pg = &pages[0];
+        do {
+            if (pg[v >> 4][v & 0xf].in_use != 0) break;
+            v++;
+        } while ((int)v < count);
+    }
+    return v;
+}
+// @ 0x43b1f0
+inline Agent* AgentTable::get(unsigned id)
+{
+    return &pages[id >> 4][id & 0xf];
+}
+
+// stdext::hash_map<int, Glyph>::lower_bound: bucket (key ^ 0xdeadbeef) & mask, the iterator returned through a hidden pointer
+// @ 0x43b210
+template GlyphHash::iterator GlyphHash::lower_bound(const int&);
+
+// @ 0x43b2b0
+template tstring* std::vector<tstring>::_Ufill(tstring*, size_t, const tstring&);
+// @ 0x43b2e0
+template E1c8* std::vector<E1c8>::_Ucopy(E1c8*, E1c8*, E1c8*);
+
+// ---- the agent's list of the 16 nearest enemies, sorted by distance (0x18-byte entries at agent+0x53ec) --------------------------------------------------------------
+static __forceinline bool hostile_to(Mission* m, int a, Agent* o)
+{
+    if (a < 0 || a >= 8) return false;
+    int b = o->team;
+    if (b < 0 || b >= 8) return false;
+    return m->teams[a].relation[b] == -1;
+}
+static __forceinline bool allied_to(Mission* m, int a, Agent* o)
+{
+    if (a < 0 || a >= 8) return false;
+    int b = o->team;
+    if (b < 0 || b >= 8) return false;
+    return m->teams[a].relation[b] == 1;
+}
+
+// @ 0x43b300
+void Agent::collect_enemies(float*)
+{
+    ai.nthreat = 0;
+    Mission* m = g_mission;
+    AgentTable* t = &m->agents;
+    unsigned i = t->first_used();
+    if (i < (unsigned)t->count) {
+        do {
+            Agent* o = &m->agents.pages[i >> 4][i & 0xf];
+            if (o->kind == 0 && o->state == 1 && (int)i != pool_id && hostile_to(m, team, o)) {
+                vector4 d;
+                d.x = o->pos.x - pos.x;
+                d.y = o->pos.y - pos.y;
+                d.z = o->pos.z - pos.z;
+                float len = d.normalize();
+                int k = 0;
+                int n = ai.nthreat;
+                if (0 < n) {
+                    while (k < ai.nthreat) {
+                        if (!(ai.threats[k].dist < len)) break;
+                        k++;
+                    }
+                    if (k >= 16) goto next;
+                }
+                if (n < 16) ai.nthreat = n + 1;
+                for (int j = ai.nthreat - 1; j > k; j--) ai.threats[j] = ai.threats[j - 1];
+                ai.threats[k].id = o->pool_id;
+                ai.threats[k].dist = len;
+                ai.threats[k].dir = d;
+                m = g_mission;
+            }
+        next:
+            t = &m->agents;
+            t->next_used(&i);
+        } while (i < (unsigned)t->count);
+    }
+}
+
+// @ 0x43b4d0
+unsigned Agent::pick_target()
+{
+    unsigned best = (unsigned)-1;
+    float bestv = -100.0f;
+    int n = ai.nthreat;
+    unsigned tid = (unsigned)-1;
+    if (0 < n) {
+        Threat* r = ai.threats;
+        int k = n;
+        do {
+            tid = r->id;
+            if (g_mission->agents.pages[tid >> 4][tid & 0xf].state == 1) {
+                const vector4& p = g_mission->agents.pages[tid >> 4][tid & 0xf].pos;
+                float dx = p.x - pos.x;
+                float dy = p.y - pos.y;
+                float dz = p.z - pos.z;
+                float v = 3.0f / (float)sqrt(dy * dy + (dx * dx + dz * dz));
+                if (!(v < 4.0f)) v = 4.0f;
+                v = v / ((float)agent_by_id(r->id)->targeted_by + 7.0f);
+                if (v > bestv) { bestv = v; best = tid; }
+            }
+            r++;
+            k--;
+            tid = best;
+        } while (k != 0);
+    }
+    return tid;
+}
+
+// the ranged weapon classes (bow, crossbow, thrown, pistol, musket); a by-value helper parameter, not a named local
+static __forceinline bool ranged_type(unsigned t) { return t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11; }
+// @ 0x43b5d0
+unsigned Agent::pick_random()
+{
+    unsigned best = (unsigned)-1;
+    float bestv = -100.0f;
+    unsigned tid = (unsigned)-1;
+    int n = 0;
+    if (0 < ai.nthreat) {
+        Threat* r = ai.threats;
+        do {
+            tid = r->id;
+            if (agent_by_id(tid)->state == 1) {
+                const vector4& p = agent_by_id(tid)->pos;
+                float dx = p.x - pos.x;
+                float dy = p.y - pos.y;
+                float dz = p.z - pos.z;
+                float v = 3.0f / (float)sqrt(dx * dx + (dy * dy + dz * dz));
+                if (!(v < 4.0f)) v = 4.0f;
+                ItemRef cur = agent_by_id(r->id)->cur_pair();
+                if (cur.item >= 0 && ranged_type(g_items[cur.item].type_flags & 0xff))
+                    v = v * 1.5f;
+                if (agent_by_id(r->id)->horse != -1) v = v * 0.85f;
+                v = v / ((float)agent_by_id(r->id)->targeted_by + 4.0f);
+                v = ((float)(rand() % 0x3dc9) * 1.2644623e-05f + 1.0f) * v;
+                if (v > bestv) { bestv = v; best = r->id; }
+            }
+            n++;
+            r++;
+            tid = best;
+        } while (n < ai.nthreat);
+    }
+    return tid;
+}
+
+// the agent's (or its mount's) velocity rotated by the body frame
+// @ 0x43b7b0
+vector4* Agent::local_velocity(vector4* out)
+{
+    unsigned idx = horse;
+    vector4 v;
+    if ((int)idx >= 0)
+        *(vec2*)&v = g_mission->agents.pages[idx >> 4][idx & 0xf].vel_xy;
+    else
+        *(vec2*)&v = vel_xy;
+    v.z = 0.0f;
+    if (body) {
+        const rgl::matrix& m = body->local;
+        float rz = (v.y * m.f.z + v.x * m.s.z) + m.u.z * 0.0f;
+        float ry = (v.y * m.f.y + v.x * m.s.y) + m.u.y * 0.0f;
+        float rx = (v.y * m.f.x + v.x * m.s.x) + m.u.x * 0.0f;
+        out->x = rx; out->y = ry; out->z = rz;
+        return out;
+    }
+    *out = v;
+    return out;
+}
+
+// @ 0x43b8a0
+unsigned Agent::find_talk_target()
+{
+    unsigned best = (unsigned)-1;
+    unsigned i = g_mission->agents.first_used();
+    if (i < (unsigned)g_mission->agents.count) {
+        do {
+            Agent* o = &g_mission->agents.pages[i >> 4][i & 0xf];
+            if (o->kind == 1 && o->rider == -1 && o->state == 1 && o->f5830 == 2) {
+                if (o->item.difficulty() <= g_game->skill_level(troop, 0x18)) {
+                    vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
+                    float len = d.normalize();
+                    if (len < 1.0f) {
+                        vec2 h = { in_now.move.x, in_now.move.y };
+                        if (d.y * h.y + d.x * h.x > 0.1f)
+                            best = i;
+                    }
+                }
+            }
+            g_mission->agents.next_used(&i);
+        } while (i < (unsigned)g_mission->agents.count);
+    }
+    return best;
+}
+
+// @ 0x43b9e0
+unsigned Agent::pick_front()
+{
+    unsigned best = (unsigned)-1;
+    float bestv = 0.07f;
+    unsigned i = g_mission->agents.first_used();
+    unsigned n = g_mission->agents.count;
+    if (i < n) {
+        int myteam = team;
+        do {
+            Agent* o = &g_mission->agents.pages[i >> 4][i & 0xf];
+            if (!allied_to(g_mission, myteam, o) && o->state == 1 && o->kind != 1) {
+                vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
+                float len = d.normalize();
+                float a = clampf((d.x * in_now.move.x + d.y * in_now.move.y) + 0.5f, 0.0f, 1.2f);
+                float b = clampf(1.0f / (len + 0.5f), 0.0f, 1.0f);
+                if (b * a > bestv) { best = i; bestv = b * a; }
+            }
+            g_mission->agents.next_used(&i);
+        } while (i < n);
+    }
+    return best;
+}
+
+// @ 0x43bb80
+unsigned Agent::pick_duel()
+{
+    Mission* m = g_mission;
+    AgentTable* t = &m->agents;
+    unsigned best = (unsigned)-1;
+    float bestv = 0.0f;
+    unsigned i = t->first_used();
+    unsigned n = t->count;
+    if (i < n) {
+        std::vector<Agent*>::iterator pg = m->agents.pages.begin();
+        int myteam = team;
+        do {
+            Agent* o = &pg[i >> 4][i & 0xf];
+            if (hostile_to(g_mission, myteam, o) && o->state == 1 && o->active != 0) {
+                vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
+                float len = d.normalize();
+                float a = clampf((d.x * in_now.move.x + (d.y * in_now.move.y + d.z * in_now.move.z)) + 0.8f, 0.0f, 1.0f);
+                float b = clampf(1.0f / (len + 0.5f), 0.0f, 1.0f);
+                float od = -(d.x * o->in_now.move.x + (d.y * o->in_now.move.y + d.z * o->in_now.move.z));
+                float c = clampf(od + 0.5f, 0.0f, 1.0f);
+                float v = (c * b) * a;
+                if (v > bestv) { best = i; bestv = v; }
+            }
+            g_mission->agents.next_used(&i);
+        } while (i < n);
+    }
+    return best;
+}
+
+// ---- the aim error of a ranged agent ----------------------------------------------------------------------------------------------------------------------------------
+// Notes on the spelling (all found by diffing against the original; none changes behaviour):
+//  - `(0.0f > x) ? 0.0f : x` is the inlined max(0, x) the original used for the shot-error floor; the second
+//    `if (acc < 0.0f)` is real source too (the original tests twice).
+//  - the speed term is `spd * 0.0f` in the original (a tuning constant that is zero in 1.011).
+//  - `sp` (mount-less speed) is a float: the original compares/adds it with single-precision constants.
+//  - tm is Timer::elapsed() inlined at its first use; the later call in the crossbow/firearm arm stays a call.
+inline __declspec(noinline) int ItemRef::accuracy()      // 0x435090
+{
+    if (item < 0) return 100;
+    int v = g_items[item].leg_armor;
+    if (v == 0) v = 99;
+    return v;
+}
+static __forceinline float fmaxr(const float& a, const float& b) { return fmax_ref(&a, &b); }
+// @ 0x43bdb0
+void Agent::update_aim_error()
+{
+    vector4 n;
+    float v = 0.0f;
+    ItemRef cur = slot_pair_fi(0);
+    int item = cur.item;
+    if (item >= 0) {
+        unsigned t = g_items[item].type_flags & 0xff;
+        if (t == itp_type_bow || t == itp_type_crossbow || t == itp_type_thrown || t == itp_type_pistol || t == itp_type_musket) {
+            float tm = (float)(g_ticks[timer.clock] - timer.start) * 1e-5f;
+            float a, b, nz, acc;
+            {
+                vector4 p; p.x = tm; p.y = a = tm + 3.0f; p.z = b = tm * 1.5f;
+                noise_gradient(0.7f, &p.x, &n.x);
+                nz = (n.x + n.y) * 1.9f + 1.4f;
+            }
+            ItemKind* ik = &g_items[item];
+            vector4 d = vsub(in_now.move, prev_facing);
+            float spd = 0.0f;
+            if (g_step_tbl[0] > 0.0f) spd = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) / g_step_tbl[0];
+            spd = spd * 0.0f;
+            if (spd > 1.0f) spd = 1.0f;
+            prev_facing = in_now.move;
+            unsigned t2 = ik->type_flags & 0xff;
+            if (t2 == itp_type_bow) {
+                float sk = (float)g_game->skill_level(troop, skl_power_draw) * 25.0f + (int)g_game->chars[troop].stat[3];
+                float p21 = (float)cur.damage(1) * 8.0f;
+                float w = (float)cur.difficulty() * 40.0f + p21 + 50.0f;
+                int c = g_items[item].leg_armor;
+                if (c == 0) c = 99;
+                float cf = (float)c * 0.01f;
+                float acc0 = ((w + 50.0f) - sk) * 6e-5f;
+                acc = (0.0f > acc0) ? 0.0f : acc0;
+                if (acc < 0.0f) acc = 0.0f;
+                if (active) {
+                    int ag = horse;
+                    if (ag >= 0) {
+                        AgentTable* tb = &g_mission->agents;
+                        if (1.0f < fabs(tb->get(ag)->vel_xy.y)) {
+                            float t5 = ((float)fabs(tb->get(ag)->vel_xy.y) + 3.0f - (sk + 200.0f) * (((float)g_game->skill_level(troop, skl_riding) + 5.0f) * (float)g_game->skill_level(troop, skl_horse_archery)) * 0.0004f) * 0.008f;
+                            float zero = 0.0f;
+                            float m = 4.0f / ((float)g_game->skill_level(troop, skl_horse_archery) + 4.0f);
+                            acc = (float)(fmax_ref(&zero, &t5) * m * nz + acc);
+                        }
+                    } else {
+                        float sp = (float)sqrt(vel_xy.y * vel_xy.y + vel_xy.x * vel_xy.x);
+                        if (sp > 0.0f) acc = (((sp + 3.0f) / (sk + 200.0f)) * nz * 7.0f + acc);
+                    }
+                    float lvl = 1.25f / damage_factor(0);
+                    float g = (sk - w * 0.5f) * 0.01f;
+                    g = (0.3f > g) ? 0.3f : g;
+                    float thr = g + lvl;
+                    v = acc;
+                    if (tm < lvl) {
+                        float zero = 0.0f;
+                        float x = (lvl - tm) / lvl - sk * 0.001f;
+                        v = fmax_ref(&zero, &x) + acc;
+                    } else if (tm > thr) {
+                        vector4 q; q.x = tm; q.y = a; q.z = b;
+                        noise_gradient(0.4f, &q.x, &n.x);
+                        float e1 = (tm - thr) * 0.4f;
+                        float e2 = 1.0f;
+                        float mn = fmin_ref(&e1, &e2);
+                        b = (float)fabs(((n.x + n.y) + 1.0f) * 0.5f);
+                        v = (w * 0.0006f) * (b * mn) + acc;
+                    }
+                    float r2 = (100.0f / (sk + 100.0f)) * spd - sk * 0.002f;
+                    r2 = (0.0f > r2) ? 0.0f : r2;
+                    v = (1.0f - cf) * 0.08f + (r2 * 0.2f + v);
+                } else {
+                    v = 0.0;
+                }
+            } else if (t2 != itp_type_crossbow && t2 != itp_type_pistol && t2 != itp_type_musket) {
+                float sk = (float)g_game->skill_level(troop, skl_power_throw) * 20.0f + (int)g_game->chars[troop].stat[5];
+                float cf = (float)cur.accuracy() * 0.01f;
+                if (active) {
+                    float p21 = (float)cur.damage(1);
+                    float fv = (float)cur.difficulty() * 5.0f + p21;
+                    acc = fmaxr(0.0f, ((fv + 30.0f) * 8.0f - sk) * 0.00012f);
+                    int ag = horse;
+                    if (ag >= 0) {
+                        AgentTable* tb = &g_mission->agents;
+                        if (1.0f < fabs(tb->get(ag)->vel_xy.y)) {
+                            float t5 = ((float)fabs(tb->get(ag)->vel_xy.y) + 5.0f - (sk + 200.0f) * (((float)g_game->skill_level(troop, skl_riding) + 5.0f) * (float)g_game->skill_level(troop, skl_horse_archery)) * 0.0004f) * 0.004f;
+                            float zero2 = 0.0f;
+                            float m = 4.0f / ((float)g_game->skill_level(troop, skl_horse_archery) + 4.0f);
+                            acc = (float)(fmax_ref(&zero2, &t5) * m * nz + acc);
+                        }
+                    } else {
+                        float sp = (float)sqrt(vel_xy.y * vel_xy.y + vel_xy.x * vel_xy.x);
+                        if (sp > 0.0f) acc = (((sp + 3.0f) / (sk + 50.0f)) * nz + acc);
+                    }
+                    float zero3 = 0.0f;
+                    float y = (100.0f / (sk + 100.0f)) * spd - sk * 0.0007f;
+                    v = (1.0f - cf) * 0.08f + (fmax_ref(&zero3, &y) * 0.3f + acc);
+                } else {
+                    v = 0.0;
+                }
+            } else {
+                float cf = (float)cur.accuracy() * 0.01f;
+                float A, B;
+                if (t2 == itp_type_crossbow) {
+                    A = (float)(int)g_game->chars[troop].stat[4];
+                    B = (float)cur.damage(1);
+                } else if (t2 == itp_type_pistol || t2 == itp_type_musket) {
+                    A = (float)(int)g_game->chars[troop].stat[6];
+                    B = (float)cur.damage(1);
+                }
+                if (active && (cur.max_amount() - (int)(cur.m4 & 0xff)) != 0) {
+                    float zero = 0.0f;
+                    float p1 = ((B + B + 100.0f) - A) * 0.00015f;
+                    float q = A + 100.0f;
+                    float p2 = 0.7f - timer.elapsed() * q * 0.01f;
+                    float zero2 = 0.0f;
+                    float r1 = fmax_ref(&zero, &p1);
+                    acc = fmax_ref(&zero2, &p2) + r1;
+                    int ag = horse;
+                    if (ag >= 0) {
+                        AgentTable* tb = &g_mission->agents;
+                        if (1.0f < fabs(tb->get(ag)->vel_xy.y)) {
+                            float t5 = ((float)fabs(tb->get(ag)->vel_xy.y) + 5.0f - (A + 150.0f) * (((float)g_game->skill_level(troop, skl_riding) + 5.0f) * ((float)g_game->skill_level(troop, skl_horse_archery) + 2.0f)) * 0.0004f) * 0.005f;
+                            float zero3 = 0.0f;
+                            float m = 4.0f / ((float)g_game->skill_level(troop, skl_horse_archery) + 4.0f);
+                            acc = (float)(fmax_ref(&zero3, &t5) * m * nz + acc);
+                        }
+                    } else {
+                        float sp = (float)sqrt(vel_xy.y * vel_xy.y + vel_xy.x * vel_xy.x);
+                        if (sp > 0.0f) acc = (((sp + 3.0f) / q) * nz * 3.0f + acc);
+                    }
+                    float zero4 = 0.0f;
+                    float y = (100.0f / q) * spd - A * 0.004f;
+                    v = (1.0f - cf) * 0.08f + (fmax_ref(&zero4, &y) * 0.15f + acc);
+                } else {
+                    v = 0.0;
+                }
+            }
+        }
+    }
+    float rate = g_step_tbl[0] * 5.0f;
+    if (!active) rate = g_step_tbl[0];
+    if (aim_error < v) rate = rate + rate;
+    if (rate > 1.0) rate = 1.0f;
+    aim_error = rate * v + (1.0f - rate) * aim_error;
+}
+
+// ---- input queue, nav face tracking and the movement animation chooser -------------------------------------------------------------------------------------------------------
+// @ 0x43c9c0
+void Agent::poll_input(float unused, InputState* out)
+{
+    InputState orig = *out;
+    *out = ai.in_prev;
+    if (!ai.input_q.empty()) {
+        __int64 now = g_ticks[2];
+        while (!ai.input_q.empty()) {
+            if (ai.input_q.front().time >= now)
+                break;
+            out->bits |= ai.input_q.front().bits;
+            ai.in_last = *out;
+            ai.input_q.pop_front();
+        }
+    }
+    out->bits |= ai.in_last.bits;
+    if ((orig.bits & 0x100) == 0 && (out->bits & 0x100) != 0)
+        out->bits |= 0x400;
+}
+
+// @ 0x43cb30
+int Agent::update_nav_face()
+{
+    vector4& np = nav_pos;
+    vector4& pp = pos;
+    vector4 d(np.x - pp.x, np.y - pp.y, np.z - pp.z);
+    if (d.y * d.y + (d.z * d.z + d.x * d.x) > 0.001f) {
+        nav_pos = pos;
+        if (nav_face != -1) {
+            if (g_mission->scene->nav->inside(&nav_face, &pos.x))
+                return nav_face;
+            if (nav_face != -1) {
+                int mode = 2;
+                nav_face = g_mission->scene->locate_near(&pos, &nav_face, &mode);
+                if (nav_face != -1)
+                    return nav_face;
+                nav_face = g_mission->scene->nearest_face(&pos.x);
+                return nav_face;
+            }
+        }
+        nav_face = g_mission->scene->nearest_face(&pos.x);
+    }
+    return nav_face;
+}
+
+// Weapon-kind groups of the movement animation table (kind 9; 0 and 7; 1..6; everything else). The kind is the last blow's
+// hit location (Blow::bone, +0x5674), left in the record by the blow that interrupted the move.
+#define PICK(k9, k07, k16, kx, m9, m07, m16, mx, shared) \
+    if (blow.bone == 9) { \
+        if (mode == 2) return m9; \
+        return (mode != 1 ? -16 : 0) + k9; \
+    } \
+    if (blow.bone == 0 || blow.bone == 7) { \
+        if (mode == 2) return m07; \
+        return (mode != 1 ? -16 : 0) + k07; \
+    } \
+    if (blow.bone == 1 || blow.bone == 4 || blow.bone == 2 || blow.bone == 5 || blow.bone == 3 || blow.bone == 6) { \
+        if (mode == 2) return shared; \
+        return (mode != 1 ? -16 : 0) + k16; \
+    } \
+    if (mode == 2) return mx; \
+    return (mode != 1 ? -16 : 0) + kx;
+
+// variant for the third block: the 1-6 arm tests mode != 2 first (matches 0x43cf37)
+#define PICK3(k9, k07, k16, kx, m9, m07, m16, mx, shared) \
+    if (blow.bone == 9) { \
+        if (mode == 2) return m9; \
+        return (mode != 1 ? -16 : 0) + k9; \
+    } \
+    if (blow.bone == 0 || blow.bone == 7) { \
+        if (mode != 2) return (mode != 1 ? -16 : 0) + k07; \
+        return m07; \
+    } \
+    if (blow.bone == 1 || blow.bone == 4 || blow.bone == 2 || blow.bone == 5 || blow.bone == 3 || blow.bone == 6) { \
+        if (mode != 2) return (mode != 1 ? -16 : 0) + k16; \
+        return shared; \
+    } \
+    if (mode == 2) return mx; \
+    return (mode != 1 ? -16 : 0) + kx;
+
+// @ 0x43cc30
+int Agent::move_anim(int mode)
+{
+    vector4 t;
+    t.x = 0.0f; t.y = 0.0f; t.z = 0.0f;
+    if ((int)blow.attacker >= 0) {
+        unsigned tid = blow.attacker;
+        Agent** pp = &g_mission->agents.pages[tid >> 4];
+        t = (*pp + (tid & 0xf))->pos;
+    }
+    vector4 d(t.x - pos.x, t.y - pos.y, t.z - pos.z);
+    if (d.x * vel.x + d.y * vel.y + d.z * vel.z > 0.0f) {
+        rgl::strategic_entity* b = body;
+        float dot = blow.dir2.z * b->local.s.z;
+        dot += blow.dir2.y * b->local.s.y;
+        float mx = blow.dir2.x;
+        dot += mx * b->local.s.x;
+        if (dot > 0.5f) {
+            PICK(0xff, 0x107, 0x10b, 0x103, 0x10f, 0x116, 0x116, 0x113, 0x116)
+        }
+        vector4 ns(-b->local.s.x, -b->local.s.y, -b->local.s.z);
+        if (ns.x * blow.dir2.x + ns.y * blow.dir2.y + ns.z * blow.dir2.z > 0.5f) {
+            PICK(0xfe, 0x106, 0x10a, 0x102, 0x10e, 0x115, 0x115, 0x112, 0x115)
+        }
+        {
+            PICK3(0x100, 0x108, 0x10c, 0x104, 0x110, 0x117, 0x117, 0x114, 0x117)
+        }
+    }
+    PICK(0x101, 0x109, 0x10d, 0x105, 0x111, 0x118, 0x118, 0x118, 0x118)
+}
+
+// ---- animation blend update ---------------------------------------------------------------------------------------------------------------------------------------------------------
+static inline Agent* AGENT(unsigned id)
+{
+    Agent** pp = &g_mission->agents.pages[id >> 4];
+    return *pp + (id & 0xf);
+}
+
+// per-tick update of the two animation slots: next sub-animation, bone masks, channel weights from the pitch,
+// head / torso rotations from the look angles
+// @ 0x43d040
+void Agent::update_anims(int unused)
+{
+    int i;
+    if (disabled != 0)
+        return;
+
+    i = 0;
+    do {
+        AnimSlot* s = &anim[i];
+        int v = s->next;
+        if (v == -1 || v == s->cur) {
+            if (body->fx->env[i].busy() && s->cur != -1) {
+                if (anim[i].sub != -1 && v != -1 && ((defs->data[s->cur].subs[anim[i].sub].flags & 0x10000000) != 0)) {
+                    v = pick(i);
+                    if (v != anim[i].sub)
+                        goto start;
+                }
+            }
+        } else {
+            v = pick(i);
+        start:
+            if (v != -1 && s->next != -1) {
+                unsigned f1 = 0;
+                float f2 = 0;
+                if (s->cur != -1 && anim[i].sub != -1) {
+                    SubAnim* o = &defs->data[s->cur].subs[anim[i].sub];
+                    f1 = o->flags;
+                    f2 = o->offset;
+                }
+                start_channel(i, &defs->data[s->next].subs[v], &f1, &f2);
+                anim[i].sub = v;
+                s->f28 = defs->data[s->next].priority;
+                if (i == 0)
+                    prev_scale1 = 1.0f;
+            }
+        }
+        s->cur = s->next;
+        i++;
+    } while (i < 2);
+
+    char act[2];
+    int a0 = (anim[0].cur == -1 || anim[0].sub == -1) ? 0 : 1;
+    act[0] = a0;
+    int a1 = (anim[1].cur == -1 || anim[1].sub == -1) ? 0 : 1;
+    act[1] = a1;
+
+    unsigned bits[2];
+    unsigned m = 0xffffffff;
+    if (act[0]) {
+        unsigned fl = defs->data[anim[0].cur].flags;
+        if (fl & 0x100) { bits[0] = body->fx->res->f28; m = ~bits[0]; }
+        else if (fl & 0x200) { bits[0] = body->fx->res->f2c; m = ~bits[0]; }
+        else if (fl & 0x400) { bits[0] = body->fx->res->f30; m = ~bits[0]; }
+        else { bits[0] = 0; m = ~bits[0]; }
+    } else {
+        bits[0] = 0;
+    }
+    if (act[1]) {
+        unsigned fl = defs->data[anim[1].cur].flags;
+        unsigned x;
+        if (fl & 0x100) x = body->fx->res->f28;
+        else if (fl & 0x200) x = body->fx->res->f2c;
+        else if (fl & 0x400) x = body->fx->res->f30;
+        else x = 0;
+        bits[1] = (x & m) | (m & ~x);
+        m = 0;
+    } else {
+        bits[1] = 0;
+    }
+    if (act[0])
+        bits[0] |= m;
+
+    i = 0;
+    do {
+        unsigned nb = bits[i];
+        FxDef* sk = body->fx;
+        unsigned diff = anim[i].prev_mask ^ nb;
+        unsigned bit = 1;
+        int off = 0;
+        for (int k = 0; k < sk->count; k++) {
+            if ((bit & diff) != 0)
+                sk->elems[k].blend_weight = 0;
+            bit <<= 1;
+        }
+        EnvRec* c = &body->fx->env[i];
+        c->active_mask = nb;
+        anim[i].prev_mask = nb;
+        if (anim[i].f10 != -1)
+            body->fx->env[i].bone = anim[i].f10;
+        i++;
+    } while (i < 2);
+
+    i = 0;
+    do {
+        if (act[i]) {
+            AnimDef* d = &defs->data[anim[i].cur];
+            if ((d->flags & 1) != 0 && horse >= 0)
+                body->fx->set_rec_phase(i, AGENT(horse)->anim[0].scale);
+            if ((d->flags & 0x1000) == 0) {
+                body->fx->env[i].wt.w[1] = 0.0f;
+                body->fx->env[i].wt.w[0] = 1.0f;
+            } else {
+                double v = asin(in_now.move.z);
+                if (v > 0.0) {
+                    v = v * 1.0504225f;
+                    body->fx->env[i].wt.offs[1] = anim[i].f28;
+                    body->fx->env[i].wt.w[1] = 0.0f;
+                    if (v < 0.0) v = 0.0; else if (v > 1.0) v = 1.0;
+                    body->fx->env[i].wt.w[1] = (float)v;
+                    body->fx->env[i].wt.w[0] = (float)(1.0 - v);
+                } else {
+                    v = v * -1.0504225f;
+                    body->fx->env[i].wt.offs[1] = -anim[i].f28;
+                    body->fx->env[i].wt.w[1] = 0.0f;
+                    if (v < 0.0) v = 0.0; else if (v > 1.0) v = 1.0;
+                    body->fx->env[i].wt.w[1] = (float)v;
+                    body->fx->env[i].wt.w[0] = (float)(1.0 - v);
+                }
+            }
+            if ((d->flags & 0x2000) != 0 && horse != -1) {
+                double h = cur * 0.5f * 0.5f;
+                quaternion q;
+                q.x = 0.0f;
+                q.z = 0.0f;
+                q.y = (float)sin(h);
+                q.w = (float)cos(h);
+                body->fx->env[i].ref[7] = q;
+                body->fx->env[i].flip_mask |= g_bit[7];
+                body->fx->env[i].ref[8] = q;
+                body->fx->env[i].flip_mask |= g_bit[8];
+            }
+            if (kind != 0 && (d->flags & 0x8000) == 0) {
+                double h = -pitch * 0.5f;
+                quaternion q;
+                q.y = 0.0f;
+                q.z = 0.0f;
+                vector4 t;
+                t.x = 0.0f;
+                q.x = (float)sin(h);
+                q.w = (float)cos(h);
+                body->fx->env[i].ref[0] = q;
+                body->fx->env[i].flip_mask |= g_bit[0];
+                double a = -pitch;
+                double c1 = cos(a);
+                if (pitch < 0.0f) {
+                    t.y = (float)((1.0 - c1) * 1.59f);
+                    t.z = (float)(sin(a) * -0.79f);
+                } else {
+                    t.y = (float)((1.0 - c1) * -0.99f);
+                    t.z = (float)(sin(a) * -0.89f);
+                }
+                body->fx->env[i].add_pos = t;
+                body->fx->env[i].flip_mask |= g_bit[0];
+                q.x = -q.x;
+                body->fx->env[i].ref[8] = q;
+                body->fx->env[i].flip_mask |= g_bit[8];
+                body->fx->env[i].ref[13] = q;
+                body->fx->env[i].flip_mask |= g_bit[13];
+                body->fx->env[i].ref[18] = q;
+                body->fx->env[i].flip_mask |= g_bit[18];
+                body->fx->env[i].ref[22] = q;
+                body->fx->env[i].flip_mask |= g_bit[22];
+            }
+        }
+        i++;
+    } while (i < 2);
+
+    i = 0;
+    do {
+        AnimSlot* s = &anim[i];
+        if ((s->events & 0x100000) != 0)
+            body->fx->env[i].set_phase(s->rate_scale);
+        unsigned ev = s->events;
+        if ((ev & 0x3000000) == 0 || (body->fx->env[i].busy() && (ev & 0x2000000) == 0))
+            s->events = 0;
+        if (s->phase >= 0.0f) {                     // false for a NaN phase too (0x43da1f: test ah,1 = C0, set when unordered)
+            body->fx->set_rec_phase(i, s->phase);
+            s->phase = -1.0f;
+        }
+        i++;
+    } while (i < 2);
+
+    if (kind == 0 && anim[0].cur >= 0) {
+        AnimDef* d = &defs->data[anim[0].cur];
+        if ((d->flags & 0x4000) != 0) {
+            const vector4& p = d->subs[anim[0].sub].displacement;
+            float x = p.x, y = p.y, z = p.z, w = p.w;
+            EnvRec* c = body->fx->env;
+            float sc = anim[0].scale;
+            c->add_pos.x = -x * sc;
+            c->add_pos.y = -y * sc;
+            c->add_pos.z = -z * sc;
+            c->add_pos.w = w;
+            c->flip_mask |= g_bit[0];
+        }
+    }
+}
+
+// ---- path goals and the path follower ----------------------------------------------------------------------------------------------------------------------------------------------------
+// @ 0x43db60
+template E1c8* std::vector<E1c8>::_Ufill(E1c8*, size_t, const E1c8&);
+
+// @ 0x43db90
+void Agent::set_goal_agent(unsigned aid)
+{
+    int a = AGENT(aid)->update_nav_face();
+    if (update_nav_face() != a) {
+        if (ai.path_active != 0 && AGENT(aid)->update_nav_face() == ai.goal_face) {
+            ai.goal_changed = 0;
+            goto done;
+        }
+        ai.goal_changed = 1;
+    }
+    ai.path_active = 0;
+done:
+    ai.goal_agent = aid;
+    ai.goal = AGENT(aid)->pos;
+    ai.goal_dir = AGENT(aid)->v56b4;
+    ai.goal_face = AGENT(aid)->update_nav_face();
+    ai.path_flag = 0;
+    ai.path_state = 2;
+}
+
+// @ 0x43dcb0
+inline void Agent::set_goal_point(vector4 p, int face)
+{
+    if (update_nav_face() != face) {
+        ai.goal_changed = 1;
+        if (ai.path_active != 0 && face == ai.goal_face) {
+            ai.goal_changed = 0;
+            goto done;
+        }
+    }
+    ai.path_active = 0;
+done:
+    ai.goal = p;
+    p.x = 0.0f; p.y = 0.0f; p.z = 0.0f;
+    ai.path_state = 1;
+    ai.goal_dir = p;
+    ai.goal_agent = -1;
+    ai.goal_face = face;
+    ai.path_flag = 0;
+}
+
+// @ 0x43dd70
+void Agent::set_goal_near(const vector4* center, const float* radius)
+{
+    int i = 0;
+    float r = *radius;
+    vector4 p;
+    Mission* m;
+    do {
+        p = *center;
+        p.x = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.x;
+        p.y = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.y;
+        m = g_mission;
+        if (m->min_x <= p.x && p.x < m->max_x && m->min_y <= p.y && p.y < m->max_y)
+            break;
+        i++;
+        r *= 0.9f;
+    } while (i < 0x20);
+    vector4 d(ai.goal.x - p.x, ai.goal.y - p.y, ai.goal.z - p.z);
+    if (d.z * d.z + (d.y * d.y + d.x * d.x) < 1e-06f) {
+        ai.path_state = 1;
+        return;
+    }
+    int cur = ai.goal_face;
+    int face;
+    if (cur >= 0 && m->nav.inside(&ai.goal_face, &p.x)) {
+        face = cur;
+    } else {
+        int mode = 2;
+        if (cur >= 0 && (face = m->scene->locate_near(&p, &ai.goal_face, &mode)) != -1) {
+        } else {
+            face = m->scene->nearest_face(&p.x);
+        }
+    }
+    set_goal_point(p, face);
+}
+
+// @ 0x43df60
+void Agent::advance_path()
+{
+    if (ai.path_active != 0 && (ai.path_state & 3) != 0) {
+        int face = update_nav_face();
+        int n = ai.path_count;
+        if (face == ai.path_face[n]) {
+            ai.path_active = 0;
+            ai.goal_changed = 0;
+            return;
+        }
+        if (face >= 0) {
+            PolyMesh* nav = &g_mission->nav;
+            if (nav->inside(&face, &pos.x)) {
+                int next = ai.path_cur + 1;
+                int nface;
+                vector4 np;
+                if (next < n) {
+                    np = ai.path_pos[ai.path_cur + 1];
+                    nface = ai.path_face[ai.path_cur + 2];
+                } else {
+                    np = ai.goal;
+                    nface = ai.goal_face;
+                }
+                int steps = 10;
+                vector4 d = pos - np;
+                if (d.out_length_squared() < 900.0f) {
+                    if (nav->trace(face, pos, nface, &np.x, &steps))
+                        ai.path_cur = next;
+                }
+            }
+        }
+        if (ai.path_cur >= ai.path_count) {
+            ai.path_active = 0;
+            ai.goal_changed = 0;
+        }
+    }
+}
+
+// deque<T>::_Xlen
+// @ 0x43e0e0
+void deque_xlen() { throw std::length_error("deque<T> too long"); }
+
+// std::allocator<PhysRec>::destroy: the record's destructor (bodies, then bones)
+// @ 0x43e150
+template void std::allocator<PhysRec>::destroy(PhysRec*);
+
+#undef PICK
+
+//=============================================================================
+// 0x43e190..0x441360 (+ the std::logic_error family, 0x40c2c0..0x40c670), from agent_combat.cpp
+// Desc: the game font's glyph metrics, the std::vector / std::deque instantiations the linker kept from this
+//       object (tstring, int, E12, E48, PhysRec, PlacedObj, E32 elements), the skeleton accessors, the agent's aim
+//       point and capsule hit test, the attack-direction / shoot / sound-id pickers, the "can this hit" test,
+//       the agent-table pool and the line-of-sight / fire-check scans. Functions in ascending address order
+//       (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
+//=============================================================================
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+shape_base* g_hit_shape;                                    // 0x5e246c: last shape hit by trace_ray
+
+
+// inline helpers: the original compiled them into the callers
+static __forceinline vector4 smul(const float& k, const vector4& v) { return vector4(k * v.x, k * v.y, k * v.z); }
+static inline vector4 vscale(const vector4& v, float k) { return vector4(v.x * k, v.y * k, v.z * k); }
+static inline vector4 to_world(const matrix& m, const vector4& t)
+{
+    return vector4(t.x * m.s.x + (t.y * m.f.x + t.z * m.u.x) + m.o.x,
+                   t.x * m.s.y + (t.y * m.f.y + t.z * m.u.y) + m.o.y,
+                   t.x * m.s.z + (t.y * m.f.z + t.z * m.u.z) + m.o.z);
+}
+static inline vector4 rot_world(const matrix& m, const vector4& d)
+{
+    return vector4(m.s.x * d.x + (m.f.x * d.y + m.u.x * d.z),
+                   m.s.y * d.x + (m.f.y * d.y + m.u.y * d.z),
+                   m.s.z * d.x + (m.f.z * d.y + m.u.z * d.z));
+}
+
+// ---- font glyph metrics ---------------------------------------------------------------------------------------
+static __forceinline const Glyph& font_glyph(Font* f, int ch)
+{
+    int key = ch;
+    if (key >= 0x200) {
+        GlyphMap::iterator it = f->map.lower_bound(key);
+        if (it != f->map.end())
+            return it->second;
+        return f->dflt;
+    }
+    return f->ascii[key];
+}
+
+// @ 0x43e190
+float Font::advance(int ch)
+{
+    int key = ch;
+    const Glyph& g = font_glyph(this, key);
+    float r = g.f18 + g.f10;
+    return r;
+}
+
+// @ 0x43e200
+float Font::measure(const int* text, int len, int* start, int* end)
+{
+    float sum = 0.0f;
+    bool in_tag = false;
+    int i = *start;
+    if (i < *end) {
+        do {
+            if (i >= len)
+                break;
+            if (in_tag) {
+                if (text[i] == 0x3e)
+                    in_tag = false;
+            } else {
+                int c = text[i];
+                if (c == 0x3c)
+                    in_tag = true;
+                else if (c == 9)
+                    sum = (float)(int)(sum * 4.0f) * 0.25f + 0.4f;
+                else
+                    sum += advance(c);
+            }
+            i++;
+        } while (i < *end);
+    }
+    return sum;
+}
+
+// @ 0x43e2a0
+template void std::vector<int, std::allocator<int> >::_Xlen() const;
+
+// ---- container instantiations (VC7.1 <vector> / <deque>) -----------------------------------------------------------
+// Built WITHOUT an EH switch: the STL try/catch alone makes cl emit the frames (with /EHa cl also keeps the ~PhysRec call
+// out of line). The catch(...) funclets and cold tails (0x43e47a, 0x43e514, 0x43e910, 0x43ebc9, 0x43ec91, 0x43edd9,
+// 0x43ef97) live inside the COMDAT of the function they belong to.
+// @ 0x43e310 (+ 0x43e47a, 0x43e514)
+template void std::vector<tstring>::_Insert_n(std::vector<tstring>::iterator, size_t, const tstring&);
+// @ 0x43e590
+template void std::deque<InputRec>::_Growmap(size_t);
+// @ 0x43e6e0
+template void std::_Destroy_range(PhysRec*, PhysRec*, std::allocator<PhysRec>&, std::_Nonscalar_ptr_iterator_tag);
+
+// @ 0x43e740
+void FxDef::ensure_updated()
+{
+    if (!pose_valid) {
+        if (pose_src)
+            update_poses();
+        else
+            update_poses2();
+    }
+}
+
+// @ 0x43e760
+template bool std::vector<int>::_Buy(size_t);
+// (the pointer vectors' _Buy instances are the same code, folded into this one by the original linker: the party manager's and the sprite table's page lists)
+template bool std::vector<Party*>::_Buy(size_t);
+template bool std::vector<Event*>::_Buy(size_t);
+// @ 0x43e7b0 (+ 0x43e910)
+template void std::vector<int>::_Insert_n(std::vector<int>::iterator, size_t, const int&);
+// @ 0x43ea00 (+ 0x43ebc9, 0x43ec91)
+template void std::vector<PlacedObj>::_Insert_n(std::vector<PlacedObj>::iterator, size_t, const PlacedObj&);
+// @ 0x43ed20 (+ 0x43edd9): PhysRec's bone vector; its body vector's copy constructor is the same code and the
+// original linker folded the two (EH-framed COMDATs fold only among copies kept from one object). vector<int>'s own
+// copy constructor is kept from a later object: 0x4cc280 (game/editor/poly_mesh_edge_face_ops.cpp).
+template std::vector<const NewtonRagDollBone*>::vector(const std::vector<const NewtonRagDollBone*>&);
+// @ 0x43edf0 (+ 0x43ef97)
+template void std::vector<E12>::_Insert_n(std::vector<E12>::iterator, size_t, const E12&);
+// @ 0x43f0a0
+template std::vector<int>& std::vector<int>::operator=(const std::vector<int>&);
+// @ 0x43f1f0
+template void std::deque<InputRec>::push_back(const InputRec&);
+
+// @ 0x43f260
+rgl::mat4* FxDef::rec(int i)
+{
+    if (!pose_valid) {
+        if (pose_src)
+            update_poses();
+        else
+            update_poses2();
+    }
+    return &elems[i].m84;
+}
+
+// @ 0x43f2a0
+template void std::vector<tstring>::push_back(const tstring&);
+// @ 0x43f310
+template void std::vector<int>::resize(size_t, int);
+// Mission::prop_ents' resize (MissionV::init_scene 0x5144d0) is the same code from this object, folded into it
+template void std::vector<rgl::strategic_entity*>::resize(size_t, rgl::strategic_entity*);
+// @ 0x43f3a0
+template std::vector<E48>::iterator std::vector<E48>::insert(std::vector<E48>::iterator, const E48&);
+// 0x4108b0 is vector<E48>::_Insert_n (an earlier object)
+template void std::vector<E48>::_Insert_n(std::vector<E48>::iterator, size_t, const E48&);
+// @ 0x43f410
+template std::vector<PlacedObj>::iterator std::vector<PlacedObj>::insert(std::vector<PlacedObj>::iterator, const PlacedObj&);
+// @ 0x43f480
+template void std::vector<PhysRec>::_Destroy(PhysRec*, PhysRec*);
+// @ 0x43f4a0
+template std::vector<E12>::iterator std::vector<E12>::insert(std::vector<E12>::iterator, const E12&);
+
+// 0x43f510 is PhysRec's implicit copy constructor (allocator<PhysRec>::construct 0x442060 calls it)
+
+// ---- aim point and hit tests ------------------------------------------------------------------------------------
+// @ 0x43f560
+void Agent::aim_point_and_dir(vector4* pos_out, vector4* dir_out)
+{
+    FxDef* sk = body->fx;
+    if (!sk->pose_valid) {
+        if (sk->pose_src)
+            sk->update_poses();
+        else
+            sk->update_poses2();
+    }
+    const rgl::mat4& r = sk->elems[9].m84;              // the aim bone's world frame
+    vector4 t = vadd(vscale(r.f, 0.2f), r.o);
+    const matrix& m = body->local;
+    *pos_out = to_world(m, t);
+    *dir_out = rot_world(body->local, r.u);
+}
+
+// @ 0x43f6d0
+bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, int* out_bone)
+{
+    capsule c;
+    frame_set* sd = body->fx->res;
+    for (int i = 0; i < sd->nbones; i++) {
+        for (unsigned j = 0; ; j++) {
+            if (j >= sd->bones[i].bodies.size())
+                break;
+            const CapDef& d = sd->bones[i].bodies[j];
+            c.l0 = vmul(d.a, scale);
+            c.l1 = vmul(d.b, scale);
+            c.radius = d.r * scale;
+            FxDef* sk = body->fx;
+            if (!sk->pose_valid) {
+                if (sk->pose_src)
+                    sk->update_poses();
+                else
+                    sk->update_poses2();
+            }
+            c.transform((const ::pos*)&(body->local * sk->elems[i].m84));
+            contact ct;
+            if (shape_contact_count(&c, other, 1, &ct)) {
+                *out_point = ct.point;
+                *out_a = ct.normal;
+                *out_bone = i;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Which of the four attack directions (1 left, 2 right, 3 up?, 0 thrust) the agent picks; derived from the
+// mouse movement (mode > 0) or from where the target stands relative to the view (mode 0).
+// rgl::matrix::transform_point_to_local (0x407f70, src/engine/physics/collision_shapes.cpp) with its body visible here (inline noinline
+// duplicate, as map_panel.cpp): its argument does not escape
+inline __declspec(noinline) vector4 rgl::matrix::transform_point_to_local(const vector4& p) const
+{
+    vector4 d(p.x - o.x, p.y - o.y, p.z - o.z);
+    return vector4(s.x * d.x + s.y * d.y + s.z * d.z, f.x * d.x + f.y * d.y + f.z * d.z, u.x * d.x + u.y * d.y + u.z * d.z);
+}
+// @ 0x43f970
+int Agent::pick_attack_dir(unsigned tid)
+{
+    int alt = 0;
+    int dir;
+    if (g_options.ctl_mode > 0) {
+        float dx = g_keyboard.f818;
+        float dy = g_keyboard.f81c;
+        if (g_options.invert != 0)
+            dy = -dy;
+        if (g_options.ctl_mode == 2) {
+            dx = -dx;
+            dy = -dy;
+        }
+        if (dx > dy) {
+            if (dx > -dy) {
+                dir = 2;
+            } else {
+                dir = 0;
+                alt = 3;
+            }
+        } else {
+            dir = 1;
+            if (!(dx < -dy))
+                dir = 3;
+        }
+        int f = horse;
+        if (f < 0)
+            goto done;
+        float v = signed_angle(vel, in_now.move);
+        if ((&g_mission->agents.pages[(unsigned)f >> 4][(unsigned)f & 0xf])->vel_xy.y > 1.0f) {
+            if (v < -0.2f && dir == 2) {
+                dir = 1;
+                alt = 0;
+                goto done;
+            }
+            if (!(v > 0.2f) || dir != 1)
+                goto done;
+            alt = 0;
+        } else {
+            if (v < -0.2f && dir == 2) {
+                dir = 1;
+                goto done;
+            }
+            if (!(v > 0.2f) || dir != 1)
+                goto done;
+        }
+        dir = 2;
+    } else {
+        Agent* t = &g_mission->agents.pages[tid >> 4][tid & 0xf];
+        rgl::strategic_entity* tb = t->body;
+        if (tb == 0)
+            return 0;
+        rgl::matrix cam = g_mission->view;
+        { const float quarter = -1.5707964f; cam.mat3::rotate_about_s(&quarter); }
+        vector4 p = t->pos;
+        p.z = p.z + 0.7f;
+        if (t->kind == 0)
+            p = ((const ::pos&)t->body->local).transform_point(tb->fx->rec(9)->o);
+        vector4 loc = cam.transform_point_to_local(p);
+        float inv = 1.0f / loc.y;
+        float x = loc.x * inv;
+        float z = inv * loc.z;
+        float a = 0.4f * z;
+        if (x < a - 0.02f && x < -0.02f - a) {
+            dir = 1;
+            alt = 0;
+        } else if (a + 0.02f < x && 0.02f - a < x) {
+            dir = 2;
+            alt = 0;
+        } else if (z < -0.1f) {
+            dir = 3;
+            alt = 0;
+        } else {
+            dir = 0;
+            alt = 2;
+            if (!(x > 0.0f))
+                alt = 1;
+        }
+        int f = horse;
+        if (f < 0)
+            goto done;
+        float v = signed_angle(vel, in_now.move);
+        if ((&g_mission->agents.pages[(unsigned)f >> 4][(unsigned)f & 0xf])->vel_xy.y > 1.0f) {
+            alt = 0;
+            dir = (v < 0.0f) ? 1 : 2;
+        } else {
+            if (v < 0.0f && dir == 2) {
+                dir = 1;
+                goto done;
+            }
+            if (!(v > 0.0f) || dir != 1)
+                goto done;
+            dir = 2;
+        }
+    }
+done:
+    int snd_a_, snd_b_, snd_c_, var_;
+    pick_sounds(0, dir, &snd_a_, &snd_b_, &snd_c_, &var_);
+    if (snd_a_ == -1)
+        dir = alt;
+    return dir;
+}
+
+// itcf_shoot_* (Module System header_items): the ranged-attack capability bits of an item.
+enum {
+    itcf_thrust_polearm = 0x100,
+    itcf_shoot_bow      = 0x1000,
+    itcf_shoot_crossbow = 0x4000,
+    itcf_throw_stone    = 0x10000,
+    itcf_throw_knife    = 0x20000,
+    itcf_throw_axe      = 0x30000,
+    itcf_throw_javelin  = 0x40000,
+    itcf_shoot_pistol   = 0x70000,
+    itcf_shoot_musket   = 0x80000,
+    itcf_shoot_mask     = 0xff000,
+};
+
+// Picks the animation and sound ids for starting a ranged attack with the item in the given slot: fixed ids
+// for each itcf_shoot_* class, otherwise the pair chosen by pick_attack_dir / pick_sounds.
+// @ 0x43fd10
+void Agent::start_shoot(int slot)
+{
+    snd_a = -1;
+    snd_b = -1;
+    snd_c = -1;
+    unsigned __int64 flags;
+    ItemRef sp = slot_pair(slot);
+    if (sp.item == -1)
+        flags = 0;
+    else
+        flags = g_items[sp.item].flags;
+    int dir, alt;
+    if (horse >= 0) {
+        float v = signed_angle(vel, in_now.move);
+        if (!(v < 0.0f)) { dir = 2; } else { dir = 1; }
+        alt = 0;
+    } else {
+        dir = rand() % 4;
+        alt = rand() % 4;
+        if (dir == alt)
+            alt = 3 - dir;
+    }
+    int tgt = pick_front();
+    if (pool_id == g_mission->player_id && (g_options.ctl_mode != 0 || tgt != -1))
+        dir = pick_attack_dir(tgt);
+    unsigned __int64 kind = flags & itcf_shoot_mask;
+    if (kind != 0) {
+        if (kind == itcf_shoot_bow) {
+            snd_b = 0x76;
+            mode1 = 0;
+            snd_a = 0x75;
+            return;
+        }
+        if (kind == itcf_shoot_crossbow) {
+            snd_b = 0x7a;
+            mode1 = 0;
+            snd_a = 0x79;
+            return;
+        }
+        if (kind == itcf_shoot_pistol) {
+            snd_b = 0x86;
+            mode1 = 0;
+            snd_a = 0x85;
+            return;
+        }
+        if (kind == itcf_shoot_musket) {
+            snd_b = 0x89;
+            mode1 = 0;
+            snd_a = 0x88;
+            return;
+        }
+        if (kind == itcf_throw_stone) {
+            snd_b = 0x84;
+            mode1 = 0;
+            snd_a = 0x83;
+            return;
+        }
+        if (kind == itcf_throw_knife) {
+            snd_b = 0x80;
+            mode1 = 0;
+            snd_a = 0x7f;
+            return;
+        }
+        if (kind == itcf_throw_axe) {
+            snd_b = 0x82;
+            mode1 = 0;
+            snd_a = 0x81;
+            return;
+        }
+        if (kind == itcf_throw_javelin) {
+            snd_a = 0x7d;
+            snd_b = 0x7e;
+        }
+        mode1 = 0;
+    } else {
+        if (slot == 0) {
+            mode1 = dir;
+            pick_sounds(0, dir, &snd_a, &snd_b, &snd_c, &variant);
+            if (snd_a == -1) {
+                mode1 = alt;
+                pick_sounds(0, alt, &snd_a, &snd_b, &snd_c, &variant);
+            }
+        } else {
+            mode2 = dir;
+            pick_sounds(slot, mode1, &snd2_a, &snd2_b, &snd2_c, &variant);
+            if (snd2_a == -1) {
+                mode2 = alt;
+                pick_sounds(slot, mode1, &snd2_a, &snd2_b, &snd2_c, &variant);
+            }
+        }
+    }
+}
+
+// @ 0x440070
+// itcf_* capability bits are stored in the high dword of the item flags
+#define ITCF(x) (((unsigned __int64)(x)) << 32)
+void Agent::pick_sound_ids(int* a, int* b, int* c)
+{
+    int z = -1;
+    *a = z;
+    *b = z;
+    *c = z;
+    int mode = 0;
+    if (pool_id != g_mission->player_id || g_options.stick_mode == 0) {
+        int t = pick_duel();
+        if (t != -1) {
+            Agent* o = agent_by_id(t);
+            if (o->active == 2)
+                mode = o->mode1;
+            else if (o->active == 1)
+                mode = o->mode1;
+        }
+    } else if (g_options.stick_mode == 1) {
+        float dx = g_keyboard.f818;
+        float dy = g_keyboard.f81c;
+        if (g_options.invert != 0)
+            dy = -dy;
+        if (dx > dy) {
+            if (dx > -dy)
+                mode = 2;
+            else
+                mode = 3;
+        } else {
+            if (dx < -dy)
+                mode = 1;
+            else
+                mode = 0;
+        }
+    } else {
+        mode = 0;
+        int t = pick_front();
+        if (t >= 0) {
+            Agent* o = agent_by_id(t);
+            rgl::strategic_entity* tb = o->body;
+            if (tb != 0) {
+                rgl::matrix cam = g_mission->view;
+                { const float quarter = -1.5707964f; cam.mat3::rotate_about_s(&quarter); }
+                vector4 p = o->pos;
+                p.z = p.z + 0.7f;
+                if (o->kind == 0)
+                    p = ((const ::pos&)o->body->local).transform_point(tb->fx->rec(9)->o);
+                vector4 q = cam.transform_point_to_local(p);
+                float inv = 1.0f / q.y;
+                float x = q.x * inv;
+                float z = inv * q.z;
+                float k = 0.4f * z;
+                if (x < k - 0.02f && x < -0.02f - k) mode = 2;
+                else if (k + 0.02f < x && 0.02f - k < x) mode = 1;
+                else if (z < -0.1f) mode = 3;
+                else mode = 0;
+            }
+        }
+    }
+    unsigned __int64 flags = 0;
+    ItemRef p0 = slot_pair_inl(0);
+    if (p0.item != -1)
+        flags = g_items[p0.item].flags;
+    ItemRef p1 = slot_pair_inl(1);
+    if (p1.item > 0) {
+        *a = 0xc7; *b = 0xc8; *c = 0xc9;
+        return;
+    }
+    if (p0.item <= 0) {
+        *a = 0x97; *b = 0x98; *c = 0x99;
+        return;
+    }
+    unsigned __int64 pole = flags & ITCF(itcf_thrust_polearm);
+    if (mode == 0) {
+        if (pole) { *a = 0xd6; *b = 0xd7; *c = 0xd8; return; }
+        if (flags & ITCF(itcf_shoot_bow)) { *a = 0xca; *b = 0xcb; *c = 0xcc; return; }
+        if (flags & ITCF(itcf_throw_stone)) { *a = 0xe2; *b = 0xe3; *c = 0xe4; return; }
+    } else if (mode == 2) {
+        if (pole) { *a = 0xd0; *b = 0xd1; *c = 0xd2; return; }
+        if (flags & ITCF(itcf_shoot_bow)) { *a = 0xd0; *b = 0xd1; *c = 0xd2; return; }
+        if (flags & ITCF(itcf_throw_stone)) { *a = 0xe8; *b = 0xe9; *c = 0xea; return; }
+    } else if (mode == 1) {
+        if (pole) { *a = 0xd3; *b = 0xd4; *c = 0xd5; return; }
+        if (flags & ITCF(itcf_shoot_bow)) { *a = 0xd3; *b = 0xd4; *c = 0xd5; return; }
+        if (flags & ITCF(itcf_throw_stone)) { *a = 0xeb; *b = 0xec; *c = 0xed; return; }
+    } else {
+        if (pole) { *a = 0xd9; *b = 0xda; *c = 0xdb; return; }
+        if (flags & ITCF(itcf_shoot_bow)) { *a = 0xcd; *b = 0xce; *c = 0xcf; return; }
+        if (flags & ITCF(itcf_throw_stone)) { *a = 0xe5; *b = 0xe6; *c = 0xe7; }
+    }
+}
+
+// 0x4378f0 (Agent::get_dir, game/agent/agent_stats.cpp owns the row): the body visible, so the direction pair passed by address does not escape
+// in Agent::can_hit (0x4406a0) and the slot_pair temporaries share its frame slot.
+inline __declspec(noinline) void Agent::get_dir(vec2* out)
+{
+    vec2 v;
+    v.x = vel.x;
+    v.y = vel.y;
+    float l = (float)sqrt(v.x * v.x + v.y * v.y);
+    if (l > 0.0f) {
+        float inv = 1.0f / l;
+        v.x = inv * v.x;
+        v.y = inv * v.y;
+    } else {
+        v.x = 0.0f;
+        v.y = 1.0f;
+    }
+    if (kind == 0 && horse != -1 && (active != 0 || f5610 != 0)) {
+        float t = cur;
+        float c = (float)cos((double)t);
+        float s = (float)sin((double)t);
+        float nx = c * v.x - s * v.y;
+        float tt = c * v.y;
+        v.y = tt + s * v.x;
+        v.x = nx;
+    }
+    *out = v;
+}
+// @ 0x4406a0
+int Agent::can_hit(unsigned aid, unsigned bid, int alt, Missile* missile, const float* target)
+{
+    Agent* a = agent_by_id(aid);
+    Agent* b = agent_by_id(bid);
+    bool strike = missile != 0;
+    int mode;
+    if (a->f100_is_0x48_and_charged())
+        mode = 0;
+    else if (alt == 0)
+        mode = a->mode1;
+    else
+        mode = a->mode2;
+    int act = b->anim[1].cur;
+    int grp = group_base(act);
+    int not_base = not_group_base(act);
+    float dx = b->pos.x - a->pos.x;
+    float dy = b->pos.y - a->pos.y;
+    float len = (float)sqrt(dy * dy + dx * dx);
+    vec2 u, f;
+    if (len > 0.0f) {
+        float inv = 1.0f / len;
+        u.x = inv * dx;
+        u.y = inv * dy;
+    } else {
+        u.x = 0.0f;
+        u.y = 1.0f;
+    }
+    b->get_dir(&f);
+    if (strike) {
+        if (grp == 199 && f.y * u.y + f.x * u.x < -0.4f) {
+            matrix m = b->body->local * *b->body->fx->rec(12);
+            vector4 hp = vadd(m.o, vmul(m.f, 0.2f));
+            float pz = hp.z;
+            float lo = 0.0f, hi = 0.0f;
+            ItemRef sp = b->slot_pair_inl(1);
+            if (sp.item >= 0) {
+                lo = (float)g_items[sp.item].weapon_length * 0.01f;
+                if (lo == 0.0f)
+                    lo = 0.5f;
+                hi = lo;
+                if (lo > 0.5f)
+                    hi = 0.5f;
+            }
+            if (b->troop >= 0) {
+                int k = g_game->skill_level(troop, 0x1a);
+                float s = (float)k * 0.02f + 1.0f;
+                float u2 = (float)k * 0.1f;
+                hi = s * hi + u2;
+                lo = s * lo + u2;
+            }
+            float z = target[2] - pz;
+            if (-lo < z && z < hi)
+                return 1;
+        }
+        return 0;
+    } else {
+        if (mode == 2 || mode == 1) {
+            if (0.3f < f.y * u.y + f.x * u.x)
+                return 0;
+        } else if (-0.2f < f.y * u.y + f.x * u.x)
+            return 0;
+        if (not_base == 0 && b->anim[1].scale < 0.25f)
+            return 0;
+        if (grp == 0x97) {
+            ItemRef sp = a->slot_pair_inl(0);
+            if (sp.item < 0)
+                return 1;
+        }
+        return id_matches_dir(grp, mode);   // 0x4326d0 (a member that ignores this)
+    }
+}
+
+// more container instantiations
+// @ 0x440a30
+template PhysRec* std::_Copy_backward_opt(PhysRec*, PhysRec*, PhysRec*, std::_Nonscalar_ptr_iterator_tag);
+// @ 0x440aa0
+template void std::vector<E48>::push_back(const E48&);
+// @ 0x440b30
+template void std::vector<int>::push_back(const int&);
+// @ 0x440b80
+template void std::vector<PlacedObj>::push_back(const PlacedObj&);
+// @ 0x440c10
+template void std::vector<E12>::push_back(const E12&);
+
+// ---- id pool ---------------------------------------------------------------------------------------------------
+// @ 0x440c90
+template<> int Pool<Missile>::alloc()
+{
+    if (!(free_ids.size() > 0)) {
+        Missile* blk = new Missile[16];
+        pages.push_back(blk);
+        for (int j = 0; j < 16; j++) {
+            blk[j].in_use = 0;
+            blk[j].pool_id = count + j;
+            free_ids.push_back(count + j);
+        }
+        count += 16;
+    }
+    unsigned id = free_ids.back();
+    free_ids.pop_back();
+    Missile* r = &pages[id >> 4][id & 0xf];
+    r->in_use = 1;
+    r->serial = serial;
+    serial++;
+    return id;
+}
+
+// @ 0x440dc0
+template void std::fill(PhysRec*, PhysRec*, const PhysRec&);
+
+// ---- agent line of sight / fire check ----------------------------------------------------------------------------
+// @ 0x440e30
+bool Agent::line_of_sight(unsigned tid, shape_base* ignore)
+{
+    Agent* o = agent_by_id(tid);
+    bool r = false;
+    vector4 d;
+    d.x = o->pos.x - pos.x;
+    d.y = o->pos.y - pos.y;
+    d.z = o->pos.z - pos.z;
+    if (d.normalize() <= 300.0f && body != 0 && o->body != 0) {
+        vector4 p, dir;
+        aim_point_and_dir(&p, &dir);
+        vector4 head = ((const ::pos&)o->body->local).transform_point(o->body->fx->elems[9].m84.o);
+        head.z += 0.2f;
+        vector4 t;
+        t.x = head.x - p.x;
+        t.y = head.y - p.y;
+        t.z = head.z - p.z;
+        d = t;
+        float len = d.normalize();
+        float dp = dir.z * d.z + dir.y * d.y + dir.x * d.x;
+        if (ignore) {
+            capsule c(0.01f, &p, &head);
+            r = shape_contact_count(&c, ignore, 0, 0) != 0;
+            if (r)
+                return false;
+        }
+        if (dp > -0.3f || len < 2.0f) {
+            r = g_mission->scene->trace_ray(&p, &head, 400.0f, &g_hit_shape, 1) != 0;
+            return r;
+        }
+    }
+    return r;
+}
+
+static __forceinline bool mission_friends(Mission* m, const int& a, const int& b)
+{
+    if (a >= 0 && a < 8 && b >= 0 && b < 8)
+        return ((const int*)&m->teams[0].relation[0])[a * 0x5b + b] == 1;
+    return false;
+}
+// @ 0x441020
+int Agent::fire_check(unsigned tid, int* out_blocker)
+{
+    g_hit_shape = 0;
+    *out_blocker = -1;
+    if (horse != -1) {
+        float v = signed_angle(vel, ai.move_dir);
+        if (!(g_range_tbl[variant].lo <= v) || !(v < g_range_tbl[variant].hi))
+            return 3;
+    }
+    if (!line_of_sight(tid, 0))
+        return 0;
+    const vector4& tp = agent_by_id(tid)->pos;
+    float score = 0.0f;
+    vector4 a;
+    a.x = tp.x - pos.x;
+    a.y = tp.y - pos.y;
+    float dist;
+    {
+        a.z = tp.z - pos.z;
+        float dz = a.z;
+        dist = a.normalize();
+        float reach = attack_speed();
+        a.z = (accel_factor(&reach, &dist, &dz) + a.z) * 0.1f;
+    }
+    a.normalize();
+    float best = 0.0f;
+    unsigned i = g_mission->agents.first_used();
+    if (i < (unsigned)g_mission->agents.count) {
+        do {
+            Agent* o = &g_mission->agents.pages[i >> 4][i & 0xf];
+            if (o->kind == 0 && mission_friends(g_mission, team, o->team) && o->state == 1 && o->pool_id != pool_id) {
+                vector4 b;
+                b.x = o->pos.x - pos.x;
+                b.y = o->pos.y - pos.y;
+                b.z = (o->pos.z - pos.z) * 0.1f;
+                float bl = b.normalize();
+                float dp = b.x * a.x;
+                dp += b.y * a.y;
+                dp += b.z * a.z;
+                if (dp > 0.2f) {
+                    float s = (float)sqrt(1.0f - dp * dp);
+                    float t = s - ((o->v56b4.out_length() + 1.0f) * 0.4f) / (bl + 0.2f);
+                    if (t < 0.0f)
+                        t = 0.0f;
+                    if (bl > dist)
+                        t = ((bl - dist) + 25.0f) * t * 0.051999997f;
+                    t = (0.3f - t) * 3.3333333f;
+                    if (t < 0.01f)
+                        t = 0.0f;
+                    t = (t * t) * (t * t);
+                    if (t > 0.7f) {
+                        score += t;
+                        if (t > best) {
+                            best = t;
+                            *out_blocker = i;
+                        }
+                    }
+                }
+            }
+            g_mission->agents.next_used(&i);
+        } while (i < (unsigned)g_mission->agents.count);
+        if (score > 0.9f)
+            return 2;
+    }
+    return 1;
+}
+
+//=============================================================================
+// 0x441360..0x441ff0, from phys_set.cpp
+// Desc: the Newton physics set: destroy a world record, add a ragdoll bone, start a static tree-collision
+//       build, add a capsule rigid body; and Agent::build_static_collision, which fills the tree collision from
+//       the static shapes around the agent and adds a body per capsule. Functions in ascending address order.
+//       Flags: /O2 /MT /Gy /TP. Names provisional.
+//=============================================================================
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+PhysSet g_phys;                                             // 0xa181f8 the physics set (its constructor and destructor run as dynamic initialisers)
+
+// @ 0x441360
+void PhysSet::destroy_world(int idx)
+{
+    if (recs[idx].world != 0) {
+        recs[idx].ragdoll = 0;
+        recs[idx].collision = 0;
+        recs[idx].body = 0;
+        recs[idx].bones.resize(0, 0);
+        recs[idx].bodies.resize(0, 0);
+        NewtonDestroy(recs[idx].world);
+        recs[idx].world = 0;
+        nworlds--;
+    }
+}
+
+// @ 0x4413e0
+const NewtonRagDollBone* PhysSet::add_bone(int idx, const NewtonRagDollBone* parent, const float* mass, matrix m0,
+                                           const float* radius, const float* height, matrix m1, const float* cone_dir,
+                                           const float* lim_min, const float* lim_max, const float* lim_twist)
+{
+    PhysRec* r;
+    m1.s.w = 0.0f; m1.f.w = 0.0f; m1.u.w = 0.0f; m1.o.w = 1.0f;
+    m0.s.w = 0.0f; m0.f.w = 0.0f; m0.u.w = 0.0f; m0.o.w = 1.0f;
+    r = &recs[idx];
+    NewtonCollision* cap = NewtonCreateCapsule(r->world, *radius, *height, &m1.s.x);
+    float v[4];
+    v[0] = 0.0f; v[1] = 0.0f; v[2] = 0.0f;
+    const NewtonRagDollBone* bone = NewtonRagDollAddBone(recs[idx].ragdoll, parent, 0, *mass, &m0.s.x, cap, v);
+    NewtonReleaseCollision(recs[idx].world, cap);
+    NewtonBody* body = NewtonRagDollBoneGetBody(bone);
+    float inertia[4];
+    float origin[4];
+    NewtonConvexCollisionCalculateInertialMatrix(cap, inertia, origin);
+    NewtonBodySetCentreOfMass(body, origin);
+    NewtonBodySetMassMatrix(body, *mass, inertia[0], inertia[1], inertia[2]);
+    NewtonBodySetMaterialGroupID(body, recs[idx].material);
+    v[0] = 0.7f; v[1] = 0.7f; v[2] = 0.7f;
+    NewtonBodySetAngularDamping(body, v);
+    NewtonBodySetFreezeTreshold(body, 0.25f, 0.7f, 5);
+    NewtonRagDollBoneSetLimits(bone, cone_dir, *lim_min * 0.017453292f, *lim_max * 0.017453292f, *lim_twist * 0.017453292f, cone_dir, 0.2f, 0.2f);
+    recs[idx].bones.push_back(bone);
+    return bone;
+}
+
+// @ 0x441610
+void PhysSet::begin_static_build(int idx)
+{
+    if (recs[idx].collision != 0) {
+        NewtonDestroyBody(recs[idx].world, recs[idx].body);
+        recs[idx].collision = 0;
+        recs[idx].body = 0;
+        for (unsigned i = 0; i < recs[idx].bodies.size(); i++)
+            NewtonDestroyBody(recs[idx].world, recs[idx].bodies[i]);
+        recs[idx].bodies.resize(0, 0);
+    }
+    recs[idx].collision = NewtonCreateTreeCollision(recs[idx].world, 0);
+    NewtonTreeCollisionBeginBuild(recs[idx].collision);
+}
+
+// @ 0x4416c0
+NewtonBody* PhysSet::add_capsule_body(int idx, const float* radius, const float* height, const float* mass, matrix* m0, matrix* m1, bool list)
+{
+    m0->s.w = 0.0f; m0->f.w = 0.0f; m0->u.w = 0.0f; m0->o.w = 1.0f;
+    m1->s.w = 0.0f; m1->f.w = 0.0f; m1->u.w = 0.0f; m1->o.w = 1.0f;
+    NewtonCollision* cap = NewtonCreateCapsule(recs[idx].world, *radius, *height, &m1->s.x);
+    NewtonBody* body = NewtonCreateBody(recs[idx].world, cap);
+    NewtonReleaseCollision(recs[idx].world, cap);
+    NewtonBodySetMatrix(body, &m0->s.x);
+    float inertia[4];
+    float origin[4];
+    NewtonConvexCollisionCalculateInertialMatrix(cap, inertia, origin);
+    NewtonBodySetCentreOfMass(body, origin);
+    NewtonBodySetMassMatrix(body, *mass, inertia[0], inertia[1], inertia[2]);
+    NewtonBodySetMaterialGroupID(body, recs[idx].material);
+    if (list)
+        recs[idx].bodies.push_back(body);
+    return body;
+}
+
+typedef matrix frame;   // a 4-row frame as the original builds it inline: three rows from identity3, origin zero
+
+// the original inlines vector4::normalize (returns the old length) and the out-parameter cross product
+static __forceinline float vnorm(vector4& v)
+{
+    float len = (float)sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        v.x *= inv; v.y *= inv; v.z *= inv;
+    } else {
+        v.x = 0.0f; v.y = 1.0f; v.z = 0.0f;
+    }
+    return len;
+}
+static __forceinline void vcross(vector4& r, const vector4& a, const vector4& b)
+{
+    r.x = a.y * b.z - a.z * b.y; r.y = a.z * b.x - a.x * b.z; r.z = a.x * b.y - a.y * b.x;
+}
+
+static __forceinline vector4 cross3(const vector4& a, const vector4& b)
+{
+    vector4 r;
+    r.x = a.y * b.z - a.z * b.y; r.y = a.z * b.x - a.x * b.z; r.z = a.x * b.y - a.y * b.x;
+    return r;
+}
+
+// @ 0x4417d0
+void Agent::build_static_collision()
+{
+    anchor = body->local.o;
+    g_phys.begin_static_build(phys_idx);
+    shape_base* hits[0x2000];
+    int cnt;
+    {
+        vector4 bmin, bmax;
+        bmin.x = body->local.o.x - 5.0f;
+        bmin.y = body->local.o.y - 5.0f;
+        bmin.z = body->local.o.z - 5.0f;
+        bmax.x = body->local.o.x + 5.0f;
+        bmax.y = body->local.o.y + 5.0f;
+        bmax.z = body->local.o.z + 5.0f;
+        g_mission->scene->query_box(&bmin, &bmax, 0x8106, hits, &cnt);   // scene is the scene object Ctx (engine/scene/strategic_entity.h)
+    }
+    int i;
+    for (i = 0; i < cnt; i++) {
+        if (hits[i]->shape_type() == 2) {
+            face* f = (face*)hits[i];
+            float tri[12];
+            tri[0] = f->w[0].x; tri[1] = f->w[0].y; tri[2] = f->w[0].z;
+            tri[3] = f->w[1].x; tri[4] = f->w[1].y; tri[5] = f->w[1].z;
+            tri[6] = f->w[2].x; tri[7] = f->w[2].y; tri[8] = f->w[2].z;
+            tri[9] = f->w[3].x; tri[10] = f->w[3].y; tri[11] = f->w[3].z;
+            NewtonTreeCollisionAddFace(g_phys.recs[phys_idx].collision, ((face*)hits[i])->count, tri, 12, 0);
+        }
+    }
+    g_phys.rebuild_static_body(phys_idx);
+    for (i = 0; i < cnt; i++) {
+        if (hits[i]->shape_type() == 1) {
+            capsule* c = (capsule*)hits[i];
+            vector4 dir;
+            float radius = c->radius;
+            dir.x = c->p1.x - c->p0.x; dir.y = c->p1.y - c->p0.y; dir.z = c->p1.z - c->p0.z;
+            float len = vnorm(dir);
+            float zero = 0.0f;
+            frame R;
+            vector4 z0(0.0f, 0.0f, 0.0f);
+            mat3 t;
+            mat3* ip = identity3(&t);
+            static_cast<mat3&>(R) = *ip;
+            R.s = dir;
+            R.o = z0;
+            vector4 c1 = cross3(R.s, R.f);
+            if (c1.length() < 0.001f) {
+                R.f = cross3(R.u, R.s);
+                vnorm(R.f);
+                R.u = cross3(R.s, R.f);
+                vnorm(R.u);
+            } else {
+                R.u = c1;
+                vnorm(R.u);
+                R.f = cross3(R.u, R.s);
+                vnorm(R.f);
+            }
+            vector4 zero2(0.0f, 0.0f, 0.0f);
+            vector4 mid(c->p0.x + c->p1.x, c->p0.y + c->p1.y, c->p0.z + c->p1.z);
+            mid.x *= 0.5f; mid.y *= 0.5f; mid.z *= 0.5f;
+            R.o = mid;
+            frame M;
+            mat3 t2;
+            mat3* ip2 = identity3(&t2);
+            static_cast<mat3&>(M) = *ip2;
+            M.o = zero2;
+            g_phys.add_capsule_body(phys_idx, &radius, &len, &zero, &R, &M, true);
+        }
+    }
+}
+
+//=============================================================================
+// 0x441ff0..0x444c50, from agent_fx_sound.cpp
+// Desc: an object that keeps int lists, the 0x38-byte record copy / fill helpers, the world's "entities fully
+//       touching a box" query, the effect element / definition lists, the emitter setup from the definition
+//       table, the FMOD sound player, game-data experience (level-up bookkeeping and its messages), the mission's
+//       effect spawn and dead-agent queue, the agent's target scans, sound pickers and players, the equipment
+//       display and the wield-change animation / sound selection. Functions in ascending address order (cl's
+//       bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
+//=============================================================================
+#include "game/agent/combat/agent_fx_sound.h"   // after the 0x43e190.. section: its itcf_* macros are i64, that section's enum is int
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+
+
+const int g_xp_table[63] = {                             // 0x590974
+    0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297, 13010, 16161, 19806, 24007, 28832, 34362, 40682, 47892, 56103, 65441, 77233,
+    90809, 106425, 124371, 144981, 168636, 195769, 226879, 262533, 303381, 350164, 412091, 484440, 568947, 667638, 782877, 917424,
+    1074494, 1257843, 1471851, 1721626, 2070551, 2489361, 2992033, 3595340, 4319408, 5188389, 6231267, 7482821, 8984785, 11236531,
+    14051314, 17569892, 21968215, 27466219, 34338823, 42929679, 53668349, 67091786, 83871183, 160204600, 320304600, 644046000, 2050460000 };
+
+
+// 0x440b30 vector<int>::push_back (agent_combat.cpp) is kept out of line
+
+
+#include "engine/core/std_vec_insert_n.h"      // vector<rgl::mesh*>::_Insert_n 0x410610 (declared only: the call is out of line)
+struct named_object;
+template<> void std::vector<named_object*, std::allocator<named_object*> >::_Insert_n(std::vector<named_object*, std::allocator<named_object*> >::iterator, size_t, named_object* const&);   // 0x41a2c0 (engine/resource/resource_manager.cpp)
+
+// @ 0x441ff0
+void rgl::lod_mesh::add_mesh(int idx, rgl::mesh* val)
+{
+    lists[idx].push_back(val);
+    if (idx + 1 > count)
+        count = idx + 1;
+}
+
+// ---- std::_Uninit_copy of the 0x38-byte PhysRec ------------------------------------------------------------
+// @ 0x442060
+template void std::allocator<PhysRec>::construct(PhysRec*, const PhysRec&);
+// @ 0x442080 (+ catch-all funclet 0x4420ea: destroys [next, dest), then `throw;`)
+template PhysRec* std::_Uninit_copy(PhysRec*, PhysRec*, PhysRec*, std::allocator<PhysRec>&, std::_Nonscalar_ptr_iterator_tag);
+
+// 0x442110 rgl::entity::add_mesh: the header's inline member (engine/scene/scene_entity.h), emitted out of line here
+
+// ---- the world's box query --------------------------------------------------------------------------------------------
+static __forceinline bool box3_inl(const vector4* a, const vector4* b, const vector4* c, const vector4* d)
+{
+    if (a->x <= d->x && c->x <= b->x && a->y <= d->y && c->y <= b->y && a->z <= d->z && c->z <= b->z)
+        return true;
+    return false;
+}
+
+// @ 0x442180
+void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<entity*>* out)
+{
+    out->clear();
+    int lo[2];
+    int hi[2];
+    int c[2];
+    to_cell(&bmin->x, lo);
+    to_cell(&bmax->x, hi);
+    for (c[0] = lo[0]; c[0] <= hi[0]; c[0]++) {
+        for (c[1] = lo[1]; c[1] <= hi[1]; c[1]++) {
+            for (cellnode* nd = cells[c[0]][c[1]].head; nd != 0; nd = nd->next) {
+                entity** pe = &nd->obj;
+                if (box3_inl(bmin, bmax, (*pe)->get_v9c(), (*pe)->get_vac()))
+                    out->push_back(*pe);
+            }
+        }
+    }
+    sort_range(out->begin(), out->end(), (int)(out->end() - out->begin()));
+    std::vector<entity*>::iterator e = std::unique(out->begin(), out->end());
+    out->erase(e, out->end());
+}
+
+// ---- effect elements / definitions ----------------------------------------------------------------------------------------
+// @ 0x442390
+void FxElem::add_psys(rgl::mesh* p) { psys.push_back(p); }   // the list holds the particle meshes (Psys* here): vector<mesh*> instance 0x410610
+// @ 0x4423f0
+void FxElem::add_group(rgl::lod_mesh* g)
+{
+    groups.push_back(g);         // the slow path is vector<lod_mesh*>::_Insert_n 0x41a2c0 (resource_manager.cpp's instance)
+    ngroups++;
+}
+// @ 0x442460
+void FxDef::attach_psys(int idx, rgl::mesh* p, const mat4* m)
+{
+    p->local_frame = *m;
+    elems[idx].add_psys(p);
+}
+// @ 0x4424a0
+void FxDef::attach_group(int idx, rgl::lod_mesh* g)
+{
+    elems[idx].add_group(g);
+}
+
+// ---- emitter setup from a definition table ----------------------------------------------------------------------------------
+// @ 0x4424c0
+void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
+{
+    if (idx < 0 || idx >= count)
+        return;
+    EmitDef* d = &defs[idx];
+    rgl::mesh* r = (rgl::mesh*)g_resmgr.get_object(&d->mesh_name);
+    if (r == 0)
+        return;
+    e->init();
+    e->tag = idx;
+    e->src = r;
+    e->res = r->res;
+    e->flags = d->flags;
+    e->spawn_rate = d->spawn_rate;
+    e->lifetime = d->life;
+    e->drag = d->drag;
+    vector4 g(0.0f, 0.0f, -9.8f);
+    e->accel = g;
+    e->accel_scale = d->accel_scale;
+    e->noise_scale = d->noise_scale;
+    e->noise_amount = d->noise_amount;
+    for (int k = 0; k < 5; k++)
+        e->curve[k] = d->t[k];
+    e->spin_scale = d->rot_speed;
+    e->spin_drag = d->rot_damping;
+    mat4 m;
+    rgl::identity_pos(&m);
+    m.o = *pos;
+    e->set_placement(&m, &d->a, &d->b, d->c);
+}
+
+// ---- the FMOD sound player ---------------------------------------------------------------------------------------------------
+static __forceinline int round_i(float v) { return round_float(&v); }
+// 0x432510 (game/common/game_util.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) int __cdecl clamp_index(const int* v, const int* lo, const int* hi)      // 0x432510
+{
+    if (*v < *lo) return *lo;
+    if (*v >= *hi) return *hi - 1;
+    return *v;
+}
+
+// @ 0x442650
+int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, float* out_duration)
+{
+    int ret = -1;
+    if (g_cfg.disable_sound == 0 && idx >= 0 && idx < ngroups) {
+        int* pn = &groups[idx].nvar;
+        int n = *pn;
+        if (n > 0) {
+            int k;
+            if (groups[idx].nvar <= 1)
+                k = 0;
+            else
+                k = rand() % *pn;
+            int dn = groups[idx].var[k];
+            int ch = FSOUND_PlaySoundEx(-1, defs[dn].sample, 0, 1);
+            ret = ch;
+            if (out_duration)
+                *out_duration = defs[dn].ratio;
+            int t = ch;                     // the handle pushed for a looping sound: address-taken, stored before the calls
+            if (ch >= 0) {
+                int hi = 0x100;
+                int vol = 0;
+                int r = round_i(groups[idx].volume_scale() * g_options.master_volume * 255.0f);
+                vol = clamp_index(&r, &vol, &hi);
+                int looping = groups[idx].flags & 2;
+                int prio;
+                if (flags & 1) {
+                    FSOUND_3D_SetAttributes(ch, 0, 0);
+                    prio = 0xff;
+                } else {
+                    FSOUND_3D_SetAttributes(ch, &pos->x, 0);
+                    int lo = 0;
+                    int hi2 = 0x100;
+                    float dist = (frame.o - *pos).out_length();
+                    float f = 3.0f / (dist + 3.0f);
+                    int pr = round_i(defs[dn].range_scale() * f * 254.0f);
+                    prio = clamp_index(&pr, &lo, &hi2);
+                }
+                FSOUND_SetVolume(ch, vol);
+                FSOUND_SetLoopMode(ch, (looping != 0) + 1);
+                if (groups[idx].flags & 4)
+                    FSOUND_SetCurrentPosition(ch, rand_below(&defs[dn].length));
+                if (looping)
+                    channels.push_back(t);
+                if (freq != 1.0f && g_cfg.disable_frequency_variation == 0)
+                    FSOUND_SetFrequency(ch, (int)((float)defs[dn].freq * freq));
+                FSOUND_SetPriority(ch, prio);
+                FSOUND_SetPaused(ch, 0);
+            }
+        }
+    }
+    return ret;
+}
+// @ 0x4428a0
+int SoundMgr::play_slot(int n, int flags, const vector4* pos, float freq, float* out_duration)
+{
+    n = slot[n];
+    return play(n, flags, pos, freq, out_duration);
+}
+
+// ---- experience and its messages ------------------------------------------------------------------------------------------------
+// the ring-buffer append that this TU inlines (colour 0xfff000)
+static __forceinline void log_add(const tstring& s)
+{
+    if (g_gui.enabled && g_gui.ring.count < 32) {
+        int idx = (g_gui.ring.head + g_gui.ring.count) % 32;
+        g_gui.ring.names[idx] = s;
+        g_gui.ring.vals[idx] = 0xfff000;
+        g_gui.ring.count++;
+    }
+}
+
+// @ 0x4428c0
+int GameData::add_experience(int troop, int amount)
+{
+    char buf1[512], buf2[512], buf3[512];
+    if (amount < 0)
+        amount = 0;
+    else if (amount >= 30000)
+        amount = 29999;
+    if (troop == player && amount > 0 && f13a34 != 0 && g_options.show_messages != 0) {
+        {
+            tstring key("ui_you_got_number_experience");
+            sprintf(buf1, g_strtable.lookup(key)->c_str(), amount);
+        }
+        {
+            tstring msg(buf1);
+            g_gui.push(msg, -1);
+        }
+    }
+    Troop* c = &chars[troop];
+    c->exp += amount;
+    while (c->exp >= g_xp_table[c->level]) {
+        c->skill_points++;
+        c->attr_points++;
+        c->prof_points += 10;
+        c->level++;
+        if (troop == player) {
+            g_sound_mgr.play(g_sound_mgr.slot[1], 1, &g_sound_mgr.frame.o, 1.0f, 0);
+            {
+                tstring key("ui_you_have_advanced_to_level_number");
+                sprintf(buf2, g_strtable.lookup(key)->c_str(), c->level);
+            }
+            {
+                tstring msg(buf2);
+                log_add(msg);
+            }
+        } else {
+            PartyMgr* pm = &parties;
+            int i = 0;
+            int p = pm->lookup(main_party);
+            if (pm->pages[p >> 4][p & 0xf].count > 0) {
+                do {
+                    int q = pm->lookup(main_party);
+                    if (pm->pages[q >> 4][q & 0xf].stacks[i].troop == troop) {
+                        {
+                            tstring key("ui_value_has_advanced_to_level_number");
+                            tstring* nm = g_strtable.find(&c->key);
+                            if (nm == 0)
+                                nm = (tstring*)c;
+                            sprintf(buf3, g_strtable.lookup(key)->c_str(), nm->c_str(), c->level);
+                        }
+                        {
+                            tstring msg(buf3);
+                            log_add(msg);
+                        }
+                    }
+                    i++;
+                    int r = pm->lookup(main_party);
+                    if (!(i < pm->pages[r >> 4][r & 0xf].count))
+                        break;
+                } while (1);
+            }
+        }
+    }
+    return c->exp;
+}
+
+// ---- spawning an effect emitter ---------------------------------------------------------------------------------------------------
+// @ 0x442ca0
+rgl::psys* Mission::spawn_effect(int idx, const mat4* m, int duration)
+{
+    rgl::psys* e = ((rgl::world*)scene)->alloc_emitter();
+    vector4 v(0.0f, 0.0f, 0.0f);
+    g_emit_defs.setup(e, idx, &v);
+    e->world = *m * e->local;
+    if (e->res != 0 && (e->res->flags & 0x40)) {
+        vector4 t;
+        t.x = g_env_rows[env_row].v20[0] * 0.3f;
+        t.y = g_env_rows[env_row].v20[1] * 0.3f;
+        t.z = g_env_rows[env_row].v20[2] * 0.3f;
+        EnvRow* c = &g_env_rows[env_row];
+        v.x = t.x + c->base[0];
+        v.y = t.y + c->base[1];
+        v.z = t.z + c->base[2];
+        vector4* d = &e->tint;
+        *d = v;
+    }
+    e->flags &= ~1u;
+    e->spawn_left = e->spawn_total = duration;
+    e->spawn_accum = 0;
+    return e;
+}
+
+// @ 0x442dc0
+void Mission::queue_dead(Agent* a)
+{
+    dead.push_back(a);
+    while (dead.size() > g_options.max_dead) {
+        dead[0]->f5830 = 4;
+        Agent* o = dead[0];
+        Timer* tm = &o->tm;
+        tm->start = g_ticks[tm->clock];      // Timer::restart inlined
+        for (unsigned i = 1; i < dead.size(); i++)
+            dead[i - 1] = dead[i];
+        dead.pop_back();
+    }
+}
+
+// ---- agent scans -------------------------------------------------------------------------------------------------------------------
+// @ 0x442ed0
+bool Agent::can_target(unsigned aid, unsigned flags, float maxdist, float* out_dist)
+{
+    Agent* o = &g_mission->agents.pages[aid >> 4][aid & 0xf];
+    if (o->state == 1
+        && (!(flags & 1) || !is_enemy(o))
+        && (!(flags & 2) || !is_friend(o))
+        && (!(flags & 4) || !(char)is_neutral(o))
+        && (!(flags & 0x10) || o->kind == 1)
+        && (!(flags & 0x20) || o->kind != 1)
+        && (!(flags & 0x200) || o->pool_id > pool_id)
+        && o->pool_id != pool_id
+        && (!(flags & 0x2000) || line_of_sight(aid, 0))
+        && o->pool_id != horse) {
+        vector4 d = o->pos - pos;
+        float len = d.normalize();
+        *out_dist = len;
+        if (maxdist >= 0.0f && len > maxdist)
+            return false;
+        if (flags & 0x1000) {
+            float dot = d.x * in_now.move.x + (d.z * in_now.move.z + d.y * in_now.move.y);
+            if (dot < -0.1f)
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+// @ 0x443020
+bool Agent::any_hostile_near()
+{
+    Mission* m = g_mission;
+    AgentTable* t = &m->agents;
+    unsigned i = t->first_used();
+    while (i < (unsigned)t->count) {
+        Agent* o = &m->agents.pages[i >> 4][i & 0xf];
+        if (o->state == 1) {
+            bool friendly = false;
+            if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
+                friendly = g_mission->teams[team].relation[o->team] == 1;
+            if (!friendly && !(char)is_neutral(o) && o->kind != 1 && o->pool_id != pool_id && o->pool_id != horse) {
+                vector4 d;
+                d.x = o->pos.x - pos.x;
+                d.y = o->pos.y - pos.y;
+                d.z = o->pos.z - pos.z;
+                float len = d.normalize();
+                if (!(300.0f < len) && line_of_sight(i, 0))
+                    return true;
+                m = g_mission;
+                t = &m->agents;
+            }
+        }
+        t->next_used(&i);
+    }
+    return false;
+}
+
+// @ 0x443140
+void Agent::update_alarm()
+{
+    if (ai.alarm & 1)
+        return;
+    bool hit = false;
+    AgentTable* t = &g_mission->agents;
+    unsigned i = t->first_used();
+    unsigned n = t->count;
+    while (i < n) {
+        if (hit)
+            break;
+        Agent** pg = &(&*g_mission->agents.pages.begin())[0];
+        Agent* o = pg[i >> 4] + (i & 0xf);
+        if (o->state == 1 && !is_enemy(o) && !(char)is_neutral(o) && o->kind != 1 && o->pool_id != pool_id && o->pool_id != horse) {
+            vector4 d = o->pos - pos;
+            if (!(10.0f < d.normalize()))
+                hit = (pg[i >> 4][i & 0xf].ai.alarm & 1) != 0;
+        }
+        g_mission->agents.next_used(&i);
+    }
+    if (hit || any_hostile_near()) {
+        ai.alarm |= 1;
+        ai.ta_interval = 0;
+    }
+}
+
+// ---- agent sound pickers and players ---------------------------------------------------------------------------------------------------
+// @ 0x443270
+unsigned Agent::pick_shout_target(int flags, float maxdist)
+{
+    unsigned best = (unsigned)-1;
+    float bestv = 0.0f;
+    AgentTable* tbl = &g_mission->agents;
+    unsigned i = tbl->first_used();
+    if (i < (unsigned)tbl->count) {
+        do {
+            unsigned id = i;
+            float dist;
+            bool ok = can_target(id, flags, maxdist, &dist);
+            Mission* m = g_mission;
+            if (ok) {
+                float x = 3.0f / (dist + 2.0f);
+                float t = (x < 1.0f) ? x : 1.0f;
+                float w = 1.0f / ((float)m->agents[id].targeted_by + 7.0f);
+                float k = 1.0f;
+                if (horse >= 0 && dist < 40.0f) {
+                    vector4 d;
+                    const vector4& op = m->agents.pages[id >> 4][id & 0xf].pos;
+                    d.x = op.x - pos.x;
+                    d.y = op.y - pos.y;
+                    d.z = op.z - pos.z;
+                    dist = d.normalize();
+                    const vector4& fw = body->local.f;
+                    float dp = d.y * fw.y;
+                    dp += d.z * fw.z;
+                    dp += d.x * fw.x;
+                    if (dp > 0.0f)
+                        k = ((40.0f - dist) * dp) * dp + 1.0f;
+                }
+                float s = (k * w) * t;
+                if (s > bestv) { bestv = s; best = id; }
+            }
+            tbl = &m->agents;
+            tbl->next_used(&i);
+        } while (i < (unsigned)tbl->count);
+    }
+    return best;
+}
+
+static inline bool fire_ok(Agent* a, unsigned id) { int fc; return a->fire_check(id, &fc) == 1; }
+// @ 0x443430
+unsigned Agent::pick_threat()
+{
+    unsigned best = (unsigned)-1;
+    float bestv = -100.0f;
+    unsigned id = (unsigned)-1;
+    int n = 0;
+    if (0 < ai.nthreat) {
+        Threat* r = ai.threats;
+        do {
+            id = r->id;
+            Agent* o = &g_mission->agents.pages[id >> 4][id & 0xf];
+            if (o->state == 1 && line_of_sight(id, 0)) {
+                if (fire_ok(this, id)) {
+                    const vector4& op = g_mission->agents.pages[id >> 4][id & 0xf].pos;
+                    float dx = op.x - pos.x;
+                    float dy = op.y - pos.y;
+                    float dz = op.z - pos.z;
+                    float v = 3.0f / (float)sqrt(dy * dy + (dx * dx + dz * dz));
+                    if (!(v < 4.0f)) v = 4.0f;
+                    float score = v / ((float)g_mission->agents.pages[(unsigned)r->id >> 4][r->id & 0xf].targeted_by + 7.0f);
+                    float s = ((float)(rand() % 0x3dc9) * 1.2644623e-05f + 1.0f) * score;
+                    if (s > bestv) { bestv = s; best = r->id; }
+                }
+            }
+            n++;
+            r++;
+            id = best;
+        } while (n < ai.nthreat);
+    }
+    return id;
+}
+
+// @ 0x4435c0
+void Agent::play_hit_sound(int* kind)
+{
+    Mission* m = g_mission;
+    if (m->muted)
+        return;
+    int snd;
+    if (this->kind == 0) {
+        int k = *kind;
+        if (k < 0)
+            return;
+        if (k > 1) {
+            if (k != 3)
+                return;
+            snd = 0xe;
+        } else if (!(pos.z < m->base_z)) {
+            bool b = (g_game->scenes[m->scene_idx].flags & 1) != 0;
+            if (b)
+                snd = 0x10;
+            else
+                snd = 0xf;
+        } else {
+            snd = 0x11;
+        }
+    } else {
+        int k = *kind;
+        unsigned c = gait & 7;
+        if (k == 4) {
+            snd = 0x61;
+        } else if (pos.z > m->base_z) {
+            if (c == 2 || c == 0) {
+                if (k != 0 && k != 2) return;
+                snd = 0x67;
+            } else if (c == 3) {
+                if (k != 0 && k != 2) return;
+                snd = 0x68;
+            } else if (c == 4) {
+                if (k != 0) return;
+                snd = 0x69;
+            } else {
+                if (c != 5) return;
+                if (k != 0) return;
+                snd = 0x6a;
+            }
+        } else {
+            if (k != 2 && k != 3) return;
+            snd = 0x11;
+        }
+    }
+    int r = rand();
+    float pitch = (float)(r % 0x3dc9) * 2.5289246e-05f + 0.8f;
+    g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &body->local.o, pitch, 0);
+}
+
+// @ 0x443730
+void Agent::play_sound_var(int* kind, float* var)
+{
+    if (*kind != -1 && body != 0) {
+        float pitch = 1.0f;
+        if (*var > 0.001f) {
+            float v = ((float)(rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * *var;
+            v = v + v;
+            if (v > 0.001f)
+                pitch = v + 1.0f;
+            else if (v < -0.001f)
+                { float nv = -v; pitch = 1.0f / (nv + 1.0f); }
+        }
+        int own = 0;
+        if (pool_id == g_mission->player_id)
+            own = 1;
+        vector4 p = body->local.o;
+        float h = (this->kind == 0 && horse != -1) ? 2.4f : 1.5f;
+        p.z += h - 0.3f;
+        g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p, pitch, &pitch);
+    }
+}
+
+// @ 0x443870
+void Agent::play_sound(int* snd)
+{
+    if (*snd != -1 && body != 0) {
+        if (channel >= 0) {
+            FSOUND_StopSound(channel);
+            channel = -1;
+        }
+        float pitch = 1.0f;
+        Mission* m = g_mission;
+        if (kind == 0 && (g_game->chars[troop].flags32 & 0xf) != 1 && pool_id != m->player_id) {
+            float v = ((float)(((party * 0x244ad + (pool_id + 0x1d) * 0x14fd + troop * 0x76ef) % 0x1b41) * 0x51f % 0x367)
+                       * 0.0011481056f - 0.5f) * 0.3f;
+            if (v > 0.001f)
+                pitch = v + 1.0f;
+            else if (v < -0.001f) {
+                float nv = -v;
+                pitch = 1.0f / (nv + 1.0f);
+            }
+        }
+        int own = 0;
+        if (pool_id == m->player_id)
+            own = 1;
+        int ch = g_sound_mgr.play(*snd, own, &body->local.o, pitch, &pitch);
+        if (ch >= 0) {
+            channel = ch;
+            snd_stamp.start = g_ticks[snd_stamp.clock];
+            snd_length = pitch;
+        }
+    }
+}
+
+// @ 0x443a00
+void Agent::play_pain_sound(float health)
+{
+    health = (1.2f - health) * 0.3f;
+    float v = (health < 0.0f) ? 0.0f : ((health >= 0.5f) ? 0.5f : health);
+    int r = rand();
+    float pitch = (float)(r % 0x3dc9) * 6.3223115e-06f + (v + 0.95f);
+    g_sound_mgr.play(g_sound_mgr.slot[0x11], 0, &body->local.o, pitch, 0);
+}
+
+// ---- the equipment display ----------------------------------------------------------------------------------------------------------------
+static inline unsigned char itype(const ItemKind* k) { return k->type(); }
+
+// shows `m` on the carry bone record `r` with local frame `f`
+static __forceinline void attach(Agent* a, rgl::lod_mesh* m, int r, const rgl::matrix& f)
+{
+    FxDef* g = a->body->fx;
+    g->remove_group(m);
+    m->frame = f;
+    FxElem& reg = g->elems[r];
+    reg.groups.push_back(m);
+    reg.ngroups++;
+}
+
+// @ 0x443aa0
+void Agent::update_equipment_display()
+{
+    char slot_used[4];
+    char bone_used[11];
+    int i;
+    for (int q = 0; q < 11; q++)       // (an explicit loop: the `= {0}` form gives a different frame)
+        bone_used[q] = 0;
+    for (i = 3; i >= 0; i--) {
+        if (pairs[i].item >= 0) {
+            ItemKind* ik = &g_items[pairs[i].item];
+            if (A[i] != 0) {
+                A[i]->mask = 0;
+                if (itype(ik) == itp_type_shield) {
+                    rgl::lod_mesh* m = A[i];
+                    int k = 0;
+                    if (0 < m->count) {
+                        float limit = 300.0f;
+                        do {
+                            m->lists[k].cap_all(&limit);
+                            k++;
+                        } while (k < m->count);
+                        k = 0;
+                    }
+                }
+            }
+            if (B[i] != 0)
+                B[i]->mask = 0;
+            if (C[i] != 0) {
+                C[i]->mask = 0;
+                rgl::lod_mesh* m = C[i];
+                int k = 0;
+                if (0 < m->count) {
+                    float limit = 0.0f;
+                    do {
+                        m->lists[k].cap_all(&limit);
+                        k++;
+                    } while (k < m->count);
+                    k = 0;
+                }
+            }
+            slot_used[i] = 0;
+        }
+    }
+    int j;
+    for (j = 0; j < 2; j++) {
+        int s = wield[j];
+        if (s >= 0 && pairs[s].item >= 0 && (j == 0 || both_hands == 0)) {
+            ItemKind* ik = &g_items[pairs[wield[j]].item];
+            unsigned t = ik->type_flags & 0xff;
+            int region = -1;
+            if (t == 2 || t == 3 || t == 4 || t == 9 || t == 10 || t == 0x10 || t == 0x11)
+                region = 0x13;
+            if (t == 8)
+                region = 0xe;
+            else if (t == 7)
+                region = 0xc;
+            vector4 z0(0.0f, 0.0f, 0.0f);
+            mat3 t3;
+            mat3* ip = identity3(&t3);
+            rgl::matrix M;
+            static_cast<mat3&>(M) = *ip;
+            M.o = z0;
+            if ((g_items[pairs[s].item].flags & itcf_shoot_mask) == itcf_throw_javelin) {
+                M.f = vector4(-M.f.x, -M.f.y, -M.f.z);
+                M.s = vector4(-M.s.x, -M.s.y, -M.s.z);
+            }
+            if (A[wield[j]] != 0) {
+                A[wield[j]]->mask = 0xffff;
+                rgl::lod_mesh* m = A[wield[j]];
+                float limit = 0.0f;
+                int k = 0;
+                if (0 < m->count) {
+                    do {
+                        m->lists[k].cap_all(&limit);
+                        k++;
+                    } while (k < m->count);
+                }
+                attach(this, A[wield[j]], region, M);
+            }
+            if (B[wield[j]] != 0) {
+                B[wield[j]]->mask = 0xffff;
+                attach(this, B[wield[j]], region, M);
+            }
+            if ((ik->flags & itcf_carry_mask) != 0 && (ik->flags & itcf_show_holster_when_drawn) == 0)
+                slot_used[wield[j]] = 1;
+            rgl::lod_mesh* h = C[wield[j]];
+            if (h != 0) {
+                if ((ik->flags & itcf_show_holster_when_drawn) == 0) {
+                    h->mask = 0;
+                } else {
+                    float limit = 10.0f;
+                    int k = 0;
+                    if (0 < h->count) {
+                        do {
+                            h->lists[k].cap_all(&limit);
+                            k++;
+                        } while (k < h->count);
+                    }
+                }
+            }
+        }
+    }
+    for (i = 3; i >= 0; i--) {
+        if (pairs[i].item >= 0) {
+            ItemKind* ik = &g_items[pairs[i].item];
+            if ((ik->flags & itcf_carry_mask) != 0) {
+                rgl::matrix M;
+                int region, bone;
+                ik->get_carry_pos(&M, &region, &bone);
+                if (!bone_used[bone] && !slot_used[i] && (itype(ik) != itp_type_shield || (pairs[i].m4 & 0xffff) > 10)) {
+                    bone_used[bone] = 1;
+                    if (C[i] == 0) {
+                        if (A[i] != 0) {
+                            A[i]->mask = 0xffff;
+                            attach(this, A[i], region, M);
+                        }
+                        if (B[i] != 0) {
+                            B[i]->mask = 0xffff;
+                            attach(this, B[i], region, M);
+                        }
+                    } else {
+                        C[i]->mask = 0xffff;
+                    }
+                }
+            }
+        }
+    }
+    if (pool_id == g_mission->player_id && g_game->f139e4 != 0) {
+        for (j = 0; j < 4; j++) {
+            if (pairs[j].item >= 0) {
+                ItemKind* ik = &g_items[pairs[j].item];
+                if ((ik->flags & itcf_carry_mask) != 0) {
+                    rgl::matrix M;
+                    int bone, region;
+                    ik->get_carry_pos(&M, &bone, &region);
+                    if (bone == 9 || bone == 7 || bone == 8) {
+                        if (wield[0] != j && (wield[1] != j || both_hands != 0)) {
+                            if (A[j] != 0)
+                                A[j]->mask &= 0x2000;
+                            if (B[j] != 0)
+                                B[j]->mask &= 0x2000;
+                        }
+                        if (C[j] != 0)
+                            C[j]->mask &= 0x2000;
+                    }
+                }
+            }
+        }
+    }
+    update_quiver();
+}
+
+// ---- the wield change ----------------------------------------------------------------------------------------------------------------------------
+// AnimSlot::set 0x4378a0 written out at these two sites only (every other caller in this file calls it)
+static __forceinline bool aset_fx(AnimSlot& s, int id, unsigned prio)
+{
+    if ((prio & 0x1ffff) < (s.events & 0x1ffff) && (s.cur != -1 || s.next != -1))
+        return false;
+    s.next = id;
+    s.events = prio;
+    if (id == -1)
+        s.events = 0;
+    return true;
+}
+// Agent::set_order 0x4379c0 (agent_stats.cpp) expanded for slot 1; INL picks the inline AnimSlot::set (two of the three sites)
+template <bool INL>
+static __forceinline void set_order_1(Agent* a, int id, unsigned prio, float rate)
+{
+    if (id >= -1 && id < a->defs->count) {
+        if (INL ? aset_fx(a->anim[1], id, prio) : a->anim[1].set(id, prio)) {
+            a->anim[1].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
+            if (prio & 0x4000000)
+                a->body->fx->set_rec_phase(1, 0.0f);   // 0x433b20
+            int k = a->wield[0];
+            if (k >= 0 && a->pairs[k].item >= 0) {
+                if (prio & 0x10000000)
+                    a->A[k]->mask = 0;
+                else
+                    a->A[k]->mask = 0xffff;
+            }
+        }
+    }
+}
+// 0x433b20 (engine/fx/env_curve.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) void FxDef::set_rec_phase(int i, float p)      // 0x433b20
+{
+    if (p < 0.0f) p = 0.0f;
+    else if (p > 1.0f) p = 1.0f;
+    EnvRec* r = &env[i];
+    int ticks = (int)(r->unshape(p) * r->period * 100000.0f);
+    r->tm.start = g_ticks[r->tm.clock] - ticks;
+}
+
+// @ 0x444370
+void Agent::on_wield_changed()
+{
+    int anim_ = -1;
+    int anim2 = -1;
+    int snd2 = -1;
+    int snd1 = -1;
+    for (int j = 0; j < 2; j++) {
+        int c = wield[j];
+        int p = wield_prev[j];
+        if (c != p) {
+            int item;
+            if (c < 0 || (item = pairs[c].item) < 0 || (j != 0 && both_hands != 0)) {
+                if (j != 0) {
+                    if (p >= 0 && c < 0 && both_hands == 0) {
+                        int pi = pairs[p].item;
+                        anim2 = 0x6d;
+                        if (pi >= 0) {
+                            ItemKind* ik = &g_items[pi];
+                            unsigned t = ik->type_flags & 0xff;
+                            if (t == itp_type_bow) {
+                                anim2 = ((ik->flags & itcf_carry_mask) == itcf_carry_bowcase_left) ? 0x71 : 0x6f;
+                                snd1 = 0x55;
+                            } else if (t == itp_type_shield) {
+                                anim2 = 0x6d;
+                                snd1 = 0x57;
+                            }
+                        }
+                    }
+                } else {
+                    if (p >= 0 && c < 0) {
+                        int pi = pairs[p].item;
+                        anim_ = 0x53;
+                        if (pi >= 0) {
+                            switch (g_items[pi].flags & itcf_carry_mask) {
+                            case itcf_carry_mace_left_hip:
+                            case itcf_carry_axe_left_hip:        anim_ = 0x59; snd2 = 0x49; break;
+                            case itcf_carry_dagger_front_right:  anim_ = 0x61; snd2 = 0x53; break;
+                            case itcf_carry_sword_left_hip:      anim_ = 0x55; snd2 = 0x45; break;
+                            case itcf_carry_dagger_front_left:   anim_ = 0x5f; snd2 = 0x53; break;
+                            case itcf_carry_revolver_right:      anim_ = 0x65; snd2 = 0x51; break;
+                            case itcf_carry_pistol_front_left:   anim_ = 0x67; snd2 = 0x51; break;
+                            case itcf_carry_spear:               anim_ = 0x5d; snd2 = 0x4d; break;
+                            case itcf_carry_axe_back:            anim_ = 0x63; snd2 = 0x4b; break;
+                            case itcf_carry_sword_back:          anim_ = 0x57; snd2 = 0x47; break;
+                            case itcf_carry_crossbow_back:       anim_ = 0x5b; snd2 = 0x4f; break;
+                            case itcf_carry_katana:              anim_ = 0x69; snd2 = 0x45; break;
+                            case itcf_carry_wakizashi:           anim_ = 0x6b; snd2 = 0x53; break;
+                            default:                             anim_ = 0x53; break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                ItemKind* ik = &g_items[item];
+                unsigned __int64 carry = ik->flags & itcf_carry_mask;
+                unsigned t = ik->type_flags & 0xff;
+                if (t == itp_type_bow) {
+                    anim2 = (carry == itcf_carry_bowcase_left) ? 0x70 : 0x6e;
+                    snd1 = 0x54;
+                } else if (t == itp_type_shield) {
+                    anim2 = 0x6c;
+                    snd1 = 0x56;
+                } else if (j == 0) {
+                    switch (carry) {
+                    case itcf_carry_mace_left_hip:
+                    case itcf_carry_axe_left_hip:        anim_ = 0x58; snd2 = 0x48; break;
+                    case itcf_carry_dagger_front_right:  anim_ = 0x60; snd2 = 0x52; break;
+                    case itcf_carry_sword_left_hip:      anim_ = 0x54; snd2 = 0x44; break;
+                    case itcf_carry_dagger_front_left:   anim_ = 0x5e; snd2 = 0x52; break;
+                    case itcf_carry_revolver_right:      anim_ = 100;  snd2 = 0x50; break;
+                    case itcf_carry_pistol_front_left:   anim_ = 0x66; snd2 = 0x50; break;
+                    case itcf_carry_spear:               anim_ = 0x5c; snd2 = 0x4c; break;
+                    case itcf_carry_axe_back:            anim_ = 0x62; snd2 = 0x4a; break;
+                    case itcf_carry_sword_back:          anim_ = 0x56; snd2 = 0x46; break;
+                    case itcf_carry_crossbow_back:       anim_ = 0x5a; snd2 = 0x4e; break;
+                    case itcf_carry_katana:              anim_ = 0x68; snd2 = 0x44; break;
+                    case itcf_carry_wakizashi:           anim_ = 0x6a; snd2 = 0x52; break;
+                    default:
+                        if (t == itp_type_polearm) { anim_ = 0x5c; snd2 = 0x4c; }
+                        else { anim_ = 0x52; snd2 = 0x58; }
+                        break;
+                    }
+                } else {
+                    anim2 = 0x6c;
+                }
+            }
+        }
+        wield_prev[j] = c;
+    }
+    if (both_hands != 0)
+        wield_prev[1] = -1;
+    if (anim[1].cur == 0x7b)
+        set_order_1<true>(this, -1, 0x46, 1.0f);
+    if (anim_ != -1)
+        set_order_1<true>(this, anim_, 0x5000046, 1.0f);
+    else if (anim2 != -1)
+        set_order_1<false>(this, anim2, 0x5000046, 1.0f);
+    if (snd1 != -1 && (float)(g_ticks[g_mission->setup_timer.clock] - g_mission->setup_timer.start) * 1e-05f > 1.0f)
+        g_sound_mgr.play(g_sound_mgr.slot[snd1], 0, &pos, 1.0f, 0);
+    if (snd2 != -1 && (float)(g_ticks[g_mission->setup_timer.clock] - g_mission->setup_timer.start) * 1e-05f > 1.0f)
+        g_sound_mgr.play(g_sound_mgr.slot[snd2], 0, &pos, 1.0f, 0);
+    weapon_flags = 0;
+    for (int j = 0; j < 2; j++) {
+        int s = wield[j];
+        if (s >= 0 && pairs[s].item >= 0 && (j == 0 || both_hands == 0)) {
+            ItemKind* ik = &g_items[pairs[s].item];
+            unsigned t = ik->type_flags & 0xff;
+            if (t == itp_type_bow) {
+                weapon_flags = 0x10;
+                variant = 0;
+            } else if (t == itp_type_crossbow || t == itp_type_thrown) {
+                weapon_flags = 0x20;
+                variant = 4;
+            } else if (t == itp_type_two_handed_wpn && (ik->type_flags & itp_two_handed)) {
+                weapon_flags = 4;
+            } else if (t == itp_type_shield) {
+                weapon_flags |= 0x1000;
+            } else if (t == itp_type_polearm) {
+                weapon_flags |= 8;
+            } else if (t == itp_type_one_handed_wpn || t == itp_type_two_handed_wpn) {
+                weapon_flags |= 2;
+            }
+        }
+    }
+    active = 0;
+    f5610 = 0;
+}
+
+// ---- std::_Uninit_fill_n of the 0x38-byte PhysRec ---------------------------------------------------------------------------------------------
+// @ 0x444bc0 (+ catch-all funclet 0x444c28: destroys [next, first), then `throw;`)
+template void std::_Uninit_fill_n(PhysRec*, unsigned, const PhysRec&, std::allocator<PhysRec>&, std::_Nonscalar_ptr_iterator_tag);
+
+//=============================================================================
+// 0x444c50..0x460160
+//=============================================================================
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+extern int g_propkind_count;                                // 0x5e29e0
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+
+unsigned g_input_mask;                                      // 0x5e2474
+
+
+// ---- canonical classes / forwarders (see agent_logic.h) ----------------------------------------------------------------------------
+
+// inline vector helpers of the original object
+static inline vector4 a_vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
+static inline vector4 a_vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static inline vector4 a_vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+
+#define itp_two_handed 0x200000
+
+// ---- PolyMesh::find_path: A*-style search over the navigation faces ---------------------------------------------------------
+
+// More bodies the original's object saw (rgl header inlines left out of line; collision_shapes.cpp and game_util.cpp own the rows).
+inline __declspec(noinline) float rgl::vector4::normalize()
+{
+    float len = (float)sqrt(x * x + y * y + z * z);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        x *= inv; y *= inv; z *= inv;
+    } else {
+        x = 0.0f; y = 1.0f; z = 0.0f;
+    }
+    return len;
+}
+inline __declspec(noinline) vector4 rgl::matrix::rot(const vector4& p) const
+{
+    return vector4(p.x * s.x + (f.x * p.y + u.x * p.z),
+                   f.y * p.y + (s.y * p.x + u.y * p.z),
+                   f.z * p.y + (s.z * p.x + u.z * p.z));
+}
+inline __declspec(noinline) vector4 rgl::cross(const vector4& a, const vector4& b) { return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
+inline __declspec(noinline) float __cdecl fmax_ref(const float* a, const float* b) { return *a > *b ? *a : *b; }
+// @ 0x444c50
+bool PolyMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int* out_count, int* out_steps,
+                        const float* w0, const float* w1, const float* w2)
+{
+    int chain[0x2004];
+    while (!open.empty())
+        open.pop_inl();
+    next_stamp();
+    faces[from].stamp = stamp + 1;
+    faces[from].parent = from;
+    hnode n;
+    n.g = 0.0f;
+    n.f = 0.0f;
+    n.id = from;
+    open.push(n);
+    *out_steps = 0;
+    float maxg = 0.0f;
+    while (faces[to].stamp <= stamp) {
+        if (open.empty() || !(n.f < 1e+06f))
+            break;
+        (*out_steps)++;
+        n = open.top();
+        open.pop_inl();
+        int cur = n.id;
+        for (int k = 0; k < faces[cur].n; k++) {
+            int nb = faces[cur].nbr[k];
+            if (nb != -1 && faces[nb].stamp <= stamp) {
+                float cost = 1.0f;
+                faces[nb].stamp = stamp + 1;
+                faces[nb].parent = cur;
+                MEdge* e = &edges[faces[cur].eid[k]];
+                float w = e->face[0] == nb ? e->crease[0] : e->crease[1];
+                if (w < 0.65f)
+                    cost = (0.65f - w) * 20.0f + 1.0f;
+                if (w <= *w0)
+                    cost = (1.0f - w) * 50.0f + cost;
+                vector4 dg = a_vsub(faces[to].centroid, faces[nb].centroid);
+                vector4 ds = a_vsub(faces[from].centroid, faces[nb].centroid);
+                float ls = ds.length();
+                float lg = dg.length();
+                cost = cost + n.g;
+                if (n.g > maxg)
+                    maxg = n.g;
+                open.push(hnode(nb, cost, (lg / ls + 1.0f) * cost));
+            }
+        }
+        faces[cur].stamp = stamp + 2;
+    }
+    if (faces[to].stamp <= stamp) {
+        *out_count = 0;
+        return false;
+    }
+    int len = 0;
+    int f = to;
+    while (f != from && len < 0x2000) {
+        chain[len++] = f;
+        f = faces[f].parent;
+    }
+    chain[len++] = from;
+    *out_count = len < 0x400 ? len : 0x400;
+    int prev = from;
+    for (int i = 0; i < *out_count; i++) {
+        int cur = chain[len - 1 - i];
+        out_faces[i] = cur;
+        int k = 0;
+        MPoly& pr = faces[prev];
+        for (int j = 0; j < pr.n; j++) {
+            if (pr.nbr[j] == cur) {
+                k = j;
+                break;
+            }
+        }
+        out_pos[i] = edges[faces[prev].eid[k]].mid;
+        prev = out_faces[i];
+    }
+    for (int i = 1; i < *out_count; i++)
+        out_pos[i - 1] = out_pos[i];
+    out_pos[*out_count - 1] = faces[out_faces[*out_count - 1]].centroid;
+    return true;
+}
+
+
+// ---- PolyMesh::reachable: can the goal face be reached within `max_steps` hops? -----------------------------------------------
+// @ 0x4452f0
+bool PolyMesh::reachable(const int* from, const int* to, const int* max_steps)
+{
+    while (!open.empty())
+        open.pop_inl();
+    next_stamp();
+    faces[*from].stamp = stamp + 1;
+    faces[*from].parent = *from;
+    hnode n;
+    n.g = 0.0f;
+    n.f = 0.0f;
+    n.id = *from;
+    open.push(n);
+    while (faces[*to].stamp <= stamp) {
+        if (open.empty() || !(n.f < 1e+06f))
+            break;
+        n = open.top();
+        open.pop_inl();
+        if ((int)n.g <= *max_steps) {
+            int cur = n.id;
+            for (int k = 0; k < faces[cur].n; k++) {
+                int nb = faces[cur].nbr[k];
+                if (nb != -1 && faces[nb].stamp <= stamp) {
+                    faces[nb].stamp = stamp + 1;
+                    faces[nb].parent = cur;
+                    vector4 dg = a_vsub(faces[*to].centroid, faces[nb].centroid);
+                    vector4 ds = a_vsub(faces[*from].centroid, faces[nb].centroid);
+                    float g = n.g + 1.0f;
+                    float h = ((float)sqrt(dg.y * dg.y + dg.z * dg.z + dg.x * dg.x) / ds.length()) * 0.7f + 1.0f;
+                    open.push(hnode(nb, g, h * g));
+                }
+            }
+        }
+        faces[n.id].stamp = stamp + 2;
+    }
+    return faces[*to].stamp > stamp;
+}
+
+// ---- std::vector<PhysRec> helpers (0x445700 _Ucopy; 0x445e70 _Ufill and 0x445ea0 _Insert_n further down) ----------------------------
+// @ 0x445700
+template std::vector<PhysRec>::pointer std::vector<PhysRec>::_Ucopy<PhysRec*>(PhysRec*, PhysRec*, PhysRec*);
+
+// ---- Agent helpers --------------------------------------------------------------------------------------------------
+// @ 0x445720
+void Agent::pick_reachable_goal(const vector4* center, const float* radius, const int* face, const int* max_steps)
+{
+    vector4 c = *center;
+    int tries = 0;
+    do {
+        set_goal_near(&c, radius);
+        if (*face < 0)
+            return;
+        if (ai.goal_face < 0)
+            return;
+        if (g_mission->nav.reachable(face, &ai.goal_face, max_steps))
+            return;
+        const MPoly& f = g_mission->nav.faces[*face];
+        float k = (float)(rand() % 0x3dc9) * 6.3223115e-06f + 0.7f;
+        c = a_vadd(a_vscale(k, a_vsub(c, f.centroid)), f.centroid);
+        tries++;
+    } while (tries < 8);
+}
+
+// @ 0x445850
+void Agent::goal_near_for_class(const vector4* center, const float* radius)
+{
+    int t = team;
+    if (t < 0 || t >= 8)
+        t = 7;
+    int cls = 0;
+    if (troop >= 0) {
+        if (horse >= 0)
+            cls = 2;
+        else if ((g_game->troops[troop].flags30 & 0x4000000) != 0)
+            cls = 1;
+        else
+            cls = 0;
+    }
+    ClassInfo* r = &g_mission->teams[t].cls[cls];
+    int max_steps = 7;
+    pick_reachable_goal(center, radius, &r->nav, &max_steps);
+    ai.goal_dir = r->target;
+}
+
+// @ 0x445910
+bool Agent::plan_path()
+{
+    ai.path_count = 0;
+    float width, w1, w2;      // w1 / w2 are never written and find_path (same unit) never reads them: they take width's frame slot
+    if (kind == 0 && horse == -1)
+        width = 0.45f;
+    else
+        width = 0.6f;
+    int face = update_nav_face();
+    if (face >= 0 && ai.goal_face >= 0) {
+        g_mission->nav.find_path(face, ai.goal_face, ai.pface(), ai.path_pos, &ai.path_count, &ai.path_steps,
+                                 &width, &w1, &w2);
+        ai.path_cur = 0;
+        ai.path_flag = ai.path_count <= 0;
+        ai.goal_face_done = ai.goal_face;
+    }
+    return ai.path_count > 0;
+}
+
+// @ 0x4459c0
+void Agent::play_class_sound(const int* kind)
+{
+    unsigned cls = (unsigned)g_game->troops[troop].flags30 & 0xf;
+    int snd = g_anim.voice(cls, *kind);
+    if (snd >= 0)
+        play_sound(&snd);
+}
+
+// @ 0x445a20
+void Agent::on_wield_reset()
+{
+    both_hands = 0;
+    if (slots[0] >= 0) {
+        int item = pairs[slots[0]].item;
+        if (item >= 0 && (g_items[item].type_flags & itp_two_handed) != 0)
+            both_hands = 1;
+    }
+    update_equipment_display();
+    on_wield_changed();
+    fr2.o.x = -20000000.0f;
+    fr1.o.x = -20000000.0f;
+}
+
+// ---- std::vector<PhysRec> helpers 0x445e70 / 0x445ea0 (the whole _Insert_n COMDAT is 0x33e bytes: 0x445ea0..0x4461dd, including
+// the two catch(...) funclets 0x44608f / 0x44614e) ------------------------------------------------------------------------------
+// @ 0x445e70
+template std::vector<PhysRec>::pointer std::vector<PhysRec>::_Ufill(PhysRec*, size_t, const PhysRec&);
+// @ 0x445ea0
+template void std::vector<PhysRec>::_Insert_n(std::vector<PhysRec>::iterator, size_t, const PhysRec&);
+
+// ---- Agent: top up the ammunition of the held ranged weapon ----------------------------------------------------
+// 0x434b70 / 0x434be0 / 0x434c30 (ItemRef::max_amount / add_amount / room_left) are header-inline in the original: the bodies are
+// visible here, so cl inlines some uses and keeps a call for the others (the slice's local copies did the same)
+static inline int round_float_inl(const float* p)       // 0x432540 (inlined here; game/agent/agent_queries.h declares the out-of-line round_float)
+{
+    float fl = (float)floor((double)*p);
+    int i = (int)fl;
+    return (*p - fl <= 0.5f) ? i : i + 1;
+}
+static int ir_max_amount(ItemRef* r)                      // 0x434b70
+{
+    if (r->item < 0) return 0;
+    int v = g_items[r->item].max_ammo;
+    if (v != 0 && (r->m4 & 0xff000000) == 0x2a000000) {
+        float f = v * 0.13f;
+        int d = round_float_inl(&f);
+        if (d < 1) d = 1;
+        v += d;
+    }
+    return v;
+}
+static void ir_add_amount(ItemRef* r, int n)             // 0x434be0
+{
+    int v = (r->m4 & 0xff) + n;
+    if (v > ir_max_amount(r))
+        v = ir_max_amount(r);
+    r->b.amount = 0;
+    r->m4 = r->m4 | v;
+}
+static int ir_room_left(ItemRef* r)                      // 0x434c30
+{
+    return ir_max_amount(r) - (int)(r->m4 & 0xff);
+}
+// The original agent translation unit (0x4353a0..0x45fxxx) saw these bodies: a local whose address reaches only them does not
+// escape, so it shares stack slots (codegen 7). game/agent/agent_queries.cpp and game/agent/agent_stats.cpp own the rows.
+inline __declspec(noinline) int ItemRef::max_amount() const     // 0x434b70
+{
+    if (item < 0) return 0;
+    int v = g_items[item].max_ammo;
+    if (v != 0 && (m4 & 0xff000000) == 0x2a000000) {
+        float f = v * 0.13f;
+        int d = round_float(&f);
+        if (d < 1) d = 1;
+        v += d;
+    }
+    return v;
+}
+inline __declspec(noinline) void ItemRef::add_amount(int n)     // 0x434be0
+{
+    int v = (m4 & 0xff) + n;
+    if (v > max_amount()) {
+        v = max_amount();
+        b.amount = 0;
+        m4 |= v;
+        return;
+    }
+    b.amount = 0;
+    m4 |= v;
+}
+inline __declspec(noinline) ItemRef Agent::best_ammo(int idx, int* missing, int* total, int* slot_out)      // 0x436880
+{
+    ItemRef r;
+    *slot_out = -1;
+    r.item = -1;
+    if (idx == -1) idx = slots[0];
+    *missing = -1;
+    *total = -1;
+    if (idx >= 0 && pairs[idx].item >= 0) {
+        unsigned wt = g_items[pairs[idx].item].type_flags & 0xff;
+        if (wt == 8 || wt == 9 || wt == 10 || wt == 0x11 || wt == 0x10) {
+            *missing = 0;
+            *total = 0;
+            for (int i = 0; i < 4; i++) {
+                ItemRef* cur = &pairs[i];
+                if (cur->item >= 0) {
+                    int w = pairs[idx].item;
+                    unsigned t = g_items[w].type_flags & 0xff;
+                    if ((t == 8 && (char)g_items[cur->item].type_flags == 5) ||
+                        (t == 9 && (char)g_items[cur->item].type_flags == 6) ||
+                        (t == 0x10 && (char)g_items[cur->item].type_flags == 0x12) ||
+                        (t == 0x11 && (char)g_items[cur->item].type_flags == 0x12) ||
+                        (t == 10 && cur->item == w)) {
+                        if (*slot_out == -1) {
+                            r = *cur;
+                            *slot_out = i;
+                        }
+                        if (*missing == 0) {
+                            unsigned b = cur->m4;
+                            if (cur->max_amount() != (int)(b & 0xff)) {
+                                r = *cur;
+                                *slot_out = i;
+                            }
+                        }
+                        unsigned b2 = cur->m4;
+                        *missing += cur->max_amount() - (b2 & 0xff);
+                        *total += cur->max_amount();
+                    }
+                }
+            }
+        }
+    }
+    return r;
+}
+inline __declspec(noinline) void rgl::mesh_list::cap_all(const float* limit)     // 0x438f90
+{
+    for (std::vector<rgl::mesh*>::iterator it = begin(); it < end(); ++it) {
+        rgl::mesh* n = *it;
+        keyframes* l = n->local_points ? &n->kf : &n->parent->get_kf();
+        if (0 < l->count) {
+            if (*limit > (float)l->times[l->count - 1])
+                n->anim_time = (float)l->times[l->count - 1];
+            else
+                n->anim_time = *limit;
+        }
+    }
+}
+inline __declspec(noinline) void rgl::lod_mesh::cap_all(const float* limit)   // 0x439000
+{
+    for (int i = 0; i < count; ++i)
+        lists[i].cap_all(limit);
+}
+inline __declspec(noinline) float __cdecl clamp(const float* x, const float* lo, const float* hi)     // 0x40e3d0
+{
+    return *x < *lo ? *lo : (*x >= *hi ? *hi : *x);
+}
+inline __declspec(noinline) int rgl::mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c)
+{
+    ensure_local();
+    int n = (int)vertices.size();
+    vertices.resize(n + 1);
+    (&*vertices.begin())[n].index = index;
+    (&*vertices.begin())[n].uv = *uv;
+    (&*vertices.begin())[n].color = *color;
+    (&*vertices.begin())[n].f5c = *f5c;
+    vertex60* vv = &vertices[n];
+    vv->normal = *pos;
+    vv->pos = *pos;
+    return n;
+}
+inline __declspec(noinline) int rgl::mesh::add_point(const vector4* p)
+{
+    ensure_local();
+    int n = (int)points.size();
+    points.resize(n + 1);
+    points[n].a = *p;
+    points[n].b = *p;
+    return n;
+}
+static inline unsigned itype(const ItemRef* p) { return g_items[p->item].type_flags & 0xff; }
+
+// @ 0x445a90
+int Agent::top_up_ammo(int count)
+{
+    ItemRef* cur = 0;
+    if (slots[0] >= 0)
+        cur = &pairs[slots[0]];
+    int added = 0;
+    if (cur != 0) {
+        unsigned wt = g_items[cur->item].type_flags & 0xff;
+        if (wt == 8 || wt == 9 || wt == 0x10 || wt == 0x11 || wt == 10) {
+            bool done = false;
+            for (int i = 0; i < 4 && !done; i++) {
+                ItemRef* s = &pairs[i];
+                if (s->item >= 0) {
+                    if ((itype(s) == 5 && itype(cur) == 8) ||
+                        (itype(s) == 6 && itype(cur) == 9) ||
+                        (itype(s) == 0x12 && itype(cur) == 0x10) ||
+                        (itype(s) == 0x12 && itype(cur) == 0x11) ||
+                        (itype(cur) == 10 && s->item == cur->item)) {
+                        while (added < count) {
+                            if (ir_room_left(s) <= 0)
+                                break;
+                            added++;
+                            ir_add_amount(s, 1);
+                        }
+                        if (added >= count)
+                            done = true;
+                    }
+                }
+            }
+            equip_value = equipment_value();
+            if ((char)g_items[cur->item].type_flags == 10) {
+                int missing, total, slot;
+                best_ammo(-1, &missing, &total, &slot);
+                if (missing <= 0) {
+                    slots[0] = -1;
+                    on_wield_reset();
+                    float rate = damage_factor(0);
+                    int anim_id = snd_b;
+                    if (anim_id >= -1 && anim_id < defs->count && this->anim[1].set(anim_id, 0x11400020)) {
+                        this->anim[1].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
+                        if (slots[0] >= 0 && pairs[slots[0]].item >= 0)
+                            links[slots[0]]->mask = 0;
+                    }
+                }
+            }
+        }
+    }
+    return added;
+}
+
+// @ 0x4461e0
+void Agent::set_weapon_mode(int mode)
+{
+    if (weapon_mode != mode) {
+        int hit = -1;
+        int hit2 = -1;
+        int t1 = team;
+        if (t1 < 0 || t1 >= 8) t1 = 7;
+        int tr = troop;
+        int k1 = 0;
+        if (tr >= 0) {
+            if (horse >= 0)
+                k1 = 2;
+            else
+                k1 = (g_game->troops[tr].flags30 & 0x4000000) ? 1 : 0;
+        }
+        int ra = g_mission->teams[t1].cls[k1].a;
+        int t2 = team;
+        if (t2 < 0 || t2 >= 8) t2 = 7;
+        int k2 = 0;
+        if (tr >= 0) {
+            if (horse >= 0)
+                k2 = 2;
+            else
+                k2 = (g_game->troops[tr].flags30 & 0x4000000) ? 1 : 0;
+        }
+        int rb = g_mission->teams[t2].cls[k2].b;
+        for (int i = 3; i >= 0; i--) {
+            ItemRef* p = &pairs[i];
+            if (p->item >= 0) {
+                ItemKind* ik = &g_items[p->item];
+                bool ok = ((ik->swing_damage & 0x300) == 0x200 || p->damage(0) <= 1) &&
+                          ((ik->thrust_damage & 0x300) == 0x200 || p->damage(1) <= 1);
+                if ((ra == 0 || ok) &&
+                    (rb == 0 || ((ik->type_flags & 0xff) != 8 && (ik->type_flags & 0xff) != 9 &&
+                                 (ik->type_flags & 0xff) != 10 && (ik->type_flags & 0xff) != 0x10 &&
+                                 (ik->type_flags & 0xff) != 0x11)) &&
+                    (horse < 0 || !(ik->type_flags & 0x10000000))) {
+                    if (mode == 1) {
+                        unsigned fl = ik->type_flags;
+                        unsigned type = fl & 0xff;
+                        if ((type == 2 || type == 3 || type == 4) && (fl & 0x400000))
+                            hit = i;
+                    } else if (mode == 2) {
+                        if (ik->is_ranged()) {
+                            int missing, total, slot_out;
+                            best_ammo(i, &missing, &total, &slot_out);
+                            if (missing > 0) {
+                                if (!(ik->type_flags & 0x100000) || horse == -1)
+                                    hit = i;
+                            }
+                        }
+                    } else if (mode == 3) {
+                        if ((char)ik->type_flags == 4)
+                            hit = i;
+                    }
+                }
+                if ((char)ik->type_flags == 7 && (int)(p->m4 & 0xffff) > 1)
+                    hit2 = i;
+            }
+        }
+        if (hit != -1)
+            slots[0] = hit;
+        else if (mode == 1)
+            slots[0] = -1;
+        if (hit2 != -1)
+            slots[1] = hit2;
+        weapon_mode = mode;
+        ai.combat_state = 0;
+        ai.input |= 0x200;
+        on_wield_reset();
+    }
+}
+
+// @ 0x4464d0
+void Agent::start_attack(int kind)
+{
+    ai.simple_behavior = kind;
+    float scale = 5.0f;
+    switch (kind) {
+    case 4:
+        if (!has_weapon_for(1)) {
+            if (has_weapon_for(3)) {
+                set_weapon_mode(3);
+                scale = 8.0f;
+            } else {
+                set_weapon_mode(1);
+                scale = 8.0f;
+            }
+        } else {
+            set_weapon_mode(1);
+            scale = 8.0f;
+        }
+        break;
+    case 7:
+        if (has_weapon_for(3)) {
+            set_weapon_mode(3);
+            scale = 9.0f;
+        } else {
+            set_weapon_mode(1);
+            scale = 9.0f;
+        }
+        break;
+    case 5:
+    case 6:
+        set_weapon_mode(2);
+        // fall through
+    case 11:
+    case 13:
+    case 14:
+        scale = 10.0f;
+        break;
+    case 8:
+        scale = 2.0f;
+        break;
+    // cases 9, 10 and 12 need their own (empty after optimisation) targets for cl to emit a plain dword jump table
+    case 9:
+        scale = scale;
+        break;
+    case 10:
+        scale = scale;
+        break;
+    case 12:
+        scale = scale;
+        break;
+    }
+    ai.ta_interval = ((float)(rand() % 0x3dc9) * 3.161156e-05f + 0.75f) * scale;
+}
+
+// ---- Agent::update_ai: the per-tick order executor ------------------------------------------------------------------
+#define AG(i) (*agent_by_id(i))
+#define tf_guarantee_ranged 0x4000000i64
+float __cdecl hit_chance(int* who, Agent* a);                          // 0x438cb0 (game/agent/agent_stats.cpp)
+static __forceinline float hit_chance_ref(const ItemRef& who, Agent* a) { return hit_chance((int*)&who, a); }
+int __cdecl team_leader(const Agent* a);                                // 0x435b60
+float frand();                                                          // 0x40e400
+float __cdecl fmin_ref(const float* a, const float* b);                 // 0x4324b0
+float __cdecl fmax_ref(const float* a, const float* b);                 // 0x4324d0
+float g_dt_scale = 1.0f;                                    // 0x5a9bf0
+unsigned g_input_flags;                                     // 0x5e2470
+
+
+__forceinline ClassInfo* Agent::class_rec()
+{
+    int cls = team;
+    if (cls < 0 || cls >= 8) cls = 7;
+    int kind = 0;
+    if (troop >= 0) {
+        if (horse >= 0)
+            kind = 2;
+        else
+            kind = (g_game->troops[troop].flags30 & tf_guarantee_ranged) ? 1 : 0;
+    }
+    return &g_mission->teams[cls].cls[kind];
+}
+
+
+// 1 + the cosine of v (normalised in its by-value copy: loads run ahead of the copy's stores) with w
+static inline float a_cos1(vector4 v, const vector4& w) { v.normalize(); return v.x * w.x + v.z * w.z + v.y * w.y + 1.0f; }
+static inline float a_dot3r(const vector4& b, const vector4& a) { return a.z * b.z + a.y * b.y + a.x * b.x; }
+static inline void a_sub3(vector4& r, const vector4& a, const vector4& b) { r.x = a.x - b.x; r.y = a.y - b.y; r.z = a.z - b.z; }
+// @ 0x4465e0
+void Agent::update_ai()
+{
+    ClassInfo* cr = class_rec();
+
+    int prev = -1;
+    int near_ = ai.last_attacker;
+    if (near_ >= 0 && g_mission->agents[near_].state == 1) {
+        Agent* o = &g_mission->agents[ai.last_attacker];   // re-read, not near_: the original reloads it here
+        vector4 d;
+        a_sub3(d, o->pos, pos);
+        float len = d.normalize();
+        bool far_ = true;
+        if (ai.target >= 0) {
+            const vector4& cp = g_mission->agents[ai.target].pos;
+            vector4 e = cp - pos;
+            far_ = !(sqrt(e.y * e.y + (e.z * e.z + e.x * e.x)) <= len + 1.0f);
+        }
+        if (far_ && is_enemy(o))
+            ai.target = near_;
+        prev = near_;
+    }
+
+    bool flag_a = false;        // local_81
+    bool flag_b = false;        // local_5d
+    int mode_ = ai.simple_behavior;
+
+    if (mode_ == 1) {
+        if (!(ai.alarm & 1)) {
+            ai.move_mode = 0;
+            ai.path_state |= 0x20;
+        } else {
+            unsigned t = ai.target;
+            if (t == 0xffffffff || AG(t).state != 1 || frand() < 0.1f)
+                flag_a = true;
+            t = ai.target;
+            if ((int)t >= 0) {
+                bool ranged = false;
+                const vector4& op = AG(ai.target).pos;
+                vector4 dd = a_vsub(pos, op);
+                float dist = (float)sqrt(dd.y * dd.y + (dd.z * dd.z + dd.x * dd.x));
+                ItemRef p = AG(ai.target).cur_pair_fi();
+                if (p.item >= 0 && g_items[p.item].is_ranged())
+                    ranged = true;
+                if (horse >= 0 || v56b4.length_squared() < 0.7f || dist < 15.0f ||
+                    (dist < 100.0f && weapon_mode == 2) || ranged) {
+                    ai.move_mode = 2;
+                    ItemRef c = cur_pair_fi();
+                    if (c.item >= 0 && g_items[c.item].is_ranged())
+                        ai.move_mode = 0x22;
+                }
+            }
+            flag_b = true;
+            ai.path_state |= 0x20;
+        }
+    } else if (mode_ == 4) {
+        if (prev == -1 || ai.target == -1 || AG(ai.target).state != 1)
+            ai.target = pick_shout_target(0x26, 300.0f);
+        if (ai.target == -1) {
+            reset_if_enemy_charged();
+            ai.move_mode = 0;
+        } else if (AG(ai.target).state != 1) {
+            ai.ta_interval = 0.0f;
+        } else {
+            vector4 q;
+            const vector4& op = AG(ai.target).pos;
+            vector4 w = op - pos;
+            float dist = w.normalize();
+            ItemRef sp = AG(ai.target).slot_pair(0);
+            int ranged = 0;
+            if (sp.item >= 0 && g_items[sp.item].is_ranged())
+                ranged = 1;
+            ai.move_mode = 2;
+            if (!ranged && dist > 15.0f && horse < 0)
+                ai.move_mode = 0;
+            if (ai.melee_charge < 0.0f)
+                ai.melee_charge = 0.0f;
+            else if (ai.melee_charge > 30.0f)
+                ai.melee_charge = 30.0f;
+            vector4 acc[2];
+            float wsum[2];
+            q = vector4(0.0f, 0.0f, 0.0f);
+            acc[0] = q;
+            q = vector4(0.0f, 0.0f, 0.0f);
+            acc[1] = q;
+            wsum[0] = wsum[1] = 0.0f;
+            float t98 = 0.0f;                       // cnt, later k and the clamp argument (one address-taken scratch)
+            int best = -1;
+            Mission* m = g_mission;
+            unsigned it = m->agents.first_used();
+            if (it < (unsigned)m->agents.count) {
+                do {
+                    Agent* a = &m->agents.pages[it >> 4][it & 0xf];
+                    if (a->kind == 0 && a->pool_id != ai.target && a->state == 1 && a->pool_id != pool_id) {
+                        vector4 dv = a->pos - pos;
+                        float len = dv.normalize();
+                        float k = 2.0f / (2.0f + len);
+                        float w2 = k * k;
+                        int idx = 0;
+                        if (is_enemy(a)) {
+                            idx = 1;
+                            if (len < 5.0f) {
+                                t98 += 1.0f;
+                                best = it;
+                            }
+                        }
+                        wsum[idx] = w2 + wsum[idx];
+                        float* ap = &acc[idx].x;
+                        vector4 t = dv * w2;
+                        ap[0] = t.x + ap[0];
+                        ap[1] = t.y + ap[1];
+                        ap[2] = t.z + ap[2];
+                    }
+                    m = g_mission;
+                    m->agents.next_used(&it);
+                } while (it < (unsigned)m->agents.count);
+            }
+            if (dist > 10.0f && best >= 0) {
+                const vector4& bp = m->agents.pages[(unsigned)best >> 4][(unsigned)best & 0xf].pos;
+                q.x = bp.x - pos.x;
+                q.y = bp.y - pos.y;
+                q.z = bp.z - pos.z;
+                q.normalize();
+                if (q.x * ai.move_dir.x + (q.y * ai.move_dir.y + q.z * ai.move_dir.z) > -0.3f) {
+                    ai.target = best;
+                    m = g_mission;
+                }
+            }
+            bool close_ = false;
+            if (cr->kind == 1) {
+                hand_pos(&q);
+                vector4 d = pos - q;
+                float len = d.normalize();
+                if (len > 5.0f) {
+                    ai.simple_behavior = 1;
+                    float r = 0.2f;
+                    goal_near_for_class(&q, &r);
+                    close_ = true;
+                }
+                m = g_mission;
+            }
+            if (cr->kind == 2) {
+                int t2 = team;
+                if (t2 < 0 || t2 >= 8) t2 = 7;
+                if (m->teams[t2].leader != pool_id) {
+                    hand_pos(&q);
+                    vector4 d = pos - q;
+                    float len = d.normalize();
+                    if (len > 8.0f) {
+                        ai.simple_behavior = 9;
+                        goto L_tail4;
+                    }
+                }
+            }
+            if (!close_) {
+                if (ai.circle_mode == 0) {
+                    float d0 = wsum[1] - wsum[0];      // stays on the x87 stack across both tests
+                    float diff;
+                    if (d0 < 0.05f)
+                        diff = 0.05f;
+                    else if (d0 >= 0.3f)
+                        diff = 0.3f;
+                    else
+                        diff = d0;
+                    int r = rand() % 0x3dc9;
+                    int hf = ai.always_attack_in_melee;
+                    float push = (((float)r * (1.0f / 15817.0f)) * diff * g_dt_scale) * 20.0f;
+                    if (hf == 0)
+                        push = ((float)g_options.difficulty * 0.5f + (40.0f - (float)g_game->troops[troop].level) * 0.012f) + push;
+                    push = push + ai.melee_charge;
+                    ai.melee_charge = push;
+                    if (push < 0.0f)
+                        ai.melee_charge = 0.0f;
+                    else if (push > 11.0f)
+                        ai.melee_charge = 11.0f;
+                    if (ai.scripted_mode == 1)
+                        ai.melee_charge = 0.0f;
+                    {
+                        ItemRef cp = AG(ai.target).cur_pair_fi();
+                        if ((cp.item < 0 || !g_items[cp.item].is_ranged()) && ai.melee_charge >= 10.0f) {
+                            ai.melee_charge = 10.0f;
+                            if (hf == 0)
+                                ai.circle_mode = 1;
+                        }
+                    }
+                    if (ai.circle_mode_prev != 0 || frand() < 0.3f - t98 * 0.05f) {
+                        ai.circle_mode_prev = ai.circle_mode;
+                        if (ai.scripted_mode == 1) {
+                            float r2 = 0.2f;
+                            set_goal_near(&ai.scripted_destination.o, &r2);
+                        } else {
+                            int fid = -1;
+                            if (g_mission->scene->hf)
+                                g_mission->scene->hf->sample(pos.x, pos.y, wsum, &fid);
+                            if (dist < 4.0f ||
+                                (g_mission->scene->hf && (floor_face == 0 || floor_face->m4 != fid))) {
+                                set_goal_agent(ai.target);
+                            } else {
+                                float r30 = 30.0f;
+                                float m = fmin_ref(&dist, &r30);
+                                float fr = frand();
+                                AgentTable* tb = &g_mission->agents;
+                                int u = ai.target;
+                                t98 = ((fr + 2.0f) * m) * 0.2f;
+                                vector4 d = t98 * tb->get(u)->v56b4;
+                                float f = a_cos1(tb->get(u)->v56b4, w);
+                                w.x = d.x * f;
+                                w.y = d.y * f;
+                                w.z = d.z * f;
+                                const vector4* pp = &tb->get(u)->pos;
+                                q.x = w.x + pp->x;
+                                q.y = w.y + pp->y;
+                                q.z = w.z + pp->z;
+                                d = q;
+                                t98 = dist * 0.3f - 0.6f;
+                                float hi = 20.0f;
+                                float lo = 0.0f;
+                                float c = clamp(&t98, &lo, &hi);
+                                if (ai.always_attack_in_melee != 0 && c > 0.5f)
+                                    c = 0.5f;
+                                int ms = (int)(c * 0.2f + 4.0f);
+                                int face = tb->get(u)->update_nav_face();
+                                pick_reachable_goal(&d, &c, &face, &ms);
+                            }
+                        }
+                    }
+                } else if (ai.circle_mode == 1) {
+                    float val = wsum[0] * 1.3f - wsum[1];
+                    float hi = 0.3f;
+                    float lo = 0.01f;
+                    float nv = ai.melee_charge - ((clamp(&val, &lo, &hi) * frand()) * g_dt_scale) * 20.0f;   // clamp before frand: a named c would be sunk below frand (clamp is pure here)
+                    ai.melee_charge = nv;
+                    if (nv < 0.0f)
+                        ai.melee_charge = 0.0f;
+                    else if (nv > 11.0f)
+                        ai.melee_charge = 11.0f;
+                    bool rg = false;
+                    {
+                        ItemRef sp2 = AG(ai.target).slot_pair(0);
+                        if (sp2.item >= 0 && g_items[sp2.item].is_ranged())
+                            rg = true;
+                    }
+                    if (ai.melee_charge < 0.0f || rg) {
+                        ai.melee_charge = 0.0f;
+                        ai.circle_mode = 0;
+                    }
+                    if (ai.circle_mode_prev != 1) {
+                        ai.circle_mode_prev = ai.circle_mode;
+                        a_sub3(q, acc[0] * 4.0f, acc[1]);
+                        q.normalize();
+                        float r16 = 16.0f;
+                        vector4 d = q * 15.0f + pos;
+                        set_goal_near(&d, &r16);
+                    }
+                }
+            }
+        }
+    L_tail4:
+        {
+            ai.path_state |= 0x20;
+            float s = 0.5f;
+            ItemRef cp = cur_pair_fi();
+            if (cp.item != -1)
+                s = (float)g_items[cp.item].weapon_length * 0.01f + 0.9f;
+            if (ai.path_state & 2) {
+                ai.melee_standoff = s;
+                ai.melee_standoff_low = s - 0.4f;
+            } else {
+                ai.melee_standoff = 0.5f;
+                ai.melee_standoff_low = 0.2f;
+            }
+        }
+    } else if (mode_ == 5 && ai.combat_state != 1 && ai.combat_state != 3 && ai.combat_state != 4) {
+        float chance = hit_chance((int*)&(const ItemRef&)slot_pair(0), this);
+        vector4 q, w;
+        float t80 = 500.0f;
+        float near_ = 500.0f;
+        int e = pick_target();
+        if (e >= 0) {
+            vector4 d = g_mission->agents.get(e)->pos - pos;
+            near_ = d.normalize();
+        }
+        if (ai.target >= 0 && g_mission->agents.get(ai.target)->state != 1) {
+            ai.target = -1;
+        }
+        if (ai.target == -1) {
+            int c = ai.action_target;
+            if (c >= 0 && g_mission->agents.get(c)->state == 1) {
+                ai.target = c;
+            }
+        }
+        int tg = ai.target;
+        float cur;
+        if (tg >= 0) {
+            vector4 d = g_mission->agents.get(tg)->pos - pos;
+            cur = d.normalize();
+        } else {
+            cur = t80;
+        }
+        if ((near_ < 8.0f && cur > near_ + near_) || tg == -1)
+            ai.target = e;
+        float wsum[2];
+        if (frand() < 0.2f || ai.target == -1 || g_mission->agents.get(ai.target)->state != 1) {
+            collect_enemies(wsum);
+            if (ai.nthreat > 0) {
+                int c = (ai.threats[0].dist < 3.5f && g_mission->agents.get(ai.threats[0].id)->state == 1) ? ai.threats[0].id : pick_threat();
+                if (c >= 0) {
+                    ai.action_target = c;
+                    ai.target = c;
+                }
+            }
+        }
+        int t3 = ai.target;
+        if (t3 >= 0 && g_mission->agents.get(t3)->state == 1) {
+            Agent* ta = g_mission->agents.get(t3);
+            ai.move_mode = 0x22;
+            vector4 d = ta->pos - pos;
+            t80 = d.normalize();
+            int bestid = -1;
+            bool close99 = false;
+            if (frand() + 1.5f > t80)
+                ai.ta_interval = 0.0f;
+            t80 = (ta->pos.z - pos.z) * 0.7f + t80;
+            float one = 1.0f;
+            float dd = fmax_ref(&t80, &one);
+            if (cr->kind == 1 || (cr->kind == 2 && team_leader(this) != pool_id)) {
+                close99 = true;
+                hand_pos(&w);
+                a_sub3(q, pos, w);
+                wsum[0] = q.normalize();
+            }
+            t80 = chance * 0.7f;
+            one = 30.0f;
+            if ((fmin_ref(&one, &t80) < dd && !close99 && cr->kind != 3) ||
+                (ai.always_attack_in_melee != 0 && !close99 && cr->kind != 3)) {
+                q = ta->pos;
+                bestid = ta->pool_id;
+            } else {
+                if (line_of_sight(ta->pool_id, 0) && fire_check(ta->pool_id, (int*)&t80) == 1 && (!close99 || wsum[0] < 3.0f)) {
+                    reset_path();      // 0x432080 (the path state only; 93d4415c had rebound this to the spawn reset 0x472f90)
+                    goto L_a79;
+                }
+                if (close99) {
+                    q = w;
+                } else {
+                    w = d * 0.7f + pos;
+                    q = w;
+                }
+            }
+            if (frand() < 0.3f) {
+                if (close99) {
+                    wsum[0] = 2.0f;
+                    goal_near_for_class(&q, &wsum[0]);
+                } else if (bestid >= 0) {
+                    int two = 2;
+                    int face = g_mission->agents.get(bestid)->update_nav_face();
+                    one = 1.0f;
+                    pick_reachable_goal(&q, &one, &face, &two);
+                } else {
+                    wsum[0] = 1.8f;
+                    set_goal_near(&q, &wsum[0]);
+                }
+            }
+        }
+    L_a79:
+        ai.path_state |= 0x20;
+        ai.melee_standoff = 1.5f;
+    } else if (mode_ == 6) {
+        hit_chance_ref(cur_pair_fi(), this);
+        float t80 = 500.0f;
+        float near_ = 500.0f;
+        int e = pick_target();
+        if (e >= 0) {
+            vector4 d = AG(e).pos - pos;
+            near_ = d.normalize();
+        }
+        float cur;
+        if (ai.target >= 0) {
+            vector4 d = AG(ai.target).pos - pos;
+            cur = d.normalize();
+        } else {
+            cur = t80;
+        }
+        if (near_ < 8.0f && cur > near_ + near_)
+            ai.target = e;
+        int r = rand() % 0x3dc9;
+        int c;
+        if (((float)r * (1.0f / 15817.0f) < 0.2f || ai.target == -1 ||
+             g_mission->agents.get(ai.target)->state != 1) &&
+            (collect_enemies(&t80), ai.nthreat > 0 && (c = (int)pick_threat()) >= 0)) {
+            ai.action_target = c;
+            ai.target = c;
+        }
+        if (ai.target == -1)
+            ai.target = ai.action_target;
+        if (horse == -1) {
+            ai.ta_interval = 0.0f;
+            return;
+        }
+        if (AG(ai.target).state != 1) {
+            ai.target = -1;
+            ai.ta_interval = 0.0f;
+        } else {
+            ai.move_mode = 0x22;
+            int c3 = cr->kind;
+            if (c3 != 3) {
+                if (c3 == 1) {
+                    if (frand() < 0.2f) {
+                        vector4 h;
+                        hand_pos(&h);
+                        float r2 = 2.0f;
+                        goal_near_for_class(&h, &r2);
+                    }
+                } else if (c3 == 2) {
+                    if (frand() < 0.2f) {
+                        vector4 h;
+                        hand_pos(&h);
+                        float r2 = 2.0f;
+                        goal_near_for_class(&h, &r2);
+                    }
+                } else {
+                    if (frand() < 0.5f) {
+                        Agent* ta = g_mission->agents.get(ai.target);
+                        vec2 v;
+                        v.x = ta->pos.x - pos.x;
+                        v.y = ta->pos.y - pos.y;
+                        v.normalize();
+                        vector4 gp;
+                        float a = v.y * 13.0f;
+                        float b = -v.x * 13.0f;
+                        float cc = v.x * -20.0f;
+                        float dd = v.y * -20.0f + ta->pos.y;
+                        float r10 = 10.0f;
+                        gp.x = (cc + ta->pos.x) + a;
+                        gp.y = dd + b;
+                        gp.z = pos.z + 100.0f;
+                        set_goal_near(&gp, &r10);
+                    }
+                }
+            }
+        }
+        ai.path_state |= 0x20;
+        ai.melee_standoff = 1.5f;
+    } else if (mode_ == 8) {
+        flag_a = true;
+        if (horse == -1) {
+            ai.ta_interval = 0.0f;
+            return;
+        }
+        if (cr->kind != 3 &&
+            (!(ai.path_state & 1) || g_mission->agents.get(horse)->vel_xy.y < 1.0f || (ai.goal_face != ai.goal_face_done && ai.goal_face >= 0))) {
+            if (g_mission->agents.get(horse)->vel_xy.y > 2.0f) {
+                float rr = 15.0f;
+                vector4 gp = vel * 25.0f + pos;
+                set_goal_near(&gp, &rr);
+            } else {
+                float rr = 30.0f;
+                set_goal_near(&pos, &rr);
+            }
+        }
+        if (ai.path_flag != 0) {
+            float r50 = 50.0f;
+            set_goal_near(&pos, &r50);
+        }
+    } else if (mode_ == 7) {
+        if (horse == -1) {
+            ai.ta_interval = 0.0f;
+            return;
+        }
+        ai.target = pick_shout_target(0x1026, 150.0f);
+        if (ai.target == -1)
+            ai.target = ai.action_target;
+        unsigned u = ai.target;
+        Agent* ta = g_mission->agents.get(u);
+        vec2 v;
+        v.x = ta->pos.x - pos.x;
+        v.y = ta->pos.y - pos.y;
+        float dist = v.normalize();
+        float dotv = v.x * vel.x + v.y * vel.y;
+        if (((dist < 10.0f && dotv < 0.0f) &&
+             (g_mission->agents.get(u)->horse == -1 || frand() < 0.2f)) ||
+            (dist < 2.0f && vel_xy.y < 1.0f)) {
+            ai.simple_behavior = 8;
+            ai.ta_interval = (((float)(rand() % 0x3dc9)) * 3.161156e-05f + 0.75f) * 2.0f;
+        } else if (weapon_mode == 3 && dotv < 0.3f && dist < 10.0f) {
+            ai.simple_behavior = 8;
+            ai.ta_interval = (((float)(rand() % 0x3dc9)) * 3.161156e-05f + 0.75f) * 2.0f;
+        }
+        ai.goal_agent = ai.target;
+        set_goal_agent(ai.target);
+        if (cr->kind != 3) {
+            if ((vel_xy.y > 2.0f && g_mission->agents.get(ai.target)->horse == -1 && dist < 11.0f) ||
+                (f100_is_0x48_and_charged() && dotv > 0.2f)) {
+                set_goal_agent(ai.target);
+                ai.circle_mode = 0;
+            } else if (ai.circle_mode != 1 || frand() < 0.5f) {
+                float s = dist + 10.0f;
+                ai.circle_mode = 1;
+                float r30 = 30.0f;
+                float m = fmin_ref(&s, &r30);
+                float fr = frand();
+                unsigned u2 = ai.target;
+                float k = ((fr + 2.0f) * m) * 0.2f;
+                AgentTable* tb = &g_mission->agents;
+                vector4 q = k * tb->get(u2)->v56b4;
+                vector4 w = q + tb->get(u2)->pos;
+                vector4 r4 = tb->get(u2)->v56b4;
+                r4.normalize();
+                float f = r4.x * v.x + r4.y * v.y;
+                if (f < 0.0f) {
+                    f = f + 1.0f;
+                    vector4 d = q * f;
+                    q = d + tb->get(u2)->pos;
+                    w = q;
+                }
+                float val = dist * 0.35f - 0.7f;
+                float hi = 25.0f;
+                float lo = 0.0f;
+                float c = clamp(&val, &lo, &hi);
+                set_goal_near(&w, &c);
+            }
+        }
+        ai.path_state |= 0x20;
+        if (ai.path_state & 2)
+            ai.path_state |= 0x80;
+        if (dist < 35.0f)
+            ai.path_state |= 0x200;
+        ai.move_mode = 2;
+    } else if (mode_ == 9) {
+        flag_b = true;
+        vector4 q, d;
+        hand_pos(&q);
+        ai.action_point = q;
+        ItemRef sp = slot_pair(0);
+        a_sub3(d, q, pos);
+        float dist = d.normalize();
+        float m = 1000.0f;
+        bool b99 = false;
+        if (sp.item < 0 || !g_items[sp.item].is_ranged()) {
+            if (ai.target == -1 || g_mission->agents.get(ai.target)->state != 1 || frand() < 0.2f)
+                ai.target = pick_threat();
+            b99 = true;
+        } else if (ai.target == -1 || g_mission->agents.get(ai.target)->state != 1 || frand() < 0.2f) {
+            ai.target = pick_random();
+        }
+        int tg = ai.target;
+        if (tg >= 0) {
+            vector4 d = g_mission->agents.get(tg)->pos - pos;
+            m = d.normalize();
+        }
+        if (!b99 && tg >= 0 && dist < 7.0f && m < 4.0f) {
+            set_goal_agent(tg);
+        } else {
+            float r2 = 0.2f;
+            goal_near_for_class(&ai.action_point, &r2);
+            ai.path_state |= 0x20;
+            if (horse >= 0)
+                ai.melee_standoff = 3.5f;
+            else
+                ai.melee_standoff = 2.5f;
+        }
+    } else if (mode_ == 0xb) {
+        int p = g_mission->player_id;
+        if (p >= 0) {
+            Agent* pa = g_mission->agents.get(p);
+            if (rgl::length(pos - pa->pos) < 1.2f) {
+                ai.target = p;
+                ai.move_mode = 2;
+                goto done;
+            }
+        }
+        ai.move_mode = 0;
+        ai.target = -1;
+    } else if (mode_ == 0xd) {
+        ai.move_mode = 0;
+        ai.target = -1;
+        ai.melee_standoff = 3.5f;
+        if (frand() < 0.0005f || prev >= 0) {
+            float r15 = 15.0f;
+            vector4 v = vel * 10.0f + pos;
+            set_goal_near(&v, &r15);
+        }
+    } else if (mode_ == 0xe) {
+        ai.move_mode = 0;
+        ai.target = -1;
+        ai.melee_standoff = 3.0f;
+        if (frand() < 0.3f) {
+            float r15 = 15.0f;
+            vector4 v = vel * 20.0f + pos;
+            set_goal_near(&v, &r15);
+        }
+    } else if (mode_ == 3) {
+        reset_path();      // 0x432080
+        if (vel_xy.y < 0.5f && horse != -1)
+            g_input_flags |= 0x10000;
+    } else if (mode_ == 2) {
+        if (horse != -1) {
+            if (ai.ta_interval > 1.0f)
+                ai.ta_interval = 1.0f;
+        } else {
+            int c = ai.action_target;
+            if (c != -1 && g_mission->agents.get(c)->state == 1) {
+                Agent* ca = g_mission->agents.get(c);
+                vector4 d = ca->pos - pos;
+                float l = d.out_length();
+                if (l > 0.99f) {
+                    flag_a = true;
+                    rgl::strategic_entity* b = ca->body;
+                    vector4 q;
+                    if (l > 2.0f) {
+                        vector4 s(b->local.s.x, b->local.s.y, b->local.s.z);
+                        q = a_vsub(ca->pos, s);
+                        ai.path_state = 0x21;
+                    } else {
+                        vector4 s = b->local.s * 0.2f;
+                        q = a_vsub(ca->pos, s);
+                        ai.path_state = 1;
+                    }
+                    float r0 = 0.0f;
+                    set_goal_near(&q, &r0);
+                } else {
+                    g_input_flags |= 0x20000;
+                    flag_a = false;
+                    ai.target = c;
+                    ai.move_mode = 2;
+                }
+                ai.melee_standoff = 0.15f;
+            }
+        }
+    }
+
+done:
+    if (g_mission->f6554 != 0 && pool_id == g_dialogs.partner_agent) {
+        ai.simple_behavior = 0;
+        flag_a = false;
+        ai.target = g_mission->player_id;
+        ai.move_mode = 2;
+    }
+    if (ai.simple_behavior == 0) {
+        ai.path_state = 0;
+        ai.path_flag = 0;
+        ai.path_count = 0;
+        ai.path_active = 0;
+        ai.goal_changed = 0;
+        ai.move_mode = 0;
+    } else if (ai.simple_behavior == 0xc) {
+        ai.path_state = 0;
+        ai.path_flag = 0;
+        ai.path_count = 0;
+        ai.path_active = 0;
+        ai.goal_changed = 0;
+        ai.move_mode = 0;
+        ai.target = -1;
+        if ((float)(rand() % 0x3dc9) * (1.0f / 15817.0f) < 0.3f) {
+            ai.target = pick_shout_target(0x26, 300.0f);
+            if (ai.target >= 0)
+                ai.ta_interval = 0.0f;
+        }
+        if ((float)(rand() % 0x3dc9) * (1.0f / 15817.0f) < 0.6f) {
+            g_input_flags = g_input_flags & 0xffffff;
+            g_input_flags = g_input_flags | 0x1000000;
+        }
+    }
+
+    ItemRef cp = cur_pair_fi();
+    if (flag_a && kind != 1) {
+        float range = 30.0f;
+        if (cp.item >= 0 && g_items[cp.item].is_ranged())
+            range = hit_chance_ref(cp, this);
+        int n = ai.nthreat;
+        float best = 0.0f;
+        int bestid = -1;
+        if (n > 0)
+            bestid = ai.threats[0].id;
+        if (cp.item >= 0 && g_items[cp.item].is_ranged()) {
+            bestid = pick_threat();
+        } else {
+            for (int i = 0; i < ai.nthreat; i++) {
+                Threat* t = &ai.threats[i];
+                float score = -0.01f;
+                Agent* ta = &AG((unsigned)t->id);
+                if (ta->state == 1) {
+                    vector4 d = ta->pos - pos;
+                    t->dir = d;
+                    float len = t->dir.normalize();
+                    t->dist = len;
+                    if (len < range) {
+                        score = 10.0f / (len + 1.0f) + a_dot3r(t->dir, body->local.f) * 0.1f;
+                    } else {
+                        if (horse == -1) {
+                            ItemRef p1 = slot_pair_fi(1);
+                            if (p1.item >= 0) {
+                                ItemKind& k1 = g_items[slot_pair(1).item];
+                                if ((char)k1.type_flags == itp_type_shield) {     // cmp cl, 7 (0x448bf6): the reference leaves the dead add eax,edx
+                                    ItemRef p0 = ta->slot_pair(0);
+                                    if (p0.item >= 0) {
+                                        ItemKind* ik = &g_items[p0.item];
+                                        if (ik->is_ranged() && (float)ik->shoot_speed * 2.1f > t->dist) {
+                                            float inv = 1.0f / (t->dist + 10.0f);
+                                            float one = 1.0f;
+                                            score = fmin_ref(&one, &inv) * 2.5f;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (t->id == ai.target)
+                        score = score * 1.5f;
+                    if (t->id == (int)prev)
+                        score = score + score;
+                }
+                if (score > best) {
+                    best = score;
+                    bestid = t->id;
+                }
+            }
+        }
+        if (bestid >= 0)
+            ai.target = bestid;
+        else
+            ai.target = -1;
+        ai.move_mode = (ai.target == -1) ? 0 : 2;
+    }
+    if (flag_b && kind == 0 && ai.target >= 0) {
+        const vector4& tv = AG(ai.target).v56b4;
+        vector4 ta_ = a_vadd(vector4(tv.x, tv.y, tv.z), AG(ai.target).pos);
+        vector4 tb_ = a_vadd(vector4(v56b4.x, v56b4.y, v56b4.z), pos);
+        vector4 d = a_vsub(ta_, tb_);
+        float dist = d.normalize();
+        float range = 3.0f;
+        if (horse >= 0 && g_game->troops[troop].nibble(0x17) < 2)
+            range = 15.0f;
+        if (dist > range && has_weapon_for(2)) {
+            set_weapon_mode(2);
+        } else if (horse < 0 || !(v56b4.length() > 0.1f) ||
+                   !has_weapon_for(3)) {
+            if (has_weapon_for(1))
+                set_weapon_mode(1);
+        } else {
+            set_weapon_mode(3);
+        }
+    }
+    ai.tc_interval = 0;
+}
+
+
+// @ 0x4350c0
+static __declspec(noinline) int slot_class_impl(int item, int flag)
+{
+    unsigned t = g_items[item].type_flags & 0xff;
+    if (t == itp_type_bow) return 3;
+    if (t == itp_type_crossbow) return 4;
+    if (t == itp_type_thrown) return 5;
+    if (t == itp_type_pistol || t == itp_type_musket) return 6;
+    if (t == itp_type_polearm) return 2;
+    if (t == itp_type_one_handed_wpn) return 0;
+    return flag == 0;
+}
+
+struct a_v2 { float x, y; a_v2() {} a_v2(const float& a, const float& b) : x(a), y(b) {} a_v2 operator*(const float& k) const { return a_v2(k * x, k * y); } void operator*=(const float& k) { x *= k; y *= k; } };
+static inline float a_clampr(const float& x, float lo, const float& hi) { return clamp(&x, &lo, &hi); }
+static inline float a_len(float y, float x) { return (float)sqrt(x * x + y * y); }
+static __forceinline void a_dec(float* v, int j, const float& dt) { v[j] = v[j] - (v[j] + 1.0f) * dt; }
+static __forceinline void a_add2(float* o, const a_v2& u) { o[0] = u.x + o[0]; o[1] = u.y + o[1]; }
+static inline float a_len2(const vec2& v) { return (float)sqrt(v.x * v.x + v.y * v.y); }
+static inline bool a_bit(unsigned v, int n) { return ((v >> n) & 1) != 0; }
+static inline const vector4& a_pos(const Agent* a) { return a->pos; }
+static inline void a_sub2(vec2& r, const vector4& a, const vector4& b) { r.x = a.x - b.x; r.y = a.y - b.y; }
+static inline void a_clamp(float& v, float lo, float hi) { if (v < lo) v = lo; else if (v > hi) v = hi; }
+
+// 0x4354d0 (game/agent/agent_queries.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) bool Agent::flag_0x400_or_0x114() const      // 0x4354d0
+{
+    bool r = false;
+    if ((int)(anim[0].events & 0x1ffff) >= 100 && anim[0].cur >= 0 && (defs->data[anim[0].cur].flags & 0x400) != 0 || (int)(anim[1].events & 0x1ffff) >= 100)
+        r = true;
+    return r;
+}
+
+// @ 0x448eb0
+void Agent::ai_update_control()
+{
+    float strafe;
+    int mid;
+    float angle;
+    unsigned fid;
+
+    {
+    vector4 tgt = a_pos(this);                                   // movement target
+    if (floor_face == 0)
+        return;
+
+    // ---- 1. keep the path / goal up to date ----------------------------------------------------------------------
+    if (ai.path_active != 0) {
+        if (ai.path_state & 2) {
+            const vector4* tp = &agent_by_id(ai.goal_agent)->pos;
+            vector4 dd(tp->x - ai.goal.x, tp->y - ai.goal.y, tp->z - ai.goal.z);
+            if ((float)sqrt(dd.y * dd.y + (dd.z * dd.z + dd.x * dd.x)) > 4.0f &&
+                ai.goal_face != agent_by_id(ai.goal_agent)->update_nav_face()) {
+                fid = ai.goal_agent;
+                ai.goal = (&g_mission->agents)->get(fid)->pos;
+                ai.goal_face = (&g_mission->agents)->get(fid)->update_nav_face();
+                ai.goal_changed = 1;
+                ai.path_active = 0;
+            }
+        }
+        if (ai.path_active != 0)
+            advance_path();
+    }
+
+    // ---- 2. pick the movement target -------------------------------------------------------------------------------
+    if (ai.path_active != 0)
+        tgt = ai.path_pos[ai.path_cur];
+    if (ai.path_active == 0) {
+        unsigned fl = ai.path_state;
+        tgt = a_pos(this);
+        if (fl != 0) {
+            if ((fl & 2) != 0) {
+                vector4 lv;
+                const vector4& v = *agent_by_id(ai.goal_agent)->local_velocity(&lv);
+                tgt = v * 0.8f + agent_by_id(ai.goal_agent)->pos;
+                if ((char)fl < 0) {
+                    float m = -1.0f;
+                    float k = 0.4f;
+                    if (f100_is_0x48_and_charged())
+                        k = 0.25f;
+                    if (anim[1].cur == 0xb9 || anim[1].cur == 0xb8)
+                        m = 1.0f;
+                    float s = m * k;
+                    vec2 perp = {vel.y, -vel.x};
+                    vec2 off = {perp.x * s, perp.y * s};
+                    tgt.x += off.x;
+                    tgt.y += off.y;
+                }
+                ai.goal = agent_by_id(ai.goal_agent)->pos;
+                ai.goal_face = agent_by_id(ai.goal_agent)->update_nav_face();
+            } else if ((fl & 1) != 0) {
+                tgt = ai.goal;
+            }
+        }
+        bool ok = false;
+        if (ai.goal_changed != 0 && ai.goal_face != update_nav_face()) {
+            if (plan_path()) {
+                ai.path_active = 1;
+                ok = true;
+            } else {
+                ai.path_active = 0;
+            }
+            ai.goal_changed = 0;
+            if (ok) {
+                advance_path();
+                if (ai.path_active != 0)
+                    tgt = ai.path_pos[ai.path_cur];
+            }
+        }
+    }
+
+    // ---- 3. heading jitter and obstacle avoidance -----------------------------------------------------------------------
+    {
+    {
+        float base;
+        if (this->kind == 0 && horse < 0) {
+            int r = rand() % 0x3dc9;
+            base = (float)r * 6.3223115e-06f + 0.88f;
+        } else {
+            int r = rand() % 0x3dc9;
+            base = (float)r * 6.3223115e-06f + 0.85f;
+        }
+        ai.veer = base * ai.veer;
+    }
+    vector4 d = tgt - a_pos(this);                               // direction to the target
+    float dlen = d.normalize();
+
+    if ((flags3c & 1) && dlen > 0.1f) {
+        if (obstacle == 0) {
+            capsule cap;
+            float a = 0.3f;
+            float b = 1.0f;
+            if (this->kind != 0 || horse != -1) {
+                a = 0.5f;
+                b = 2.0f;
+            }
+            if (b < dlen)
+                b = dlen;
+            if (b > 5.0f)
+                b = 5.0f;
+            cap.radius = 0.25f;
+            cap.p0 = d * a + a_pos(this);
+            cap.p1 = d * b + a_pos(this);
+            cap.p0.z = cap.p0.z + 1.3f;
+            cap.p1.z = cap.p1.z + 1.3f;
+            vector4 bmin, bmax;
+            cap.get_min(&bmin);
+            cap.get_max(&bmax);
+            shape_base* shapes[8193];
+            int count;
+            g_mission->scene->query_box(&bmin, &bmax, 2, shapes, &count);
+            int n = count;
+            shape_base* hit;
+            int found = 0;
+            contact contact;
+            vector4 nrm;
+            for (int i = 0; i < n; i++) {
+                if (found != 0)
+                    break;
+                shape_base* sh = shapes[i];
+                found = shape_contact_count(&cap, sh, 1, &contact);
+                if (found != 0) {
+                    nrm = contact.normal;
+                    hit = sh;
+                }
+            }
+            if (found != 0 && hit->shape_type() != 2) {
+                vec2 nn = {-nrm.x, -nrm.y};
+                if (d.x * nn.y - d.y * nn.x > 0.0f)
+                    ai.veer = (-0.7f - ai.veer) * ((frand() + 1.0f) * 0.5f) + ai.veer;
+                else
+                    ai.veer = (0.7f - ai.veer) * ((frand() + 1.0f) * 0.5f) + ai.veer;
+            }
+            if (horse >= 0) {
+                std::vector<rgl::entity*> ents;
+                g_mission->scene->collect_boxed(&bmin, &bmax, &ents);
+                std::vector<rgl::entity*>::iterator pe = ents.begin();
+                if (pe < ents.end()) {
+                    do {
+                        rgl::entity* e = *pe;
+                        if (e->shape != 0 && e->game_kind == 0xb && (unsigned)e->game_id != pool_id &&
+                            (unsigned)e->game_id != (unsigned)horse && (unsigned)e->game_id != (unsigned)rider) {
+                            Agent* o = agent_by_id(e->game_id);
+                            if (o->kind == 1 && shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
+                                rgl::strategic_entity* mb = body;
+                                rgl::matrix m = mb->local;
+                                int flag = 1;
+                                float ang = 0.01f;
+                                m.rotate_about_u(&ang);
+                                const vector4& of = o->body->local.f;
+                                float lhs = (float)fabs(m.f.y * of.y + m.f.z * of.z + m.f.x * of.x);
+                                float rhs = (float)fabs(rgl::dot(mb->local.f, of));
+                                if (rhs > lhs)
+                                    flag = -1;
+                                ai.veer = (float)flag * 0.1f + ai.veer;
+                            }
+                        }
+                        ++pe;
+                    } while (pe < ents.end());
+                }
+            }
+        }
+        // ---- speed-dependent weave ---------------------------------------------------------------------------------
+        if (sqrt(v56b4.x * v56b4.x + (v56b4.z * v56b4.z + v56b4.y * v56b4.y)) < 0.3f) {
+            if (horse >= 0) {
+                if (!(ai.speed > 0.9f))
+                    goto weave_up;
+                if (ai.weave < -0.95f) {
+                    ai.simple_behavior = 3;
+                    ai.weave = ai.weave - 0.03f;
+                } else {
+                    ai.weave = ai.weave - 0.03f;
+                }
+            } else {
+                if (this->kind != 0 || (ai.strafe_state & 1) == 0)
+                    goto weave_up;
+                ai.weave = ai.weave - 0.03f;
+            }
+        } else {
+weave_up:
+            ai.weave = ai.weave + 0.2f;
+        }
+        a_clamp(ai.weave, -1.0f, 1.0f);
+        if (ai.weave < -0.1f) {
+            if ((float)(g_ticks[weave_timer.clock] - weave_timer.start) * 1e-5f >= 0.0f) {
+                ai.weave = 1.0f;
+                ai.path_active = 0;
+                ai.goal_changed = 1;
+                weave_timer.start = g_ticks[weave_timer.clock] + 6000000;
+            } else {
+                if (ai.veer < 0.0f) {
+                    int r = rand() % 0x3dc9;
+                    ai.veer = ai.veer - (0.3f - ai.weave) * ((float)r * 6.3223117e-05f + 0.5f);
+                } else {
+                    int r = rand() % 0x3dc9;
+                    ai.veer = (0.3f - ai.weave) * ((float)r * 6.3223117e-05f + 0.5f) + ai.veer;
+                }
+                int r = rand() % 0x3dc9;
+                if ((float)r * 6.3223117e-05f < 0.01f)
+                    ai.veer = -ai.veer;
+            }
+        }
+    }
+    if (ai.veer < -0.03f || 0.03f < ai.veer) {
+        float va = ai.veer;
+        float ca = (float)cos(va);
+        float sa = (float)sin(va);
+        float rx = ca * d.x - d.y * sa;
+        float ry = sa * d.x + d.y * ca;
+        tgt = vector4(rx, ry, d.z) * dlen + pos;
+    }
+
+    }
+
+    // ---- 4. eye position and move direction ----------------------------------------------------------------------------
+    {
+    vector4 eye = pos;
+    {
+        float h;
+        if (this->kind == 0 && horse != -1)
+            h = 2.4f;
+        else
+            h = 1.5f;
+        eye.z = h + eye.z;
+    }
+    float att = attack_speed();
+    unsigned fl2 = ai.move_mode;
+    if ((fl2 & 1) != 0) {
+        ai.move_dir = ai.wp - eye;
+    } else if ((fl2 & 2) == 0 || ai.target == 0xffffffff) {
+        ai.move_dir = tgt - a_pos(this);
+        if (ai.move_dir.length() < 0.001f)
+            ai.move_dir = vel;
+    } else {
+        Agent* o = agent_by_id(ai.target);
+        vector4 op = o->pos;
+        float h;
+        if (o->kind == 0 && o->horse != -1)
+            h = 2.4f;
+        else
+            h = 1.5f;
+        op.z = (h - 0.2f) + op.z;
+        if (o->horse < 0 && o->f5610 == 0)
+            goto lead;
+        if ((fl2 & 0x20) == 0)
+            goto lead_done;
+        op.z = op.z - (float)(int)(ai.rand_bits & 2) * 0.8f;
+lead:
+        if ((fl2 & 0x20) != 0 && att > 0.1f) {
+            vector4 dv = op - a_pos(this);          // from the agent's position, not the eye (0x449c44: fsub [edi], edi = &pos)
+            float dxz = dv.x * dv.x + dv.z * dv.z;   // dy^2 is added last (0x449c69..0x449c7f); in one expression cl summed dz, dy, dx
+            float dist = (float)sqrt(dxz + dv.y * dv.y);
+            float s = 40.0f - (float)g_game->troops[troop].level;
+            if (0.0f > s)
+                s = 0.0f;
+            float j = (frand() - 0.5f) * s * 0.01f + 1.0f;
+            float k = (float)g_game->troops[troop].level * 0.02f + 0.6f;
+            if (!(k < 1.0f))
+                k = 1.0f;
+            k = (dist / att) * k;
+            vector4 off = k * o->v56b4 * j;
+            op.x = off.x + op.x;
+            op.y = off.y + op.y;
+            op.z = off.z + op.z;
+        }
+lead_done:
+        ai.move_dir = op - eye;
+    }
+    float mz = ai.move_dir.z;
+    float mlen = ai.move_dir.normalize();
+    if ((ai.move_mode & 0x20) != 0) {
+        float s = 0.2f - (float)g_game->troops[troop].level * 0.005f;
+        if (!(s > 0.0f))
+            s = 0.0f;
+        int r = rand() % 0x3dc9;
+        float jit = ((float)r * 6.3223117e-05f - 0.5f) * s + 1.0f;
+        float af = accel_factor(&att, &mlen, &mz);
+        ai.move_dir.z = af * jit + ai.move_dir.z;
+        ai.move_dir.normalize();
+    }
+
+    }
+
+    // ---- 5. movement input bits ---------------------------------------------------------------------------------------
+    mid = horse;
+    {
+    vector4 d = tgt - a_pos(this);
+    strafe = 0.0f;
+    ai.strafe.x = d.x;
+    ai.strafe.y = d.y;
+    angle = 0.0f;
+    if (mid == -1 && this->kind == 0) {
+        vec2 m;
+        m.x = ai.move_dir.x;
+        m.y = ai.move_dir.y;
+        float ml2 = (float)sqrt(m.x * m.x + m.y * m.y);
+        float nx, ny;
+        if (ml2 > 0.0f) {
+            float inv = 1.0f / ml2;
+            nx = m.x * inv;
+            ny = m.y * inv;
+        } else {
+            nx = 0.0f;
+            ny = 1.0f;
+        }
+        vector4 dd = d;
+        vec2 l = {dd.x * ny - dd.y * nx, dd.x * nx + dd.y * ny};
+        float fa, fb;
+        if (ai.path_active == 0) {
+            fa = ai.melee_standoff * 1.4f;
+            fb = ai.melee_standoff * 0.9f;
+        } else {
+            fa = 0.0f;
+            fb = 0.0f;
+        }
+        float l2 = (float)sqrt(l.x * l.x + l.y * l.y);
+        if (l2 > 0.0f) {
+            float inv = 1.0f / l2;
+            l.x = l.x * inv;
+            l.y = l.y * inv;
+        } else {
+            l.x = 0.0f;
+            l.y = 1.0f;
+        }
+        unsigned f = ai.strafe_state;
+        vec2 mv;
+        mv.x = 0.0f;
+        mv.y = 0.0f;
+        if (((f & 1) != 0 && l2 > fb) || ((f & 1) == 0 && l2 > fa)) {
+            if (((f & 2) != 0 && l.y > 0.35f) || ((f & 2) == 0 && l.y > 0.45f)) {
+                f |= 2;
+                ai.in_prev.bits |= 1;
+                mv.y = 1.0f;
+            } else if (((f & 4) != 0 && l.y < -0.35f) || ((f & 4) == 0 && l.y < -0.45f)) {
+                f |= 4;
+                ai.in_prev.bits |= 2;
+                mv.y = -1.0f;
+            } else {
+                f &= 0xfffffff9;
+            }
+            ai.strafe_state = f;
+            if (((f & 8) != 0 && l.x > 0.35f) || ((f & 8) == 0 && l.x > 0.45f)) {
+                f |= 8;
+                ai.in_prev.bits |= 4;
+                mv.x = 1.0f;
+            } else if (((f & 0x10) != 0 && l.x < -0.35f) || ((f & 0x10) == 0 && l.x < -0.45f)) {
+                f |= 0x10;
+                ai.in_prev.bits |= 8;
+                mv.x = -1.0f;
+            } else {
+                f &= 0xffffffe7;
+            }
+            ai.strafe_state = f;
+            ai.strafe_state = f | 1;
+            mv.normalize();
+            strafe = l.x * mv.y - mv.x * l.y;
+        } else {
+            ai.strafe_state = 0;
+        }
+        if ((ai.path_state & 0x20) != 0 && ai.speed_limit > 2.6f)
+            ai.in_prev.bits = ai.in_prev.bits | 0x200000;
+    }
+    if (mid != -1 || this->kind != 0) {
+        // ---- follow / mount case ----
+        vector4 gp = tgt;
+        if (ai.path_active != 0)
+            gp = ai.goal;
+        d = gp - a_pos(this);
+        float gdist = (float)sqrt(d.x * d.x + d.z * d.z + d.y * d.y);
+        float hi = 0.8f, lo = 0.5f;
+        if (ai.path_active == 0) {
+            hi = ai.melee_standoff * 1.2f;
+            lo = ai.melee_standoff * 0.8f;
+        }
+        if ((ai.strafe_state != 0 && gdist > lo) || (ai.strafe_state == 0 && gdist > hi)) {
+            ai.strafe_state = 1;
+            vector4 tt = tgt - a_pos(this);
+            float h_y = vel.y;
+            float h_x = vel.x;
+            float hl = (float)sqrt(h_x * h_x + h_y * h_y);
+            float hx, hy;
+            if (hl > 0.0f) {
+                float inv = 1.0f / hl;
+                hx = h_x * inv;
+                hy = h_y * inv;
+            } else {
+                hx = 0.0f;
+                hy = 1.0f;
+            }
+            float tl = (float)sqrt(tt.x * tt.x + tt.y * tt.y);
+            float tx, ty;
+            if (tl > 0.0f) {
+                float inv = 1.0f / tl;
+                tx = tt.x * inv;
+                ty = tt.y * inv;
+            } else {
+                tx = 0.0f;
+                ty = 1.0f;
+            }
+            float a0 = (float)atan2(-(hy * tx - ty * hx), hy * ty + hx * tx);
+            float ang = a0;
+            float sp = gdist * 0.7f;
+            if (sp < 1.0f)
+                sp = 1.0f;
+            else if (ai.speed_limit <= sp)
+                sp = ai.speed_limit;
+            ai.speed = sp;
+            float gv = ai.goal_dir.length();
+            if (gv > sp && d.z * ai.goal_dir.z + d.y * ai.goal_dir.y + d.x * ai.goal_dir.x > 0.1f)
+                ai.speed = sp * 0.5f + gv;
+            float other = turn_rate;
+            if (mid != -1)
+                other = agent_by_id(mid)->turn_rate;
+            if (ang - other > 0.1f && ang > 0.1f)
+                ai.in_prev.bits |= 0x80;
+            else if (ang - other < -0.1f && ang < -0.1f)
+                ai.in_prev.bits |= 0x40;
+            if ((ai.turn_sign != 0 && ang > 0.1f) || (ai.turn_sign == 0 && ang > 0.2f)) {
+                ai.turn_sign = 1;
+                ai.speed = (0.9f - ang * 0.45f) * ai.speed;
+            } else if ((ai.turn_sign != 0 && ang < -0.1f) || (ai.turn_sign == 0 && ang < -0.2f)) {
+                ai.turn_sign = 1;
+                ai.speed = (ang * 0.45f + 0.9f) * ai.speed;
+            } else {
+                ai.turn_sign = 0;
+            }
+            angle = ang;
+            if (ai.speed < 1.2f)
+                ai.speed = 1.2f;
+            else if (ai.speed > ai.speed_limit)
+                ai.speed = ai.speed_limit;
+        } else {
+            ai.speed = 0.0f;
+            ai.strafe_state = 0;
+        }
+        unsigned who = pool_id;
+        if (this->kind == 0)
+            who = mid;
+        if (agent_by_id(who)->vel_xy.y < ai.speed - 0.2f) {
+            ai.in_prev.bits = ai.in_prev.bits | 0x10;
+        } else if (ai.speed + 0.2f < agent_by_id(who)->vel_xy.y && (ai.path_state & 0x200) == 0) {
+            ai.in_prev.bits = ai.in_prev.bits | 0x20;
+        }
+    }
+    }
+    }
+
+    // ---- 6. combat state machine -----------------------------------------------------------------------------------------
+    if (g_mission->f6554 == 0 && this->kind == 0 && ai.target != 0xffffffff && (ai.move_mode & 2) != 0) {
+        if (!is_enemy(agent_by_id(ai.target)) || agent_by_id(ai.target)->state != 1)
+            goto no_target;
+        Agent* o = g_mission->agents.get(ai.target);
+        vec2 tv;
+        a_sub2(tv, a_pos(o), a_pos(this));
+        float dist = tv.normalize();
+        ItemRef p = slot_pair(0);
+        ItemKind* wk;
+        if (p.item == -1 || (wk = &g_items[p.item], !wk->is_ranged()))
+            goto melee;
+        {
+        float hc, fm, zt, one;
+        unsigned itype;
+
+        // ---- ranged weapon ------------------------------------------------------------------------------------------------
+        itype = wk->type_flags & 0xff;
+        hc = hit_chance_ref(p, this);
+        one = 1.0f;
+        zt = (o->pos.z - a_pos(this).z) * 0.7f + dist;
+        fm = fmax_ref(&zt, &one);
+        if (ai.combat_state == 0) {
+            if ((itype == itp_type_crossbow || itype == itp_type_pistol || itype == itp_type_musket) &&
+                p.max_amount() == (int)(p.m4 & 0xff)) {
+                ai.timer.start = g_ticks[ai.timer.clock];
+                ai.combat_state = 4;
+                goto bb72;
+            }
+            if (fm >= hc) {
+                ai.combat_state = 7;
+                goto bb72;
+            }
+            if (fm < hc && frand() < ((float)g_game->troops[troop].level + 1.0f) * 0.2f) {
+                int blocker;
+                int r = fire_check(ai.target, &blocker);
+                ai.fire_result = r;
+                if (r == 1) {
+                    ai.combat_state = 1;
+                    float x = (dist + 70.0f) * 0.01f;
+                    float lo = 0.7f;
+                    float hi = 1.2f;
+                    float cl = clamp(&x, &lo, &hi);
+                    float delay = (((frand() + 2.5f) * cl) * 35.0f) / (float)(g_game->troops[troop].level + 0x23);
+                    if (itype == itp_type_thrown)
+                        delay = delay * 0.5f;
+                    ((Timer*)&ai.timer)->set_delay(-delay);
+                    goto bb72;
+                }
+                if (r == 0) {
+                    ai.last_hit = g_hit_shape;
+                    int t = (int)pick_threat();
+                    if (t < 0) {
+                        ai.combat_state = 7;
+                        goto bb72;
+                    }
+                    ai.target = t;
+                    goto bb72;
+                }
+                if (r == 3) {
+                    ai.combat_state = 8;
+                } else {
+                    ai.shot_failed = 2;
+                    ai.ta_interval = 0;
+                }
+            }
+            goto bb72;
+        }
+        if (ai.combat_state == 1) {
+            // state 1
+            ai.input = ai.input | 0x100;
+            int m = horse;
+            if (m == -1 && dist < 2.5f && (o->horse == m || o->v56b4.out_length() < 1.5f)) {
+                ai.ta_interval = 0;
+                ai.combat_state = 3;
+            }
+            if (m == -1 && (itype == itp_type_crossbow || itype == itp_type_bow) && ai.timer.elapsed() > -0.7f)
+                ai.in_prev.bits = ai.in_prev.bits & 0xfffffff0;
+            if (!(ai.timer.elapsed() > 0.0f))
+                goto bb72;
+            {
+                int blocker;
+                if (fire_check(ai.target, &blocker) == 1) {
+                    ((Timer*)&ai.timer)->set_delay(-0.3f);
+                    ai.combat_state = 3;
+                    goto bb72;
+                }
+            }
+            ai.input = ai.input | 0x200;
+            goto bb68;
+        }
+        if (ai.combat_state == 3) {
+            int m = horse;
+            if (m == -1 && dist < 4.0f && (o->horse == m || o->v56b4.out_length() < 1.0f)) {
+                ai.ta_interval = 0;
+                ai.combat_state = 0;
+            }
+            if (m == -1 && (itype == itp_type_crossbow || itype == itp_type_bow))
+                ai.in_prev.bits = ai.in_prev.bits & 0xfffffff0;
+            if (ai.timer.elapsed() >= 0.0f)
+                ai.combat_state = 0;
+            goto bb72;
+        }
+        if (ai.combat_state == 4) {
+            int m = horse;
+            if (m == -1 && dist < 2.5f && (o->horse == m || o->v56b4.out_length() < 1.5f)) {
+                ai.ta_interval = 0;
+                ai.combat_state = 0;
+            }
+            ai.input = ai.input | 0x100;
+            if (m == -1)
+                ai.in_prev.bits = ai.in_prev.bits & 0xfffffff0;
+            if (p.max_amount() != (int)(p.m4 & 0xff))
+                ai.combat_state = 0;
+            if (anim[1].cur != 0x7b && ai.timer.elapsed() > 1.0f)
+                ai.combat_state = 0;
+            goto bb72;
+        }
+        if (ai.combat_state == 7) {
+            if (!(fm < hc))
+                goto bb72;
+            if (frand() < 0.03f) {
+                int t = (int)pick_threat();
+                if (t < 0)
+                    goto bb72;
+                ai.target = t;
+            } else {
+                if (!line_of_sight(ai.target, ai.last_hit)) {
+                    ai.last_hit = g_hit_shape;
+                    goto bb72;
+                }
+            }
+            goto bb68;
+        }
+        if (ai.combat_state == 8) {
+            AgentTable* at = &g_mission->agents;
+            vec2 tv2;
+            a_sub2(tv2, at->get(ai.target)->pos, a_pos(this));
+            tv2.normalize();
+            vec2 bf;
+            bf.x = body->local.f.x;
+            bf.y = body->local.f.y;
+            float fx = bf.x;
+            float fy = bf.y;
+            if (horse == -1 || at->get(horse)->vel_xy.y > 0.5f)
+                goto bb68;
+            unsigned bits;
+            if (fy * tv2.y + tv2.x * fx > 0.0f)
+                bits = ai.in_prev.bits | 0x40;
+            else
+                bits = ai.in_prev.bits | 0x80;
+            ai.in_prev.bits = bits;
+            if (!(tv2.y * fx - fy * tv2.x > 0.3f))
+                goto bb72;
+            goto bb68;
+        }
+        goto bb72;
+        }
+
+melee:
+        float reach0, facing, ofacing, wprof, r2f, distL;
+        int idx;
+        bool b3e, b3f, b58, b59, b5a, b5b;
+        // ---- melee / no ranged weapon -----------------------------------------------------------------------------------
+        reach0 = (frand() - 0.5f) * (float)(g_options.difficulty + 1) * 0.15f + 0.9f;
+        facing = tv.y * vel.y + tv.x * vel.x;
+        ofacing = -tv.x * o->vel.x + -tv.y * o->vel.y;
+        {
+            float r1 = frand() * 0.2f + 1.0f;
+            const vector4& V = v56a4;
+            const vector4& OP = o->pos;
+            float outlen = (o->v56a4 * r1 + OP - (V * r1 + a_pos(this))).out_length();
+            idx = p.item;
+            if (idx < 0)
+                idx = 0;
+            wk = &g_items[idx];
+            int mc;
+            {
+            ItemRef q = slot_pair(1);
+            b3f = false;
+            wprof = 50.0f;
+            if (idx != 0) {
+                int cls = slot_class_impl(p.item, slot_pair(1).item >= 0);
+                if (cls >= 0 && cls < 7)
+                    wprof = g_game->troops[troop].stat[cls];
+                reach0 = (100.0f / (float)p.speed_rating()) * reach0;
+            }
+            if (ai.combat_state == 3 && active == 1)
+                reach0 = reach0 * 0.5f;
+            vector4 l2 = o->v56a4 * reach0 + OP;
+            float dl = rgl::length(l2 - a_pos(this));
+            float reach2 = rgl::length(V) * reach0;
+            mc = horse;
+            float distv;
+            if (mc >= 0 && !(rgl::length(l2 - (V * reach0 + a_pos(this))) < dl - reach2 * 0.5f))
+                distv = rgl::length(OP - a_pos(this)) + 0.2f;
+            else
+                distv = dl - reach2;
+            distL = distv;
+            if (q.item >= 0 && (g_items[q.item].type_flags & 0xff) == itp_type_shield)
+                b3f = true;
+            }
+            float r2base = 2.5f;
+            float reachf = 2.5f;
+            if (p.item != -1)
+                reachf = (float)g_items[p.item].weapon_length * 0.01f + 1.1f;
+            if (mc >= 0)
+                reachf = reachf - 0.3f;
+            if (o->horse >= 0)
+                reachf = reachf + 0.7f;
+            ItemRef op0 = o->slot_pair(0);
+            if (op0.item != -1)
+                r2base = (float)g_items[op0.item].weapon_length * 0.01f + 1.9f;
+            r2f = r2base * 1.3f;
+            b5b = false;
+            {
+            ItemRef op1 = o->slot_pair(1);
+            b3e = false;
+            b5a = distL < reachf;
+            b58 = (ofacing > 0.0f) && (distL < r2f);
+            b59 = false;
+            if ((char)wk->type_flags == 4 && facing > 0.4f && anim[1].cur == 0x47 && outlen < 19.0f)
+                b59 = true;
+            if (f100_is_0x48_and_charged() && facing > 0.4f)
+                b3e = true;
+            if (op1.item >= 0 && (g_items[op1.item].type_flags & 0xff) == itp_type_shield)
+                b5b = true;
+            }
+            int st = ai.combat_state;
+            if (st <= 1) {
+                if (b3f && op0.item != -1 && !b3e && !b59) {
+                    ai.input = ai.input | 0x200;
+                } else if (outlen < 2.8f) {
+                    if (g_game->troops[troop].level >= 0x14 && (b3f || p.item == -1) && !b59 && !b3e)
+                        ai.input = ai.input | 0x200;
+                }
+                if (flag_0x400_or_0x114()) {
+                    if (this->kind == 0 && horse == -1)
+                        ai.in_prev.bits = (ai.in_prev.bits & 0xfffffffe) | 2;
+                    if (b3f) {
+                        {
+                            float fr = frand();      // one rand call, doubled (0x44b4a0 fadd st0,st0)
+                            ((Timer*)&ai.timer2)->set_delay(-((fr + fr) + 1.3f));
+                        }
+                        ai.combat_state = 7;
+                    }
+                    goto bb72;
+                }
+                if (b5a && !b3e && (frand() < wprof * 0.004f + 0.5f || horse >= 0)) {
+                    ((Timer*)&ai.timer)->set_delay(0.0f);
+                    ai.combat_state = 3;
+                    goto bb72;
+                }
+                if (b3f) {
+                    if (op0.item == -1)
+                        goto b53e;
+                    if (!b3e && g_items[op0.item].is_melee() && ai.timer2.elapsed() > 0.0f &&
+                        ((o->active == 1 && frand() < 0.3f - (float)g_game->troops[troop].level * 0.01f) ||
+                         (o->active == 2 && frand() < (float)g_game->troops[troop].level * 0.05f + 0.5f)) &&
+                        b58) {
+b508:
+                        {
+                            float fr = frand();      // one rand call, doubled (0x44b4a0 fadd st0,st0)
+                            ((Timer*)&ai.timer2)->set_delay(-((fr + fr) + 1.3f));
+                        }
+                        ai.combat_state = 7;
+                        goto bb72;
+                    }
+                }
+                if (op0.item == -1) {
+b53e:
+                    if (p.item == -1 && ai.timer2.elapsed() > 0.0f && ofacing > 0.0f &&
+                        ((o->active == 1 && frand() < (float)g_game->troops[troop].level * 0.01f + 0.5f) ||
+                         (o->active == 2 && frand() < (float)g_game->troops[troop].level * 0.05f + 0.5f)) &&
+                        outlen < r2f)
+                        goto b508;
+                }
+                if (!b3f && !b3e && wk->is_melee() && (wk->type_flags & 0x4000) == 0 && ai.timer2.elapsed() > 0.0f &&
+                    op0.item != -1 && g_items[op0.item].is_melee() && o->active != 0 && b58 &&
+                    frand() < wprof * 0.01f + 0.1f) {
+                    ((Timer*)&ai.timer2)->set_delay(-(frand() * 0.5f + 0.6f));
+                    ai.combat_state = 2;
+                    goto bb72;
+                }
+                if (dist < 15.0f && frand() < 0.005f && horse == -1 && (g_mission->flags & 1) == 0 &&
+                    (!(frand() < 0.2f) || (g_mission->flags & 1) != 0)) {
+                    int kind = 4;
+                    play_class_sound(&kind);
+                }
+                goto bb72;
+            }
+            if (st == 2) {
+                ai.input = ai.input | 0x200;
+                if (ai.timer2.elapsed() > 0.0f)
+                    ai.combat_state = 0;
+                if (o->active != 0 || !(frand() < 0.9f))
+                    goto bb72;
+                if (frand() < 0.4f) {
+                    ((Timer*)&ai.timer)->set_delay(-0.2f);
+                    ai.combat_state = 3;
+                    goto bb72;
+                }
+                goto bb68;
+            }
+            if (st == 3) {
+                if (frand() < 0.02f && horse == -1 && (g_mission->flags & 1) == 0) {
+                    int kind = 4;
+                    play_class_sound(&kind);
+                }
+                unsigned fl = ai.input;
+                int fa = active;
+                ai.input = fl | 0x100;
+                if (fa <= 4 && ai.timer.elapsed() > 0.0f && fa == 1) {
+                    if (b5a) {
+                        int sv = p.speed_rating();
+                        int sk = g_game->troops[troop].level + 0x28;
+                        ((Timer*)&ai.timer)->set_delay(-((4.9f / (float)sk + (float)g_options.difficulty * 0.25f + 0.6f) * (100.0f / (float)sv)));
+                        ai.combat_state = 4;
+                    } else if (ai.timer.elapsed() > 8.0f || reach0 * 4.0f < distL) {
+                        ai.input = fl | 0x300;
+                        ai.combat_state = 0;
+                    }
+                }
+                if (flag_0x400_or_0x114())
+                    goto bb68;
+                goto bb72;
+            }
+            if (st == 4) {
+                if (ai.timer.elapsed() > 0.0f) {
+                    ai.combat_state = 0;
+                } else if (in_id_set(anim[1].cur)) {
+                    ai.combat_state = 0;
+                } else {
+                    if (b5b && o->f5610 != 0 && ofacing > 0.0f) {
+                        if (frand() < 0.03f)
+                            ai.combat_state = 0;
+                    } else if (g_items[op0.item].is_melee() && !b5b && ofacing > 0.0f) {
+                        float zero[3];
+                        zero[0] = 0.0f;
+                        zero[1] = 0.0f;
+                        zero[2] = 0.0f;
+                        if (can_hit(pool_id, ai.target, 0, 0, zero) == 0) {
+                            if (wprof > 100.0f && frand() < 0.03f)
+                                ai.combat_state = 0;
+                        } else if (frand() < ((4.0f - (float)g_options.difficulty) * wprof) * 0.0005f) {
+                            ai.combat_state = 0;
+                        }
+                    }
+                }
+                if (flag_0x400_or_0x114())
+                    goto bb68;
+                goto bb72;
+            }
+            if (st == 7) {
+                ai.input = ai.input | 0x200;
+                if ((op0.item == -1 || g_items[op0.item].is_melee()) && o->active == 0) {
+                    if (frand() < 0.4f) {
+                        ((Timer*)&ai.timer2)->set_delay(0.0f);
+                        ((Timer*)&ai.timer)->set_delay(-0.2f);
+                        ai.combat_state = 3;
+                    } else {
+                        ((Timer*)&ai.timer2)->set_delay(0.0f);
+                        ai.combat_state = 0;
+                    }
+                }
+                if (ai.timer2.elapsed() > 0.0f)
+                    goto bb68;
+                goto bb72;
+            }
+            goto bb68;
+        }
+    } else {
+no_target:
+        if ((g_input_mask | 0x100) != 0 && (g_input_mask | 0x200) == 0)
+            ai.input = ai.input | 0x300;
+    }
+bb68:
+    ai.combat_state = 0;
+bb72:
+    ai.in_prev.move = ai.move_dir;
+    if ((!(strafe < -0.001f) || !(strafe < 0.001f)) && (ai.in_prev.bits & 0xf) != 0 &&
+        ((ai.input | g_input_mask) & 0x100) == 0 && ai.combat_state != 4) {
+        double a = -asin((double)strafe);
+        float c = (float)cos(a);
+        double s = sin(a);
+        float py = ai.in_prev.move.y;
+        ai.in_prev.move.y = (float)(s * ai.in_prev.move.x + c * ai.in_prev.move.y);
+        ai.in_prev.move.x = (float)(c * ai.in_prev.move.x - s * py);
+    }
+    ai.in_prev.move.normalize();
+}
+
+
+// ---- Agent::cycle_slot: advance slots[which] to the next usable held item -------------------------------------------------
+// @ 0x44bc30
+void Agent::cycle_slot(int which)
+{
+    bool found = false;
+    int old_item = -1;
+    int old = slots[which];
+    if (old >= 0)
+        old_item = pairs[old].item;
+    if (which == 0 || slots[0] < 0 || slots[1] < 0 || slots[4] == 0) {
+        int n = 0;
+        do {
+            if (n >= 4)
+                break;
+            int v = (slots[which] + 1) % 4;
+            slots[which] = v;
+            if (which == 0 || slots[1] != slots[0]) {
+                int it = pairs[v].item;
+                if (it >= 0) {
+                    ItemKind* ik = &g_items[it];
+                    if (which == 0) {
+                        unsigned fl = ik->type_flags;
+                        if ((char)fl == 10) {
+                            ItemRef* p = &pairs[v];
+                            int cnt = p->m4 & 0xff;
+                            int val = p->max_amount();
+                            if (val - cnt > 0 && pairs[slots[0]].item != old_item) {
+                                if (horse < 0 || !(ik->type_flags & 0x10000000))
+                                    found = true;
+                            }
+                        } else if (fl & 0x400000) {
+                            if (horse < 0 || !(fl & 0x10000000))
+                                found = true;
+                        }
+                    } else {
+                        unsigned fl = ik->type_flags;
+                        unsigned t = fl & 0xff;
+                        // stand-in: the original keeps the second t == 7 compare (cmp eax,7); written plainly cl folds it into
+                        // the first, (t ^ 7) == 0 survives to codegen as xor eax,7 (one byte off), t - 7 == 0 as add eax,-7
+                        if ((t == 7 || ((fl & 0x800000) && (t ^ 7) == 0)) &&
+                            (horse < 0 || !(fl & 0x10000000)) && (int)(pairs[v].m4 & 0xffff) > 0)
+                            found = true;
+                    }
+                }
+            }
+            n++;
+        } while (!found);
+        if (which != 0 && old >= slots[which])
+            slots[which] = -1;
+        if (!found)
+            slots[which] = -1;
+    } else {
+        slots[0] = -1;
+    }
+    slots[4] = 0;
+    if (slots[0] >= 0) {
+        int it = pairs[slots[0]].item;
+        if (it >= 0 && (g_items[it].type_flags & 0x200000))
+            slots[4] = 1;
+    }
+    update_equipment_display();
+    on_wield_changed();
+    fr1.o.x = fr2.o.x = -20000000.0f;
+}
+
+
+// ---- Mission::spawn_missile ---------------------------------------------------------------------------------
+// the missile record of an id: pages of 16 records of 0xb0 bytes at Mission+0x30 (Pool<Missile>, engine/core/pool.h)
+static __forceinline Agent& mag(Mission* m, unsigned id) { return m->agents.pages[id >> 4][id & 0xf]; }
+static __forceinline Missile& mrec(Pool<Missile>* p, unsigned id)
+{
+    return p->pages[id >> 4][id & 0xf];   // the real operator[] per use (its dead add reg,edi stays)
+}
+#define MS(id) mrec(&poolJ, id)
+static __forceinline void set_fbc_ref(rgl::entity* e, const float& v) { e->set_fbc(&v); }
+// @ 0x44be50
+int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* launcher, ItemRef* ammo,
+                           unsigned shooter_id)
+{
+    Agent* shooter = &(mag(this, shooter_id));
+    float mount_f;
+    if (shooter->horse >= 0)
+        mount_f = (float)cos(shooter->cur) * (mag(this, shooter->horse)).vel_xy.y;
+    else
+        mount_f = shooter->vel_xy.y;
+    int id = poolJ.alloc();
+    rgl::entity* e = scene->create_entity(9);
+    rgl::matrix ident;
+    identity_pos(&ident);
+    rgl::mesh* m;
+    // a launcher of type 10 names the flying mesh itself (0x44bed6..0x44befd read the third argument); otherwise
+    // the ammo item's own mesh (0x44bf04.. read the fourth)
+    if ((g_items[launcher->item].type_flags & 0xff) == 10) {
+        tstring tn = launcher->mesh_name();
+        m = (rgl::mesh*)g_resmgr.get_object(&tn);
+    } else {
+        m = 0;
+        if (ammo->item >= 0 && ammo->item < g_item_kind_count)
+            m = g_items[ammo->item].mesh_for(0x2000000000000000ui64, ammo->b.mod);
+        if (!m) {
+            tstring name("flying_missile");
+            m = (rgl::mesh*)g_resmgr.get_object(&name);
+        }
+    }
+    if (m) {
+        rgl::mesh* c = m->clone();
+        c->local_frame = ident;
+        e->add_mesh(c);
+    }
+    e->local.f = *dir;
+    e->local.u = vector4(0.0f, 0.0f, 1.0f);
+    e->local.orthonormalize();
+    e->local.o = *pos;
+    set_fbc_ref(e, 0.5f);                              // a const float& temporary, stored after the push
+    e->center = vector4(0.0f, e->get_radius(), 0.0f);
+    e->visible = 0;
+    MS(id).ent = e;
+    MS(id).pos = *pos;
+    MS(id).prev = *pos;
+    MS(id).vel = *dir;
+    MS(id).f64 = (float)launcher->damage(1);
+    unsigned lt = g_items[launcher->item].type_flags & 0xff;
+    if (lt == 8 || lt == 9)
+        MS(id).f64 += (float)ammo->damage(1);
+    MS(id).f60 = shooter->attack_speed();
+    MS(id).speed = MS(id).f60;
+    MS(id).speed += mount_f;
+    MS(id).shooter = shooter_id;
+    MS(id).launcher = *launcher;
+    MS(id).ammo = *ammo;
+    MS(id).init();
+    return id;
+}
+
+// ---- Mission::spawn_prop: instantiate scene-prop record props[*idx] as a world entity (meshes, collision shape, 3D sounds) ----
+// views of tables of other objects (offsets read here): g_ptypes entries 0x48 bytes at +0x1c, count at +0x18; g_propkinds records
+// flags +0x10, meshes +0x40, shape +0x50, sounds +0x6c; ItemKind sounds +0x228
+static inline SimpleTriggerVec& isnd(ItemKind* k) { return k->sound; }
+
+// mesh of an item for the prop display class, null for an invalid item index (bounds check inlined)
+static inline rgl::mesh* item_mesh(int item, int packed)
+{
+    if (item < 0 || item >= g_item_kind_count)
+        return 0;
+    return g_items[item].mesh_for(0x3000000000000000ui64, packed >> 24);
+}
+int find_item(const tstring* name);                     // 0x434ad0 (cdecl)
+
+// 0x4285e0 (engine/scene/shape_load.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) shape_base* body_part::clone_shape()      // 0x4285e0
+{
+    shape_base* r;
+    if (shape->shape_type() == 0) {
+        r = new sphere(*(sphere*)shape);
+    } else if (shape->shape_type() == 1) {
+        r = new capsule(*(capsule*)shape);
+    } else if (shape->shape_type() == 2) {
+        r = new face(*(face*)shape);
+    } else if (shape->shape_type() == 3) {
+        r = new composite(*(composite*)shape);
+    } else if (shape->shape_type() == 4) {
+        return ((manifold*)shape)->build_composite();
+    }
+    return r;
+}
+
+// @ 0x44c210
+void Mission::spawn_prop(int* idx, int* id)
+{
+    PlacedObj* r = (PlacedObj*)&props[*idx];
+    r->frame = r->start_frame;
+    std::vector<rgl::mesh*> meshes;
+    body_part* shape_res = 0;
+    tstring name;
+    tstring s2("0");
+    int tbl = -1;
+    int t = r->kind;
+    if (t == 2) {
+        int ii = find_item(&r->name);
+        name = g_items[ii].mesh_name_for(0);
+    } else if (t == 6) {
+        int item = find_item(&r->name);
+        int param = r->value;
+        unsigned k = g_items[item].type_flags & 0xff;
+        ItemRef ref;
+        ref.item = item;
+        ref.m4 = param;
+        rgl::mesh* m;
+        if (!((k == 2 || k == 3 || k == 4 || k == 6 || k == 5 || k == 0x12) && (m = item_mesh(ref.item, (int)ref.m4)) != 0))
+            name = ref.mesh_name();
+        else
+            meshes.push_back(m);
+    } else if (t == 4) {
+        int ti = find_in_table20(&r->name);
+        r->value = r->value % g_ptypes[ti].nframes;
+        name = g_ptypes[ti].boxes[r->value].name;
+        body_part* rs = g_ptypes[ti].boxes[r->value].res;
+        if (rs)
+            shape_res = rs;
+    } else if (t == 7) {
+        int ri = r->id;
+        name = g_items[ri].mesh_name_for(r->value);
+        s2.assign("boshield");
+    } else if (t == 0) {
+        tbl = find_in_table78(&r->name);
+        if (tbl < 0)
+            tbl = r->id;
+        if (tbl < 0 || tbl >= g_propkind_count) {
+            tbl = -1;
+        } else {
+            MissionObj* rec = &g_propkinds[tbl];
+            if (g_cfg.enable_edit_mode != 0 || !(rec->flags & 0x4000))
+                meshes = rec->meshes;
+            shape_res = rec->shape;
+        }
+    } else if (t != 3) {
+        if (t == 1) {
+            if (g_cfg.enable_edit_mode)
+                name.assign("entry_arrow");
+            else
+                name.assign("");
+        } else if (t == 5) {
+            if (g_cfg.enable_edit_mode)
+                name.assign("_mesh_passage");
+            else
+                name.assign("");
+            s2.assign("bo_mesh_passage");
+        }
+    }
+after:
+    if (name.len > 0)
+        meshes = g_resmgr.find_meshes(&name);
+    if (s2.differs("0") && s2.len != 0)
+        shape_res = (body_part*)g_resmgr.get_object60(s2);
+
+    if (r->kind == 7) {
+        r->id = find_item(&r->name);
+        rgl::dynamic_entity* e = static_cast<rgl::dynamic_entity*>(scene->create_entity(7));   // type 7: the rigid body
+        for (unsigned i = 0; i < meshes.size(); i++)
+            e->add_mesh(meshes[i]->clone());
+        if (shape_res)
+            e->shape = shape_res->clone_shape();
+        static_cast<rgl::matrix&>(e->local) = r->start_frame;
+        e->game_kind = 0xc;
+        e->game_id = *idx;
+        r->ent2 = e;
+        e->mass = 2.0f;
+        float a = (float)(rand() % 0x3dc9) * (float)(1.0 / 15817);
+        float b = (float)(rand() % 0x3dc9) * (float)(2.0 / 15817) + 1.0f;
+        float c = (float)(rand() % 0x3dc9) * (float)(2.0 / 15817);
+        e->vel = a_vadd(a_vadd(vmul(c, e->local.f), vector4(0.0f, 0.0f, b)), vmul(a, e->local.u));
+        e->restitution = 0.4f;
+        float a2 = (float)(rand() % 0x3dc9) * (float)(9.0 / 15817);
+        float c2 = (float)(rand() % 0x3dc9) * (float)(4.0 / 15817);
+        float d = (float)(rand() % 0x3dc9) * (float)(6.0 / 15817);
+        e->grounded = 0;
+        e->angvel = a_vadd(a_vadd(vmul(d, r->frame.s), vmul(c2, r->frame.f)), vmul(a2, r->frame.u));
+    } else {
+        rgl::strategic_entity* e = static_cast<rgl::strategic_entity*>(scene->create_entity(9));   // type 9
+        for (unsigned i = 0; i < meshes.size(); i++) {
+            rgl::mesh* m = meshes[i]->clone();
+            if (r->kind == 4) {
+                vector4 dir, col;
+                ((rgl::world*)scene)->light_at(r->frame.o, vector4(0.0f, 0.0f, 1.0f), &dir, &col, 1, 1.0f);
+            }
+            if (r->kind == 0 && tbl >= 0 && tbl < g_propkind_count && (g_propkinds[tbl].flags & 0x12000))
+                m->mask = 0xffff;
+            else
+                m->mask = 0x1ffff;
+            if (r->scale.z * r->scale.y * r->scale.x < 0.0f)
+                m->mirrored = 1;
+            e->add_mesh(m);
+        }
+        if (shape_res) {
+            if (r->kind == 3 || r->kind == 5 ||
+                (r->kind == 0 && tbl >= 0 && ((g_propkinds[tbl].flags & 0xff) == 5 || (g_propkinds[tbl].flags & 0xff) == 10)))
+                e->shape = shape_res->copy_shape();
+            shape_base* sh = shape_res->clone_shape();
+            int v = 8;
+            if (r->kind == 0 && tbl >= 0) {
+                unsigned fl = g_propkinds[tbl].flags;
+                if ((char)fl == 8)
+                    v = 0x10c;
+                else if (fl & 0x4000)
+                    v = 0xc;
+                else if (fl & 0x8000)
+                    v = 0;
+            }
+            sh->set_m8(v);
+            sh->scale(r->scale);
+            sh->transform((const pos*)&r->frame);
+            e->add_shape(sh);
+        } else if (r->kind == 2) {
+            r->id = find_item(&r->name);
+            unsigned k = g_items[r->id].type_flags & 0xff;
+            shape_base* sh;
+            if (k == 1) {
+                sh = (shape_base*)new capsule(0.4f, &vector4(0.0f, -0.3f, 1.05f), &vector4(0.0f, 0.67f, 1.15f));
+            } else if (k == 0xb) {
+                sh = (shape_base*)new sphere(vector4(0.0f, 0.0f, 0.0f), &(const float&)0.3f);
+            } else {
+                goto done_shape;
+            }
+            if (sh) {
+                sh->scale(r->scale);
+                sh->transform((const pos*)&r->frame);
+                ((rgl::world*)scene)->reg_shape((shape_base*)sh);
+            }
+        } else if (r->kind == 6) {
+            unsigned k = g_items[r->id].type_flags & 0xff;
+            ItemKind* ik = &g_items[r->id];
+            shape_base* sh;
+            if (k == 1) {
+                sh = (shape_base*)new capsule(0.4f, &vector4(0.0f, -0.3f, 1.05f), &vector4(0.0f, 0.67f, 1.15f));
+            } else if (k == 0xb) {
+                sh = (shape_base*)new sphere(vector4(0.0f, 0.0f, 0.0f), &(const float&)0.3f);
+            } else if (ik->is_melee() || ik->is_ranged() || k == 7 || k == 5 || k == 6 || k == 0x12) {
+                sh = (shape_base*)new sphere(vector4(0.0f, 0.0f, 0.0f), &(const float&)0.5f);
+            } else {
+                goto done_shape;
+            }
+            if (sh) {
+                sh->scale(r->scale);
+                e->shape = sh;
+            }
+        }
+done_shape:
+        e->set_local_scaled(&r->frame, &r->scale);
+        r->m58 = r->frame;
+        e->game_kind = 0xc;
+        e->game_id = *idx;
+        r->ent = e;
+        prop_ents.push_back(e);
+    }
+
+    int ty = r->kind;
+    if (ty == 0) {
+        int ri = r->id;
+        if (ri >= 0 && ri < g_propkind_count && g_propkinds[ri].triggers.count > 0) {
+            SimpleTriggerVec* ss = &g_propkinds[ri].triggers;
+            g_game->set_matrix(&r->frame);
+            g_game->event_ctx.prop = *idx;
+            rgl::entity* en = r->ent;
+            if (!(en->meshes.size() > 0)) { g_game->event_ctx.mesh = 0; } else { g_game->event_ctx.mesh = en->meshes[0]; }
+            g_game->event_ctx.key_a = 0;
+            g_script.param1 = *idx;
+            ss->update(-0x28);
+        }
+    } else if (ty == 2 || ty == 6 || ty == 7) {
+        int ri = r->id;
+        if (ri >= 0 && ri < g_item_kind_count && isnd(&g_items[ri]).count > 0) {
+            SimpleTriggerVec* ss = &isnd(&g_items[ri]);
+            int who = *id;
+            int aid = -1;
+            if (who >= 0)
+                aid = mag(this, who).troop;
+            g_game->event_ctx.agent = who;
+            g_game->event_ctx.troop = aid;
+            g_game->event_ctx.slot = -1000;
+            rgl::entity* en = r->ent;
+            if (en && en->meshes.size() > 0) {
+                g_game->event_ctx.mesh = en->meshes[0];
+            } else {
+                rgl::entity* e2 = r->ent2;
+                if (e2 && e2->meshes.size() > 0)
+                    g_game->event_ctx.mesh = e2->meshes[0];
+                else
+                    g_game->event_ctx.mesh = 0;
+            }
+            g_game->event_ctx.key_a = 0;
+            g_script.param1 = *id;
+            g_script.param2 = aid;
+            ss->update(-0x32);
+        }
+    }
+    r->init_hp();
+}
+
+// ---- std::vector<PhysRec>::insert (0x44cf90) ----------------------------------------------------------------------------------
+// @ 0x44cf90
+template std::vector<PhysRec>::iterator std::vector<PhysRec>::insert(std::vector<PhysRec>::iterator, const PhysRec&);
+
+
+// ---- Agent::choose_action: the AI decision (15 scored candidate actions) ------------------------------------------------------
+#undef AG
+#define AG(i) (g_mission->agents.pages[(unsigned)(i) >> 4][(unsigned)(i) & 0xf])   // unsigned index: shr, as the original
+#define ZERO_S for (int zi = 0; zi < 15; zi++) s[zi] = 0.0f;
+#define tf_hero 0x00000010i64
+#define tf_guarantee_horse 0x01000000i64
+static __forceinline char mode_flag1_i(const Mission* m) { return ((g_mission_templates[m->mode].flags >> 1) & 1) != 0; }
+static __forceinline int team_leader_i(const Agent* a)     // team_leader 0x435b60, inlined in choose_action
+{
+    int t = a->team;
+    if (t < 0 || t >= 8) t = 7;
+    return g_mission->teams[t].leader;
+}
+static __forceinline float ca_dot(const vector4& a, const vector4& b) { return a.x * b.x + a.z * b.z + b.y * a.y; }   // the threat-loop dot product (the dir reference anchors the loop pointer at dir.y, as the original)
+// @ 0x44d000
+void Agent::choose_action(int unused)
+{
+    vector4 pv[15];                             // target position per kind
+    int ids[15];                                // target id per kind
+    ClassInfo* cr;
+    float s[15];                                // score per kind
+    unsigned cand;
+    float dist;
+    int cls = team;
+    if (cls < 0 || cls >= 8) cls = 7;
+    int kind = 0;
+    if (troop >= 0) {
+        if (horse >= 0)
+            kind = 2;
+        else
+            kind = (g_game->troops[troop].flags30 & tf_guarantee_ranged) ? 1 : 0;
+    }
+    cr = &g_mission->teams[cls].cls[kind];
+
+    ai.last_attacker = -1;
+    ai.melee_standoff_low = 0;
+    ai.melee_standoff = 1.5f;
+    ZERO_S
+
+    if (this->kind == 1) {
+        if (ai.scripted_mode == 1) {
+            ZERO_S
+            s[1] = 10000.0f;
+            pv[1] = ai.scripted_destination.o;
+        } else if (dismount_state) {
+            s[14] = 10000.0f;
+        } else {
+            s[13] = 10000.0f;
+        }
+    } else if (!(ai.alarm & 1)) {
+        if (ai.scripted_mode == 1) {
+            s[1] = 10.0f;
+            pv[1] = ai.scripted_destination.o;
+        }
+        s[11] = (float)(rand() % 15817) * 9.4834677e-06f + 0.3f;
+    } else {
+        {
+            vector4 hp;
+            collect_enemies(&hp.x);
+        }
+        cand = pick_random();
+        Mission* m = g_mission;
+        bool target_mounted = false;
+        int held_id = -1;
+        dist = 1000.0f;
+        if (cand != (unsigned)-1) {
+            float dx = m->agents.pages[cand >> 4][cand & 0xf].pos.x - pos.x;
+            float dy = m->agents.pages[cand >> 4][cand & 0xf].pos.y - pos.y;
+            float dz = m->agents.pages[cand >> 4][cand & 0xf].pos.z - pos.z;
+            dist = (float)sqrt(dx * dx + (dy * dy + dz * dz));
+            ItemRef r = m->agents.pages[cand >> 4][cand & 0xf].cur_pair();
+            held_id = r.item;
+            target_mounted = m->agents.pages[cand >> 4][cand & 0xf].horse >= 0;
+        }
+        if (ai.scripted_mode == 1) {
+            ZERO_S
+            s[1] = 10.0f;
+            pv[1] = ai.scripted_destination.o;
+        } else {
+            if (ai.nthreat) {
+                float t = 5.0f / dist;
+                if (t < 0.0f)
+                    s[4] = 0.0f;
+                else if (t >= 5.0f)
+                    s[4] = 5.0f;
+                else
+                    s[4] = t;
+                ids[4] = cand;
+                if (!has_weapon_for(1) && !has_weapon_for(3)) s[4] = s[4] * 0.1f;
+                if (has_weapon_for(2)) {
+                    float t5 = dist * 0.06666667f;
+                    if (t5 < 0.0f)
+                        s[5] = 0.0f;
+                    else if (t5 >= 2.5f)
+                        s[5] = 2.5f;
+                    else
+                        s[5] = t5;
+                    float t6 = dist * 0.07692308f;
+                    if (!(t6 < 2.0f)) t6 = 2.0f;
+                    s[6] = t6 * 1.5f;
+                    if (g_game->troops[troop].flags30 & tf_guarantee_ranged) {
+                        s[5] = s[5] + s[5];
+                        s[6] = s[6] * 3.0f;
+                    }
+                    if (horse != -1) {
+                        if (weapon_mode == 2)
+                            s[6] = (frand() * 2.0f + 3.5f) * s[6];
+                        else if (ai.weave < -0.5f)
+                            s[6] = (frand() * 5.5f + 6.0f) * s[6];
+                    } else {
+                        s[6] = 0.0f;
+                        if (weapon_mode == 2) s[5] = (frand() + 2.0f) * s[5];
+                        if (target_mounted && held_id >= -1 && g_items[held_id].is_ranged())
+                            s[5] = s[5] * 2.5f;
+                    }
+                    ids[5] = cand;
+                    ids[6] = cand;
+                }
+                if (horse != -1) {
+                    s[5] = s[5] * 0.2f;
+                    s[4] = 0.0f;
+                    if (has_weapon_for(3) || has_weapon_for(1)) {
+                        int best = -1;
+                        float bests = -100.0f;
+                        for (int i = 0; i < ai.nthreat; i++) {
+                            float w = 50.0f / (ai.threats[i].dist + 25.0f);
+                            if (!(w < 1.0f)) w = 1.0f;
+                            int n = agent_by_id(ai.threats[i].id)->targeted_by - 1;
+                            w = w / ((float)(n < 0 ? 0 : n) + 1.0f);
+                            float d = ca_dot(vel, ai.threats[i].dir);
+                            if (d > 0.0f) w = (d * d * 20.0f + 1.0f) * w;
+                            float sc = ((float)(rand() % 15817) * 6.3223117e-05f + 0.25f) * w * 0.5f;
+                            if (agent_by_id(ai.threats[i].id)->weapon_flags & 0x10)
+                                sc = sc * 1.5f;
+                            else if (agent_by_id(ai.threats[i].id)->weapon_flags & 0x20)
+                                sc = sc * 1.5f;
+                            if (sc > bests) {
+                                best = i;
+                                bests = sc;
+                            }
+                        }
+                        ids[7] = ai.threats[best].id;
+                        s[7] = bests;
+                    }
+                }
+            } else {
+                if (mode_flag1_i(g_mission)) {
+                    for (int i = 0; i < 8; i++) {
+                        if (g_mission->teams[team].relation[i] == -1 &&
+                            (g_mission->counts[i][5] > 0 || g_mission->counts[i][4] > 0)) {
+                            s[12] = 1000.0f;
+                            break;
+                        }
+                    }
+                }
+            }
+            cls = team;
+            if (cls < 0 || cls >= 8) cls = 7;
+            int leader = g_mission->teams[cls].leader;
+            if (this->kind == 0) {
+                int k = cr->kind;
+                if (k == 1 || (k == 2 && leader != pool_id)) {
+                    if ((int)cand >= 0) {
+                        vector4 d = vsub(AG(cand).pos, cr->pos);
+                        if ((float)sqrt(d.z * d.z + d.x * d.x + d.y * d.y) > cr->half + cr->half && dist > 10.0f)
+                            s[7] = s[7] * 0.0f;
+                    }
+                    if (k == 2 && leader != pool_id) {
+                        vector4 hp;
+                        hand_pos(&hp);
+                        vector4 d = vsub(hp, pos);
+                        float l = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) * 0.25f;
+                        if (l < 0.15f)
+                            l = 0.15f;
+                        else if (l >= 4.0f)
+                            l = 4.0f;
+                        s[9] = (l + 1.0f);
+                        pv[1] = AG(leader).pos;
+                        pv[9] = AG(leader).pos;
+                    } else if (k == 1) {
+                        vector4 hp;
+                        hand_pos(&hp);
+                        vector4 d = vsub(hp, pos);
+                        float l = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) * 0.25f;
+                        if (l < 0.15f)
+                            l = 0.15f;
+                        else if (l >= 4.0f)
+                            l = 4.0f;
+                        s[1] = (l + 1.0f);
+                        pv[1] = hp;
+                    }
+                    ids[9] = cand;
+                    ids[1] = cand;
+                } else if (cr->kind == 3) {
+                    s[1] = 1.5f;
+                    pv[1] = pos;
+                    ids[1] = cand;
+                }
+                if (cr->k4 == 1 && horse == -1) {
+                    Troop* T = &g_game->troops[troop];
+                    unsigned __int64 fl = T->flags30;
+                    if ((fl & tf_hero) || (fl & tf_guarantee_horse)) {
+                        AgentTable* tbl = &g_mission->agents;
+                        float best = 10000.0f;
+                        int bestid = -1;
+                        unsigned it = tbl->first_used();
+                        unsigned cnt = tbl->count;
+                        if (it < cnt) {
+                            Agent* const* pg = &g_mission->agents.pages[0];
+                            do {
+                                Agent* a = &pg[it >> 4][it & 0xf];
+                                if (a->kind == 1 && a->rider == -1 && a->f5830 == 2) {
+                                    int v = a->item.difficulty();
+                                    if (v <= T->nibble(0x18)) {
+                                        vector4 d = vsub(a->pos, pos);
+                                        float dd = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x);
+                                        if (dd < best) {
+                                            best = dd;
+                                            bestid = it;
+                                        }
+                                    }
+                                }
+                                tbl->next_used(&it);
+                            } while (it < cnt);
+                            if (bestid != -1 && best < 60.0f) {
+                                s[2] = 2.2f;
+                                ids[2] = bestid;
+                            }
+                        }
+                        goto randomise;
+                    }
+                }
+                if (cr->k4 == 2 && horse != -1 && dist > 5.0f) s[3] = 50.0f;
+            }
+        }
+    }
+randomise:
+    for (int i = 0; i < 15; i++) s[i] = ((float)(rand() % 15817) * 1.2644623e-05f + 0.9f) * s[i];
+    if (ai.shot_failed == 2) {
+        s[5] = s[5] * 0.1f;
+        s[6] = s[6] * 0.5f;
+    }
+    int best = 0;
+    for (int i = 1; i < 15; i++)
+        if (s[i] > s[best]) best = i;
+
+    int saved = ai.simple_behavior;
+    start_attack(best);
+    ai.action_target = ids[best];
+    ai.action_point = pv[best];
+    ai.circle_mode = 0;
+    ai.circle_mode_prev = -1;
+    if (best == 11 || best != 1) {
+        if (best == 5 || best == 6) {
+            int t = pick_threat();
+            if (t >= 0) ai.action_target = t;
+        }
+    } else {
+        int k = cr->kind;
+        if (k == 1 || (k == 2 && team_leader_i(this) != pool_id)) {
+            float zero = 0.0f;
+            goal_near_for_class(&ai.action_point, &zero);
+        } else if (cr->kind == 3 && ai.scripted_mode != 1) {
+            if (ai.fire_result == 0) {
+                const vector4& f = body->local.f;
+                vector4 p = a_vadd(vector4(f.x, f.y, f.z), pos);
+                int fkind = 2;
+                int face = update_nav_face();
+                float speed = 2.0f;
+                pick_reachable_goal(&p, &speed, &face, &fkind);
+            }
+        } else {
+            float zero = 0.0f;
+            set_goal_near(&ai.action_point, &zero);
+        }
+        ai.path_state |= 0x20;
+        if (horse < 0 && this->kind != 1) {
+            if (ai.scripted_mode != 0)
+                ai.melee_standoff = 1.75f;
+            else
+                ai.melee_standoff = 1.0f;
+        } else {
+            ai.melee_standoff = 3.0f;
+        }
+    }
+    ai.shot_failed = 0;
+    if (ai.simple_behavior != saved) ai.tb_interval = 0;
+}
+
+
+// ---- Agent::ai_idle_tick: the per-frame timer block of the AI controller ----------------------------------------------------
+// The three timer tests compare against Timer::elapsed() (0x432c10) inlined: the tick is re-read for the
+// restart below, so the inlined form must not be commoned with it.
+static __forceinline float tick_elapsed(const Timer& t)
+{
+    return (float)(g_ticks[t.clock] - t.start) * 1e-05f;
+}
+
+// @ 0x44df30
+void Agent::ai_idle_tick(const float* dt)
+{
+    int alive = state;
+    g_input_flags = 0;
+    if (alive != 1) {
+        ai.in_prev.bits = 0;
+        return;
+    }
+    float v = this->ai.alertness - *dt * 0.002f;
+    this->ai.alertness = v;
+    if (v > 1.0f)
+        this->ai.alertness = v - *dt * 0.05f;
+    if (this->ai.alertness < 0.5f)
+        this->ai.alertness = 0.5f;
+    if (ai.action_countdown < 9.0f)
+        ai.action_countdown = ai.action_countdown + *dt;
+    if (ai.ta_interval < tick_elapsed(ai.ta)) {
+        ai.ta.start = g_ticks[ai.ta.clock];
+        ai.ta_interval = (float)(rand() % 0x3dc9) * 0.00012644623f + 5.0f;
+        choose_action(0);
+    }
+    if (ai.tb_interval < tick_elapsed(ai.tb)) {
+        ai.rand_bits = rand();
+        update_ai();
+        ai.tb.start = g_ticks[ai.tb.clock];
+        ai.tb_interval = ((float)(rand() % 0x3dc9) * 6.322312e-05f + 0.5f) * g_dt_scale;
+    }
+    if (ai.tc_interval <= tick_elapsed(ai.tc)) {
+        update_alarm();
+        ai.in_prev.bits = 0;
+        g_input_mask = ai.input;
+        ai.input = 0;
+        ai_update_control();
+        ai.tc.start = g_ticks[ai.tc.clock];
+        float r1 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
+        float hi = (float)g_options.difficulty * 0.02f + 0.2f / (float)(g_game->troops[troop].level + 10);
+        ai.tc_interval = (r1 * 0.03f + hi) + 0.05f;
+        InputRec e;
+        e.bits = ai.input;
+        float r2 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
+        float ga = (float)g_options.difficulty * 0.1f;
+        float t = ga + (r2 + 1.0f) * 0.1f;
+        if (troop >= 0)
+            t = t / ((float)g_game->troops[troop].level + 30.0f) * 40.0f;
+        e.time = (__int64)(t * 100000.0f + g_ticks[2]);
+        ai.in_prev.bits = ai.in_prev.bits | g_input_flags;
+        ai.input_q.push_back(e);
+    }
+}
+
+
+// ---- Agent::shoot: fire a missile from the agent's hand ---------------------------------------------------------------------
+// @ 0x44e2b0
+void Agent::shoot()
+{
+    ItemRef curp = cur_pair_fi();
+    ItemKind* ik = &g_items[curp.item];
+
+    FxDef* an = body->fx;
+    if (!an->pose_valid) {
+        if (an->pose_src) an->update_poses(); else an->update_poses2();
+    }
+    const rgl::matrix* W = &an->elems[9].m84;
+    vector4 P(W->o.x * 0.65f, W->o.y * 0.65f, W->o.z * 0.65f);
+    an = body->fx;
+    if (!an->pose_valid) {
+        if (an->pose_src) an->update_poses(); else an->update_poses2();
+    }
+    const vector4* o19 = &an->elems[19].m84.o;
+    const rgl::matrix* m = &body->local;
+    float kx = o19->x * 0.35f + P.x;
+    float ky = o19->y * 0.35f + P.y;
+    float kz = o19->z * 0.35f + P.z;
+    P.x = kz * m->u.x + ky * m->f.x + kx * m->s.x + m->o.x;
+    P.y = kz * m->u.y + ky * m->f.y + kx * m->s.y + m->o.y;
+    P.z = kz * m->u.z + ky * m->f.z + kx * m->s.z + m->o.z;
+    P.x = W->f.x * 0.15f + P.x;
+    P.y = W->f.y * 0.15f + P.y;
+    P.z = W->f.z * 0.15f + P.z;
+
+    vector4 d0 = vel;
+    if (horse >= 0) {
+        vector4 tmp;
+        rotate_scale_xy(&tmp, &vel, &cur, &in_now.move);
+        d0 = tmp;
+    }
+    float spr = aim_error;
+    Mission* ms = g_mission;
+    int tid = ai.target;
+    if (ms->player_id != pool_id && tid >= 0) {
+        ItemRef c2 = slot_pair_fi(1);
+        float cls = (float)slot_class_impl(curp.item, c2.item >= 0);
+        Agent* tg = &ms->agents.pages[tid >> 4][tid & 0xf];
+        vector4 rel = a_vsub(tg->v56b4, v56b4);
+        vector4 diff = a_vsub(tg->pos, pos);
+        vector4 dn = diff;
+        float dist = dn.normalize();
+        vector4 q = a_vadd(diff, rel);
+        q.normalize();
+        float err = cls + 20.0f;
+        float cx = dn.y * q.z - dn.z * q.y;
+        float cy = dn.z * q.x - q.z * dn.x;
+        float cz = q.y * dn.x - dn.y * q.x;
+        float g5 = (float)g_options.difficulty * 0.5f;
+        float cm = (float)sqrt(cx * cx + cz * cz + cy * cy);
+        float rm = (float)sqrt(rel.x * rel.x + rel.z * rel.z + rel.y * rel.y);
+        float A2 = err;
+        float t2 = (g5 + 0.5f) * (((10.0f / (dist + 10.0f)) * (cm * rm)) * 0.3f / err);
+        float t1 = (g5 + 1.0f) * (0.65f / A2);
+        err = t1 + t2;
+        if (err > 0.2f) err = 0.2f;
+        if (ms->fog_far < 200.0f) err = dist / ms->fog_far * 0.05f + err;
+        if (::is_night()) err = dist * 0.001f + err;
+        d0.x = (0.5f - (float)(rand() % 0x3dc9) * 6.322312e-05f) * err + d0.x;
+        d0.y = (0.5f - (float)(rand() % 0x3dc9) * 6.322312e-05f) * err + d0.y;
+        d0.z = (0.5f - (float)(rand() % 0x3dc9) * 6.322312e-05f) * err + d0.z;
+        d0.normalize();
+    }
+    unsigned mid;
+    {
+    int missing, total, slot_out;
+    ItemRef ammo = best_ammo(-1, &missing, &total, &slot_out);
+    vector4 shot;
+    rand_cone_dir(&shot, d0, spr);
+    ItemRef launcher = cur_pair_fi();
+    mid = g_mission->spawn_missile(&P, &shot, &launcher, &ammo, pool_id);
+    }
+    unsigned __int64 shoot_bits = ik->flags & 0xff000ui64;
+    if (shoot_bits == 0x30000ui64) {
+        mrec(&g_mission->poolJ, mid).tumble = 6.0f;
+        return;
+    }
+    if (shoot_bits == 0x20000ui64) {
+        mrec(&g_mission->poolJ, mid).tumble = 12.0f;
+        return;
+    }
+    mrec(&g_mission->poolJ, mid).tumble = 0.0f;
+}
+
+
+using rgl::mesh;
+using rgl::mat4;
+
+#define itp_two_handed 0x200000
+#define itcf_carry_mask 0x00000007f0000000i64
+
+
+// ---- rgl::mesh members --------------------------------------------------------------------------------------------------
+// @ 0x44e970
+void rgl::mesh::add_quad(const vector4* p0, const vector4* p1, const vec2* uv0, const vec2* uv1, const unsigned* color)
+{
+    int pts[4];
+    int vts[4];
+    pts[0] = add_point(p0);
+    { vector4 q; q.x = p1->x; q.y = p0->y; q.z = p0->z; pts[1] = add_point(&q); }
+    { vector4 q; q.x = p1->x; q.y = p1->y; q.z = p0->z; pts[2] = add_point(&q); }
+    { vector4 q; q.x = p0->x; q.y = p1->y; q.z = p0->z; pts[3] = add_point(&q); }
+    vector4 n(0.0f, 0.0f, 1.0f);
+    int f5c = 0;
+    vts[0] = add_vertex(pts[0], uv0, color, &n, &f5c);
+    { vec2 u; u.x = uv1->x; u.y = uv0->y; f5c = 0; vts[1] = add_vertex(pts[1], &u, color, &n, &f5c); }
+    f5c = 0;
+    vts[2] = add_vertex(pts[2], uv1, color, &n, &f5c);
+    { vec2 u; u.x = uv0->x; u.y = uv1->y; f5c = 0; vts[3] = add_vertex(pts[3], &u, color, &n, &f5c); }
+    add_face(vts[0], vts[1], vts[2]);
+    add_face(vts[0], vts[2], vts[3]);
+    slots[0].f28 = 1;
+    slots[1].f28 = 1;
+}
+// rgl::aabb::extend_box (0x4201b0, src/engine/scene/entity_render.cpp) with its body visible here (inline noinline
+// duplicate, as transform_point_to_local above): the matrix append_skinned / append_plain receive does not escape
+inline __declspec(noinline) void rgl::aabb::extend_box(const aabb* b, const rgl::matrix* m)
+{
+    if (b->min.x > b->max.x)
+        return;
+    {
+        float c[8][4];
+        c[0][0] = b->min.x; c[0][1] = b->min.y; c[0][2] = b->min.z;
+        c[1][0] = b->max.x; c[1][1] = b->min.y; c[1][2] = b->min.z;
+        c[2][0] = b->min.x; c[2][1] = b->max.y; c[2][2] = b->min.z;
+        c[3][0] = b->max.x; c[3][1] = b->max.y; c[3][2] = b->min.z;
+        c[4][0] = b->min.x; c[4][1] = b->min.y; c[4][2] = b->max.z;
+        c[5][0] = b->max.x; c[5][1] = b->min.y; c[5][2] = b->max.z;
+        c[6][0] = b->min.x; c[6][1] = b->max.y; c[6][2] = b->max.z;
+        c[7][0] = b->max.x; c[7][1] = b->max.y; c[7][2] = b->max.z;
+        for (int i = 0; 8 > i; i++) {
+            float x = c[i][1] * m->f.x;
+            vector4 p;
+            x = x + c[i][2] * m->u.x;
+            x = x + c[i][0] * m->s.x;
+            p.x = x + m->o.x;
+            float y = c[i][2] * m->u.y;
+            y = y + c[i][0] * m->s.y;
+            y = y + c[i][1] * m->f.y;
+            p.y = y + m->o.y;
+            float z = m->s.z * c[i][0];
+            z = z + c[i][1] * m->f.z;
+            z = z + c[i][2] * m->u.z;
+            p.z = z + m->o.z;
+            extend(&p);
+        }
+    }
+}
+
+namespace rgl { static inline unsigned min255(unsigned v) { return v < 255 ? v : 255; } }
+// 0x40e440 (engine/physics/collision_shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+namespace rgl {
+inline __declspec(noinline) unsigned pack_color(const vector4* c)      // 0x40e440
+{
+    unsigned a = (unsigned)(c->w * 256.0f);
+    unsigned r = (unsigned)(c->x * 256.0f);
+    unsigned g = (unsigned)(c->y * 256.0f);
+    unsigned b = (unsigned)(c->z * 256.0f);
+    return (((min255(a) << 8 | min255(r)) << 8) | min255(g)) << 8 | min255(b);
+}
+}
+
+// @ 0x44eb00
+void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned col, char flip)
+{
+    if (!local_faces) {
+        faces = parent->faces;
+        local_faces = 1;
+    }
+    ensure_local();
+    int npts = (int)points.size();
+    int nverts = (int)vertices.size();
+    if (other->nbones > nbones) nbones = other->nbones;
+    if (bone + 1 > nbones) nbones = bone + 1;
+    std::vector<point20>& pts = other->get70_rec();
+    std::vector<vertex60>& vs = other->get50_rec();
+    std::vector<skin_vert>& sk = other->get60_rec();
+    vector4 p;
+    for (unsigned i = 0; i < pts.size(); i++) {
+        const vector4& q = pts[i].a;
+        p.x = m->f.x * q.y + m->u.x * q.z + q.x * m->s.x + m->o.x;
+        p.y = m->s.y * q.x + m->f.y * q.y + m->u.y * q.z + m->o.y;
+        p.z = m->s.z * q.x + m->f.z * q.y + m->u.z * q.z + m->o.z;
+        add_point(&p);
+    }
+    if (sk.size() != 0) {
+        if (skin_verts.size() < vertices.size())
+            build_skin();
+        for (unsigned i = 0; i < sk.size(); i++) {
+            skin_vert e = sk[i];
+            skin_verts.push_back(e);
+        }
+    } else {
+        if (bone >= 0) {
+            if (skin_verts.size() < vertices.size())
+                build_skin();
+            for (unsigned i = 0; i < vs.size(); i++) {
+                skin_vert e;
+                e.w[0] = 1.0f; e.w[3] = 0.0f; e.w[2] = 0.0f; e.w[1] = 0.0f;
+                e.bone[0] = bone; e.bone[3] = 0; e.bone[2] = 0; e.bone[1] = 0;
+                e.bonef[0] = (float)bone; e.bonef[3] = 0; e.bonef[2] = 0; e.bonef[1] = 0;
+                skin_verts.push_back(e);
+            }
+        }
+    }
+    vector4& tint = p;
+    new ((void*)&tint) vector4(rgl::unpack_color(&col));   // constructed in place: the hidden return pointer is &tint
+    for (unsigned i = 0; i < vs.size(); i++) {
+        const vector4& n = vs[i].pos;
+        vertex60 v = vs[i];
+        vector4 t;
+        t.x = n.x * m->s.x + (m->f.x * n.y + m->u.x * n.z);
+        t.y = m->f.y * n.y + (m->u.y * n.z + n.x * m->s.y);
+        t.z = m->f.z * n.y + (m->u.z * n.z + n.x * m->s.z);
+        v.pos = t;
+        v.normal = t;
+        v.index += npts;
+        vector4 c;
+        c = rgl::unpack_color(&v.color);
+        c.x = c.x * tint.x; c.y = c.y * tint.y; c.z = c.z * tint.z; c.w = c.w * tint.w;
+        v.color = rgl::pack_color(&c);
+        v.f58 = v.color;
+        vertices.push_back(v);
+    }
+    std::vector<face20>& fs = other->get90_rec();
+    for (unsigned i = 0; i < fs.size(); i++) {
+        if (!(flip)) { add_face(fs[i].a + nverts, fs[i].b + nverts, fs[i].c + nverts); } else { add_face(fs[i].a + nverts, fs[i].c + nverts, fs[i].b + nverts); }
+    }
+    slots[0].f28 = 1;
+    slots[1].f28 = 1;
+    bounds.extend_box(&other->bounds, m);
+}
+// @ 0x44f0c0
+void rgl::mesh::scale(float s)
+{
+    ensure_local();
+    for (unsigned i = 0; i < points.size(); i++) {
+        point20* p = &(&*points.begin())[i];
+        p->a.x = s * p->a.x;
+        p->a.y = s * p->a.y;
+        p->a.z = s * p->a.z;
+        p = &(&*points.begin())[i];
+        p->b.x = s * p->b.x;
+        p->b.y = s * p->b.y;
+        p->b.z = s * p->b.z;
+    }
+    for (unsigned j = 0; j < (unsigned)kf.count; j++) {
+        for (std::vector<vector4>::iterator q = kf.frames[j].verts.begin(); q != kf.frames[j].verts.end(); q++) {
+            q->x = s * q->x;
+            q->y = s * q->y;
+            q->z = s * q->z;
+        }
+    }
+    char* dirty = &slots[0].f28;
+    *dirty = 1;
+    bounds.min.x = s * bounds.min.x;
+    bounds.min.y = s * bounds.min.y;
+    bounds.min.z = s * bounds.min.z;
+    bounds.max.x = s * bounds.max.x;
+    bounds.max.y = s * bounds.max.y;
+    bounds.max.z = s * bounds.max.z;
+    bounds.center.x = s * bounds.center.x;
+    bounds.center.y = s * bounds.center.y;
+    bounds.center.z = s * bounds.center.z;
+    bounds.radius = s * bounds.radius;
+}
+// @ 0x44f240
+void rgl::mesh::translate(const vector4* d)
+{
+    ensure_local();
+    for (unsigned i = 0; i < points.size(); i++) {
+        vector4& a = points[i].a;
+        a += *d;
+        points[i].b += *d;
+    }
+    for (int j = 0; j < kf.count; j++) {
+        for (unsigned k = 0; k < kf.frames[j].verts.size(); k++) {
+            kf.frames[j].verts[k] += *d;
+        }
+    }
+    char* dirty = &slots[0].f28;
+    *dirty = 1;
+    bounds.min += *d;                   // through vector4::operator+= (o.x + x order and its expansion's keys: min.z, max.x orientation)
+    bounds.max += *d;
+    bounds.center.x = bounds.center.x + d->x;
+    bounds.center.y = bounds.center.y + d->y;
+    bounds.center.z = bounds.center.z + d->z;
+}
+
+// ---- Font::draw_glyph, the carried ranged item mesh, add_placed, the Newton world ---------------------------------------------------
+// the font glyph record: the slices read it as {u0, v0, u1, v1, xoff, yoff, xadv}; font.h's Glyph has the same seven words
+// (key, f4, f8, fc, f10, f14, f18), the key word being the left u of an ascii entry
+static __forceinline const Glyph* font_get(Font* f, int c)
+{
+    if (c >= 0x200) {
+        GlyphMap::iterator it = f->map.lower_bound(c);
+        if (it != f->map.end())
+            return &it->second;
+        return &f->dflt;
+    }
+    return &f->ascii[c];
+}
+
+// @ 0x44f3c0
+void rgl::mesh::transform(mat4 m)
+{
+    ensure_local();
+    unsigned i;
+    for (i = 0; i < points.size(); i++) {
+        vector4 ta, tb;
+        point20* p = &(&*points.begin())[i];
+        ta.x = m.u.x * p->a.z + m.f.x * p->a.y + m.s.x * p->a.x + m.o.x;
+        ta.y = m.u.y * p->a.z + m.f.y * p->a.y + m.s.y * p->a.x + m.o.y;
+        ta.z = m.u.z * p->a.z + m.f.z * p->a.y + m.s.z * p->a.x + m.o.z;
+        p->a = ta;
+        p = &(&*points.begin())[i];
+        tb.x = m.u.x * p->b.z + m.f.x * p->b.y + m.s.x * p->b.x + m.o.x;
+        // the original sums y and z as (f*by + u*bz) + s*bx (0x44f44a..0x44f4e8); MSVC reorders a commutative
+        // chain written in one expression, so the order is pinned with a running sum
+        float ty = m.f.y * p->b.y;
+        ty = ty + m.u.y * p->b.z;
+        ty = ty + m.s.y * p->b.x;
+        tb.y = ty + m.o.y;
+        float tz = m.f.z * p->b.y;
+        tz = tz + m.u.z * p->b.z;
+        tz = tz + m.s.z * p->b.x;
+        tb.z = tz + m.o.z;
+        p->b = tb;
+    }
+    for (i = 0; i < vertices.size(); i++) {
+        vector4 tb;
+        vertex60* v = &(&*vertices.begin())[i];
+        // the original sums (s*nx + f*ny) + u*nz (0x44f538..0x44f5a1); pinned with a running sum, see above
+        float nx = m.s.x * v->normal.x;
+        nx = nx + m.f.x * v->normal.y;
+        tb.x = nx + m.u.x * v->normal.z;
+        float ny = m.s.y * v->normal.x;
+        ny = ny + m.f.y * v->normal.y;
+        tb.y = ny + m.u.y * v->normal.z;
+        float nz = m.s.z * v->normal.x;
+        nz = nz + m.f.z * v->normal.y;
+        tb.z = nz + m.u.z * v->normal.z;
+        v->normal = tb;
+    }
+    slots[0].f28 = 1;
+    compute_bounds();
+}
+// @ 0x44f5d0
+void Font::draw_glyph(int ch, const vector4* pos, const vec2* scale, mesh* m, const unsigned* color)
+{
+    const Glyph* g = font_get(this, ch);
+    float dv = g->hi.y - g->lo.y;
+    vector4 a = *pos;
+    vec2 s;                            // the glyph size as a two-float struct: its lanes are field views, not substituted temporaries
+    s.y = dv * scale->y;
+    a.y = (g->f14 * scale->y - s.y) + a.y;
+    s.x = (g->hi.x - g->lo.x) * scale->x;
+    vector4 b(a.x + s.x, a.y + s.y, a.z);
+    m->add_quad(&a, &b, &g->lo, &g->hi, color);
+}
+
+// item flag field at ItemKind::flags: (flags & 0xff000) selects a visual class (module-system itp_* bits 12..19)
+enum { ITEM_CLASS_MASK = 0xff000, ITEM_CLASS_A = 0x10000, ITEM_CLASS_B = 0x20000, ITEM_CLASS_C = 0x30000 };
+
+static inline tstring item_mesh_name(ItemKind* items, const ItemRef& r)
+{
+    if (r.item >= 0 && r.item < g_item_kind_count)
+        return items[r.item].mesh_name_for((int)r.m4 >> 24);
+    return tstring("Error: Invalid item");
+}
+static __forceinline rgl::mesh* get_obj(const tstring& n) { return (rgl::mesh*)g_resmgr.get_object(&n); }
+// 0x40e670 / 0x40e770 (engine/physics/collision_shapes.cpp owns the rows): the bodies visible, so the angle passed to them does not escape
+static __forceinline vector4 rm_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
+static __forceinline vector4 rm_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline vector4 rm_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+inline __declspec(noinline) void rgl::mat3::rotate_about_f(const float* angle)
+{
+    double sn = sin((double)*angle);
+    vector4 ns, nu;
+    ns = rm_sub(rm_mul(s, cos((double)*angle)), rm_mul(u, sn));
+    nu = rm_add(rm_mul(u, cos((double)*angle)), rm_mul(s, sn));
+    s = ns;
+    u = nu;
+}
+inline __declspec(noinline) void rgl::mat3::rotate_about_u(const float* angle)
+{
+    double sn = sin((double)*angle);
+    vector4 ns, nf;
+    ns = rm_add(rm_mul(s, cos((double)*angle)), rm_mul(f, sn));
+    nf = rm_sub(rm_mul(f, cos((double)*angle)), rm_mul(s, sn));
+    s = ns;
+    f = nf;
+}
+
+// 0x4351f0 (game/agent/agent_queries.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) ItemRef Missile::ranged_ref()      // 0x4351f0
+{
+    ItemRef r;
+    r.item = -1;
+    if (launcher.item >= 0) {
+        if ((char)g_items[launcher.item].type_flags == itp_type_thrown)
+            r = launcher;
+        else
+            r = ammo;
+    }
+    return r;
+}
+
+// @ 0x44f6a0
+mesh* Missile::make_ranged_mesh()
+{
+    mesh* result = 0;
+    ItemKind* items = g_items;
+    int i = -1;
+    int a = launcher.item;
+    if (a >= 0) {
+        if ((char)items[a].type_flags == 10)
+            i = a;
+        else
+            i = ammo.item;
+    }
+    ItemRef r = ranged_ref();
+
+    if (i >= 0) {
+        mesh* obj = (mesh*)get_obj(item_mesh_name(g_items, r));
+        float s = (float)g_items[i].weapon_length * 0.01f;
+        if (obj) {
+            result = obj->clone();
+            vector4 d(0.0f, -s, 0.0f);
+            result->translate(&d);
+            rgl::matrix rot;
+            identity_pos(&rot);
+            float angle = 1.5707964f;
+            rot.rotate_about_f(&angle);
+            if ((char)g_items[i].type_flags == 10) {
+                if ((g_items[i].flags & ITEM_CLASS_MASK) == ITEM_CLASS_C) {
+                    angle = frand() * 0.4f + 0.5f;
+                    rot.rotate_about_u(&angle);
+                }
+                if ((g_items[i].flags & ITEM_CLASS_MASK) == ITEM_CLASS_B) {
+                    angle = frand() * 0.4f + 3.2415926f;
+                    rot.rotate_about_u(&angle);
+                }
+            }
+            result->transform(*(mat4*)&rot);
+        }
+    }
+    return result;
+}
+
+#include "game/mission/placed_obj.h"      // PlacedObj (Mission::props is a std::vector<PlacedObj>)
+
+// @ 0x44f870
+int Mission::add_placed(const int* kind, const int* id, const int* value, const matrix* m, int* spawn_id)
+{
+    int cnt = 0;
+    int prev = -1;
+    int idx = (int)props.size();
+    {
+        PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent_queries.cpp): shared rec1c8.h
+        props.push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
+        ::init_placed(&props[idx], kind, id, value, m);
+        if (*kind == 7 || *kind == 6)
+            props[idx].m10 = 2;
+        if (*kind == 1) {
+            cnt = 0;
+            prev = -1;
+            for (int k = 0; k < 0x28; k++) {
+                if (prev >= cnt)
+                    break;
+                prev = cnt;
+                for (unsigned j = 0; j < props.size(); j++) {
+                    if (props[j].kind == 1 && props[j].value == cnt)
+                        cnt++;
+                }
+            }
+            if (cnt < 0x40)
+                props[idx].value = cnt;
+        }
+        spawn_prop(&idx, spawn_id);
+    }
+    return idx;
+}
+
+// the freshly created record as the original builds it: the two vectors are zeroed in place and no cleanup follows
+
+// @ 0x44fa40
+template void std::vector<PhysRec>::push_back(const PhysRec&);
+
+// @ 0x44fad0
+unsigned PhysSet::create_world()
+{
+    unsigned idx = 0;
+    PhysRec* p = &recs[0];
+    while (idx < recs.size() && p->world != 0) {
+        idx++;
+        p++;
+    }
+    NewtonWorld* w = NewtonCreate(0, 0);
+    NewtonSetSolverModel(w, 6);
+    {
+        vector4 mx, mn;
+        mn.x = -1000.0f; mn.y = -1000.0f; mn.z = -100.0f;
+        mx.x = 1000.0f; mx.y = 1000.0f; mx.z = 1000.0f;
+        NewtonSetWorldSize(w, &mn.x, &mx.x);
+    }
+    if (idx == recs.size()) {
+        PhysRec r;
+        r.world = w;
+        recs.push_back(r);                                          // 0x44fa40
+    } else {
+        recs[idx].world = w;
+    }
+    recs[idx].material = NewtonMaterialGetDefaultGroupID(w);
+    recs[idx].f0 = 0;
+    NewtonMaterialSetDefaultSoftness(w, recs[idx].material, recs[idx].material, 0.1f);
+    NewtonMaterialSetDefaultElasticity(w, recs[idx].material, recs[idx].material, 0.5f);
+    NewtonMaterialSetDefaultFriction(w, recs[idx].material, recs[idx].material, 1.1f, 0.9f);
+    nworlds++;
+    return idx;
+}
+
+// ---- Agent::start_ragdoll: turn the animated skeleton into a Newton ragdoll -----------------------------------------------------
+// inlined helpers (see s004417d0)
+// frame whose side axis is `dir`, f/u completed with the cross products (the inline code of s004417d0)
+static __forceinline void make_frame(matrix& R, const vector4& dir)
+{
+    R.s = dir;
+    vector4 c1 = cross3(R.s, R.f);
+    if ((float)sqrt(c1.x * c1.x + c1.z * c1.z + c1.y * c1.y) < 0.001f) {      // 0x450778: (x^2 + z^2) + y^2
+        R.f = cross3(R.u, R.s);
+        vnorm(R.f);
+        R.u = cross3(R.s, R.f);
+        vnorm(R.u);
+    } else {
+        R.u = c1;
+        vnorm(R.u);
+        R.f = cross3(R.u, R.s);
+        vnorm(R.f);
+    }
+}
+
+// transform a point by a frame
+static __forceinline void tpoint(vector4& r, const matrix& m, const vector4& p)
+{
+    r.x = p.y * m.f.x + p.z * m.u.x + p.x * m.s.x + m.o.x;
+    r.y = m.f.y * p.y + m.u.y * p.z + m.s.y * p.x + m.o.y;
+    r.z = m.f.z * p.y + m.u.z * p.z + m.s.z * p.x + m.o.z;
+}
+// rotate a vector by the 3x3 part of a frame
+static __forceinline void rot3v(vector4& r, const matrix& m, float x, float y, float z)
+{
+    r.x = m.s.x * x + m.u.x * z + m.f.x * y;
+    r.y = m.s.y * x + m.u.y * z + m.f.y * y;
+    r.z = m.s.z * x + m.u.z * z + m.f.z * y;
+}
+// the same product in the three summation orders the original uses (float sums are not associative)
+// 0x450e65 (skeleton velocity) and 0x450f40 (the bone's own angular velocity): x is (u*z + f*y) + s*x
+static __forceinline void rot3v_x(vector4& r, const matrix& m, float x, float y, float z)
+{
+    r.x = m.u.x * z + m.f.x * y + m.s.x * x;
+    r.y = m.s.y * x + m.u.y * z + m.f.y * y;
+    r.z = m.s.z * x + m.u.z * z + m.f.z * y;
+}
+// 0x450bf1 (the cone limit axis): x is (u*z + s*x) + f*y, y and z are (f*y + s*x) + u*z
+static __forceinline void rot3v_cone(vector4& r, const matrix& m, float x, float y, float z)
+{
+    r.x = m.u.x * z + m.s.x * x + m.f.x * y;
+    r.y = m.f.y * y + m.s.y * x + m.u.y * z;
+    r.z = m.f.z * y + m.s.z * x + m.u.z * z;
+}
+// 0x450fbb (the angular velocity into the world): every component is (z*u + y*f) + x*s
+static __forceinline void rot3v_w(vector4& r, const matrix& m, float x, float y, float z)
+{
+    r.x = z * m.u.x + y * m.f.x + x * m.s.x;
+    r.y = z * m.u.y + y * m.f.y + x * m.s.y;
+    r.z = z * m.u.z + y * m.f.z + x * m.s.z;
+}
+
+// @ 0x44fc60
+void Agent::start_ragdoll()
+{
+    int idx = (int)g_phys.create_world();
+    phys_idx = idx;
+    g_phys.recs[idx].ragdoll = NewtonCreateRagDoll(g_phys.recs[idx].world);
+    NewtonRagDollBegin(g_phys.recs[idx].ragdoll);
+
+    rgl::strategic_entity* b = body;
+    frame_set* sd = b->fx->res;
+    int n = sd->nbones;
+    vector4 wacc[32], vacc[32];
+    M4 Wr[32], Ar[32];
+    matrix* W = (matrix*)Wr;
+    matrix* A = (matrix*)Ar;
+    int i;
+
+    // zero the accumulators
+    for (i = 0; i < n; i++) {
+        wacc[i] = vector4(0.0f, 0.0f, 0.0f);
+        vacc[i] = vector4(0.0f, 0.0f, 0.0f);
+    }
+    vector4 v, w;                                           // velocity / angular velocity handed to Newton
+
+    // sum the ancestors' angular velocities into every bone
+    FxElem* regs = b->fx->elems;
+    for (i = 0; i < n; i++) {
+        float px, py, pz;
+        {
+            const vector4& o = regs[i].m84.o;
+            px = b->local.f.x * o.y + b->local.u.x * o.z + o.x * b->local.s.x + b->local.o.x;
+            py = b->local.f.y * o.y + b->local.u.y * o.z + b->local.s.y * o.x + b->local.o.y;
+            pz = b->local.f.z * o.y + b->local.u.z * o.z + b->local.s.z * o.x + b->local.o.z;
+        }
+        int j = sd->bones[i].parent;
+        if (j >= 0) {
+            FxElem* regs2 = b->fx->elems;
+            Bone* items = sd->bones;
+            Bone* jr = &items[j];
+            do {
+                float qx = b->local.f.x * regs[j].m84.o.y + b->local.u.x * regs[j].m84.o.z + b->local.s.x * regs[j].m84.o.x + b->local.o.x;
+                float qy = b->local.f.y * regs[j].m84.o.y + b->local.s.y * regs[j].m84.o.x + b->local.u.y * regs[j].m84.o.z + b->local.o.y;
+                float qz = b->local.f.z * regs[j].m84.o.y + b->local.s.z * regs[j].m84.o.x + b->local.u.z * regs[j].m84.o.z + b->local.o.z;
+                float rx = px - qx;
+                float ry = py - qy;
+                float rz = pz - qz;
+                float lx = regs2[j].m84.f.x * regs2[j].vf4.y + regs2[j].m84.u.x * regs2[j].vf4.z + regs2[j].m84.s.x * regs2[j].vf4.x;     // 0x4500ac: (f*wy + u*wz) + s*wx
+                float ly = regs2[j].m84.f.y * regs2[j].vf4.y + regs2[j].m84.u.y * regs2[j].vf4.z + regs2[j].m84.s.y * regs2[j].vf4.x;
+                float lz = regs2[j].m84.f.z * regs2[j].vf4.y + regs2[j].m84.u.z * regs2[j].vf4.z + regs2[j].m84.s.z * regs2[j].vf4.x;
+                float vx = lx * b->local.s.x + lz * b->local.u.x + ly * b->local.f.x;
+                float vy = lx * b->local.s.y + lz * b->local.u.y + ly * b->local.f.y;
+                float vz = lx * b->local.s.z + lz * b->local.u.z + ly * b->local.f.z;
+                float cx = vy * rz - vz * ry;
+                float cz = vx * ry - rx * vy;
+                vacc[i].x = cx + vacc[i].x;
+                vacc[i].y = (rx * vz - vx * rz) + vacc[i].y;
+                vacc[i].z = cz + vacc[i].z;
+                wacc[i].x = vx + wacc[i].x;
+                wacc[i].y = vy + wacc[i].y;
+                wacc[i].z = vz + wacc[i].z;
+                // the next ancestor that has capsules. The original steps to items[-1] when the chain ends and tests whatever
+                // bytes precede the array (the allocator's header: non-empty there, so it falls out with j = -1); at 64 bits those
+                // bytes are zero and the loop never ended, so the chain's end (parent < 0) ends it here.
+                do {
+                    j = jr->parent;
+                    if (j < 0)
+                        break;
+                    jr = &items[j];
+                } while (jr->bodies.size() == 0);
+            } while (j >= 0);
+        }
+    }
+
+    // create the bones
+    for (i = 0; i < n; i++) {
+        Bone* rec = &sd->bones[i];
+        int p = rec->parent;
+        matrix T;
+        if (p < 0) {
+            W[i] = b->local * b->fx->elems[i].m84;
+            T = b->local * rec->local;
+            A[i] = T;
+        } else {
+            W[i] = ((rgl::matrix&)W[p]) * b->fx->elems[i].m44;
+            matrix cur = rec->local;
+            int j = p;
+            for (;;) {
+                if (sd->bones[j].bodies.size() != 0)
+                    break;
+                cur = sd->bones[j].local * cur;
+                j = sd->bones[j].parent;
+            }
+            T = cur;
+            float a0 = rec->rotate.x * 0.017453292f;
+            T.rotate_about_s(&a0);
+            float a1 = rec->rotate.y * 0.017453292f;
+            T.rotate_about_f(&a1);
+            float a2 = rec->rotate.z * 0.017453292f;
+            T.rotate_about_u(&a2);
+            A[i] = ((rgl::matrix&)A[j]) * T;
+        }
+        if (rec->bodies.size() != 0) {
+            float radius = 0.0f, height = 0.01f;
+            matrix R;
+            vector4 z0(0.0f, 0.0f, 0.0f);
+            rgl::mat3 t;
+            rgl::mat3* ip = identity3(&t);
+            static_cast<mat3&>(R) = *ip;
+            R.o = z0;
+            for (unsigned k = 0; k < rec->bodies.size(); k++) {
+                const CapDef& d = rec->bodies[k];
+                radius = d.r * scale;
+                vector4 dir;
+                dir.x = d.b.x - d.a.x; dir.y = d.b.y - d.a.y; dir.z = d.b.z - d.a.z;
+                float len = vnorm(dir);
+                height = len * scale;
+                make_frame(R, dir);
+                vector4 mid(d.b.x + d.a.x, d.b.y + d.a.y, d.b.z + d.a.z);
+                R.o = vector4(mid.x * 0.5f * scale, mid.y * 0.5f * scale, mid.z * 0.5f * scale);
+            }
+            // physics parent: nearest ancestor that already has a bone
+            const NewtonRagDollBone* pbone = 0;
+            int q = p;
+            if (q >= 0) {
+                if (b->fx->elems[q].ragdoll_bone == 0) {
+                    do {
+                        q = sd->bones[q].parent;
+                    } while (b->fx->elems[q].ragdoll_bone == 0);
+                }
+                pbone = b->fx->elems[q].ragdoll_bone;
+            }
+            vector4 cone;
+            rot3v_cone(cone, A[i], rec->socket_dir.x, rec->socket_dir.y, rec->socket_dir.z);
+            b->fx->elems[i].ragdoll_bone = g_phys.add_bone(phys_idx, pbone, &rec->bone_mass, T, &radius, &height, R, &cone.x,
+                                                     &rec->cone_min, &rec->cone_max, &rec->twist_limit);
+            v = v56a4;
+            link_vel = vector4(0.0f, 0.0f, 0.0f);
+            if ((unsigned)horse != (unsigned)-1) {
+                const Agent* other = &g_mission->agents.pages[(unsigned)horse >> 4][(unsigned)horse & 0xf];
+                link_vel = other->v56a4;
+                v = vector4(0.0f, 0.0f, 0.0f);
+            }
+            vector4 rv;
+            rot3v_x(rv, b->local, b->fx->root_vel.x, b->fx->root_vel.y, b->fx->root_vel.z);
+            v.x = rv.x + v.x;
+            v.y = rv.y + v.y;
+            v.z = v.z + rv.z;
+            v.x = v.x + vacc[i].x;
+            v.y = v.y + vacc[i].y;
+            v.z = v.z + vacc[i].z;
+            NewtonBody* nb = NewtonRagDollBoneGetBody(b->fx->elems[i].ragdoll_bone);
+            FxElem* e = &b->fx->elems[i];
+            vector4 wl;
+            rot3v_x(wl, e->m84, e->vf4.x, e->vf4.y, e->vf4.z);
+            rot3v_w(w, b->local, wl.x, wl.y, wl.z);
+            w.x = w.x + wacc[i].x;
+            w.y = w.y + wacc[i].y;
+            w.z = w.z + wacc[i].z;
+            NewtonBodySetVelocity(nb, &v.x);
+            NewtonBodySetOmega(nb, &w.x);
+        }
+    }
+
+    NewtonRagDollSetForceAndTorqueCallback(g_phys.recs[phys_idx].ragdoll, apply_force_and_torque);
+    NewtonRagDollEnd(g_phys.recs[phys_idx].ragdoll);
+    for (i = 0; i < sd->nbones; i++) {
+        if (body->fx->elems[i].ragdoll_bone != 0)
+            NewtonBodySetMatrix(NewtonRagDollBoneGetBody(body->fx->elems[i].ragdoll_bone), &W[i].s.x);
+    }
+    build_static_collision();
+
+    // the mount: a capsule body for the horse
+    unsigned mid = mount_id;
+    if ((int)mid >= 0 && g_mission->agents.pages[mid >> 4][mid & 0xf].body != 0) {
+        const Agent* h = &g_mission->agents.pages[mid >> 4][mid & 0xf];
+        vector4 z0(0.0f, 0.0f, 0.0f);
+        rgl::mat3 t;
+        matrix R;
+        rgl::mat3* ip = identity3(&t);
+        static_cast<mat3&>(R) = *ip;
+        float radius = 0.2114f * h->scale;
+        vector4 dir(0.0f, 1.0f, 0.0f);                       // 0x45117c: the original folds the unit axis and the 1.2886 length
+        float height = 1.2886f * h->scale;
+        make_frame(R, dir);
+        R.o = vector4(0.0f * h->scale, 0.5443f * h->scale, -0.0629f * h->scale);
+        matrix m0 = h->body->local * h->body->fx->elems->m84;
+        float zero = 0.0f;
+        mount_body = g_phys.add_capsule_body(phys_idx, &radius, &height, &zero, &m0, &R, false);
+    }
+    disabled = 1;
+    floor_sound_done = 0;
+    mount_sync = 1;
+    mount_vel_sync = 1;
+    body->fx->pose_src = 1;
+}
+
+// ---- blood and dust on the meshes of an agent ------------------------------------------------------------------------------
+static inline float dust_clamp01(float v) { return v < 0.0f ? 0.0f : (v >= 1.0f ? 1.0f : v); }
+
+// @ 0x451710
+void dust_vertices(mesh* m, const mat4* xf, const float* center, const float* radius, const float* strength,
+                   const vector4* tint)
+{
+    bool dirty = false;
+    std::vector<rgl::vertex60>& vs = m->get50_rec();
+    std::vector<rgl::point20>& ps = m->get70_rec();
+    for (unsigned i = 0; i < vs.size(); i++) {
+        rgl::point20* pt = &ps[vs[i].index];
+        vector4 w;
+        w.x = xf->s.x * pt->b.x + xf->f.x * pt->b.y + xf->u.x * pt->b.z + xf->o.x;
+        w.y = xf->s.y * pt->b.x + xf->f.y * pt->b.y + xf->u.y * pt->b.z + xf->o.y;
+        w.z = xf->s.z * pt->b.x + xf->f.z * pt->b.y + xf->u.z * pt->b.z + xf->o.z;
+        vector4 d;
+        d.x = w.x - center[0];
+        d.y = w.y - center[1];
+        d.z = w.z - center[2];
+        float dist = d.length();
+        if (dist < *radius && (float)(rand() % 15817) * (1.0f / 15817.0f) < 0.6f) {
+            float a = (1.0f - dist / *radius) * 1.5f;
+            float e = ((float)(rand() % 15817) * (0.6f / 15817.0f) + 0.4f) * a;
+            float s = dust_clamp01(e * *strength);
+            if (s > 0.02f) {
+                m->ensure_local();
+                vector4 c = rgl::unpack_color(&vs[i].color);
+                float omt = 1.0f - s;
+                vector4 o = a_vadd(a_vscale(omt, c), a_vscale(s, *tint));
+                o.w = c.w;
+                m->vertices[i].color = rgl::pack_color(&o);
+                dirty = true;
+            }
+        }
+    }
+    if (dirty)
+        m->slots[0].f28 = 1;
+}
+// @ 0x4519f0
+void Agent::apply_blood(const float* center, float amount)
+{
+    float radius;
+    float t = amount * 0.06f;
+    if (t < 0.0f)
+        radius = 0.0f;
+    else if (t >= 0.7f)
+        radius = 0.7f;
+    else
+        radius = t;
+    float strength;
+    float u = amount * 0.07f;
+    if (u < 0.0f)
+        strength = 0.0f;
+    else if (u >= 1.0f)
+        strength = 1.0f;
+    else
+        strength = u;
+    vector4 tint;
+    tint.x = 0.4f;
+    tint.y = 0.01f;
+    tint.z = 0.01f;
+    tint.w = 1.0f;
+    if (body) {
+        rgl::lod_mesh* shapes[32];
+        int n;
+        body->fx->all_groups(shapes, &n);
+        for (int s = 0; s < n; s++) {
+            rgl::lod_mesh* L = shapes[s];
+            if (L && L->mask && L->ready()) {
+                int cur = L->cur;
+                for (int k = 0; k < L->count; k++) {
+                    std::vector<mesh*>& list = L->lists[k];
+                    for (unsigned j = 0; j < list.size(); j++) {
+                        mesh** slot = &(&*list.begin())[j];
+                        if (*slot) {
+                            rgl::matrix xf = body->local;
+                            if (cur == k) {
+                                xf = (&*L->lists[cur].begin())[j]->world_frame;
+                            } else {
+                                std::vector<mesh*>& cl = L->lists[cur];
+                                if (cl.size() != 0)
+                                    xf = (*cl.begin())->world_frame;
+                            }
+                            dust_vertices(*slot, (const mat4*)&xf, center, &radius, &strength, &tint);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+static inline void cross_inl(vector4& r, const vector4& a, const vector4& b)
+{
+    r.x = a.y * b.z - a.z * b.y;
+    r.y = a.z * b.x - a.x * b.z;
+    r.z = a.x * b.y - a.y * b.x;
+}
+// @ 0x451c50
+void rgl::mesh::compute_normals()
+{
+    typedef struct {
+        void operator=(const std::vector<point20>&); // 0x411630
+    } _v90_op;
+    struct vec4n : vector4 {
+        __forceinline float normalize_inl()
+        {
+            float len = length();
+            if (len > 1e-10f) {
+                float inv = 1.0f / len;
+                x *= inv;
+                y *= inv;
+                z *= inv;
+            } else {
+                x = 0.0f;
+                y = 1.0f;
+                z = 0.0f;
+            }
+            return len;
+        }
+        __forceinline void add_inl(const vector4& o)
+        {
+            x += o.x;
+            y += o.y;
+            z += o.z;
+        }
+    };
+    if (!local_faces) {
+        faces = parent->faces;
+        local_faces = 1;
+    }
+    ensure_local();
+    std::vector<vector4> fnorm;
+    fnorm.resize(faces.size());
+    unsigned i;
+    for (i = 0; i < faces.size(); i++) {
+        vector4 e1 = points[vertices[faces[i].b].index].a - points[vertices[faces[i].a].index].a;
+        vector4 e2 = points[vertices[faces[i].c].index].a - points[vertices[faces[i].a].index].a;
+        cross_inl(fnorm[i], e1, e2);
+        ((vec4n&)fnorm[i]).normalize_inl();
+    }
+    for (i = 0; i < vertices.size(); i++) {
+        vertices[i].normal = vector4(0.0f, 0.0f, 0.0f);
+    }
+    for (i = 0; i < faces.size(); i++) {
+        for (int j = 0; j < 3; j++) {
+            ((vec4n&)vertices[(&faces[i].a)[j]].normal).add_inl(fnorm[i]);
+        }
+    }
+    for (i = 0; i < vertices.size(); i++) {
+        if (vertices[i].normal.length_squared() > 0.0001f) {
+            ((vec4n&)vertices[i].normal).normalize_inl();
+        } else {
+            vertices[i].normal = vector4(0.0f, -1.0f, 0.0f);
+        }
+    }
+    slots[0].f28 = 1;
+}
+// @ 0x4520b0
+void rgl::mesh::append_plain(mesh* other, const mat4* m)
+{
+    append_skinned(other, m, -1, -1, 0);
+}
+
+// ---- Font::layout_text, FxDef::skin_lods, Mission::blood_burst, Agent::refresh_carried ---------------------------------------------
+enum {
+    TXT_NOWRAP2 = 0x2, TXT_ALIGN_L = 0x4, TXT_ALIGN_R = 0x8, TXT_ALIGN_C = 0x10, TXT_NOSHRINK = 0x100,
+    TXT_ALIGN_L2 = 0x200, TXT_START_X = 0x400, TXT_TALL_LINES = 0x800
+};
+
+// UTF-8 -> int code points (0x487b00; custom register convention in the original: text in edi, count out in edx)
+const int g_max_chars = 8192;                        // 0x59095c
+static __declspec(noinline) void decode_utf8(int* out_len, const tstring* s, int* buf, const int* maxn)   // 0x487b00
+{
+    *out_len = 0;
+    int n = s->len;
+    int i = 0;
+    if (n > 0) {
+        do {
+            if (*out_len >= *maxn)
+                break;
+            unsigned char c = s->buf[i];
+            int ch;
+            if (c >= 0xf0 && c < 0xf5) {
+                ch = ((((((unsigned char)s->buf[i + 0] & 7) << 6) | ((unsigned char)s->buf[i + 1] & 0x3f)) << 6 | ((unsigned char)s->buf[i + 2] & 0x3f)) << 6) | ((unsigned char)s->buf[i + 3] & 0x3f);
+                i += 4;
+            } else if (c >= 0xe0 && c < 0xf0) {
+                ch = (((((unsigned char)s->buf[i + 0] & 0xf) << 6) | ((unsigned char)s->buf[i + 1] & 0x3f)) << 6) | ((unsigned char)s->buf[i + 2] & 0x3f);
+                i += 3;
+            } else if (c >= 0xc2 && c < 0xe0) {
+                ch = ((((unsigned char)s->buf[i + 0] & 0x1f) << 6) | ((unsigned char)s->buf[i + 1] & 0x3f));
+                i += 2;
+            } else {
+                i++;
+                if (c >= 0x80)
+                    continue;
+                ch = (signed char)c;
+            }
+            buf[*out_len] = ch;
+            (*out_len)++;
+        } while (i < n);
+    }
+}
+
+// @ 0x4520d0
+void Font::layout_text(float* out, const tstring* text, const vector4* pos_in, const float* scale_in, mesh* m,
+                       const unsigned* color, const float* xmin, const float* xmax, unsigned flags)
+{
+    int buf[8192];
+    int len;
+    vector4 pos = *pos_in;
+    if (flags & TXT_START_X)
+        pos.x = *xmin;
+    vec2 scale;
+    scale.x = (font_scale / x_ratio) * scale_in[0];
+    scale.y = (scale_in[1] / y_ratio) * font_scale;
+    float y0 = pos.y;
+    decode_utf8(&len, text, buf, &g_max_chars);
+    unsigned noshrink = flags & TXT_NOSHRINK;
+    if (noshrink == 0 && (flags & TXT_NOWRAP2) == 0) {
+        int start = 0;
+        float w = measure(buf, len, &start, &len) * scale.x * 1.001f;
+        float avail = *xmax - *xmin;
+        if (w > avail && w > 0.0f) {
+            float f = avail / w;
+            scale.x = scale.x * f;
+            scale.y = f * scale.y;
+        }
+    }
+    int cur = 0;
+    float maxx = *xmin;
+    if (len > 0) {
+        float inv = 1.0f / scale.x;
+        unsigned f4 = flags & TXT_ALIGN_L;
+        unsigned f800 = flags & TXT_TALL_LINES;
+        do {
+            int line_end = cur;
+            float linew = 0.0f;
+            bool first = true;
+            bool brk = false;
+            int p = cur;
+            do {
+                brk = false;
+                int s = p;
+                if (p < len) {
+                    for (; s < len; s++) {
+                        int c = buf[s];
+                        if (c == 0x20 || c == 0xa || c == 9) {
+                            if (s < len) {
+                                if (buf[s] == 0xa)
+                                    brk = true;
+                                s++;
+                            }
+                            break;
+                        }
+                    }
+                }
+                int e = s;
+                float w = measure(buf, len, &cur, &e) * scale.x;
+                if (first || w <= *xmax - *xmin) {
+                    linew = w;
+                    line_end = s;
+                    p = s;
+                } else {
+                    brk = true;
+                }
+                if (p >= len)
+                    brk = true;
+                first = false;
+            } while (!brk);
+            if (f4 != 0 || ((flags & TXT_ALIGN_L2) && noshrink == 0)) {
+                pos.x = *xmin;
+            } else if (flags & TXT_ALIGN_C) {
+                pos.x = (*xmin + *xmax) * 0.5f - linew * 0.5f;
+            } else if (flags & TXT_ALIGN_R) {
+                pos.x = *xmin + *xmax - linew;
+            }
+            float ux = inv * pos.x;
+            for (int k = cur; k < line_end; k++) {
+                int ch = buf[k];
+                const Glyph* g = font_get(this, ch);
+                if (ch != 0xa) {
+                    if (ch == 9) {
+                        int n = (int)((inv * pos.x - ux) * 4.0f);
+                        pos.x = (((float)n + 1.0f) * 0.25f + ux) * scale.x;
+                    } else {
+                        pos.x = scale.x * g->f10 + pos.x;
+                        draw_glyph(ch, &pos, &scale, m, color);
+                        pos.x = scale.x * g->f18 + pos.x;
+                    }
+                }
+            }
+            if (maxx < pos.x)
+                maxx = pos.x;
+            pos.x = *xmin;
+            pos.y = pos.y - (((f800 ? 1.2f : 1.0f) * font_scale * scale_in[1]) * line_spacing) * 0.9f;
+            cur = line_end;
+        } while (cur < len);
+    }
+    m->compute_normals();
+    if ((flags & TXT_ALIGN_C) && noshrink != 0)
+        out[0] = *xmax - *xmin;
+    else
+        out[0] = (maxx - *xmin) + 0.0001f;
+    out[1] = (y0 - pos.y) + 0.001f;
+}
+// @ 0x452530
+void FxDef::skin_lods(rgl::lod_mesh* g, int flag)
+{
+    for (int k = 0; k < g->count; k++) {
+        std::vector<rgl::mesh*>& v = g->lists[k];
+        for (std::vector<rgl::mesh*>::iterator it = v.begin(); it < v.end(); ++it)
+            skin(*it, flag);
+    }
+}
+// @ 0x4525a0
+void Mission::blood_burst(float x, float y, float z, int unused, float amount)
+{
+    if (g_cfg.enable_blood) {
+        // apply_blood reads the burst centre as a vector4 (x, y, z, w): the original hands it the address of its own four
+        // consecutive argument words; here they are gathered into one
+        vector4 c(x, y, z);
+        memcpy(&c.w, &unused, sizeof c.w);
+        unsigned i = agents.first_used();
+        if (i < (unsigned)agents.count) {
+            do {
+                Agent* a = &agents.pages[i >> 4][i & 0xf];
+                float dx = a->pos.x - x;
+                float dy = a->pos.y - y;
+                float dz = a->pos.z - z;
+                if ((float)sqrt(dx * dx + dy * dy + dz * dz) < 3.5f)
+                    a->apply_blood(&c.x, amount);
+                agents.next_used(&i);
+            } while (i < (unsigned)agents.count);
+        }
+    }
+}
+// rgl::matrix::relative (0x4329d0, src/game/common/game_util.cpp) visible here too (inline noinline duplicate): with both bodies refresh_carried's rel does not escape, so the target-mesh load is hoisted
+// above the rel.o.y store as in the original
+inline __declspec(noinline) rgl::matrix rgl::matrix::relative(const rgl::matrix& b) const
+{
+    rgl::matrix m;
+    m.o = transform_point_to_local(b.o);
+    static_cast<rgl::mat3&>(m) = mul_t(b);
+    return m;
+}
+// @ 0x452650
+void Agent::refresh_carried(Missile* other)
+{
+    int slot = wield[1];
+    if (slot < 0)
+        return;
+    int idx = other->launcher.item;
+    if (idx < 0)
+        return;
+    if ((char)g_items[idx].type_flags != 10)
+        idx = other->ammo.item;
+    if (idx < 0)
+        return;
+    if ((g_items[idx].flags & 0xff000) == 0x10000)
+        return;
+    mesh* m = other->make_ranged_mesh();
+    if (m == 0)
+        return;
+    if (B[slot] == 0) {
+        B[slot] = new rgl::lod_mesh;
+        mesh* nm = new rgl::mesh;
+        nm->res = m->res;
+        B[slot]->add_mesh(0, nm);
+        body->fx->attach_group(0x13, B[slot]);      // the animator at body+0x304 (fx.h attach_group 0x4424a0)
+        update_equipment_display();
+    }
+    rgl::lod_mesh* L = B[slot];
+    if (L) {
+        if ((char)g_items[other->launcher.item].type_flags == 8)
+            m->scale(0.87f);
+        mat4 M;
+        M = body->local * *body->fx->rec(0xc);
+        // the frame block is its own scope (fr then shares the operator* return temporary's slot: frame 0xe0)
+        {
+            rgl::mat4 fr;
+            fr.o = other->pos;
+            fr.f = other->vel;
+            fr.u = rgl::vector4(0.0f, 0.0f, 1.0f);
+            fr.orthonormalize();
+            rgl::mat4 rel = M.relative(fr);
+            vector4 d;
+            d.x = rel.o.x;
+            d.z = 0.0f;
+            d.y = rel.o.y - 0.23f;
+            float n = d.normalize();
+            if (n < 0.0f)
+                n = 0.0f;
+            else if (n > 0.19f)
+                n = 0.19f;
+            {
+                vector4 t = vscale(d, n);
+                d.x = t.x;
+                d.y = t.y + 0.23f;
+                d.z = t.z;
+            }
+            rel.o = d;
+            rel.o.z = 0.05f - (frand() * 0.01f + other->speed * 0.0005f);
+            if (rel.o.x < -0.45f)
+                rel.o.x = -0.45f;
+            else if (rel.o.x > 0.2f)
+                rel.o.x = 0.2f;
+            rel.o.x = (frand() - 0.5f) * 0.02f + rel.o.x;
+            rel.o.y = (frand() - 0.5f) * 0.02f + rel.o.y;
+            L->lists[0][0]->append_plain(m, (const mat4*)&rel);
+        }
+    }
+    delete m;
+}
+
+// ---- Agent::drop_held, the text layout wrapper, the message log, the animator visibility switch, Agent::get_label_box -----------
+extern Font* g_font;                                    // 0x5e2934
+// the animator's inline accessor of a bone record's world frame (brings the poses up to date first)
+static __forceinline rgl::mat4* skel_rec_inl(FxDef* sk, int i)
+{
+    if (!sk->pose_valid) {
+        if (sk->pose_src)
+            sk->update_poses();
+        else
+            sk->update_poses2();
+    }
+    return &sk->elems[i].m84;
+}
+static __forceinline tstring* lk(const tstring& k) { return g_strtable.lookup(k); }
+static __forceinline skin* get_mat(const tstring& n) { return g_resmgr.get_material(n); }
+
+// @ 0x4529e0
+void Agent::drop_held()
+{
+    int i = 0;
+    ItemRef* it = pairs;
+    rgl::lod_mesh** lp = B;
+    for (; i < 4; i++, lp++, it++) {
+        if (it->item >= 0) {
+            int v = rand() % 15817;
+            if ((float)v * (1.0f / 15817.0f) < 0.25f) {
+                ItemKind* kind = &g_items[it->item];
+                rgl::matrix M;
+                identity_pos(&M);
+                int bone;
+                int bflags;
+                v = -1;
+                if (wield[0] == i || wield[1] == i)
+                    bone = kind->ammo_skill();
+                else if ((kind->flags & itcf_carry_mask) != 0) {
+                    kind->get_carry_pos(&M, &v, &bflags);
+                    bone = v;
+                } else
+                    bone = 0x13;
+                FxDef* sk = body->fx;
+                mat4 T1 = body->local * *skel_rec_inl(sk, bone);
+                mat4 T2 = T1 * *(mat4*)&M;
+                T2.o.z += 0.1f;
+                if (lp[-4])
+                    lp[-4]->mask = 0;
+                if (lp[0])
+                    lp[0]->mask = 0;
+                if (lp[4])
+                    lp[4]->mask = 0;
+                v = 6;
+                g_mission->add_placed(&v, &it->item, &it->word, (rgl::matrix*)&T2, &pool_id);
+                it->item = -1;
+            }
+        }
+    }
+}
+// @ 0x452bb0
+rgl::vector4* Font::layout_clear(rgl::vector4* out_extent, const tstring* text, const rgl::vector4* pos, const float* scale, rgl::mesh* m,
+                               const int* a, const float* b, const float* c, unsigned flags)
+{
+    m->clear_geometry();
+    layout_text(&out_extent->x, text, pos, scale, m, (const unsigned*)a, b, c, flags);
+    return out_extent;
+}
+// @ 0x452c00
+void gui_manager::add(tstring msg, int color)
+{
+    rgl::matrix M;
+    tstring S = msg.strip_tags();
+    while (history.size() > 100)
+        history.erase(history.begin());
+    if (enabled) {
+        if (S.len > 0x50) {
+            int a = 0, b = 0;
+            while (b >= 0 && b < 0x50) {
+                a = b;
+                char c = ' ';
+                b = msg.find(c, b + 1);
+            }
+            if (a > 0) {
+                tstring first = msg.substr(0, a);
+                msg = msg.substr(a + 1, msg.len);
+                add(first, color);
+                add(msg, color);
+                return;
+            }
+        }
+        {
+        vector4 ext;
+        {
+            vec2 scale;
+            float zero;
+            float f08;
+            int minus1;
+            f08 = 0.8f;
+            scale.x = 0.021f;                                  // 0x3cac0831 (0x452d72)
+            scale.y = 0.021f;                                  // 0x3cac0831 (0x452d7a)
+            cur = (cur + 31) % 32;
+            ((rgl::mesh*)&meshA[cur])->clear_geometry();
+            ((rgl::mesh*)&meshB[cur])->clear_geometry();
+            zero = 0.0f;
+            minus1 = -1;
+            vector4 p(0.02f, -0.03f, 0.0f);
+            g_font->layout_clear(&ext, &S, &p, (const float*)&scale, &meshA[cur], &minus1, &zero, &f08, 0);
+            mat4* id = (mat4*)identity_pos(&M);
+            meshB[cur].append_skinned(&meshA[cur], id, -1, -1, 0);
+            this->color[cur] = color;
+            age[cur] = 0;
+            {
+                vector4 hi;                                 // never written here: it shares p's slot
+                meshA[cur].calc_bounds(&ext, &hi);       // 0x438d80
+                height[cur] = hi.y - ext.y;
+            }
+            total_h += height[cur];
+        }
+        {
+            tstring n("ui_font");
+            meshA[cur].res = get_mat(n);
+        }
+        {
+            tstring n("ui_font_background");
+            meshB[cur].res = get_mat(n);
+        }
+        }
+        history.push_back(msg);
+    }
+}
+
+// @ 0x452f80
+void FxDef::set_visible(bool on)
+{
+    if (!frozen) {
+        if (on) {
+            if (!pose_valid) {
+                if (pose_src)
+                    update_poses();
+                else
+                    update_poses2();
+            }
+            for (unsigned i = 0; i < psys.size(); i++)
+                skin(psys[i], 1);
+            for (unsigned j = 0; j < groups.size(); j++)
+                skin_lods(groups[j], 1);
+        }
+    }
+    frozen = on;
+}
+
+// Mission::log_message: the caller loads g_mission into ecx and the body ignores it (ret 8). agent_obj/mission.h is shared, so a stub class names the member here.
+// @ 0x453020
+void Mission::log_message(const tstring* s, float seconds)
+{
+    g_gui.add(*s, -261);
+}
+
+// rgl::matrix::transform_point (0x408460, src/engine/physics/collision_shapes.cpp) with its body visible from here on (inline noinline
+// duplicate): its hidden return temporary does not escape, so get_label_box's third result shares p2's dead slot (frame 0x20)
+inline __declspec(noinline) vector4 rgl::matrix::transform_point(const vector4& p) const
+{
+    return vector4(s.x * p.x + f.x * p.y + u.x * p.z + o.x,
+                   s.y * p.x + f.y * p.y + u.y * p.z + o.y,
+                   s.z * p.x + f.z * p.y + u.z * p.z + o.z);
+}
+// box above the agent's head (two corner vectors and a scale), for its label: the capsule's segment and radius
+// @ 0x453050
+void Agent::get_label_box(capsule* out)
+{
+    if (kind != 0) {
+        out->p0 = vector4(pos.x, pos.y - 0.3f, pos.z + 0.8f);
+        out->p1 = vector4(pos.x, pos.y + 0.8f, pos.z + 0.85f);
+        out->radius = 0.5f;
+    } else if (body != 0) {
+        vector4 p1 = body->local.transform_point(body->fx->elems[3].m84.o);
+        vector4 p2 = body->local.transform_point(body->fx->elems[6].m84.o);
+        p1.x = p1.x + p2.x;
+        p1.y = p1.y + p2.y;
+        p2.z = p1.z + p2.z;
+        p1.x = p1.x * 0.5f;
+        p1.y = p1.y * 0.5f;
+        p1.z = p2.z * 0.5f;
+        out->p0 = p1;
+        out->p1 = body->local.transform_point(body->fx->elems[9].m84.o);
+        out->radius = scale * 0.33f;
+    } else {
+        g_gui.add(tstring("WARNING:CHECK INVALID ENTITY"), -1);
+        // one vector built in each arm: cl hoists the common x / y / pos.z part above the f2c test (the original's order)
+        vector4 c;
+        if (horse == -1)
+            c = vector4(pos.x, pos.y, pos.z + 0.8f);
+        else
+            c = vector4(pos.x, pos.y, pos.z + 1.5f);
+        out->p0 = vector4(c.x, c.y, c.z - 0.5f);
+        out->p1 = vector4(c.x, c.y, c.z + 0.5f);
+        out->radius = 0.4f;
+    }
+}
+
+// ---- Agent::shield_hit, Agent::on_removed ---------------------------------------------------------------------------------------------
+#define itp_type_shield 7
+
+// 0x434eb0 (game/agent/agent_queries.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) int ItemRef::body_armor()      // 0x434eb0
+{
+    if (item < 0) return 0;
+    int v = g_items[item].body_armor;
+    if (v != 0) {
+        switch (b.mod) {
+        case 2:
+        case 0x15: v -= 3; break;
+        case 7: v -= 1; break;
+        case 0x18: v += 1; break;
+        case 0x19: v += 2; break;
+        case 0x12:
+        case 0x1a: v += 3; break;
+        case 1: v -= 4; break;
+        case 5:
+        case 0x16: v -= 2; break;
+        case 0x1b: v += 4; break;
+        case 0x1d: v += 6; break;
+        }
+        if (v < 0) v = 0;
+    }
+    return v;
+}
+
+// @ 0x4532f0
+void Agent::shield_hit(int damage)
+{
+    int cur = wield[1];
+    if (cur >= 0 && both_hands == 0) {
+        ItemRef* it = &pairs[cur];
+        if (it && (g_items[it->item].type_flags & 0xff) == itp_type_shield) {
+            damage -= it->body_armor();
+            float f = 0.0f > (float)damage ? 0.0f : (float)damage;
+            int skill = g_game->skill_level(troop, 0x1a);
+            int d = (int)((1.0f - (float)skill * 0.08f) * (float)(int)f);
+
+            if ((float)d > 0.0f) {
+                unsigned v = (it->m4 & 0xffff) - d;
+                it->w.count = 0;
+                it->m4 |= ((int)v < 0) - 1 & v;
+                if ((it->m4 & 0xffff) == 0) {
+                    int old = wield[1];
+                    wield[1] = -1;
+                    on_wield_reset();
+                    set_order(1, move_anim(0), 0x1000010, 1.0f);
+                    f = 0.0f;
+                    int kind = 0x5e;
+                    play_sound_var(&kind, &f);
+                    mat4 M = body->local * *body->fx->rec(0xc);
+                    int mod = it->b.mod;
+                    kind = 7;
+                    g_mission->add_placed(&kind, &it->item, &mod, (rgl::matrix*)&M, &pool_id);
+                    if (((g_mission_templates[g_mission->mode].flags >> 1) & 1) && old >= 0 &&
+                        g_mission->player_id == pool_id && old < 10 && slot_flag[old]) {
+                        ItemRef* s = &pairs[old];
+                        if (s->item >= 0 && (g_items[s->item].type_flags & 0xff) == itp_type_shield) {
+                            unsigned bits;
+                            int m = s->b.mod;
+                            if (m == 1) {
+                                if (frand() < 0.2f) {
+                                    { tstring key("ui_shield_broken"); g_gui.add(*g_strtable.lookup(key), 0xddbbbb); }
+                                    
+                                    if (s->item == g_game->chars[g_game->player].equip[old].item && pairs[old].m4 == g_game->chars[g_game->player].equip[old].m4)
+                                        g_game->chars[g_game->player].equip[old].item = -1;
+                                }
+                                return;
+                            } else if (m == 5) {
+                                if (!(frand() < 0.2f))
+                                    return;
+                                { tstring key("ui_shield_cracked"); g_gui.add(*g_strtable.lookup(key), 0xddbbbb); }
+                                bits = 0x1000000;
+                            } else {
+                                if (!(frand() < 0.2f))
+                                    return;
+                                { tstring key("ui_shield_deformed"); g_gui.add(*g_strtable.lookup(key), 0xddbbbb); }
+                                bits = 0x5000000;
+                            }
+                            
+                            if (s->item == g_game->chars[g_game->player].equip[old].item && pairs[old].m4 == g_game->chars[g_game->player].equip[old].m4) {
+                                ItemRef* r2 = &g_game->chars[troop].equip[old];
+                                r2->b.mod = 0;
+                                r2->m4 |= bits;
+                                r2->reduce(0);
+                            }
+                            s->b.mod = 0;
+                            s->m4 |= bits;
+                            s->reduce(0);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+// @ 0x454320
+void Agent::on_removed()
+{
+    g_phys.destroy_world(phys_idx);
+    disabled = 0;
+    if (state != 1) {
+        body->fx->set_visible(true);
+        if (pool_id != g_mission->player_id)
+            drop_held();
+    }
+    if (!queued) {
+        if (pool_id != g_mission->player_id)
+            g_mission->queue_dead(this);
+        queued = 1;
+    }
+}
+
+// ---- Agent::hit_damage: the damage of a melee blow or missile hit ------------------------------------------------------------------
+// 0x434c50 / 0x434cb0 / 0x434d70 (ItemRef::difficulty / damage / speed_rating, game/agent/agent_queries.cpp owns the rows): bodies that only read *this, so
+// Agent::hit_damage (0x453710) keeps sp.item in a register across the calls (no `item` local) and sp does not escape.
+inline __declspec(noinline) int ItemRef::difficulty()      // 0x434c50
+{
+    if (item < 0) return 0;
+    int v = g_items[item].difficulty;
+    if (v != 0) {
+        int m = b.mod;
+        if ((char)g_items[item].type_flags == itp_type_horse) {
+            if (m == imod_timid) return v - 1;
+            if (m == imod_stubborn) return v + 1;
+            if (m == imod_champion) return v + 2;
+        } else {
+            if (m == imod_heavy) return v + 1;
+            if (m == imod_strong) return v + 2;
+            if (m == imod_masterwork) v += 4;
+        }
+    }
+    return v;
+}
+inline __declspec(noinline) int ItemRef::damage(int which)      // 0x434cb0
+{
+    if (item < 0) return 0;
+    unsigned v;
+    if (which == 0) v = g_items[item].swing_damage & 0xff;
+    else v = g_items[item].thrust_damage & 0xff;
+    if (v != 0) {
+        switch (b.mod) {
+        case imod_cracked: v -= 5; break;
+        case imod_rusty:
+        case imod_bent: v -= 3; break;
+        case imod_chipped: v -= 1; break;
+        case imod_crude: v -= 2; break;
+        case imod_fine: v += 1; break;
+        case imod_heavy: v += 2; break;
+        case imod_balanced:
+        case imod_strong: v += 3; break;
+        case imod_tempered: v += 4; break;
+        case imod_masterwork: v += 5; break;
+        }
+    }
+    return v;
+}
+inline __declspec(noinline) int ItemRef::speed_rating()      // 0x434d70
+{
+    if (item < 0) return 100;
+    int v = g_items[item].spd_rtng;
+    if (v != 0) {
+        switch (b.mod) {
+        case imod_balanced: v += 3; break;
+        case imod_tempered: return v;
+        case imod_masterwork: v += 1; break;
+        case imod_heavy: v -= 2; break;
+        case imod_bent:
+        case imod_strong: v -= 3; break;
+        }
+    }
+    return v;
+}
+
+static __forceinline vector4 vmul_sv(const float& s, const vector4& v)
+{
+    vector4 r;
+    r.x = s * v.x; r.y = s * v.y; r.z = s * v.z;
+    return r;
+}
+static __forceinline vector4 rot_xy(const rgl::matrix& M, const vector4& p)     // p.z taken as 0
+{
+    vector4 t;
+    t.x = p.x * M.s.x + (0.0f * M.u.x + p.y * M.f.x);
+    t.y = 0.0f * M.u.y + p.x * M.s.y + p.y * M.f.y;
+    t.z = 0.0f * M.u.z + p.x * M.s.z + p.y * M.f.z;
+    return t;
+}
+static __forceinline vector4 rot_inl(const rgl::matrix& M, const vector4& p)
+{
+    vector4 t;
+    t.x = p.x * M.s.x + p.z * M.u.x + p.y * M.f.x;
+    t.y = p.z * M.u.y + p.x * M.s.y + p.y * M.f.y;
+    t.z = p.z * M.u.z + p.x * M.s.z + p.y * M.f.z;
+    return t;
+}
+// @ 0x453710
+void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out_flag, unsigned victim, float* scale)
+{
+    ItemRef sp = slot_pair(hand);
+    *out_dmg = 0.0f;
+    Mission* ms = g_mission;
+    vector4 A;
+    A.x = 0.0f; A.y = 0.0f; A.z = 0.0f;
+    if ((int)victim >= 0) {
+        Agent& v = ms->agents[victim];
+        if (v.horse >= 0) {
+            A = vmul_sv(ms->agents[v.horse].vel_xy.y, ms->agents[v.horse].body->local.f);
+        } else {
+            vector4 lv;
+            lv.x = v.vel_xy.x; lv.y = v.vel_xy.y; lv.z = 0.0f;
+            A = ((const ::pos&)v.body->local).rot(lv);
+        }
+    }
+    vector4 B;
+    if (horse >= 0) {
+        B = vmul_sv(ms->agents[horse].vel_xy.y, ms->agents[horse].body->local.f);
+    } else {
+        vector4 lv;
+        *(vec2*)&lv = vel_xy;                       // x, y as dwords; z is never stored (rot_xy uses 0)
+        B = rot_xy(body->local, lv);
+    }
+    if (missile) {
+        *out_flag = 1;
+        float spd = missile->speed;
+        if ((int)victim >= 0) {
+            vector4 rel = A - missile->vel * missile->speed;
+            spd = rel.length();        // 0x4539d7: (dz^2 + dy^2) + dx^2
+        }
+        *out_dmg = ((float)pow((double)(spd / missile->f60), (double)g_module_settings.missile_damage_speed_power)) * missile->f64 * *scale;
+    } else {
+        int st = hand ? mode2 : mode1;
+        unsigned fl = (st == 0);
+        *out_flag = fl;
+        if (sp.item >= 0)
+            *out_dmg = (float)(int)sp.damage(fl) * *scale;
+        else
+            *out_dmg = (float)g_game->chars[troop].lvl58 * 0.3f + 2.0f;
+        vector4 d;
+        d = A - B;
+        float len = d.normalize();
+        if (f100_is_0x48_and_charged()) {
+            *out_dmg = (*out_dmg + 5.0f) * (float)pow((double)len, (double)1.8f);
+            vector4 q = ((const ::pos&)body->local).rot(skel_rec_inl(body->fx, 19)->f);
+            q.normalize();
+            *out_dmg = ((0.2f - (q.x * d.x + d.y * q.y + d.z * q.z)) * *out_dmg) * g_module_settings.couched_lance_damage_multiplier * 0.2f;
+            if (g_options.damage_msgs) {
+                if (pool_id == g_mission->player_id)
+                    { tstring key("ui_delivered_couched_lance_damage"); g_gui.add(*g_strtable.lookup(key), 0xffd03030); }
+                else if (victim == (unsigned)g_mission->player_id)
+                    { tstring key("ui_received_couched_lance_damage"); g_gui.add(*g_strtable.lookup(key), 0xffd03030); }
+            }
+        } else {
+            if (mode1 == 3)
+                *out_dmg = *out_dmg * 1.05f;
+            vector4 q = ((const ::pos&)body->local).rot(skel_rec_inl(body->fx, 19)->f);
+            q.normalize();
+            int m = mode1;
+            vector4 dir;
+            vector4 up;
+            up.x = 0.0f; up.y = 0.0f; up.z = 1.0f;
+            if (m == 0) {
+                dir = q;
+            } else if (m == 2) {
+                dir = rgl::cross(q, up);
+            } else if (m == 1) {
+                dir = vneg(rgl::cross(q, up));
+            } else {
+                vector4 s = rgl::cross(q, up);
+                s.normalize();
+                dir = rgl::cross(q, s);
+            }
+            dir.normalize();
+            float t = 1.0f;
+            float h = anim[1].scale;
+            if (h < 0.33f) {
+                float k = h * 3.030303f;
+                if (k < 0.0f)
+                    k = 0.0f;
+                else if (k >= 1.0f)
+                    k = 1.0f;
+                if (m != 0)
+                    k = k * 0.7f + 0.3f;
+                t = k;
+            } else if (h > 0.61f) {
+                float x = (h - 0.65f) * -25.000025f;
+                t = 1.0f;
+                float lo = 0.0f;
+                t = clamp(&x, &lo, &t);
+            }
+            float w = (float)sp.speed_rating() * 0.154f;
+            if (m == 0)
+                w = w * 0.93f;
+            if (t < 1e-06f) {
+                *out_dmg = 0.0f;
+            } else {
+                float c = t < 0.1f ? 0.1f : (t >= 1.2f ? 1.2f : t);
+                t = (c * w - (dir.x * d.x + (dir.y * d.y + dir.z * d.z)) * len) / w;
+                if (t < 0.3f)
+                    t = 0.3f;
+                else if (t > 3.0f)
+                    t = 3.0f;
+                float p = (float)pow((double)t, (double)g_module_settings.melee_damage_speed_power);
+                *out_dmg = p * *out_dmg;
+                float bonus = (p - 1.0f) * 100.0f;
+                int n = round_float(&bonus);
+                if (n != 0 && g_options.damage_msgs && pool_id == g_mission->player_id) {
+                    char msg[512];
+                    if (n > 0) {
+                        tstring key("ui_speed_bonus_plus");
+                        sprintf(msg, g_strtable.lookup(key)->c_str(), n);
+                    } else {
+                        tstring key("ui_speed_bonus");
+                        sprintf(msg, g_strtable.lookup(key)->c_str(), n);
+                    }
+                    g_gui.add(tstring(msg), -1);
+                }
+            }
+        }
+    }
+    if (sp.item >= 0) {
+        ItemRef w = slot_pair_fi(1);
+        int cls = slot_class_impl(sp.item, w.item >= 0);
+        int prof = (int)g_game->chars[troop].stat[cls];
+        if ((g_items[sp.item].type_flags & 0xff) == itp_type_crossbow) {
+            if (g_mission->precip_mode == 1)
+                *out_dmg = *out_dmg * 0.75f;
+        } else {
+            float pct = (float)prof * 0.01f;
+            *out_dmg = (pct * 0.15f + 0.85f) * *out_dmg;
+            unsigned t = g_items[sp.item].type_flags & 0xff;
+            if (t == itp_type_bow) {
+                int sk = g_game->skill_level(troop, 0x21);
+                int lim = sp.difficulty() + 4;
+                if (!(lim < sk)) lim = sk;
+                *out_dmg = ((float)lim * 0.14f + 1.0f) * *out_dmg;
+                if (horse != -1) {
+                    int hs = g_game->skill_level(troop, 0x17);
+                    *out_dmg = ((float)hs * 0.019f + 0.8f) * *out_dmg;
+                }
+                if (g_mission->precip_mode == 1)
+                    *out_dmg = *out_dmg * 0.9f;
+            } else if (t == itp_type_thrown) {
+                int sk = g_game->skill_level(troop, 0x22);
+                *out_dmg = ((float)sk * 0.1f + 1.0f) * *out_dmg;
+                if (horse != -1) {
+                    int hs = g_game->skill_level(troop, 0x17);
+                    *out_dmg = ((float)hs * 0.019f + 0.8f) * *out_dmg;
+                }
+            } else if (g_items[sp.item].is_melee()) {
+                int sk = g_game->skill_level(troop, 0x23);
+                *out_dmg = ((float)sk * 0.08f + 1.0f) * *out_dmg;
+            }
+            *out_dmg = (float)g_game->chars[troop].lvl58 * 0.2f + *out_dmg;
+        }
+        unsigned t2 = g_items[sp.item].type_flags & 0xff;
+        if (t2 == itp_type_two_handed_wpn || t2 == itp_type_polearm) {
+            ItemRef w2 = slot_pair_fi(1);
+            if (w2.item >= 0 || horse >= 0)
+                *out_dmg = *out_dmg * (0.75f * 0.9f);
+        }
+    }
+    if (*out_dmg < 0.0f)
+        *out_dmg = 0.0f;
+    else if (*out_dmg > 500.0f)
+        *out_dmg = 500.0f;
+}
+
+// ---- Agent::ragdoll_update: per-frame update of the agent's body ----------------------------------------------------------------
+// @ 0x4543a0
+void Agent::ragdoll_update()
+{
+    int i = 0;
+    if (body == 0)
+        return;
+    if (disabled != 0) {
+        frame_set* data = body->fx->res;
+        rgl::matrix world[0x20];
+        if (0 < body->fx->count) {
+            do {
+                if (i == 0) {
+                    rgl::mat4 g;
+                    NewtonRagDollBoneGetGlobalMatrix(body->fx->elems[0].ragdoll_bone, (float*)&g);
+                    rgl::mat4 chk = g;
+                    if (!(-1e6f <= chk.o.x) || !(chk.o.x < 1e6f)) {
+                        on_removed();
+                        body->fx->pose_src = 0;
+                        break;
+                    }
+                    (rgl::mat4&)body->local = g;
+                    rgl::mat4 id0;
+                    { rgl::matrix idp; identity_pos(&idp); body->fx->elems[0].m44 = *(rgl::mat4*)&idp; }
+                    *(rgl::mat4*)&world[0] = g;
+                } else {
+                    FxElem* e = &body->fx->elems[i];
+                    rgl::mat4 res;
+                    mat4* dst;
+                    if (e->ragdoll_bone == 0) {
+                        res = *(rgl::mat4*)&world[data->bones[i].parent] * *(rgl::mat4*)&e->m44;
+                        dst = (rgl::mat4*)&world[i];
+                    } else {
+                        rgl::mat4 g;
+                        NewtonRagDollBoneGetGlobalMatrix(e->ragdoll_bone, (float*)&g);
+                        mat4* w = (rgl::mat4*)&world[i];
+                        *w = g;
+                        if ((kind == 0 && (i == 8 || i == 10 || i == 15)) || (kind == 1 && i == 2)) {
+                            float lim = 0.15f;
+                            if (kind == 1)
+                                lim = 0.4f;
+                            else if (i == 8)
+                                lim = 0.35f;
+                            if (!mount_sync && !floor_sound_done && hold.o.z - w->o.z < 0.0f &&
+                                w->o.z - g_mission->scene->floor_z(&w->o) < lim) {
+                                g_sound_mgr.play(g_sound_mgr.slot[74], 0, &body->local.o, frand() * 0.4f + 0.8f, 0);
+                                floor_sound_done = 1;
+                            }
+                            hold = *w;
+                        }
+                        res = *(rgl::mat4*)&((rgl::mat4&)world[data->bones[i].parent]).relative((const rgl::mat4&)world[i]);
+                        dst = (rgl::mat4*)&body->fx->elems[i].m44;
+                    }
+                    *dst = res;
+                }
+                i++;
+            } while (i < body->fx->count);
+        }
+        float dx = body->local.o.x - anchor.x;
+        float dy = body->local.o.y - anchor.y;
+        float dz = body->local.o.z - anchor.z;
+        if (9.0f < dx * dx + (dy * dy + dz * dz))
+            build_static_collision();
+        if ((int)mount_id >= 0) {
+            unsigned mid = mount_id;
+            if (g_mission->agents.pages[mid >> 4][mid & 0xf].body != 0) {
+                rgl::mat4 m1, m2, mm;
+                NewtonBodyGetMatrix(mount_body, (float*)&m1);
+                NewtonBodyGetMatrix(NewtonRagDollBoneGetBody(body->fx->elems[0].ragdoll_bone), (float*)&m2);
+                rgl::strategic_entity* mb = g_mission->agents.pages[mount_id >> 4][mount_id & 0xf].body;
+                mm = (rgl::mat4&)mb->local * *(rgl::mat4*)&mb->fx->elems[0].m84;
+                NewtonBodySetMatrix(mount_body, (float*)&mm);
+                if (0.0f < m2.o.z - m1.o.z) {
+                    int j = 0;
+                    if (0 < body->fx->count) {
+                        do {
+                            const NewtonRagDollBone* b = body->fx->elems[j].ragdoll_bone;
+                            if (b != 0) {
+                                NewtonBody* nb = NewtonRagDollBoneGetBody(b);
+                                NewtonBodyGetMatrix(nb, (float*)&m2);
+                                float z = mm.o.z + m2.o.z;
+                                float x = (mm.o.x + m2.o.x) - m1.o.x;
+                                float y = (mm.o.y + m2.o.y) - m1.o.y;
+                                float zz = z - m1.o.z;
+                                *(vector4*)&m2.o = vector4(x, y, zz);
+                                NewtonBodySetMatrix(nb, (float*)&m2);
+                            }
+                            j++;
+                        } while (j < body->fx->count);
+                    }
+                    mount_sync = 0;
+                } else if (mount_vel_sync != 0) {
+                    mount_vel_sync = 0;
+                    float* pv = &g_mission->agents.pages[mount_id >> 4][mount_id & 0xf].v56a4.x;
+                    int j = 0;
+                    if (0 < body->fx->count) {
+                        do {
+                            const NewtonRagDollBone* b = body->fx->elems[j].ragdoll_bone;
+                            if (b != 0) {
+                                NewtonBody* nb = NewtonRagDollBoneGetBody(b);
+                                float v[4];
+                                NewtonBodyGetVelocity(nb, v);
+                                v[0] = v[0] + pv[0];
+                                v[1] = v[1] + pv[1];
+                                NewtonBodySetVelocity(nb, v);
+                            }
+                            j++;
+                        } while (j < body->fx->count);
+                    }
+                    mount_sync = 0;
+                } else
+                    mount_sync = 0;
+            } else if ((int)mount_id >= 0) {
+                int j = 0;
+                if (0 < body->fx->count) {
+                    do {
+                        const NewtonRagDollBone* b = body->fx->elems[j].ragdoll_bone;
+                        if (b != 0) {
+                            NewtonBody* nb = NewtonRagDollBoneGetBody(b);
+                            float v[4];
+                            NewtonBodyGetVelocity(nb, v);
+                            v[0] = v[0] + link_vel.x;
+                            v[1] = v[1] + link_vel.y;
+                            NewtonBodySetVelocity(nb, v);
+                        }
+                        j++;
+                    } while (j < body->fx->count);
+                }
+                mount_sync = 0;
+            } else
+                mount_sync = 0;
+        } else
+            mount_sync = 0;
+    } else if (!queued) {
+        matrix* bm = (matrix*)&body->local;
+        bm->f = vel;
+        bm->f.z = 0.0f;
+        bm->u = vector4(0.0f, 0.0f, 1.0f);
+        bm->orthonormalize();
+        if (state != 1) {
+            floor_blend = g_step_tbl[2] + floor_blend;
+            if (floor_blend < 0.0f)
+                floor_blend = 0.0f;
+            else if (1.0f < floor_blend)
+                floor_blend = 1.0f;
+            float* d = &floor_face->normal.x;
+            float k = 1.0f - floor_blend;
+            float a = d[0] * floor_blend;
+            float b = d[1] * floor_blend;
+            float c = d[2] * floor_blend;
+            float zk = k * 0.0f;
+            bm->u = vector4(zk + a, zk + b, k + c);
+            bm->u.normalize();
+            bm->s = rgl::cross(bm->f, bm->u);
+            bm->s.normalize();
+            bm->f = rgl::cross(bm->u, bm->s);
+        }
+        bm->rotate_about_f(rot);
+        bm->o = vector4(v98.x + pos.x, v98.y + pos.y, v98.z + pos.z);
+    }
+    camera_params(static_cast<capsule*>(body->shape));     // the body's shape is its capsule (Mission::spawn 0x4832b0)
+    if (horse < 0) {
+        if (f5830 == 3 || f5830 == 4) {
+            body->set_mode(0);
+        } else {
+            body->set_mode(2);
+            if (rider == -1)
+                body->shadow_caster = -1;
+        }
+    } else {
+        body->set_mode(0);
+        rgl::strategic_entity* mb = g_mission->agents.pages[(unsigned)horse >> 4][(unsigned)horse & 0xf].body;
+        if (mb != 0)
+            mb->shadow_caster = body->id;
+    }
+    name_label->mask = 0;
+    if (g_options.fx_on != 0)
+        name_label->mask = 1;
+}
+
+#define itcf_carry_slot1 0x100000000i64
+#define itcf_carry_slot2 0x200000000i64
+#define itcf_carry_quiver_back_right 0x60000000i64
+#define itcf_carry_quiver_back 0x80000000i64
+// get_carry_pos (0x433e40, src/game/data/item_kind.cpp) and the two shape constructors (0x4332a0 / 0x433310,
+// src/game/agent/agent_item_pick.cpp) with their bodies visible here (inline noinline duplicates): reduce_blow's carry frame,
+// bone / aux, lo and hi then do not escape, so the packer shares their slots with the later locals as the original does
+inline __declspec(noinline) void ItemKind::get_carry_pos(rgl::matrix* out, int* bone_flags, int* bone)
+{
+    vector4 v;
+    float a;
+    *bone = 0;
+    rgl::matrix ident;
+    *out = *identity_pos(&ident);
+    __int64 carry = flags & itcf_carry_mask;
+    *bone_flags = 0;
+    if (carry == itcf_carry_sword_left_hip) {
+        *bone = 1;
+        *bone_flags = 0;
+        v.x = 0.24f; v.y = 0.1f; v.z = 0.1f;
+        out->o = v;
+        a = 1.5393804f; out->rotate_about_f(&a);
+        a = -2.2f; out->rotate_about_u(&a);
+        a = 0.12f; out->rotate_about_s(&a);
+        a = -0.2f; out->rotate_about_f(&a);
+    }
+    else if (carry == itcf_carry_axe_left_hip) {
+        vector4& o = out->o;
+        *bone = 1;
+        *bone_flags = 0;
+        v.x = 0.21f; v.y = 0.12f; v.z = 0.14f;
+        o = v;
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = 1.0f; out->rotate_about_u(&a);
+        a = 3.3415928f; out->rotate_about_f(&a);
+        float s = (float)weapon_length * 0.01f - 0.3f;
+        vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
+        o.x = o.x - t.x;
+        o.y = o.y - t.y;
+        o.z = o.z - t.z;
+    }
+    else if (carry == itcf_carry_mace_left_hip) {
+        vector4& o = out->o;
+        *bone = 1;
+        *bone_flags = 0;
+        v.x = 0.21f; v.y = 0.12f; v.z = 0.14f;
+        o = v;
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = 1.0f; out->rotate_about_u(&a);
+        a = 3.3415928f; out->rotate_about_f(&a);
+        float s = (float)weapon_length * 0.01f - 0.1f;
+        vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
+        o.x = o.x - t.x;
+        o.y = o.y - t.y;
+        o.z = o.z - t.z;
+    }
+    else if (carry == itcf_carry_dagger_front_left) {
+        *bone = 7;
+        *bone_flags = 0;
+        v.x = 0.04f; v.y = 0.25f; v.z = 0.15f;
+        out->o = v;
+        a = 0.15707964f; out->rotate_about_f(&a);
+        a = -2.5f; out->rotate_about_u(&a);
+        a = -0.05f; out->rotate_about_f(&a);
+    }
+    else if (carry == itcf_carry_dagger_front_right) {
+        *bone = 8;
+        *bone_flags = 0;
+        v.x = -0.04f; v.y = 0.25f; v.z = 0.15f;
+        out->o = v;
+        a = -3.2986722f; out->rotate_about_f(&a);
+        a = -2.5f; out->rotate_about_u(&a);
+        a = 0.05f; out->rotate_about_f(&a);
+    }
+    else if (carry == itcf_carry_slot1) {
+        vector4& o = out->o;
+        *bone = 5;
+        *bone_flags = 8;
+        v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
+        o = v;
+        a = 0.5654867f; out->rotate_about_u(&a);
+        a = 3.1415927f; out->rotate_about_f(&a);
+        float s = (float)weapon_length * 0.01f - 0.3f;
+        vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
+        o.x = o.x - t.x;
+        o.y = o.y - t.y;
+        o.z = o.z - t.z;
+    }
+    else if (carry == (itcf_carry_sword_left_hip | itcf_carry_slot1)) {
+        *bone = 5;
+        *bone_flags = 8;
+        v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
+        out->o = v;
+        a = -2.576106f; out->rotate_about_u(&a);
+    }
+    else if (carry == (itcf_carry_quiver_right_vertical | itcf_carry_slot1)) {
+        vector4& o = out->o;
+        *bone = 5;
+        *bone_flags = 8;
+        v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
+        o = v;
+        a = 0.5654867f; out->rotate_about_u(&a);
+        vector4 t(out->f.x * 0.67f, out->f.y * 0.67f, out->f.z * 0.67f);
+        o.x = o.x - t.x;
+        o.y = o.y - t.y;
+        o.z = o.z - t.z;
+    }
+    else if (carry == (itcf_carry_axe_left_hip | itcf_carry_slot1)) {
+        *bone = 0;
+        *bone_flags = 8;
+        v.x = -0.19f; v.y = 0.04f; v.z = -0.18f;
+        out->o = v;
+        a = 3.2986722f; out->rotate_about_f(&a);
+        a = 1.0995574f; out->rotate_about_u(&a);
+    }
+    else if (carry == (itcf_carry_quiver_back | itcf_carry_slot1)) {
+        *bone = 0;
+        *bone_flags = 8;
+        v.x = -0.06f; v.y = 0.18f; v.z = -0.2f;
+        out->o = v;
+        a = -3.2986722f; out->rotate_about_f(&a);
+        a = 1.5707964f; out->rotate_about_u(&a);
+    }
+    else if (carry == (itcf_carry_dagger_front_left | itcf_carry_slot1)) {
+        *bone = 0;
+        *bone_flags = 8;
+        v.x = -0.22f; v.y = -0.06f; v.z = -0.2f;
+        out->o = v;
+        a = 3.138451f; out->rotate_about_f(&a);
+        a = 1.0995574f; out->rotate_about_u(&a);
+    }
+    else if (carry == (itcf_carry_quiver_front_right | itcf_carry_slot1)) {
+        vector4& o = out->o;
+        *bone = 6;
+        *bone_flags = 8;
+        v.x = 0.19f; v.y = 0.34f; v.z = -0.155f;
+        o = v;
+        a = -0.5654867f; out->rotate_about_u(&a);
+        a = 1.4137167f; out->rotate_about_f(&a);
+        a = 0.1f; out->rotate_about_u(&a);
+        float s = (float)weapon_length * 0.01f + 0.5f;
+        vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
+        o.x = o.x - t.x;
+        o.y = o.y - t.y;
+        o.z = o.z - t.z;
+    }
+    else if (carry == (itcf_carry_quiver_back_right | itcf_carry_slot1)) {
+        *bone = 6;
+        *bone_flags = 8;
+        v.x = -0.05f; v.y = 0.0f; v.z = -0.19f;
+        out->o = v;
+        a = -0.5654867f; out->rotate_about_u(&a);
+        a = -1.5707964f; out->rotate_about_f(&a);
+    }
+    else if (carry == itcf_carry_quiver_front_right) {
+        *bone = 4;
+        *bone_flags = 0;
+        v.x = -0.21f; v.y = 0.15f; v.z = 0.0f;
+        out->o = v;
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = -2.5f; out->rotate_about_u(&a);
+        a = -0.2f; out->rotate_about_f(&a);
+    }
+    else if (carry == itcf_carry_quiver_back_right) {
+        *bone = 4;
+        *bone_flags = 0;
+        v.x = -0.05f; v.y = 0.03f; v.z = -0.19f;
+        out->o = v;
+        a = 0.15707964f; out->rotate_about_f(&a);
+        a = 1.1f; out->rotate_about_u(&a);
+        a = 3.1415927f; out->rotate_about_f(&a);
+    }
+    else if (carry == itcf_carry_quiver_right_vertical) {
+        *bone = 4;
+        *bone_flags = 0;
+        v.x = -0.23f; v.y = 0.05f; v.z = 0.0f;
+        out->o = v;
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = 0.5f; out->rotate_about_u(&a);
+        a = -0.05f; out->rotate_about_f(&a);
+        a = 0.2f; out->rotate_about_s(&a);
+    }
+    else if (carry == itcf_carry_quiver_back) {
+        *bone = 5;
+        *bone_flags = 8;
+        v.x = -0.05f; v.y = 0.02f; v.z = -0.17f;
+        out->o = v;
+        a = 0.37699112f; out->rotate_about_u(&a);
+    }
+    else if (carry == (itcf_carry_dagger_front_right | itcf_carry_slot1)) {
+        *bone = 3;
+        *bone_flags = 0;
+        v.x = 0.18f; v.y = -0.1f; v.z = -0.1f;
+        out->o = v;
+        a = 2.1991148f; out->rotate_about_f(&a);
+    }
+    else if (carry == itcf_carry_revolver_right) {
+        *bone = 9;
+        *bone_flags = 4;
+        v.x = -0.1f; v.y = 0.0f; v.z = 0.05f;
+        out->o = v;
+        a = -1.5707964f; out->rotate_about_f(&a);
+        a = 0.9424779f; out->rotate_about_u(&a);
+        a = -0.1f; out->rotate_about_f(&a);
+    }
+    else if (carry == itcf_carry_pistol_front_left) {
+        *bone = 7;
+        *bone_flags = 0;
+        v.x = -0.07f; v.y = 0.25f; v.z = 0.15f;
+        out->o = v;
+        a = 0.15707964f; out->rotate_about_f(&a);
+        a = -1.5f; out->rotate_about_u(&a);
+        a = -0.05f; out->rotate_about_f(&a);
+    }
+    else if (carry == itcf_carry_bowcase_left) {
+        *bone = 10;
+        *bone_flags = 0;
+        v.x = 0.26f; v.y = 0.03f; v.z = -0.1f;
+        out->o = v;
+        a = -4.3982296f; out->rotate_about_f(&a);
+        a = -0.25f; out->rotate_about_s(&a);
+        a = -0.84823006f; out->rotate_about_u(&a);
+    }
+    else if (carry == (itcf_carry_sword_left_hip | itcf_carry_slot2)) {
+        *bone = 1;
+        *bone_flags = 0;
+        v.x = 0.23f; v.y = 0.15f; v.z = 0.23f;
+        out->o = v;
+        a = -1.4451327f; out->rotate_about_f(&a);
+        a = 1.5f; out->rotate_about_u(&a);
+        a = -0.2f; out->rotate_about_f(&a);
+    }
+    else if (carry == (itcf_carry_axe_left_hip | itcf_carry_slot2)) {
+        *bone = 2;
+        *bone_flags = 0;
+        v.x = 0.05f; v.y = 0.19f; v.z = 0.24f;
+        out->o = v;
+        a = -2.1991148f; out->rotate_about_f(&a);
+        a = 1.8f; out->rotate_about_u(&a);
+        a = -0.2f; out->rotate_about_f(&a);
+    }
+}
+inline __declspec(noinline) sphere::sphere(vector4 c, const float* r) : shape_base(inline_init())
+{
+    local_center = c;
+    center = c;
+    radius = *r;
+}
+inline __declspec(noinline) capsule::capsule(float r, const vector4* a, const vector4* b) : shape_base(inline_init())
+{
+    radius = r;
+    l0 = *a;
+    l1 = *b;
+    p0 = l0;
+    p1 = l1;
+}
+// ---- Agent::reduce_blow, draw_name, spawn_corpse --------------------------------------------------------------------------------------
+// @ 0x454e30
+void Agent::reduce_blow(Blow* b)
+{
+    int bone, aux;
+    float dmg = b->dmg_in;
+    int idx;
+    if (kind == 1)
+        idx = 0;
+    else {
+        int t = b->bone;
+        if (t == 9)
+            idx = 0;
+        else if (t == 1 || t == 4 || t == 2 || t == 5 || t == 3 || t == 6)
+            idx = 2;
+        else
+            idx = 1;
+    }
+    float armor_v = (float)armor[idx];
+    if (kind == 0) {
+        ItemRef w = best_weapon_slot();
+        if (w.item >= 0 && b->hit) {
+            ItemKind* ik = &g_items[w.item];
+            rgl::matrix carry;
+            ik->get_carry_pos(&carry, &bone, &aux);
+            rgl::mat4 r = *body->fx->rec(bone);
+            rgl::mat4 u = (rgl::mat4&)body->local * (r * *(rgl::mat4*)&carry);
+            HitInfo* h = b->hit;
+            if (u.u.y * h->d.y + u.u.z * h->d.z + u.u.x * h->d.x < -0.5f) {
+                vector4 hi = h->d * 4.0f + h->p;
+                vector4 lo = h->p - h->d * 4.0f;
+                capsule cap(0.0f, &lo, &hi);
+                float zero = 0.0f;
+                sphere sph(*(vector4*)&u.o, &zero);
+                float gap = capsule_sphere_gap(&cap, &sph);
+                if (gap < (float)ik->weapon_length * 0.01f) {
+                    int bonus = w.body_armor() + 10;
+                    armor_v = (float)bonus + armor_v;
+                    if (g_mission->player_id == pool_id) {
+                        tstring key("ui_hit_shield_on_back");
+                        g_gui.add(*g_strtable.lookup(key), -1);
+                    }
+                }
+            }
+        }
+    }
+    float x, y;
+    if (b->kind == 0) {
+        x = g_module_settings.armor_soak_factor[0] * armor_v;
+        armor_v = g_module_settings.armor_reduction_factor[0] * armor_v;
+    } else if (b->kind == 1) {
+        x = g_module_settings.armor_soak_factor[1] * armor_v;
+        armor_v = g_module_settings.armor_reduction_factor[1] * armor_v;
+    } else {
+        x = g_module_settings.armor_soak_factor[2] * armor_v;
+        armor_v = g_module_settings.armor_reduction_factor[2] * armor_v;
+    }
+    y = ((float)(rand() % 0x3dc9) * 3.4772715e-05f + 0.45f) * x;
+    float d = dmg - y;
+    if (0.0f > d)
+        x = 0.0f;
+    else
+        x = d;
+    int iv = rand() % 0x3dc9;
+    float part = (1.0f - 1.0f / (float)exp((double)(((float)iv * 3.4772715e-05f + 0.45f) * (armor_v * 0.014f)))) * x;
+    if (armor_v < 0.0001f)
+        part = 0.0f;
+    y = part + y;
+    double fl = ::floor((double)y);
+    int n = (int)fl;
+    b->absorbed = (y - fl <= 0.5f) ? n : n + 1;
+    x = ((float)(rand() % 0x3dc9) * 2.5289246e-05f + 0.6f) * dmg - b->absorbed;
+    b->dmg_out = x;
+    if (kind != 1) {
+        if (b->bone == 9)
+            b->dmg_out = x * 1.2f;
+        else if (b->bone == 1 || b->bone == 4)
+            b->dmg_out = x * 0.9f;
+    }
+    if (b->dmg_out < 0.0f)
+        b->dmg_out = 0.0f;
+}
+// the friend test as an inline on a by-value id: its own id >= 0 test stays after the outer one (0x455342, 0x4553a0)
+static __forceinline bool agent_friend(Mission* ms, int id, Agent* a) { return id >= 0 && mag(ms, id).is_friend(a); }
+// @ 0x4552c0
+void Agent::draw_name()
+{
+    Mission* ms = g_mission;
+    int local = ms->player_id;
+    unsigned col = 0xffffffff;
+    vector4 origin;
+    origin.x = 0.0f; origin.y = 0.0f; origin.z = 0.0f;
+    vec2 scale;
+    scale.x = 0.14f; scale.y = 0.14f;
+    float a = -1.0f;
+    float bb = 1.0f;
+    if (local >= 0) {
+        if (mag(ms, local).team == team)
+            col = 0xff44ff44;
+        else if (agent_friend(ms, local, this))
+            col = 0xff4444ff;
+    }
+    if (kind == 0 && pool_id != local) {
+        bool f1 = (g_mission_templates[ms->mode].flags >> 1) & 1;
+        if (f1 && agent_friend(ms, local, this)) {
+            char buf[512];
+            tstring* nm = g_game->chars[troop].display_name();
+            sprintf(buf, "%s", nm->c_str());
+            if (state != 1) {
+                name_label->frame.o.z = 0.3f;              // the label's height over the origin
+                if (f5830 == 3)
+                    buf[0] = 0;
+            } else if (horse >= 0)
+                name_label->frame.o.z = 2.65f;
+            else
+                name_label->frame.o.z = 1.88f;
+            unsigned colp = col;
+            vector4 ext;
+            tstring text(buf);
+            g_font->layout_clear(&ext, &text, &origin, (const float*)&scale, name_label->lists[0][0], (const int*)&colp, &a, &bb, 0x10);
+        }
+    }
+}
+// @ 0x4554c0
+void Agent::spawn_corpse()
+{
+    floor_face = 0;
+    vector4 saved = pos;
+    turn_rate = 0;
+    int i = 0;
+    {
+        float z;
+        face** pf = &floor_face;
+        do {
+            if (i >= 100)
+                break;
+            i++;
+            if (i == 30 || i == 60)
+                pos = saved;
+            g_mission->scene->floor_at(&pos, &z, pf);
+            if (*pf != 0)
+                break;
+            pos.x = ((float)(rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 0.01f + pos.x;
+            pos.y = ((float)(rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 0.01f + pos.y;
+        } while (*pf == 0);
+        pos.z = z;
+    }
+    int r;
+    float fv;
+    r = rand() % 0x3dc9;
+    fv = (float)r * 6.322312e-05f - 0.5f;
+    (&ai.hand_off.x)[0] = fv + fv;
+    r = rand() % 0x3dc9;
+    fv = (float)r * 6.322312e-05f - 0.5f;
+    (&ai.hand_off.x)[1] = fv + fv;
+    r = rand() % 0x3dc9;
+    fv = (float)r * 6.322312e-05f - 0.5f;
+    (&ai.hand_off.x)[2] = fv + fv;
+    r = rand() % 0x3dc9;
+    ai.action_countdown = 5.0f;
+    spawn = pos;
+    fv = (float)r * 6.322312e-05f - 0.5f;
+    (&ai.hand_off.x)[3] = fv + fv;
+    ragdoll_update();
+    stand_animation = 1;
+    if ((g_game->chars[troop].flags32 & 0xf) == 1)
+        stand_animation = 0;
+    walk_forward_animation = 9;
+}
+
+// ---- Agent::tick_death, Agent::note_blow -------------------------------------------------------------------------------------------
+#define TICKS_SINCE(t) ((float)(g_ticks[(t).clock] - (t).start) * 1e-5f)
+static void restart_timer(Timer& t) { t.start = g_ticks[t.clock]; }
+// @ 0x457710
+void Agent::tick_death()
+{
+    if (dismount_state == 1 && rider >= 0 && kind == 1 && TICKS_SINCE(tm) > 3.0f) {
+        g_mission->agents.pages[(unsigned)rider >> 4][(unsigned)rider & 0xf].horse = -1;
+        rider = -1;
+        dismount_state = 2;
+    }
+    if (f5830 == 3) {
+        if (dismount_state != 0) {
+            if (!(TICKS_SINCE(tm) > 3.0f))
+                return;
+            f5830 = 4;
+            restart_timer(tm);
+            return;
+        }
+        if (disabled == 0 && queued == 0 && tm.elapsed() > 3.0f) {
+            if (state != 1) {
+                body->fx->set_visible(true);
+                if (pool_id != g_mission->player_id)
+                    drop_held();
+            }
+            if (pool_id != g_mission->player_id)
+                g_mission->queue_dead(this);
+            queued = 1;
+        }
+        if (g_options.max_ragdolls > g_phys.nworlds && TICKS_SINCE(tm) > 0.0f && t5918.elapsed() > 0.0f) {
+            if (disabled == 0 && queued == 0)
+                start_ragdoll();
+        }
+        if (disabled == 0)
+            return;
+        if ((floor_sound_done == 0 || !(t5918.elapsed() > 10.0f)) && !(t5918.elapsed() > 30.0f) &&
+            (!(t5918.elapsed() > 1.0f) || !g_phys.none_sleeping(phys_idx)))
+            return;
+        on_removed();
+    } else if (f5830 == 4) {
+        if (queued == 0 && state != 1)
+            return;
+        float k = 1.0f - TICKS_SINCE(tm) * 0.33333334f;
+        if (k < 0.0f)
+            k = 0.0f;
+        else if (k > 1.0f)
+            k = 1.0f;
+        vector4 c;
+        c.x = 1.0f; c.y = 1.0f; c.z = 1.0f; c.w = k;
+        body->set_color(rgl::pack_color(&c));
+        body->shadow_fade = k;
+        if (TICKS_SINCE(tm) > 3.0f) {
+            f5830 = 5;
+            release_body();
+            if (state == 1)
+                state = 2;
+        }
+    }
+}
+// @ 0x457af0
+void Agent::note_blow(Blow* b)
+{
+    reduce_blow(b);
+    if (has_blow == 0 || !(b->dmg_out < blow.dmg_out)) {
+        blow = *b;
+        has_blow = 1;
+    }
+}
+
+// ---- Agent::update_controls: the movement update of an agent ------------------------------------------------------------------------
+struct GaitBand { float lo, hi; };
+extern const GaitBand g_gait_walk[3];
+extern const GaitBand g_gait_mount[6];
+const GaitBand g_gait_walk[3] = { { -10000.0f, 0.3f }, { 0.27f, 2.32f }, { 2.27f, 10000.08f } };       // 0x590940 {lo, hi} per speed band
+const GaitBand g_gait_mount[6] = { { -3.0f, -0.01f }, { -0.01f, 0.01f }, { 0.2f, 2.1f }, { 2.0f, 3.9f }, { 3.8f, 6.3f }, { 6.2f, 200.5f } };   // 0x590910
+float g_move_fwd;                                           // 0x5e2478
+float g_move_side;                                          // 0x5e247c
+#define PICK(m2, m3, m1, m0) (mode == 2 ? (m2) : mode == 3 ? (m3) : mode == 1 ? (m1) : (m0))
+static __forceinline bool aset_inl(AnimSlot& s, int id, unsigned prio)         // 0x4378a0 inlined (AnimSlot::set is a call elsewhere in this object)
+{
+    if ((prio & 0x1ffff) < (s.events & 0x1ffff) && (s.cur != -1 || s.next != -1))
+        return false;
+    s.next = id;
+    s.events = prio;
+    if (id == -1)
+        s.events = 0;
+    return true;
+}
+static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; }     // Timer::restart as the slice's callers inline it
+static __forceinline void a_vadd(vector4& a, const vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }      // vector4 += (x + 0.0f folds to a copy that stays)
+// 0x4379c0 as cl inlines it (the call sites that pass a constant slot 1)
+static __forceinline void set_order_inl(Agent* a, int slot, int id, unsigned prio, float rate)
+{
+    if (id >= -1 && id < a->defs->count) {
+        if (aset_inl(a->anim[slot], id, prio)) {
+            a->anim[slot].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
+            if (prio & 0x4000000)
+                a->body->fx->set_rec_phase(slot, 0.0f);
+            if (slot == 0) {
+                if (id >= 0 && (a->defs->data[id].flags & 0x400) && a->anim[1].cur != -1 &&
+                    (prio & 0x1ffff) > (a->anim[1].events & 0x1ffff))
+                    aset_inl(a->anim[1], -1, prio & 0x1ffff);
+            } else if (slot == 1) {
+                int k = a->wield[0];
+                if (k >= 0 && a->pairs[k].item >= 0) {
+                    if (prio & 0x10000000)
+                        a->links[k]->mask = 0;
+                    else
+                        a->links[k]->mask = 0xffff;
+                }
+            }
+        }
+    }
+}
+static __forceinline void order1(Agent* a, int id, unsigned prio) { set_order_inl(a, 1, id, prio, 1.0f); }
+// @ 0x4556d0
+void Agent::update_controls(float dt)
+{
+    g_move_fwd = 0.0f;
+    g_move_side = 0.0f;
+    turn_rate2 = (1.0f - dt * 10.0f) * turn_rate2;
+    turn_rate = (1.0f - dt * 5.0f) * turn_rate;
+    float t74 = (1.0f - dt * 4.0f) * (rot[1] - dt * rot[0] * 0.2f) * 0.9f;
+    rot[1] = t74;
+    rot[0] = t74 + rot[0];
+    if ((anim[1].events & 0x1ffff) == 0)
+        order1(this, -1, 0);
+    vec2 inp;
+    if ((int)(anim[0].events & 0x1ffff) >= 0x40) {
+        inp.x = 0.0f;
+        inp.y = 0.0f;
+        vel_xy = inp;
+        return;
+    }
+    float speed_mul = 1.0f;
+    if (flags3c & 1) {
+        if ((float)(g_ticks[t40.clock] - t40.start) * 1e-05f >= 0.0f) {
+            // ---- terrain / night speed multiplier ------------------------------------------------------------------
+            Mission* ms = g_mission;
+            if (this->kind == 0) {
+                if (pos.z < ms->base_z) {
+                    float lo = 0.4f;
+                    float v = 1.0f - (ms->base_z - pos.z) * 0.5f;
+                    speed_mul = fmax_ref(&lo, &v);
+                } else if (ms->precip_mode == 1) {
+                    speed_mul = 0.9f;
+                }
+            } else {
+                if (pos.z < ms->base_z) {
+                    float lo = 0.3f;
+                    float v = 1.0f - (ms->base_z - pos.z) * 0.6f;
+                    speed_mul = fmax_ref(&lo, &v);
+                } else {
+                    if (ms->precip_mode == 1)
+                        speed_mul = 0.9f;
+                    if (g_game->is_night())
+                        speed_mul = speed_mul * 0.9f;
+                }
+            }
+            vector4 up(0.0f, 0.0f, 1.0f);
+            if (floor_face)
+                up = floor_face->normal;
+
+            // ---- input bits -> the two input axes ------------------------------------------------------------------
+            unsigned fl = in_now.bits;
+            float side = 0.0f;
+            inp.y = 0.0f;
+            if (fl & 1) {
+                inp.y = 1.0f;
+                if (fl & 0x200000)
+                    g_move_fwd = 1.0f;
+                else
+                    g_move_fwd = 0.6f;
+            } else if (fl & 2) {
+                inp.y = -1.0f;
+                g_move_fwd = -0.7f;
+                if (!(fl & 0x200000))
+                    g_move_fwd = -0.5f;
+            }
+            if (in_now.bits & 4) {
+                side = 1.0f;
+                g_move_fwd = g_move_fwd * 0.7f;
+                if (in_now.bits & 0x200000)
+                    g_move_side = 0.9f;
+                else
+                    g_move_side = 0.55f;
+            } else if (in_now.bits & 8) {
+                side = -1.0f;
+                g_move_fwd = g_move_fwd * 0.7f;
+                if (in_now.bits & 0x200000)
+                    g_move_side = -0.9f;
+                else
+                    g_move_side = -0.55f;
+            }
+            float len2 = side * side + inp.y * inp.y;
+            if (len2 > 0.0f) {
+                float inv = 1.0f / (float)sqrt(len2);
+                float ms = inv * side;
+                float mf = inv * inp.y;
+                if (mf < -0.1f) {
+                    ms = ms * 0.7f;
+                    mf = mf * 0.7f;
+                    if (!(in_now.bits & 0x200000)) {
+                        ms = ms * 0.7f;
+                        mf = mf * 0.7f;
+                    }
+                } else if (!(in_now.bits & 0x200000)) {
+                    ms = ms * 0.6f;
+                    mf = mf * 0.6f;
+                }
+                g_move_fwd = mf;
+                g_move_side = ms;
+            }
+
+            int mode = 0;
+            if (this->kind == 0) {
+                // ---- on foot: weapon mode, walk animation ----------------------------------------------------------
+                {
+                    ItemRef a = slot_pair(0);
+                    ItemRef b = slot_pair(1);
+                    if (a.item >= 0) {
+                        ItemKind* ik = &g_items[a.item];
+                        mode = 1;
+                        unsigned fl;
+                        if ((b.item == -1 && (ik->type_flags & 0xff) == 4) || (fl = ik->type_flags, (fl & 0xff) == 9)) {
+                            mode = 2;
+                        } else if (ik->is_melee() && (fl & 0x200000)) {
+                            mode = 3;
+                        }
+                    }
+                }
+                if ((anim[0].events & 0x1ffff) == 0 && horse == -1) {
+                    int anim;
+                    switch (mode) {
+                    case 1:
+                        anim = 5;
+                        break;
+                    case 2:
+                        { ItemKind* ik; if (slot_pair(0).item < 0 || (ik = &g_items[slot_pair(0).item], (ik->type_flags & 0xff) != 9))
+                            anim = 7;
+                        else
+                            anim = 8; }
+                        break;
+                    case 3:
+                        anim = 6;
+                        break;
+                    default:
+                        if (!(ai.alarm & 1) && (pool_id != (unsigned)g_mission->player_id ||
+                                (!a_bit(g_mission_templates[g_mission->mode].flags, 1) && !(g_mission->flags & 1))))
+                            anim = stand_animation;
+                        else
+                            anim = 4;
+                        break;
+                    }
+                    set_order(0, anim, 0, 1.0f);
+                }
+                float divisor = 1.0f;
+                a_v2 mv(g_move_side, g_move_fwd);
+                float slope = 1.0f;
+                {
+                    vector4 v(g_move_side, g_move_fwd, 0.0f);
+                    v.normalize();
+                    v = ((const ::pos&)body->local).rot(v);
+                    vector4 c = cross(v, up);
+                    v = cross(up, c);
+                    v.normalize();
+                    if (v.z > 0.01f)
+                        slope = 1.0f - v.z * 0.5f;
+                }
+                if (v98.z > 0.0001f) {
+                    slope = (1.0f - v98.z * 0.2f) * slope;
+                } else if (v98.z < -0.0001f) {
+                    float lo = 0.0f;
+                    float vv = v98.z * 0.5f + 0.7f;
+                    slope = fmax_ref(&lo, &vv) * slope;
+                }
+                float mag = (float)sqrt(g_move_fwd * g_move_fwd + g_move_side * g_move_side);
+                if (mag > 0.0f) {
+                    mv.x = g_move_side * (1.0f / mag);
+                    mv.y = (1.0f / mag) * g_move_fwd;
+                }
+                float lim = stamina_scale() * slope;
+                if (mag > speed_mul)
+                    mag = speed_mul;
+                if (mag < speed_mul * -0.8f)
+                    mag = speed_mul * -0.8f;
+                if (mag > lim)
+                    mag = lim;
+                if (mag < lim * -0.8f)
+                    mag = lim * -0.8f;
+                int off = troop;
+                const int& agi = g_game->chars[off].attributes[1];
+                float skill = ((60.0f / (equip_value + 60.0f)) * (g_game->chars[off].nibble(0x19) * 5.0f + agi) + 100.0f) * 0.01f;
+                float nvx, nvy;
+                {
+                    a_v2 dv = mv * mag * 2.8f * skill;
+                    dv.x = dv.x * 0.95f;
+                    if (dv.y < 0.0f)
+                        dv.y = dv.y * 0.8f;
+                    dv.x = dv.x - vel_xy.x;
+                    dv.y = dv.y - vel_xy.y;
+                    const int& agi2 = g_game->chars[off].attributes[1];
+                    float step = (((70.0f / (equip_value + 70.0f)) * ((25.0f / (equip_value + 25.0f)) * (((float)g_game->chars[off].nibble(0x19) * 0.2f) + ((float)agi2 * 0.06666667f)) + 1.0f)) * dt) * 10.0f;
+                    float lo_ = -step;
+                    nvx = a_clampr(dv.x, lo_, step) + vel_xy.x;
+                    vel_xy.x = nvx;
+                    nvy = a_clampr(dv.y, lo_, step) + vel_xy.y;
+                    vel_xy.y = nvy;
+                }
+                unsigned band = gait & 7;
+                float spd = a_len2(vel_xy);
+                for (;;) {
+                    if (spd > g_gait_walk[band].hi)
+                        band++;
+                    else if (spd < g_gait_walk[band].lo)
+                        band--;
+                    else
+                        break;
+                }
+                if (band == 2 && nvy < -0.1f)
+                    band = 1;
+                if (band == 2) {
+                    int ath3 = g_game->chars[off].nibble(0x19);
+                    divisor = ((float)ath3 + 30.0f) * 0.07f;
+                    if (fabs(nvy) * 0.5f > fabs(nvx)) {
+                        if (nvy > 0.0f)
+                            set_order(0, PICK(0x13, 0x14, 0x12, 0x11), 0x100000, 1.0f);
+                        else
+                            set_order(0, PICK(0x1f, 0x20, 0x1e, 0x1d), 0x100000, 1.0f);
+                    } else {
+                        float h = (float)fabs(nvx) * 0.5f;
+                        if (nvy > h) {
+                            if (nvx > 0.0f)
+                                set_order(0, PICK(0x17, 0x18, 0x16, 0x15), 0x100000, 1.0f);
+                            else
+                                set_order(0, PICK(0x1b, 0x1c, 0x1a, 0x19), 0x100000, 1.0f);
+                        } else if (-nvy > h) {
+                            if (nvx > 0.0f)
+                                set_order(0, PICK(0x38, 0x37, 0x36, 0x35), 0x100000, 1.0f);
+                            else
+                                set_order(0, PICK(0x34, 0x33, 0x32, 0x31), 0x100000, 1.0f);
+                        } else if (nvx > 0.0f) {
+                            set_order(0, PICK(0x3c, 0x3b, 0x3a, 0x39), 0x100000, 1.0f);
+                        } else {
+                            set_order(0, PICK(0x40, 0x3f, 0x3e, 0x3d), 0x100000, 1.0f);
+                        }
+                    }
+                } else if (band == 1) {
+                    divisor = 1.5f;
+                    if (fabs(nvy) * 0.5f > fabs(nvx)) {
+                        if (nvy > 0.0f)
+                            set_order(0, PICK(0xb, 0xc, 10, walk_forward_animation), 0x100000, 1.0f);
+                        else
+                            set_order(0, PICK(0xf, 0x10, 0xe, 0xd), 0x100000, 1.0f);
+                    } else {
+                        float h = (float)fabs(nvx) * 0.5f;
+                        if (nvy > h) {
+                            if (nvx > 0.0f)
+                                set_order(0, PICK(0x2c, 0x2b, 0x2a, 0x29), 0x100000, 1.0f);
+                            else
+                                set_order(0, PICK(0x30, 0x2f, 0x2e, 0x2d), 0x100000, 1.0f);
+                        } else if (-nvy > h) {
+                            if (nvx > 0.0f)
+                                set_order(0, PICK(0x38, 0x37, 0x36, 0x35), 0x100000, 1.0f);
+                            else
+                                set_order(0, PICK(0x34, 0x33, 0x32, 0x31), 0x100000, 1.0f);
+                        } else if (nvx > 0.0f) {
+                            set_order(0, PICK(0x24, 0x23, 0x22, 0x21), 0x100000, 1.0f);
+                        } else {
+                            set_order(0, PICK(0x28, 0x27, 0x26, 0x25), 0x100000, 1.0f);
+                        }
+                    }
+                }
+                gait_ratio = spd / divisor;
+                if (gait_ratio > 0.001f)
+                    anim[0].rate_scale = 1.0f / gait_ratio;
+                else
+                    anim[0].rate_scale = 1.0f;
+                gait = (gait & 0xfffffff8) | band;
+            }
+            // ---- mount: rider skill, acceleration, gait band ------------------------------------------------------
+            int rid = rider;
+            int rskill = 5;
+            float rmul = 1.0f;
+            if (rid != -1) {
+                Agent* pg = g_mission->agents.pages[(unsigned)rid >> 4];
+                int rt = pg[rid & 0xf].troop;
+                rskill = g_game->chars[rt].nibble(0x18);
+                rmul = ((float)rskill + 25.0f) * 0.037037037f;
+            }
+            float sgn = 0.0f;
+            if (this->kind == 1) {
+                unsigned fl2 = in_now.bits;
+                if (fl2 & 0x40) {
+                    sgn = -1.0f;
+                } else if (fl2 & 0x80) {
+                    sgn = 1.0f;
+                }
+                if (rid >= 0) {
+                    Mission* m7 = g_mission;
+                    if (m7->agents.get(rid)->f100_is_0x48_and_charged()) {
+                        if ((int)pool_id == m7->player_id)       // both arms the same: only the two loads are left (0x456503)
+                            sgn = sgn * 0.7f;
+                        else
+                            sgn = sgn * 0.7f;
+                    }
+                }
+                float lim;
+                if (vel_xy.y > 4.0f)
+                    lim = vel_xy.y;
+                else
+                    lim = 4.0f;
+                int s1 = item.horse_maneuver() + 1;
+                float acc = ((((float)s1 / lim) * sgn) * rmul) * dt + turn_rate;
+                turn_rate = acc;
+                rot[1] = rot[1] - ((acc * vel_xy.y) * dt) * 0.007f;
+                vel.rotate_xy(acc * dt);
+                if (in_now.bits & 0x10) {
+                    if (this->kind == 1) {
+                        unsigned bb = gait;
+                        if ((bb & 0x300) == 0) {
+                            gait = bb | 0x100;
+                            int s2 = item.horse_maneuver() - 1;
+                            vel_xy.y = ((float)s2 * rmul) * 0.04f;
+                        } else if (bb & 0x100) {
+                            vel_xy.y = (((18.0f - vel_xy.y) * ((float)item.horse_maneuver() * ((float)rskill + 3.0f))) * dt) * 0.0006f + vel_xy.y;
+                        } else if (bb & 0x200) {
+                            float nf = dt + vel_xy.y;
+                            vel_xy.y = nf;
+                            if (nf > -0.9f)
+                                vel_xy.y = 0.0f;
+                        }
+                    }
+                } else if (in_now.bits & 0x20) {
+                    if (this->kind != 0)
+                        order1(this, 0x1a1, 0);
+                    unsigned bb = gait;
+                    if ((bb & 0x300) == 0) {
+                        bb = bb | 0x200;
+                        gait = bb;
+                        vel_xy.y = -0.9f;
+                    } else if (bb & 0x200) {
+                        vel_xy.y = vel_xy.y - dt * 0.5f;
+                    } else if (bb & 0x100) {
+                        int s2 = item.horse_maneuver();
+                        float nf = vel_xy.y - ((float)s2 * dt) * 0.08f;
+                        vel_xy.y = nf;
+                        if (nf < 0.9f)
+                            vel_xy.y = 0.0f;
+                    }
+                } else {
+                    float nf = (1.0f - dt * 0.01f) * vel_xy.y;
+                    vel_xy.y = nf;
+                    if (fabs(nf) < 0.9f)
+                        vel_xy.y = 0.0f;
+                    if (vel_xy.y == 0.0f)
+                        gait = gait & 0xfffffcff;
+                }
+                vel.normalize();
+                int s3 = item.horse_speed() + 1;
+                vector4* fr = &body->local.f;
+                float cap = ((float)rskill * 0.02f + 1.0f) * ((float)s3 * speed_mul * 0.19f);
+                vector4 v;
+                v.x = vel_xy.y * fr->x;
+                v.y = fr->y * vel_xy.y;
+                v.z = fr->z * vel_xy.y;
+                vector4 c = cross(v, up);
+                v = cross(up, c);
+                v.normalize();
+                float lim2;
+                if (v.z > 0.01f)
+                    lim2 = (1.0f - v.z * 0.9f) * cap;
+                else if (v.z < -0.27f)
+                    lim2 = (1.0f - (-0.27f - v.z) * 1.3f) * cap;
+                else
+                    lim2 = cap;
+                if (vel_xy.y < -1.0f)
+                    vel_xy.y = -1.0f;
+                else if (lim2 < vel_xy.y)
+                    vel_xy.y = lim2;
+                unsigned band = gait & 7;
+                float div2 = 1.0f;
+                if (vel_xy.y > g_gait_mount[band].hi)
+                    band++;
+                else if (vel_xy.y < g_gait_mount[band].lo)
+                    band--;
+                if ((int)band < 0)
+                    band = 0;
+                else if ((int)band > 5)
+                    band = 5;
+                if (band == 5) {
+                    set_order(0, 0x19a, 0x100000, 1.0f);
+                    div2 = 5.0f;
+                    if (rider == g_mission->player_id) {
+                        if (t5810.elapsed() > 1.2f)
+                            restart_inl(t5810);
+                    }
+                } else if (band == 4) {
+                    set_order(0, 0x199, 0x100000, 1.0f);
+                    div2 = 3.2f;
+                } else if (band == 3) {
+                    set_order(0, 0x198, 0x100000, 1.0f);
+                    div2 = 2.0f;
+                } else if (band == 2) {
+                    set_order(0, 0x197, 0x100000, 1.0f);
+                    div2 = 1.7f;
+                } else if (band == 0) {
+                    set_order(0, 0x19b, 0, 1.0f);
+                    div2 = 1.0f;
+                } else {
+                    set_order(0, 0x196, 0, 1.0f);
+                    if (t5810.elapsed() > 1.2f) {
+                        if (t5810.elapsed() > 30.2f || frand() < 0.05f) {
+                            float var = 0.0f;
+                            int kind = 0x6c;
+                            play_sound_var(&kind, &var);
+                        }
+                        restart_inl(t5810);
+                    }
+                }
+                float r = vel_xy.y / div2;
+                gait_ratio = r;
+                if (r != 0.0f)
+                    anim[0].rate_scale = 1.0f / r;
+                else
+                    anim[0].rate_scale = 1.0f;
+                gait = (gait & 0xfffffff8) | band;
+                if (turn_rate < -0.1f) {
+                    if (band == 1)
+                        set_order(0, 0x19f, 0, 1.0f);
+                    order1(this, 0x19f, 0);
+                } else if (turn_rate > 0.1f) {
+                    if (band == 1)
+                        set_order(0, 0x1a0, 0, 1.0f);
+                    order1(this, 0x1a0, 0);
+                }
+            }
+            // ---- jump / rear-up ------------------------------------------------------------------------------------
+            if ((in_now.bits & 0x100000) && t5800.elapsed() >= 0.0f) {
+                if (this->kind == 0) {
+                    if (horse == -1) {
+                        flags3c = flags3c & 0xfffffffe;
+                        a_vadd(impulse, vector4(0.0f, 0.0f, 5.0f));
+                        set_order(0, 2, 0x1000002, 1.0f);
+                        if (pos.z < g_mission->base_z) {
+                            float var = 0.1f;
+                            int kind = 0x1f;
+                            play_sound_var(&kind, &var);
+                        } else {
+                            float var = 0.1f;
+                            int kind = 0x1d;
+                            play_sound_var(&kind, &var);
+                        }
+                        ((Timer*)&t5800)->set_delay(-2.0f);
+                    }
+                } else if (vel_xy.y > 3.5f) {
+                    flags3c = flags3c & 0xfffffffe;
+                    a_vadd(impulse, vector4(0.0f, 0.0f, 6.0f));
+                    set_order(0, 0x19d, 0x1000002, 1.0f);
+                    if (pos.z < g_mission->base_z) {
+                        float var = 0.1f;
+                        int kind = 0x23;
+                        play_sound_var(&kind, &var);
+                    } else {
+                        float var = 0.1f;
+                        int kind = 0x21;
+                        play_sound_var(&kind, &var);
+                    }
+                    ((Timer*)&t5800)->set_delay(-4.0f);
+                }
+            }
+            if ((in_now.bits & 0x40000) && this->kind != 0) {
+                int kind = 4;
+                play_hit_sound(&kind);
+                set_order(0, 0x19c, 0x100004a, 1.0f);
+            }
+        }
+    }
+    // ---- heading ------------------------------------------------------------------------------------------------
+    if ((int)pool_id == g_mission->player_id && horse == -1) {
+        if (in_now.f4 != 0) {
+            vel = in_now.move;
+        } else {
+            if (active != 0 || f5610 != 0 || (in_now.bits & 0xffdfffff) != 0)
+                steer(dt);
+        }
+    } else if (this->kind != 1 && horse == -1) {
+        steer(dt);
+    }
+    // ---- riding: mount reactions, mount / dismount --------------------------------------------------------------
+    unsigned mid = horse;
+    if ((int)mid >= 0) {
+        Agent* h = agent_by_id(mid);
+        switch (h->anim[0].cur) {
+        case 0x197: set_order(0, 0x42, 0, 1.0f); break;
+        case 0x198: set_order(0, 0x45, 0, 1.0f); break;
+        case 0x199: set_order(0, 0x46, 0, 1.0f); break;
+        case 0x19a: set_order(0, 0x47, 0, 1.0f); break;
+        case 0x19c: set_order(0, 0x49, 0x1000040, 1.0f); break;
+        case 0x19d: set_order(0, 0x4b, 0, 1.0f); break;
+        case 0x19e: set_order(0, 0x4c, 0, 1.0f); break;
+        case 0x1a0: set_order(0, 0x4e, 0, 1.0f); break;
+        case 0x19f: set_order(0, 0x4d, 0, 1.0f); break;
+        default:
+            aset_inl(anim[0], 0x41, 0);
+            break;
+        }
+        if (weapon_flags & 8) {
+            if (agent_by_id(horse)->vel_xy.y > 5.5f) {
+                order1(this, 0x48, 0);
+            } else if (agent_by_id(horse)->anim[0].cur == 0x196) {
+                order1(this, 0x51, 0);
+            } else {
+                order1(this, 0x43, 0);
+            }
+        }
+    }
+    if ((in_now.bits & 0x80000) && (gait & 0x100) && this->kind == 0 && horse >= 0 &&
+        g_mission->agents.get(horse)->vel_xy.y < 5.2f)
+        set_order(0, 0x4a, 0x1000002, 1.0f);
+    unsigned fl = in_now.bits;
+    if ((fl & 0x10000) && horse >= 0 && mount_timer.active == 0) {
+        ((ActiveTimer*)&mount_timer)->begin(2.0f);
+        set_order(0, 0x50, 0x1000040, 1.0f);
+        order1(this, -1, 0x1f);
+        active = 0;
+        f5610 = 0;
+        agent_by_id(horse)->rider = -1;
+        agent_by_id(horse)->ai.simple_behavior = 0;
+        agent_by_id(horse)->ai.ta_interval = 10.0f;     // +0x2c0 as a float (0x457367: 0x41200000)
+        restart_inl(agent_by_id(horse)->ai.ta);
+        horse = -1;
+        draw_name();
+    } else if (!(fl & 0x20000) || horse != -1) {
+        if ((fl >> 24) && (fl & 0xff000000) == 0x1000000 && this->kind == 0 && anim[1].cur != 0x127 && mount_attempts < 3) {
+            order1(this, 0x127, 0x1000040);
+            mount_attempts++;
+            int kind = 6;
+            play_class_sound(&kind);
+        }
+    } else {
+        unsigned tg;
+        if (f7c == 2)
+            tg = ai.target;
+        else
+            tg = find_talk_target();
+        if ((int)tg >= 0 && agent_by_id(tg)->rider == -1) {
+            g_mission->agents.get(tg)->f5830 = 2;
+            g_mission->agents.get(tg)->rider = pool_id;
+            horse = tg;
+            set_order(0, 0x4f, 0x1000040, 1.0f);
+            order1(this, -1, 0x1f);
+            active = 0;
+            f5610 = 0;
+            draw_name();
+            if (wield[0] >= 0 && pairs[wield[0]].item >= 0 && (g_items[pairs[wield[0]].item].type_flags & 0x10000000)) {
+                wield[0] = -1;
+                on_wield_reset();
+            }
+            if (wield[1] >= 0 && pairs[wield[1]].item >= 0) {
+                unsigned tf = g_items[pairs[wield[1]].item].type_flags;
+                if ((tf & 0xff) == 7 && (tf & 0x10000000)) {
+                    wield[1] = -1;
+                    on_wield_reset();
+                    order1(this, 0x6d, 0x5000046);
+                }
+            }
+        }
+    }
+    ((ActiveTimer*)&mount_timer)->expired();
+}
+
+// ---- Agent::process_blow: the handler of a pending blow ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+#include "engine/fx/anim_set.h"   // AnimSet g_anim_set (0xa76628): .data is the array of 0x30-byte animation definitions
+#define itp_wooden_attack 0x00020000
+#define itcf_throw_stone 0x0000000000010000i64
+#define tf_allways_fall_dead 0x80
+#define imod_lame 30
+#define PAGE_AGENT(m, i) ((m)->agents.pages[(unsigned)(i) >> 4] + ((i) & 0xf))
+// 0x43a280 (the register-convention helper: type in EAX, destination buffer in ESI)
+#define PB_IMPULSE() if (flags3c & 1) { \
+        flags3c &= ~1u; \
+        ((Timer*)&t40)->set_delay(-0.6f); \
+        impulse.x = imp.x + impulse.x; \
+        impulse.y = imp.y + impulse.y; \
+        impulse.z = imp.z + impulse.z; \
+        if ((int)blow.attacker >= 0 && g_mission->agents.get(blow.attacker)->kind == 1) { \
+            impulse.x = impulse.x; \
+            impulse.y = impulse.y; \
+            impulse.z = impulse.z + 1.0f; \
+        } \
+    }
+// 0x407c80 (engine/physics/collision_shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+namespace rgl {
+inline __declspec(noinline) float vector4::out_length_squared() const { return length_squared(); }      // 0x407c80
+}
+
+// 0x435130 (game/agent/agent_queries.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) bool Troop::is_hero()      // 0x435130
+{
+    if (flags30 & 0x10) return true;
+    return false;
+}
+
+// @ 0x457b40
+void Agent::process_blow(float unused)
+{
+    int attacker;
+    float dmg;
+    int hit_part;
+    int anim_a, anim_b;
+    int atk_troop, atk_rider;
+    Mission* m;
+    bool stunned;
+    bool cA, cB;
+    vector4 imp;
+    ItemKind* ik;
+
+    if (state != 1)
+        return;
+    if (has_blow == 0)
+        return;
+    attacker = blow.attacker;
+    dmg = blow.dmg_out;
+    hit_part = blow.absorbed;
+    has_blow = 0;
+    anim_a = -1;
+    anim_b = -1;
+    if (attacker >= 0)
+        ai.last_attacker = attacker;
+    m = g_mission;
+    atk_troop = -1;
+    atk_rider = -1;
+    if (attacker >= 0) {
+        Agent** pg = &m->agents.pages[0];
+        if (pg[(unsigned)attacker >> 4][attacker & 0xf].kind == 0) {
+            atk_rider = attacker;
+            if (atk_rider >= 0)
+                atk_troop = pg[(unsigned)atk_rider >> 4][atk_rider & 0xf].troop;
+        } else if (pg[(unsigned)attacker >> 4][attacker & 0xf].rider >= 0) {
+            atk_rider = m->agents.get(attacker)->rider;
+            if (atk_rider >= 0)
+                atk_troop = pg[(unsigned)atk_rider >> 4][atk_rider & 0xf].troop;
+        }
+    }
+    if ((this->kind == 0 && blow.bone == 9) || (this->kind == 1 && blow.bone == 7)) {
+        if (blow.item >= 0 && g_items[blow.item].is_ranged()) {
+            dmg = dmg * 1.75f;
+            if (attacker == m->player_id && g_options.damage_msgs != 0) {
+                tstring k("ui_head_shot");
+                g_gui.add(*g_strtable.lookup(k), 0xffffdd11);
+                m = g_mission;
+            }
+        }
+    }
+    if (pool_id == m->player_id || rider == m->player_id) {
+        if (g_options.dmg_to_player == 1)
+            dmg = dmg * 0.5f;
+        else if (g_options.dmg_to_player == 0)
+            dmg = dmg * 0.25f;
+    } else {
+        int dd = g_options.dmg_to_friends;
+        GameData* g = g_game;
+        if (dd != 2 &&
+            ((this->kind == 0 && party == g->main_party) ||
+             (this->kind == 1 && rider >= 0 && m->agents.get(rider)->party == g->main_party))) {
+            if (dd == 1)
+                dmg = dmg * 0.75f;
+            else if (dd == 0)
+                dmg = dmg * 0.5f;
+        }
+    }
+    health = health - dmg;
+
+    // ---- the damage messages ----
+    {
+        int shown = g_options.damage_msgs;
+        if (blow.attacker == m->player_id && shown != 0) {
+            char msgbuf[512];
+            {
+                tstring k((this->kind != 0 && rider != -1) ? "ui_delivered_number_damage_to_horse"
+                                                        : "ui_delivered_number_damage");
+                sprintf(msgbuf, g_strtable.lookup(k)->c_str(), round_float(&dmg));
+            }
+            {
+                tstring t(msgbuf);
+                g_gui.add(t, -261);
+            }
+        } else {
+            int lid = m->player_id;
+            if (lid >= 0 && m->agents.pages[(unsigned)lid >> 4][lid & 0xf].horse >= 0 &&
+                blow.attacker == m->agents.pages[(unsigned)lid >> 4][lid & 0xf].horse && shown != 0 &&
+                round_float(&dmg) != 0) {
+                char hbuf[256];
+                {
+                    tstring k("ui_horse_charged_for_number_damage");
+                    sprintf(hbuf, g_strtable.lookup(k)->c_str(), round_float(&dmg));
+                }
+                {
+                    tstring t(hbuf);
+                    g_mission->log_message(&t, 20.0f);
+                }
+            } else {
+                const char* key = 0;
+                shown = g_options.damage_msgs;
+                m = g_mission;
+                if (pool_id == m->player_id && shown != 0) {
+                    key = "ui_received_number_damage";
+                } else if (m->player_id >= 0) {
+                    int l2 = m->player_id;
+                    if (m->agents.pages[(unsigned)l2 >> 4][l2 & 0xf].horse >= 0 &&
+                        pool_id == m->agents.pages[(unsigned)l2 >> 4][l2 & 0xf].horse && shown != 0)
+                        key = "ui_horse_received_number_damage";
+                }
+                if (key) {
+                    char hbuf[256];
+                    {
+                        tstring k(key);
+                        sprintf(hbuf, g_strtable.lookup(k)->c_str(), round_float(&dmg));
+                    }
+                    g_gui.add(tstring(hbuf), 0xffe0c0c0);
+                }
+            }
+        }
+    }
+
+    // ---- hit sounds ----
+    if (!(blow.flags & 0x20)) {
+        int kind;
+        float var;
+#define HIT_SOUND(k) { kind = (k); play_sound_var(&kind, &var); }
+        if (blow.item >= 0) {
+            if (g_items[blow.item].is_ranged()) {
+                var = 0.1f;
+                if (pool_id == g_mission->player_id)
+                    HIT_SOUND(0x66)
+                else
+                    HIT_SOUND(0x64)
+            } else {
+                bool blunt = (blow.item_mod & itp_wooden_attack) != 0 || blow.kind == 2;
+                var = 0.15f;
+                if (dmg < 9.0f) {
+                    if (hit_part < 14) {
+                        if (blunt) HIT_SOUND(0x79) else HIT_SOUND(0x75)
+                    } else {
+                        if (blunt) HIT_SOUND(0x7b) else HIT_SOUND(0x77)
+                    }
+                } else {
+                    if (hit_part < 14) {
+                        if (blunt) HIT_SOUND(0x7a) else HIT_SOUND(0x76)
+                    } else {
+                        if (blunt) HIT_SOUND(0x7c) else HIT_SOUND(0x78)
+                    }
+                }
+            }
+        } else {
+            var = 0.15f;
+            HIT_SOUND(0x65)
+        }
+#undef HIT_SOUND
+    }
+
+    // ---- a missile that sticks in the body ----
+    if (blow.missile != 0 && g_items[blow.missile->ammo.item].flags != itcf_throw_stone &&
+        !(g_mission->flags & 1) && dmg > 7.0f && (health < 1.0f || blow.bone != 9 || dmg > 75.0f)) {
+        rgl::mat4 M = body->local * *body->fx->rec(blow.bone);
+        float len = blow.missile->ammo_scale() * 0.7f;
+        matrix mm;
+        mm.o = blow.pos - len * blow.dir;
+        mm.f = blow.dir;
+        mm.u = vector4(0.0f, 0.0f, 1.0f);
+        mm.orthonormalize();
+        if (blow.missile != 0) {
+            rgl::mesh* ms = blow.missile->make_ranged_mesh();
+            if (ms != 0) {
+                vector4 off;
+                off.x = 0.0f;
+                off.y = blow.missile->ammo_scale();
+                off.z = 0.0f;
+                ms->translate(&off);
+                ((FxDef*)body->fx)->attach_psys(blow.bone, ms, &((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm));
+            }
+        }
+    }
+
+    // ---- blood ----
+    if (dmg > 1.0f && !(*(unsigned*)&g_mission->flags & 0x100)) {
+        float blood = 1.0f;
+        if (blow.kind == 2)
+            blood = 0.2f;
+        else if (blow.kind == 1)
+            blood = 0.7f;
+        if (g_options.blood > 0 && blow.kind != 2) {
+            bool go = false;
+            if (g_options.blood == 2) {
+                go = true;
+            } else if (g_mission->player_id >= 0) {
+                if ((blow.pos - g_mission->agents.get(g_mission->player_id)->pos).out_length_squared() < 70.0f)
+                    go = true;
+            }
+            if (go)
+                g_mission->blood_burst(blow.pos.x, blow.pos.y, blow.pos.z, 0, blood * dmg);
+        }
+    }
+
+    if (this->kind == 1) {
+        float plen;
+        if (health < 1.0f) {
+            health = 0.0f;
+            state = 5;
+            f5830 = 3;
+            tm.start = g_ticks[tm.clock];
+            body->fx->track_root_vel = 1;
+            draw_name();
+            m = g_mission;
+            if (rider == m->player_id && pool_id == m->f60 && a_bit(g_mission_templates[m->mode].flags, 1) &&
+                item.item >= 0 && !a_bit(g_items[item.item].type_flags, 12)) {
+                GameData* g = g_game;
+                ItemRef* horse = &g->chars[g->player].equip[8];
+                if ((horse->m4 & 0xff000000) == (unsigned)imod_lame << 24) {
+                    if (frand() < 0.2f) {
+                        tstring k("ui_horse_fell_dead");
+                        g_gui.add(*g_strtable.lookup(k), 0xffdd6655);
+                        horse->item = -1;
+                    }
+                } else {
+                    if (frand() < 0.2f) {
+                        {
+                            tstring k("ui_horse_crippled");
+                            g_gui.add(*g_strtable.lookup(k), 0xffeebbbb);
+                        }
+                        horse->b.mod = 0;
+                        horse->m4 |= (unsigned)imod_lame << 24;
+                        horse->reduce(0);
+                    }
+                }
+            }
+            plen = 1.0f;
+            if (vel_xy.y > 2.5f) {
+                set_order(0, 0x1a4, 0x2000080, 1.0f);
+                int kind = 4;
+                play_hit_sound(&kind);
+                ((Timer*)&t40)->set_delay(-2.4f);
+                if (rider >= 0) {
+                    g_mission->agents.get(rider)->set_order(0, 0x123, 0x1000081, 1.0f);
+                    vector4 z;
+                    z.x = 0.0f;
+                    z.y = 0.0f;
+                    z.z = 0.0f;
+                    g_mission->agents.get(rider)->impulse = z;
+                    ((Timer*)&g_mission->agents.get(rider)->t40)->set_delay(-2.4f);
+                }
+            } else {
+                if (frand() <= 1.0f) {
+                    set_order(0, 0x1a3, 0x2000080, 1.0f);
+                    int kind = 4;
+                    play_hit_sound(&kind);
+                    plen = g_anim_set.data[0x1a3].subs->offset;
+                    if (rider >= 0)
+                        g_mission->agents.get(rider)->set_order(0, 0x122, 0x1000081, 1.0f);
+                } else {
+                    set_order(0, 0x1a2, 0x2000080, 1.0f);
+                    plen = g_anim_set.data[0x1a2].subs->offset;
+                    int kind = 4;
+                    play_hit_sound(&kind);
+                    if (rider >= 0)
+                        g_mission->agents.get(rider)->set_order(0, 0x121, 0x1000081, 1.0f);
+                }
+                if (plen < 0.01f)
+                    plen = 1.0f;
+            }
+            ((Timer*)&t5918)->set_delay(-plen);
+            if (rider >= 0) {
+                g_mission->agents.get(rider)->horse = -1;
+                rider = -1;
+            }
+            return;
+        }
+        // the horse survived: a lance couched into it may stagger it
+        // the horse survived: a lance couched into it may stagger it
+        if (blow.item < 0) return;
+        if ((g_items[blow.item].type_flags & 0xff) != itp_type_polearm) return;
+        if (blow.kind != 1) return;
+        if (!(blow.dmg_out > 8.0f)) return;
+        if (!(vel_xy.y > 0.1f)) return;
+        if ((int)blow.attacker < 0) return;
+        if (!(rgl::dot(pos - m->agents.get(blow.attacker)->pos, body->local.f) < -0.5f)) return;
+        if ((int)(anim[0].events & 0x1ffff) >= 0x4a) return;
+        float a = 5.0f;
+        float x = 5.0f / ((float)item.horse_charge() + 2.0f);
+        float y = fmax_ref(&vel_xy.y, &a);
+        x = (x / y) * 5.0f;
+        if (frand() < x) {
+            int kind = 4;
+            play_hit_sound(&kind);
+            set_order(0, 0x19c, 0x100004a, 1.0f);
+            return;
+        }
+        a = 0.95f;
+        float z = (float)item.horse_charge() * 0.01f + 0.7f;
+        vel_xy.y = fmin_ref(&z, &a) * vel_xy.y;
+        return;
+    }
+
+    // ---- a human ----
+    stunned = false;
+    hit_part = 0x80;
+    if (health < 1.0f) {
+        vector4 apos;
+        apos.x = 0.0f;
+        apos.y = 0.0f;
+        apos.z = 0.0f;
+        if ((int)blow.attacker >= 0)
+            apos = g_mission->agents.get(blow.attacker)->pos;
+        vector4 av = apos - pos;
+        if (this->horse != -1) {
+            anim_a = 0x120;
+        } else {
+            if (av.x * vel.x + (av.y * vel.y + av.z * vel.z) > 0.0f) {
+                if (blow.bone == 9 && (blow.missile != 0 || frand() < 0.7f)) {
+                    anim_a = 0x11a;
+                } else if (blow.bone == 9) {
+                    anim_a = 0x11d;
+                } else if (blow.bone == 0 || blow.bone == 7) {
+                    anim_a = 0x11c;
+                } else if (blow.missile == 0 && rgl::dot(blow.dir2, body->local.s) > 0.3f) {
+                    anim_a = 0x11e;
+                } else {
+                    anim_a = 0x11b;
+                }
+            } else {
+                anim_a = 0x11f;
+            }
+        }
+    } else {
+        if (troop >= 0) {
+            if (((dmg < 1.0f) && (blow.dmg_in < (frand() + 1.0f) * (float)(g_game->chars[troop].attributes[0] + 15) * 0.2f)) ||   // strength (+0x58, 0x458bc1)
+                dmg < g_module_settings.damage_interrupt_attack_treshold) {
+                if ((int)blow.attacker >= 0 && g_mission->agents.get(blow.attacker)->kind == 0)
+                    stunned = true;
+            }
+        }
+        if (this->horse == -1 && blow.item >= 0 &&
+            (ik = &g_items[blow.item], ik->is_ranged() || (ik->type_flags & 0xff) == itp_type_polearm)) {
+            if (!stunned) {
+                if (((ik->type_flags & 0xff) == itp_type_polearm && frand() < 0.5f && blow.dmg_in > 15.0f) ||
+                    ((g_items[blow.item].type_flags & 0xff) == itp_type_thrown && frand() < 0.4f && blow.dmg_in > 15.0f) ||
+                    ((g_items[blow.item].type_flags & 0xff) == itp_type_bow && frand() < 0.3f && blow.dmg_in > 25.0f) ||
+                    ((g_items[blow.item].type_flags & 0xff) == itp_type_crossbow && frand() < 0.3f && blow.dmg_in > 25.0f)) {
+                    anim_a = move_anim(2);
+                    float k = frand() * 0.2f + 2.1f;
+                    hit_part = 0x82;
+                    imp.x = k * blow.dir.x;
+                    imp.y = k * blow.dir.y;
+                    imp.z = k * blow.dir.z;
+                    goto impulse;
+                }
+                anim_a = move_anim(1);
+            }
+        } else if (this->horse != -1) {
+            anim_b = move_anim(0);
+        } else do {
+            if (rgl::dot(vel, blow.dir) < 0.0f &&
+                (((blow.flags & 0x10) && blow.dmg_in > 7.0f) || (blow.dmg_in > 24.0f && frand() < 0.4f)) &&
+                blow.kind == 2 && anim[0].cur != 0x125) {
+                anim_a = 0x125;
+                imp.x = vel.x * -0.6f;
+                anim_b = 0x126;
+                imp.y = vel.y * -0.6f;
+                imp.z = vel.z * -0.6f;
+                if (blow.flags & 0x10) {
+                    float rr = frand() * 0.4f + 1.5f;
+                    imp.x = rr * blow.dir.x + imp.x;
+                    imp.y = rr * blow.dir.y + imp.y;
+                    imp.z = rr * blow.dir.z + imp.z;
+                }
+            } else {
+                anim_b = move_anim(1);
+                if (!(blow.flags & 0x10)) {
+                    if (!(blow.dmg_in > 15.0f))
+                        break;
+                    if (!(frand() < 0.3f))
+                        break;
+                }
+                {
+                    float e = (frand() - 0.5f) * 0.5f;
+                    float f = (frand() + 0.6f) * (blow.dmg_in + 30.0f) * 0.02f;
+                    vector4* sv = &body->local.s;
+                    imp.x = f * blow.dir.x + e * sv->x;
+                    imp.y = f * blow.dir.y + e * sv->y;
+                    imp.z = f * blow.dir.z + e * sv->z;
+                }
+            }
+            if (!stunned) {
+            impulse:
+                PB_IMPULSE()
+            }
+            } while (0);
+    }
+
+    cA = false;
+    cB = false;
+    if (health < 1.0f) {
+        health = 0.0f;
+        m = g_mission;
+        float surg = 0.0f;
+        if (m->player_id >= 0) {
+            if (m->agents.get(m->player_id)->is_friend(this)) {
+                surg = (float)g_game->parties.get(g_game->main_party)->skill_level(10) * 0.04f + 0.25f;
+                m = g_mission;
+            }
+        }
+        if (!(m->flags & 1) &&
+            ((g_game->chars[troop].flags30 & tf_allways_fall_dead) != 0 ||
+             (blow.kind != 2 && troop >= 0 && !g_game->chars[troop].is_hero() && frand() > surg)))
+            cA = true;
+        else
+            cB = true;
+        f5830 = 3;
+        tm.start = g_ticks[tm.clock];
+        mount_id = this->horse;
+        body->fx->track_root_vel = 1;
+        float len = 0.5f;
+        if (anim_a >= 0) {
+            len = g_anim_set.data[anim_a].subs->offset;
+            if (len < 0.01f)
+                len = 0.5f;
+        }
+        ((Timer*)&t5918)->set_delay(-len);
+        hit_bone = blow.bone;
+        hit_vec = blow.dir2;
+        hit_vec.normalize();
+        float k = (blow.dmg_in + 5.0f) * 0.2f;
+        hit_vec.x = k * hit_vec.x;
+        hit_vec.y = k * hit_vec.y;
+        hit_vec.z = k * hit_vec.z;
+        hit_pos = blow.pos;
+        if (blow.flags & 0x10) {
+            hit_vec.x = hit_vec.x + hit_vec.x;
+            hit_vec.y = hit_vec.y + hit_vec.y;
+            hit_vec.z = hit_vec.z + hit_vec.z;
+        }
+        if (blow.kind == 2) {
+            hit_vec.x = hit_vec.x + hit_vec.x;
+            hit_vec.y = hit_vec.y + hit_vec.y;
+            hit_vec.z = hit_vec.z + hit_vec.z;
+        }
+        draw_name();
+        m = g_mission;
+        if (this->horse >= 0) {
+            if (m->player_id < 0 || m->agents.get(m->player_id)->horse != -1 ||
+                ((blow.attacker != m->player_id || m->dismount_count >= 4) && !(m->flags & 1))) {
+                m->agents.get(this->horse)->dismount_state = 1;
+                Agent* h = g_mission->agents.get(this->horse);
+                h->tm.start = g_ticks[h->tm.clock];
+            } else {
+                Agent* h = m->agents.get(this->horse);
+                vector4 bf;
+                bf.x = h->vel_xy.y * body->local.f.x;
+                bf.y = body->local.f.y * h->vel_xy.y;
+                bf.z = body->local.f.z * h->vel_xy.y;
+                ((Timer*)&t40)->set_delay(-1.4f);
+                impulse = bf;
+                g_mission->agents.get(this->horse)->rider = -1;
+                this->horse = -1;
+                g_mission->dismount_count++;
+            }
+        }
+    }
+
+    // ---- experience and weapon proficiency for the attacker ----
+    if (atk_troop >= 0 && this->is_enemy(PAGE_AGENT(g_mission, atk_rider)) && dmg > 0.01f && (cA || cB)) {
+        Troop* chars = g_game->chars;
+        float xpf = (float)chars[troop].scaled_b0();
+        if (g_mission->flags & 1)
+            xpf = xpf * 0.1f;
+        int xp = (int)xpf;
+        if (xp != 0) {
+            if (chars[g_mission->agents.get(atk_rider)->troop].is_hero()) {
+                GameData* g = g_game;
+                if (atk_troop == g->player)
+                    g->add_experience(atk_troop, (int)((float)xp * g_module_settings.player_xp_multiplier));
+                else
+                    g->add_experience(atk_troop, (int)((float)xp * g_module_settings.hero_xp_multiplier));
+            } else {
+                g_mission->agents.get(atk_rider)->xp_pool += (int)((float)xp * g_module_settings.regulars_xp_multiplier);
+            }
+        }
+    }
+    if ((int)blow.attacker >= 0 && dmg > 0.01f) {
+        AgentTable* t = &g_mission->agents;
+        if (this->is_enemy(t->get(blow.attacker)) && t->get(blow.attacker)->troop >= 0 &&
+            g_game->chars[t->get(blow.attacker)->troop].is_hero() && blow.item >= 0) {
+            ItemRef sp = t->get(blow.attacker)->slot_pair(1);
+            int cls = slot_class_impl(blow.item, sp.item >= 0);
+            int old = (int)g_game->chars[atk_troop].stat[cls];
+            float dm = dmg;
+            if (g_mission->flags & 1)
+                dm = dm * 0.33f;
+            float amount = (((float)g_game->chars[troop].level + 10.0f) * dm) * 0.05f;
+            vector4 vA = v56b4 - t->get(blow.attacker)->v56b4;
+            vector4 vB = pos - t->get(blow.attacker)->pos;
+            float lenB = vB.normalize();
+            float lenA = vA.normalize();
+            float cl = rgl::cross(vA, vB).out_length();
+            char msgbuf[512];
+            char namebuf[256];
+            float w;
+            if (cls == 3 || cls == 5 || cls == 4 || cls == 6) {
+                float tt = ((cl * lenA + 4.0f) * 0.25f) * ((lenB + 4.0f) * 0.25f) * 0.3f;
+                if (tt < 1.0f)
+                    tt = 1.0f;
+                else if (tt > 12.0f)
+                    tt = 12.0f;
+                if (blow.attacker == g_mission->player_id && g_options.shot_difficulty != 0) {
+                    float sd = tt;
+                    if (blow.bone == 9)
+                        sd = tt * 1.2f;
+                    {
+                        tstring k("ui_shot_difficulty");
+                        sprintf(msgbuf, g_strtable.lookup(k)->c_str(), (double)sd);
+                    }
+                    {
+                        g_gui.add(tstring(msgbuf), 0xffaaaaaa);
+                    }
+                }
+                w = tt * amount;
+            } else {
+                w = amount;
+            }
+            g_game->chars[atk_troop].adjust(cls, w * 0.02f);
+            int nw = (int)g_game->chars[atk_troop].stat[cls];
+            if (atk_troop == 0 && nw > old) {
+                ui_weapon_class_name(cls, namebuf);
+                int diff = nw - old;
+                if (diff == 1) {
+                    {
+                        tstring k("ui_you_have_improved_your_proficiency_in_value_to_number");
+                        sprintf(msgbuf, g_strtable.lookup(k)->c_str(), namebuf, nw);
+                    }
+                } else {
+                    tstring k("ui_your_proficiency_in_value_has_improved_by_number_to_number");
+                    sprintf(msgbuf, g_strtable.lookup(k)->c_str(), namebuf, diff, nw);
+                }
+                g_gui.add(tstring(msgbuf), 0xffffdf44);
+            }
+        }
+    }
+
+    // ---- the impact particles ----
+    if (dmg > 1.0f && !(g_mission->flags & 1) && g_cfg.enable_blood != 0) {
+        float hi = 50.0f;
+        float lo = 1.0f;
+        float k = ((dmg + 5.0f) * g_module_settings.blood_multiplier) * 0.1f + 1.0f;
+        float ef = clamp(&k, &lo, &hi);
+        matrix m2;
+        m2.o = blow.pos;
+        m2.f = vector4(-blow.dir.x, -blow.dir.y, -blow.dir.z + 0.5f);
+        m2.u = vector4(0.0f, 0.0f, 1.0f);
+        m2.orthonormalize();
+        int vi = (int)(g_game->chars[troop].flags30 & 0xf);
+        int e1 = g_anim.blood1(vi);
+        int e2 = g_anim.blood2(vi);
+        if (e1 == 0)
+            e1 = g_emit_defs.used[2];
+        if (e2 == 0)
+            e2 = g_emit_defs.used[3];
+        if (e1 >= 0) {
+            rgl::psys* em = g_mission->spawn_effect(e1, (const rgl::mat4*)&m2, (int)(ef + ef));
+            float s = (ef + 10.0f) * 0.1f;
+            vector4 v;
+            v.x = s * g_emit_defs.defs[e1].b.x;
+            v.y = s * g_emit_defs.defs[e1].b.y;
+            v.z = s * g_emit_defs.defs[e1].b.z;
+            em->set_v184(&v);       // 0x433740 (game/agent/agent_item_pick.cpp)
+            em->spawn_rate = ef * g_emit_defs.defs[e1].spawn_rate;
+        }
+        if (e2 >= 0) {
+            rgl::psys* em = g_mission->spawn_effect(e2, (const rgl::mat4*)&m2, (int)(ef * 4.0f));
+            float s = (ef + 10.0f) * 0.1f;
+            vector4 v;
+            v.x = s * g_emit_defs.defs[e2].b.x;
+            v.y = s * g_emit_defs.defs[e2].b.y;
+            v.z = s * g_emit_defs.defs[e2].b.z;
+            em->set_v184(&v);       // 0x433740 (game/agent/agent_item_pick.cpp)
+            em->spawn_rate = ef * g_emit_defs.defs[e2].spawn_rate;
+        }
+    }
+
+    // ---- the outcome ----
+    if (cA) {
+        if (!(blow.flags & 0x20)) {
+            int kind = 0;
+            play_class_sound(&kind);
+        }
+        set_order(0, anim_a, 0x28000c8, 1.0f);
+        state = 5;
+        m = g_mission;
+        if (blow.attacker == m->player_id) {
+            g_game->cnt_killed++;
+            if (this->is_friend(m->agents.get(g_mission->player_id)))
+                g_game->cnt_killed_friend++;
+            m = g_mission;
+        }
+        if ((int)blow.attacker >= 0)
+            m->agents.get(blow.attacker)->kill_count++;
+        if (g_options.kill_msgs != 0) {
+            char msgbuf[512];
+            tstring unused_s;
+            if (atk_troop >= 0) {
+                tstring k("ui_value_killed_by_value");
+                const char* n1 = g_game->chars[atk_troop].display_name()->c_str();
+                const char* n2 = g_game->chars[troop].display_name()->c_str();
+                sprintf(msgbuf, g_strtable.lookup(k)->c_str(), n2, n1);
+            } else {
+                tstring k("ui_value_fell_dead");
+                const char* n2 = g_game->chars[troop].display_name()->c_str();
+                sprintf(msgbuf, g_strtable.lookup(k)->c_str(), n2);
+            }
+            m = g_mission;
+            int lid = m->player_id;
+            int color = 0xff44ddaa;
+            if (lid >= 0) {
+                if (m->agents.get(lid)->team == team)
+                    color = 0xffcc4411;
+                else if (lid >= 0 && m->agents.get(lid)->is_friend(this))
+                    color = 0xffce1180;
+            }
+            g_gui.add(tstring(msgbuf), color);
+        }
+        draw_name();
+        return;
+    }
+    if (cB) {
+        if (!(blow.flags & 0x20)) {
+            int kind = 0;
+            play_class_sound(&kind);
+        }
+        set_order(0, anim_a, 0x28000c8, 1.0f);
+        state = 4;
+        m = g_mission;
+        if (blow.attacker == m->player_id) {
+            g_game->cnt_ko++;
+            if (this->is_friend(m->agents.get(g_mission->player_id)))
+                g_game->cnt_ko_friend++;
+            m = g_mission;
+        }
+        if ((int)blow.attacker >= 0)
+            m->agents.get(blow.attacker)->wounded_count++;
+        if (g_options.kill_msgs != 0) {
+            char namebuf[256];
+            if (atk_troop >= 0) {
+                tstring k("ui_value_knocked_unconscious_by_value");
+                const char* n1 = g_game->chars[atk_troop].display_name()->c_str();
+                const char* n2 = g_game->chars[troop].display_name()->c_str();
+                sprintf(namebuf, g_strtable.lookup(k)->c_str(), n2, n1);
+            } else {
+                tstring k("ui_value_fell_unconscious");
+                const char* n2 = g_game->chars[troop].display_name()->c_str();
+                sprintf(namebuf, g_strtable.lookup(k)->c_str(), n2);
+            }
+            m = g_mission;
+            int lid = m->player_id;
+            int color = 0xff44ddaa;
+            if (lid >= 0) {
+                if (m->agents.get(lid)->team == team)
+                    color = 0xffcc9911;
+                else if (lid >= 0 && m->agents.get(lid)->is_friend(this))
+                    color = 0xffb26fdd;
+            }
+            g_gui.add(tstring(namebuf), color);
+        }
+        draw_name();
+        return;
+    }
+    if (stunned)
+        return;
+    if (!(blow.flags & 0x20)) {
+        int kind = 1;
+        play_class_sound(&kind);
+    }
+    if (anim_a >= 0)
+        set_order(0, anim_a, hit_part | 0x5800000, 1.0f);
+    if (anim_b >= 0)
+        set_order(1, anim_b, hit_part | 0x5800000, 1.0f);
+}
+
+// ---- Agent::swing_trace: the melee swing / missile hit test ------------------------------------------------------------------------
+// Agent::f100_is_0x48_and_charged 0x432470 (game_util.cpp); the agent calls it with an unused agent in ecx
+int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag);   // 0x43a720 (game/agent/agent_stats.cpp)
+static __forceinline int round_inl(const float& x)
+{
+    float fl = (float)floor((double)x);
+    int i = (int)fl;
+    return (x - fl <= 0.5f) ? i : i + 1;
+}
+static __forceinline bool rel_is(int a, int b, int v, int* rel)
+{
+    if (a < 0 || a >= 8 || b < 0 || b >= 8)
+        return false;
+    *rel = ((const int*)&g_mission->teams[0].relation[0])[a * 0x5b + b];
+    return *rel == v;
+}
+#define SND(who, n) { int sid_ = (n); float var_ = 0.1f; (who)->play_sound_var(&sid_, &var_); }
+static __forceinline float sw_vlen(const vector4& v) { return (float)sqrt(v.y * v.y + (v.z * v.z + v.x * v.x)); }
+static __forceinline vector4 sw_vmul(const vector4& v, const float& k) { return vector4(v.x * k, v.y * k, v.z * k); }
+static __forceinline vector4 sw_smul(const float& k, const vector4& v) { return vector4(k * v.x, k * v.y, k * v.z); }
+static __forceinline vector4 sw_vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline vector4 sw_vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+
+// @ 0x45a170
+int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
+{
+    capsule sweep;
+    ItemRef sp = slot_pair(hand);
+    float reach = 0.2f;
+    float inner = 0.0f;
+    vector4 tA, bA, tB, bB, dT, dB, bBs;
+    int steps;
+    float len;
+    if (missile == 0) {
+        if (fr2.o.x < -1e7f)
+            return 0;
+        if (sp.item >= 0) {
+            reach = (float)g_items[sp.item].weapon_length * 0.01f - 0.01f;
+        } else {
+            reach = 0.15f;
+            inner = 0.0f;
+        }
+        if (mode1 == 0) {
+            float t = reach - 1.0f;
+            inner = (0.0f > t) ? 0.0f : t;
+        }
+        tA = sw_vadd(sw_smul(reach, fr1.f), fr1.o);
+        bA = sw_vadd(sw_smul(inner, fr1.f), fr1.o);
+        tB = sw_vadd(sw_smul(reach, fr2.f), fr2.o);
+        bB = sw_vadd(sw_smul(inner, fr2.f), fr2.o);
+        bBs = bB;
+        dT = sw_vsub(tA, tB);
+        dB = sw_vsub(bA, bB);
+        steps = round_inl((len = sw_vlen(dT)) * 20.0f) + 1;
+        sweep.p0 = bB;
+        sweep.p1 = tA;
+        sweep.radius = 0.1f;
+    } else {
+        missile->ray(&sweep);
+        steps = 1;
+    }
+
+    int result = 0;
+    bool ragdoll = false;
+    shape_base* found = 0;
+    int probed = 0;
+    char can;
+    if (!prop_done) {
+        capsule pc(sweep);
+        pc.radius = 0.0f;
+        if (missile == 0 && mode1 != 0) {
+            can = 1;
+            probed = ::probe_shape_contact(&pc, &bB, &found, &can);
+        } else {
+            can = 0;
+            probed = ::probe_shape_contact(&pc, &bB, &found, &can);
+        }
+    }
+    int ncand = 0;
+    float best_d2 = 10000.0f;
+    int best = -1;
+    can = 0;
+    bool hit_flag = false;
+    float maxdist = 1000.0f;
+    if (probed) {
+        vector4 d = sw_vsub(bB, sweep.p0);
+        maxdist = (float)sqrt(d.x * d.x + (d.y * d.y + d.z * d.z));
+    }
+    unsigned cand[0x400];
+    unsigned i;
+    if (!prop_done && (missile != 0 || probed == 0)) {
+        vector4 sd = sw_vsub(sweep.p0, sweep.p1);
+        float limit2 = (sd.x * sd.x + (sd.y * sd.y + sd.z * sd.z)) + 50.0f;
+        unsigned end = g_mission->agents.count;
+        for (i = g_mission->agents.first_used(); i < end; g_mission->agents.next_used(&i)) {
+            if (ncand >= 0x400)
+                break;
+            if (i != (unsigned)pool_id && i != (unsigned)horse) {
+                Agent* o = agent_by_id(i);
+                bool ok = o->f5830 == 2;
+                if (!ok && is_friend(o) && agent_by_id(i)->f5830 == 3 &&
+                    g_mission->agents.get(i)->tm.elapsed() < 2.0f)
+                    ok = true;
+                if (ok) {
+                    vector4 dd = sw_vsub(o->pos, sweep.p0);
+                    float d2 = dd.x * dd.x + (dd.y * dd.y + dd.z * dd.z);
+                    if (d2 < limit2) {
+                        cand[ncand] = i;
+                        if (d2 < best_d2) {
+                            best = ncand;
+                            ncand++;
+                            best_d2 = d2;
+                        } else {
+                            ncand++;
+                        }
+                    }
+                }
+            }
+        }
+        if (best >= 0) {
+            unsigned t = cand[0];
+            cand[0] = cand[best];
+            cand[best] = t;
+        }
+        for (i = 0; (int)i < ncand; i++) {
+            Agent* o = agent_by_id(cand[i]);
+            bool hit = false;
+            if (o->kind == 0) {
+                capsule oc;
+                o->get_label_box(&oc);
+                contact ct;
+                vector4 hitpt;
+                if (missile != 0) {
+                    hit = shape_contact_count(&sweep, &oc, 1, &ct) != 0;
+                    hitpt = ct.point;
+                } else {
+                    sweep.p0 = bBs;
+                    sweep.p1 = tA;
+                    sweep.radius = 0.9f;
+                    if (shape_contact_count(&oc, &sweep, 0, 0) != 0) {
+                        sweep.radius = 0.1f;
+                        int n = round_inl(len * 10.0f) + 1;
+                        for (int j = 0; j < n && !hit; j++) {
+                            float t = (float)j / (float)n;
+                            vector4 T = sw_vadd(sw_smul(t, dT), tB);
+                            vector4 Bp = sw_vadd(sw_smul(t, dB), bBs);
+                            vector4 d = sw_vsub(T, Bp);
+                            d.normalize();
+                            float k = (reach - inner) - 0.15f;
+                            sweep.p0 = Bp;
+                            sweep.p1 = sw_vadd(sw_smul(k, d), Bp);
+                            hit = shape_contact_count(&oc, &sweep, 1, &ct) != 0;
+                            hitpt = ct.point;
+                        }
+                    }
+                }
+                if (hit) {
+                    int rel;
+                    if (!rel_is(team, o->team, -1, &rel)) {
+                        if (!rel_is(team, o->team, 1, &rel))
+                            return 2;
+                    }
+                    bool fr = rel == 1;
+                    if (fr) {
+                        if (missile == 0) {
+                            vector4 dv(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
+                            float dl = dv.normalize();
+                            if (horse == -1 && o->horse == -1 &&
+                                0.8f < dv.x * vel.x + (dv.y * vel.y + dv.z * vel.z) && dl < 1.3f)
+                                return 2;
+                            goto next;
+                        }
+                        if (pool_id != g_mission->player_id)
+                            return 2;
+                    }
+                    ItemRef cur = slot_pair_fi(0);
+                    sp = cur;
+                    int twohand = 0;
+                    if (cur.item >= 0 && (g_items[cur.item].type_flags & 0x20000) != 0)
+                        twohand = 1;
+                    can = can_hit(pool_id, cand[i], hand, missile, &hitpt.x) != 0;
+                    if (can) {
+                        ItemRef os = o->slot_pair_fi(1);
+                        if (os.item >= 0 && (g_items[os.item].type_flags & 0xff) == itp_type_shield) {
+                            float dmg;
+                            unsigned fl2[2];
+                            hit_damage(hand, missile, &dmg, fl2, o->pool_id, scale);
+                            ItemRef ms = slot_pair_fi(0);
+                            unsigned wf = ms.item < 0 ? 0 : g_items[ms.item].type_flags;
+                            if ((wf & 0x4000000) != 0)
+                                dmg = dmg + dmg;
+                            if (f100_is_0x48_and_charged())
+                                dmg = dmg + dmg;
+                            if (missile != 0 && ((unsigned)g_items[missile->launcher.item].flags & 0xff000) != 0x10000)
+                                o->refresh_carried(missile);
+                            o->shield_hit((int)dmg);
+                            if ((g_items[os.item].type_flags & 0x40000) != 0) {
+                                if (twohand) { SND(o, 0x71); } else { SND(o, 0x73); }
+                            } else {
+                                if (twohand) { SND(o, 0x74); } else { SND(o, 0x72); }
+                            }
+                        } else {
+                            ItemRef os0 = o->slot_pair_fi(0);
+                            if (sp.item == -1) {
+                                SND(this, 0x6d);
+                            } else if (os0.item >= 0 && (g_items[os0.item].type_flags & 0x40000) != 0) {
+                                if (twohand) { SND(this, 0x6e); } else { SND(this, 0x70); }
+                            } else {
+                                if (twohand) { SND(this, 0x70); } else { SND(this, 0x6f); }
+                            }
+                        }
+                        o->set_default_order();
+                        result = 2;
+                    } else {
+                        sweep.radius = 0.1f;
+                        for (int j = 0; j < steps && result == 0; j++) {
+                            if (missile == 0 && mode1 != 0) {
+                                float t = (float)j / (float)steps;
+                                vector4 T = sw_vadd(sw_smul(t, dT), tB);
+                                vector4 Bp = sw_vadd(sw_smul(t, dB), bBs);
+                                vector4 d = sw_vsub(T, Bp);
+                                d.normalize();
+                                float k = reach - inner;
+                                sweep.p0 = Bp;
+                                sweep.p1 = sw_vadd(sw_smul(k, d), Bp);
+                            }
+                            vector4 hp;
+                            vector4 nrm;
+                            int bone;
+                            result = o->capsule_hit(&sweep, &hp, &nrm, &bone) & 0xff;
+                            vector4 hv = sw_vsub(hp, sweep.p0);
+                            if (result != 0 && sw_vlen(hv) < maxdist) {
+                                hit_flag = true;
+                                if (pool_id == g_mission->player_id && is_friend(o)) {
+                                    g_gui.add(*g_strtable.lookup(tstring("ui_you_hit_a_friendly_troop")),
+                                                 0xffff0000);
+                                }
+                                out->flags = 0;
+                                out->attacker = pool_id;
+                                out->pos = hp;
+                                out->bone = bone;
+                                int flg;
+                                hit_damage(hand, missile, &out->dmg_in, (unsigned*)&flg, o->pool_id, scale);
+                                if (missile != 0) {
+                                    out->dir = missile->vel;
+                                    out->dir2 = missile->vel;
+                                    out->dir2.normalize();
+                                    out->item = missile->launcher.item;
+                                    out->item_mod = missile->launcher.m4;
+                                    out->kind = (g_items[missile->launcher.item].thrust_damage >> 8) & 3;
+                                    out->missile = missile;
+                                } else {
+                                    ItemRef s0 = slot_pair(hand);
+                                    out->dir = sw_vsub(o->pos, pos);
+                                    if (s0.item < 0)
+                                        out->kind = 2;
+                                    else if (flg == 0)
+                                        out->kind = (g_items[s0.item].swing_damage >> 8) & 3;
+                                    else
+                                        out->kind = (g_items[s0.item].thrust_damage >> 8) & 3;
+                                    out->dir2 = dT;
+                                    out->dir2.normalize();
+                                    out->dir.normalize();
+                                    out->item = s0.item;
+                                    out->item_mod = s0.m4;
+                                    if (f100_is_0x48_and_charged())
+                                        out->flags |= 0x10;
+                                }
+                                o->reduce_blow(out);
+                                if (o->has_blow == 0 || !(out->dmg_out < o->blow.dmg_out)) {
+                                    o->blow = *out;
+                                    o->has_blow = 1;
+                                }
+                                result = 1;
+                            }
+                        }
+                    }
+                }
+            } else {
+                char skip = missile == 0 ? hit_once : missile->spent;
+                if (skip == 0) {
+                    int rd = o->rider;
+                    if (rd < 0 || !(char)is_neutral(agent_by_id(rd))) {
+                        if (missile != 0 || (rd >= 0 && is_enemy(agent_by_id(rd)))) {
+                            bool h = false;
+                            vector4 hp;
+                            vector4 nrm;
+                            int bone;
+                            if (missile != 0) {
+                                h = o->capsule_hit(&sweep, &hp, &nrm, &bone);
+                            } else {
+                                float l6 = len * 6.6666665f;
+                                sweep.radius = 0.1f;
+                                int n = round_float(&l6) + 1;
+                                for (int j = 0; j < n && !h; j++) {
+                                    float t = (float)j / (float)n;
+                                    vector4 T = sw_vadd(sw_smul(t, dT), tB);
+                                    vector4 Bp = sw_vadd(sw_smul(t, dB), bBs);
+                                    vector4 d = sw_vsub(T, Bp);
+                                    d.normalize();
+                                    float k = reach - inner;
+                                    sweep.p0 = Bp;
+                                    sweep.p1 = sw_vadd(sw_smul(k, d), Bp);
+                                    h = o->capsule_hit(&sweep, &hp, &nrm, &bone);
+                                }
+                            }
+                            if (h) {
+                                out->flags = 0;
+                                out->attacker = pool_id;
+                                out->pos = hp;
+                                out->bone = bone;
+                                int flg;
+                                hit_damage(hand, missile, &out->dmg_in, (unsigned*)&flg, o->pool_id, scale);
+                                if (missile != 0) {
+                                    out->dir = missile->vel;
+                                    out->dir2 = missile->vel;
+                                    out->item = missile->launcher.item;
+                                    out->item_mod = missile->launcher.m4;
+                                    out->kind = (g_items[missile->launcher.item].thrust_damage >> 8) & 3;
+                                    out->missile = missile;
+                                } else {
+                                    ItemRef s0 = slot_pair(hand);
+                                    if (s0.item < 0)
+                                        out->kind = 2;
+                                    else if (flg == 0)
+                                        out->kind = (g_items[s0.item].swing_damage >> 8) & 3;
+                                    else
+                                        out->kind = (g_items[s0.item].thrust_damage >> 8) & 3;
+                                    out->dir = nrm;
+                                    out->dir2 = nrm;
+                                    out->item = s0.item;
+                                    out->item_mod = s0.m4;
+                                }
+                                o->reduce_blow(out);
+                                if (o->has_blow == 0 || !(out->dmg_out < o->blow.dmg_out)) {
+                                    o->blow = *out;
+                                    o->has_blow = 1;
+                                }
+                                if (missile != 0) {
+                                    missile->spent = 1;
+                                    result = 1;
+                                } else {
+                                    hit_once = 1;
+                                    int r = rand() % 0x3dc9;
+                                    *scale = ((float)r * 1.2644623e-05f + 0.4f) * *scale;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        next:
+            if (result != 0)
+                break;
+        }
+    }
+
+    if (!prop_done && !hit_flag && !can && probed != 0) {
+        int eid = found->mc;
+        if (eid >= 0) {
+            rgl::entity* e = g_mission->scene->find_entity(eid);
+            if (e != 0) {
+                int pi = e->game_id;
+                e->game_kind = 0xc;
+                if (pi >= 0 && (unsigned)pi < g_mission->props.size()) {
+                    PlacedObj* pr = &g_mission->props[pi];
+                    prop_done = 1;
+                    if (pr->kind == 0) {
+                        unsigned kf = g_propkinds[pr->id].flags & 0x8000;
+                        if ((kf != 0 && 0.0f < pr->hp) || kf == 0) {
+                            float dmg = 0.0f;
+                            int flg = 0;
+                            if (kf != 0 && 0.0f < pr->hp) {
+                                hit_damage(0, missile, &dmg, (unsigned*)&flg, 0xffffffff, scale);
+                                pr->hp = pr->hp - dmg;
+                            }
+                            MissionObj* kind = &g_propkinds[pr->id];
+                            g_game->set_matrix(&pr->frame);
+                            g_game->event_ctx.prop = pi;
+                            g_script.param1 = pi;
+                            g_script.param2 = (__int64)dmg;
+                            matrix frame;
+                            frame.o = bB;
+                            if (missile != 0) {
+                                frame.f = missile->vel;
+                                frame.f.normalize();
+                                frame.u = vector4(0.0f, 0.0f, 1.0f);
+                                frame.orthonormalize();
+                                if ((kind->flags & 0x18000) != 0) {
+                                    rgl::mesh* m = missile->make_ranged_mesh();
+                                    if (m != 0) {
+                                        vector4 o2 = sw_vsub(frame.o, sw_vmul(frame.f, 0.2f));
+                                        matrix fm2;
+                                        static_cast<mat3&>(fm2) = *(rgl::mat3*)&frame;
+                                        fm2.o = o2;
+                                        *(rgl::mat4*)&m->local_frame = ((rgl::mat4*)&e->local)->relative((const rgl::mat4&)fm2);
+                                        e->add_mesh((rgl::mesh*)m);
+                                        ragdoll = true;
+                                    }
+                                }
+                            } else {
+                                frame.s = fr1.s;
+                                frame.f = fr1.f;
+                                frame.u = fr1.u;
+                            }
+                            g_script.pos[1] = frame;
+                            kind->triggers.update(-0x2a);
+                            if ((kind->flags & 0x8000) != 0 && pr->hp <= 0.0f)
+                                kind->triggers.update(-0x2b);
+                        }
+                    }
+                }
+            }
+        }
+        if (missile != 0) {
+            if (ragdoll)
+                return 2;
+            missile->ent->local.o = bB;
+            result = 3;
+        }
+    }
+    return result;
+}
+
+// ---- Agent::update_attack: the per-tick attack / reload state machine -------------------------------------------------------------
+#define itp_cant_reload_on_horseback 0x00100000
+#define itcf_throw_knife   0x0000000000020000i64
+#define itcf_throw_axe     0x0000000000030000i64
+#define itcf_throw_javelin 0x0000000000040000i64
+#define itcf_shoot_musket  0x0000000000080000i64
+#define itcf_shoot_mask    0x00000000000ff000i64
+#define itcf_reload_pistol 0x0000007000000000i64
+#define itcf_reload_musket 0x0000008000000000i64
+#define itcf_reload_mask   0x000000f000000000i64
+int __cdecl ftoi_helper(int x);                     // 0x435440
+static __forceinline ItemRef* cur_ptr(Agent* a) { ItemRef* p = 0; if (a->wield[0] >= 0) p = &a->pairs[a->wield[0]]; return p; }
+#define ACT anim[1].cur          // +0x100 current animation id
+#define NEXTACT anim[1].next     // +0x104
+#define PRIO1 anim[1].events     // +0x114
+#define PROG anim[1].scale       // +0x118 animation progress
+#define TYPE (ik->type_flags & 0xff)
+static __forceinline void log_timed(const char* s) { tstring msg(s); g_mission->log_message(g_strtable.lookup(msg), 20.0f); }
+#define LOG_TIMED(str) log_timed(str);
+// @ 0x45c220
+void Agent::update_attack(float dt)
+{
+    int slot;
+    Blow hit;
+    hit.init();
+    if (((int)(anim[0].events & 0x1ffff) >= 0x20 && anim[0].cur >= 0 && (defs->data[anim[0].cur].flags & 0x400)) ||
+        (int)(PRIO1 & 0x1ffff) >= 0x40) {
+        active = 0;
+        f5610 = 0;
+        return;
+    }
+    ItemRef cur = slot_pair_fi(0);
+    FxDef* sk = body->fx;
+    if (!sk->pose_valid) {
+        if (sk->pose_src)
+            sk->update_poses();
+        else
+            sk->update_poses2();
+    }
+
+    fr1 = body->local * sk->elems[19].m84;
+    if (this->kind != 0)
+        goto done;
+    {
+    int ci = cur.item;
+    if (ci < 0) ci = 0;
+    ItemKind* ik = &g_items[ci];
+    unsigned t0 = TYPE;
+    if (t0 == itp_type_one_handed_wpn || t0 == itp_type_two_handed_wpn || t0 == itp_type_polearm || cur.item < 0) {
+        // ------------------------------------------------------------------ melee / bare hands
+        if (ACT == -1)
+            active = 0;
+        int S;
+        if (active == 0 && f5610 == 0) {
+            float t = dt + charge_ramp;
+            charge_ramp = t;
+            if (t > 1.0f)
+                charge_ramp = 1.0f;
+            if (in_now.bits & 0x100) {
+                bool found = false;
+                int i = 0;
+                do {
+                    if (i >= 10) break;
+                    start_shoot(0);
+                    if (snd_a != -1) {
+                        found = true;
+                        active = 1;
+                        set_order(1, snd_a, 0x0240000a, damage_factor(0));
+                        this->cur = 0.0f;
+                        f5610 = 0;
+                        classify(0);
+                        charge = charge_ramp;
+                    }
+                    i++;
+                } while (!found);
+            }
+        } else if (active == 1) {
+            if (PROG > 0.99f) {
+                float u = dt * 0.8f + charge;
+                charge = u;
+                if (u < 1.0f)
+                    charge = dt * 0.6f + u;
+                if (charge > 1.3f)
+                    charge = 1.3f;
+            }
+            if (ACT == snd_a && !(in_now.bits & 0x200)) {
+                if (pool_id == g_mission->player_id) {
+                    if (in_now.bits & 0x100) {
+                        if (PROG < 0.3f && g_options.ctl_mode > 0) {
+                            if (pick_attack_dir(0) != mode1) {
+                                start_shoot(0);
+                                if (snd_a != -1) {
+                                    set_order(1, snd_a, 0x0240000a, damage_factor(0));
+                                    classify(0);
+                                }
+                            }
+                            goto melee_tail;
+                        }
+                        goto melee_hold;
+                    }
+                } else {
+                melee_hold:
+                    if (in_now.bits & 0x100)
+                        goto melee_tail;
+                }
+                if (PROG > 0.99f) {
+                    if (snd_b == -1) {
+                        active = 0;
+                    } else {
+                        set_order(1, snd_b, 0x0140000a, damage_factor(0));
+                        active = 2;
+                        { int kind = 3; play_hit_sound(&kind); }
+                        if (horse == -1 && frand() < (charge - 1.0f) * 3.5f) {
+                            if (pool_id == g_mission->player_id || frand() < 0.3f) {
+                                int kind = 2;
+                                play_class_sound(&kind);
+                            } else {
+                                int kind = 3;
+                                play_class_sound(&kind);
+                            }
+                        }
+                        fr1.o.x = fr2.o.x = -20000000.0f;      // 0xcb989680 (0x45d14d)
+                        hit_once = 0;
+                        prop_done = 0;
+                        classify(0);
+                    }
+                }
+            } else {
+                charge_ramp = 0.8f;
+                active = 6;
+                unsigned tt = TYPE;
+                int aid = 0x72;
+                if (tt == 4) aid = 0x74;
+                else if (tt == 3) aid = 0x73;
+                set_order(1, aid, 0x0140000c, damage_factor(0));
+            }
+        }
+    melee_tail:
+        S = active;
+        if ((S == 2 && ACT == NEXTACT && ACT == snd_b && (mode1 == 0 || PROG > 0.1f)) || f100_is_0x48_and_charged()) {
+            if (f100_is_0x48_and_charged()) {
+                mode1 = 0;
+                snd_c = 0x44;
+                if (frand() < 0.05f) {
+                    hit_once = 0;
+                    prop_done = 0;
+                }
+            }
+            if (in_now.bits & 0x200) {
+                active = 6;
+                charge_ramp = 0.8f;
+                unsigned tt = TYPE;
+                int aid = 0x72;
+                if (tt == 4) aid = 0x74;
+                else if (tt == 3) aid = 0x73;
+                set_order(1, aid, 0x0140000c, damage_factor(0));
+            }
+            if (!f100_is_0x48_and_charged() && (!(PROG < 0.85f) || (mode1 != 0 && !(PROG > 0.2f))))
+                goto chk99;
+            if (f100_is_0x48_and_charged())
+                charge = 1.0f;
+            int r = swing_trace(0, 0, &hit, &charge);
+            if (r != 0 && f100_is_0x48_and_charged())
+                order1(this, 0x44, 0x0100007d);
+            if (r >= 2) {
+                set_order(1, snd_c, 0x1400023, damage_factor(0));
+                active = 5;
+            }
+            if ((in_now.bits & 0x100) && pool_id != g_mission->player_id) {
+                active = 6;
+                charge_ramp = 0.8f;
+                unsigned tt = TYPE;
+                int aid = 0x72;
+                if (tt == 4) aid = 0x74;
+                else if (tt == 3) aid = 0x73;
+                set_order(1, aid, 0x0140000c, damage_factor(0));
+            }
+            if (r == 1) {
+                if (hit.dmg_out < 5.0f && cur.item >= 0) {
+                    set_order(r, snd_c, 0x1400023, damage_factor(0));
+                    active = 5;
+                } else {
+                    active = 3;
+                }
+                goto tail;
+            }
+            if (r == 2)
+                goto clear_state;
+            goto chk99;
+        } else {
+            if (S == 3)
+                goto chk99;
+            if (S != 5 && S != 6)
+                goto tail;
+            if (ACT == -1)
+                goto clear_state;
+        chk99:
+            if (!(PROG > 0.99f))
+                goto tail;
+        clear_state:
+            active = 0;
+        }
+    } else if (ik->is_ranged()) {
+        // ------------------------------------------------------------------ bow / crossbow / thrown / guns
+        int missing, total;
+        slot = 0;
+        best_ammo(-1, &missing, &total, &slot);
+        if (TYPE == itp_type_crossbow) {
+            if (cur.max_amount() - (cur.m4 & 0xff) != 0) {
+                float var2 = 100.0f;
+                links[wield[0]]->cap_all(&var2);
+                if (slot >= 0)
+                    links[slot]->mask = 0xffff;
+            } else {
+                float var2 = 0.0f;
+                links[wield[0]]->cap_all(&var2);
+                if (slot >= 0)
+                    links[slot]->mask = 0;
+            }
+        } else if (TYPE == itp_type_bow && links[wield[0]]) {
+            float var2 = 0.0f;
+            links[wield[0]]->cap_all(&var2);
+        }
+        int S = active;
+        if (S == 0) {
+            if (!(in_now.bits & 0x400))
+                goto tail;
+            if ((TYPE == itp_type_crossbow || TYPE == itp_type_pistol || TYPE == itp_type_musket) &&
+                cur.max_amount() - (cur.m4 & 0xff) == 0) {
+                if (missing > 0) {
+                    reload_anim = -1;
+                    if (horse == -1) {
+                        reload_anim = 0x7b;
+                    } else if (ik->type_flags & itp_cant_reload_on_horseback) {
+                        if (pool_id == g_mission->player_id) {
+                            tstring msg("ui_cant_reload_this_weapon_on_horseback");
+                            g_gui.add(*g_strtable.lookup(msg), -1);
+                        }
+                    } else {
+                        reload_anim = 0x7c;
+                    }
+                    unsigned __int64 rl = ik->flags & itcf_reload_mask;
+                    if (rl != 0) {
+                        if (rl == itcf_reload_pistol)
+                            reload_anim = 0x87;
+                        else if (rl == itcf_reload_musket)
+                            reload_anim = 0x8a;
+                    }
+                    if (reload_anim >= 0) {
+                        set_order(1, reload_anim, 0x0140003c, damage_factor(0));
+                        update_quiver();
+                        active = 2;
+                    }
+                } else if (pool_id == g_mission->player_id) {
+                    if (total > 0) {
+                        LOG_TIMED("ui_no_more_bolts")
+                    } else {
+                        LOG_TIMED("ui_you_are_not_carrying_any_bolts")
+                        goto no_ammo;
+                    }
+                }
+            } else if (missing <= 0 && TYPE != itp_type_crossbow && TYPE != itp_type_pistol && TYPE != itp_type_musket) {
+                if (pool_id == g_mission->player_id) {
+                    if (total > 0) {
+                        if (TYPE == itp_type_bow)
+                            LOG_TIMED("ui_no_more_arrows")
+                    } else {
+                        if (TYPE == itp_type_bow)
+                            LOG_TIMED("ui_you_are_not_carrying_any_arrows")
+                        else
+                            LOG_TIMED("ui_you_are_not_carrying_any_bolts")
+                    }
+                }
+            no_ammo:
+                goto tail;
+            } else {
+                hit_once = 0;
+                prop_done = 0;
+                active = 1;
+                timer.restamp();
+                start_shoot(0);
+                if (snd_a != -1) {
+                    set_order(1, snd_a, 0x02400002, damage_factor(0));
+                    unsigned __int64 sm = ik->flags & itcf_shoot_mask;
+                    if (sm == itcf_throw_axe || sm == itcf_throw_knife || sm == itcf_throw_stone ||
+                        sm == itcf_shoot_musket || TYPE == itp_type_thrown || TYPE == itp_type_crossbow) {
+                        variant = 4;
+                    } else {
+                        variant = ((TYPE != itp_type_pistol) - 1) & 5;
+                    }
+                    this->cur = 0.0f;
+                }
+            }
+        } else if (S == 1) {
+            if ((unsigned char)ik->type_flags == itp_type_bow && PROG > 0.3f) {
+                if (PROG > 0.46f && links[wield[0]]) {
+                    float x = (PROG - 0.46f) * 2.5f;
+                    float hi = 1.0f;
+                    float lo = 0.0f;
+                    float var2 = clamp(&x, &lo, &hi) * 100.0f;
+                    links[wield[0]]->cap_all(&var2);
+                }
+                links[slot]->mask = 0xffff;
+                update_quiver();
+            }
+            if (in_now.bits & 0x200) {
+                order1(this, -1, 2);
+                if ((unsigned char)ik->type_flags == itp_type_bow && links[slot]) {
+                    links[slot]->mask = 0;
+                    update_quiver();
+                }
+                goto clear_state;
+            } else if (!(in_now.bits & 0x100) &&
+                       (PROG > 0.99f || ((TYPE == itp_type_crossbow || TYPE == itp_type_musket) && PROG > 0.2f))) {
+            {
+                unsigned rel = 0;
+                if (TYPE != itp_type_bow) {
+                    if (TYPE == itp_type_thrown) {
+                        rel = 0x40001b;
+                    } else if (TYPE == itp_type_crossbow || TYPE == itp_type_pistol || TYPE == itp_type_musket) {
+                        ItemRef* rp = cur_ptr(this);
+                        if (rp)
+                            rp->add_amount(1);
+                    }
+                }
+                set_order(1, snd_b, rel | 0x1000002, damage_factor(0));
+            }
+            if ((unsigned char)ik->type_flags != itp_type_thrown) {
+                shoot();
+                if ((unsigned char)ik->type_flags == itp_type_bow)
+                    top_up_ammo(1);
+                if (slot >= 0 && links[slot])
+                    links[slot]->mask = 0;
+                active = 0;
+            } else {
+                active = 3;
+            }
+            if (TYPE == itp_type_bow) {
+                if (pool_id == g_mission->player_id) {
+                    float var = 0.1f;
+                    int kind = 0x25;
+                    play_sound_var(&kind, &var);
+                } else {
+                    float var = 0.1f;
+                    int kind = 0x25;
+                    play_sound_var(&kind, &var);
+                }
+            } else if (TYPE == itp_type_crossbow) {
+                float var = 0.1f;
+                int kind = 0x26;
+                play_sound_var(&kind, &var);
+            } else if (TYPE == itp_type_thrown) {
+                unsigned __int64 sm = ik->flags & itcf_shoot_mask;
+                if (sm == itcf_throw_javelin) {
+                    int kind = 0x27;
+                    float var = 0.1f;
+                    play_sound_var(&kind, &var);
+                } else if (sm == itcf_throw_axe) {
+                    float var = 0.1f;
+                    int kind = 0x28;
+                    play_sound_var(&kind, &var);
+                } else if (sm == itcf_throw_knife) {
+                    float var = 0.1f;
+                    int kind = 0x29;
+                    play_sound_var(&kind, &var);
+                } else if (sm == itcf_throw_stone) {
+                    int kind = 0x2a;
+                    float var = 0.1f;
+                    play_sound_var(&kind, &var);
+                }
+            }
+            g_game->event_ctx.agent = pool_id;
+            g_game->event_ctx.troop = item.item;
+            g_game->event_ctx.slot = wield[0];
+            {
+                GameData* g = g_game;
+                g->event_ctx.key_a = slot_mesh[ftoi_helper(g->event_ctx.slot)];
+            }
+            g_script.pos[1] = body->local * *body->fx->rec(ik->ammo_skill());
+            ik->sound.update(-0x33);
+            }
+        } else if (S == 2) {
+            if (ACT != reload_anim) {
+                active = 0;
+            } else if ((in_now.bits & 0x130200) ||
+                       (ACT == 0x7b && PROG < 0.8f && pool_id == g_mission->player_id && (in_now.bits & 0xf))) {
+                order1(this, -1, 0x3d);
+                active = 0;
+            } else if (PROG > 0.99f) {
+                ItemRef* rp = cur_ptr(this);
+                if (rp) {
+                    unsigned u = rp->m4 & 0xff;
+                    int n = top_up_ammo(u);
+                    ItemRef* rq = cur_ptr(this);
+                    rq->b.amount = 0;
+                    rq->m4 |= u - n;
+                }
+                update_quiver();
+                active = 0;
+            } else if (links[wield[0]]) {
+                float lo2 = 0.4f, hi2 = 0.66f;
+                if (horse != -1) {
+                    lo2 = 0.16f;
+                    hi2 = 0.5f;
+                }
+                float x = (PROG - lo2) / (hi2 - lo2);
+                float hi = 1.0f;
+                float lo = 0.0f;
+                float var2 = clamp(&x, &lo, &hi) * 100.0f;
+                links[wield[0]]->cap_all(&var2);
+            }
+        } else if (S == 3) {
+            if (ACT == 0x84 || ACT == 0x80 || ACT == 0x82 || ACT == 0x7e) {
+                if (PROG > 0.25f) {
+                    shoot();
+                    top_up_ammo(1);
+                    active = 4;
+                    if (wield[0] >= 0)
+                        links[wield[0]]->mask = 0;
+                }
+            } else {
+                active = 0;
+            }
+        } else if (S == 4) {
+            if (ACT == 0x84 || ACT == 0x80 || ACT == 0x82 || ACT == 0x7e) {
+                if (!(PROG > 0.98f))
+                    goto tail;
+                if (wield[0] >= 0)
+                    links[wield[0]]->mask = 0xffff;
+                update_quiver();
+            }
+            goto clear_state;
+        }
+    }
+    }
+tail:
+    if (in_now.bits & 0x200) {
+        if (f5610 == 0) {
+            pick_sound_ids(&block_anim_a, &block_anim_b, &f561c);
+            if (block_anim_a != -1 && (int)(PRIO1 & 0x1ffff) <= 0xf) {
+                f5610 = 1;
+                active = 0;
+                float v = damage_factor(0);
+                if (slot_pair(1).item >= 0)
+                    v = damage_factor(1);
+                set_order(1, block_anim_a, 0x0240000e, v);
+                this->cur = 0.0f;
+                classify(1);
+            }
+            goto done;
+        }
+        if (ACT == block_anim_a || ACT == f561c || ACT == block_anim_b) {
+            if (ACT == block_anim_a && PROG < 0.99f) {
+                if (PROG < 0.5f && g_options.stick_mode != 0) {
+                    int a, b, c;
+                    pick_sound_ids(&a, &b, &c);
+                    if (a != block_anim_a) {
+                        block_anim_b = b;
+                        block_anim_a = a;
+                        f561c = c;
+                        float v = damage_factor(0);
+                        if (slot_pair(1).item >= 0)
+                            v = damage_factor(1);
+                        float p = PROG;
+                        set_order(1, block_anim_a, 0x0240000e, v);
+                        { AnimSlot& a1 = anim[1]; a1.phase = p * 0.85f; }
+                        active = 0;
+                        goto done;
+                    }
+                }
+            } else {
+                set_order(1, block_anim_b, 0xe, 1.0f);
+            }
+            active = 0;
+        } else {
+            order1(this, -1, 0xf);
+        }
+    } else {
+        f5610 = 0;
+        if (block_anim_a != -1) {
+            if (ACT == block_anim_a || (ACT == f561c && PROG > 0.2f))
+                order1(this, -1, 0xf);
+        }
+    }
+done:
+    fr2 = fr1;
+}
+
+// ---- Agent::move_step: the movement / collision step ----------------------------------------------------------------------------------
+void __cdecl bounce(vector4* out, vector4* v, const vector4* n);                    // 0x432e30 (the result is *out)
+static __forceinline float elapsed_inl(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
+static __forceinline void mv_vadd_to(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
+struct MV3 { float x, y, z; MV3() {} MV3(float a, float b, float c) : x(a), y(b), z(c) {} };
+static __forceinline MV3 mv_vneg(const vector4& a) { return MV3(-a.x, -a.y, -a.z); }
+static __forceinline void mv_vadd3(vector4& a, const MV3& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
+static __forceinline vector4 mv_vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
+static __forceinline vector4 mv_vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+static __forceinline vector4 mv_unit_up(const vector4& v)
+{
+    float len = (float)sqrt(v.x * v.x + v.z * v.z + v.y * v.y);
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        return vector4(v.x * inv, inv * v.y, inv * v.z);
+    }
+    return vector4(0.0f, 1.0f, 0.0f);
+}
+static __forceinline vector4 mv_vscale(const float& s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
+// 0x4353a0 (game/agent/agent_queries.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) Blow* Blow::init()      // 0x4353a0
+{
+    flags = 0;
+    attacker = -1;
+    pos = vector4(0.0f, 0.0f, 0.0f);
+    dir = vector4(1.0f, 0.0f, 0.0f);
+    dir2 = dir;
+    bone = 0;
+    dmg_in = 0;
+    kind = 0;
+    item = -1;
+    missile = 0;
+    dmg_out = 0;
+    absorbed = 0;
+    return this;
+}
+
+// @ 0x45d820
+void Agent::move_step(float dt)
+{
+    vector4 push(0.0f, 0.0f, 0.0f);
+    vector4 v(0.0f, 0.0f, 0.0f);
+    vector4 gv(0.0f, 0.0f, 0.0f);
+    vector4 np;
+    bool hit_ok;
+    vector4 hits[16];
+    shape_base* shapes[8188];
+    int nh;
+    {
+    ::pos m = *(::pos*)&body->local;
+    if ((flags3c & 1) && elapsed_inl(t40) >= 0.0f) {
+        vector4 a(m.s.x * vel_xy.x, m.s.y * vel_xy.x, m.s.z * vel_xy.x);
+        vector4 b(m.f.x * vel_xy.y, m.f.y * vel_xy.y, m.f.z * vel_xy.y);
+        push = vector4(a.x + b.x, a.y + b.y, a.z + b.z);
+        int fid = floor_face->mc;
+        if (fid >= 0) {
+            rgl::entity* ent = g_mission->scene->find_entity(fid);
+            if (ent && ent->is_dirty()) {                  // the floor moved this frame: carry the agent with it
+                vector4 loc = ent->prev.transform_point_to_local(pos);
+                vector4 wp = ((::pos*)&ent->local)->transform_point(loc);
+                vector4 d = mv_vsub(wp, pos);
+                if (dt > 0.0f) {
+                    float inv = 1.0f / dt;
+                    vector4 t = mv_vscale(inv, d);
+                    mv_vadd_to(push, t);
+                }
+            }
+        }
+    } else {
+        v = v56a4;
+        impulse.z = impulse.z - dt * 9.8f;
+        mv_vadd_to(v, impulse);
+    }
+    float k = 1.0f - ((flags3c & 1) ? dt * 0.4f : dt * 0.1f);
+    v.x = v.x * k;
+    v.y = v.y * k;
+    v.z = k * v.z;
+    if (body && anim[0].cur != -1 && anim[0].sub != -1) {
+        AnimDef* r = &defs->data[anim[0].cur];
+        if (r->flags & 0x4000) {
+            SubAnim* p = &r->subs[anim[0].sub];
+            float inv = 1.0f / p->scale;
+            gv = mv_vscale(inv, ((const ::pos&)body->local).rot(p->displacement));
+        }
+    }
+    vector4 nv(v.x + push.x, v.y + push.y, v.z + push.z);
+    v56a4 = nv;
+    push.x = 0.0f;
+    push.y = 0.0f;
+    push.z = 0.0f;
+    gv = vector4(nv.x + gv.x, nv.y + gv.y, nv.z + gv.z);
+    np.x = gv.x * dt;
+    np.y = gv.y * dt;
+    np.z = gv.z * dt;
+    capsule cap;
+    camera_params(&cap);
+    m.o = vector4(np.x + pos.x, np.y + pos.y, np.z + pos.z);
+    cap.transform(&m);
+    vector4 t;
+    vector4 bmin, bmax;
+    {
+        vector4* q = cap.get_min(&t);
+        bmin.x = q->x - 0.1f;
+        bmin.y = q->y - 0.1f;
+        bmin.z = q->z - 0.1f;
+    }
+    {
+        vector4* q = cap.get_max(&t);
+        bmax.x = q->x + 0.1f;
+        bmax.y = q->y + 0.1f;
+        bmax.z = q->z + 0.1f;
+    }
+    hit_ok = true;
+    contact contact;
+    if ((float)sqrt(np.y * np.y + np.x * np.x + np.z * np.z) > 0.0f) {
+        std::vector<rgl::entity*> ents;
+        g_mission->scene->collect_boxed(&bmin, &bmax, &ents);
+        for (std::vector<rgl::entity*>::iterator it = ents.begin(); it < ents.end(); ++it) {
+            rgl::entity* e = *it;
+            unsigned eid = e->game_id;
+            if (e->shape != 0 && e->game_kind == 0xb && eid != pool_id && eid != (unsigned)horse && eid != (unsigned)rider) {
+                Agent* o = &g_mission->agents.pages[eid >> 4][eid & 0xf];
+                if (o->state == 1 && shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
+                    vector4 old = np;
+                    bounce(&t, &np, &contact.normal);
+                    vector4 rv = t;
+                    if (this->kind == 1 && vel_xy.y > 4.0f && o->kind == 0 && o->horse == -1) {
+                        int st = item.horse_charge();
+                        float f = (float)st * 0.03f + 0.1f;
+                        if (rider >= 0)
+                            f = (float)g_game->skill_level(g_mission->agents.get(rider)->troop, 0x18) * 0.03f + f;
+                        if (f < 0.0f)
+                            f = 0.0f;
+                        else if (f > 0.96f)
+                            f = 0.96f;
+                        float g = 1.0f - f;
+                        rv.x = rv.x * g;
+                        rv.y = rv.y * g;
+                        rv.z = rv.z * g;
+                        np = (np - old) * g + old;
+                    } else if (this->kind == 1 && vel_xy.y > 3.0f && o->kind == 1) {
+                        hit_ok = !(rgl::dot(body->local.f, o->body->local.f) > 0.0f) || !(o->vel_xy.y > 0.2f);
+                    }
+                    if (this->kind == 0 && o->kind == 0 && o->horse == -1) {
+                        vec2 p2 = {np.x + pos.x, np.y + pos.y};
+                        vec2 d2;
+                        d2.x = o->pos.x - p2.x;
+                        d2.y = o->pos.y - p2.y;
+                        float len = d2.normalize();
+                        if (len < 0.7f) {
+                            float pen = (0.7f - len) * -0.6f;
+                            a_v2 tt = ((a_v2&)d2) * pen;
+                            np.x = tt.x + np.x;
+                            np.y = tt.y + np.y;
+                        }
+                    }
+                    m.o = vector4(np.x + pos.x, np.y + pos.y, np.z + pos.z);
+                    cap.transform(&m);
+                    mv_vadd3(push, mv_vneg(rv));
+                    if (this->kind == 1 && vel_xy.y > 3.5f && o->kind == 0 && o->horse == -1 && (o->flags3c & 1) &&
+                        o->t40.elapsed() >= 0.0f) {
+                        if (rider == -1 || g_mission->agents.get(rider)->is_enemy(o)) {
+                            Blow b;
+                            b.init();
+                            vector4 nn(-contact.normal.x, -contact.normal.y, -contact.normal.z);
+                            b.bone = 7;
+                            int s2 = item.horse_charge() + 5;
+                            float dmg = (((nn.z * v56a4.z + nn.y * v56a4.y + nn.x * v56a4.x) + 0.1f) * (float)s2 * g_module_settings.horse_charge_damage_multiplier) * vel_xy.y * 0.015f;
+                            if (dmg < 0.0f)
+                                dmg = 0.0f;
+                            b.dmg_in = dmg;
+                            b.dir = nn;
+                            b.dir2 = nn;
+                            b.attacker = pool_id;
+                            b.pos = contact.point;
+                            b.kind = 2;
+                            b.flags = 0x10;
+                            o->note_blow(&b);
+                        }
+                    }
+                }
+            } else if (e->shape != 0 && e->game_kind == 0) {
+                if (shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
+                    vector4 fv;
+                    fv.x = contact.normal.x * contact.depth;
+                    fv.y = contact.depth * contact.normal.y;
+                    fv.z = contact.depth * contact.normal.z;
+                    np.x = fv.x + np.x;
+                    np.y = np.y + fv.y;
+                    np.z = np.z + fv.z;
+                    MV3 nn = mv_vneg(contact.normal);
+                    vector4 mir;
+                    mir.x = nn.x + nn.x;
+                    mir.y = nn.y + nn.y;
+                    mir.z = nn.z + nn.z;
+                    // the rigid body's impulse slot (26); an agent's body is a strategic_entity, whose slot 26 is
+                    // clear_emitters: the original calls it with these two arguments too
+                    static_cast<rgl::collision_entity*>(e)->apply_impulse(&contact.point, &mir);
+                    cap.p0.x = cap.p0.x + fv.x;
+                    cap.p0.y = cap.p0.y + fv.y;
+                    cap.p0.z = cap.p0.z + fv.z;
+                    cap.p1.x = cap.p1.x + fv.x;
+                    cap.p1.y = cap.p1.y + fv.y;
+                    cap.p1.z = cap.p1.z + fv.z;
+                    push.x = fv.x + push.x;
+                    push.y = fv.y + push.y;
+                    push.z = fv.z + push.z;
+                }
+            }
+        }
+    }
+    unsigned mask = 0x8002;
+    if (pool_id == (unsigned)g_mission->player_id || !(flags3c & 1))
+        mask = 0x8102;
+    int count;
+    g_mission->scene->query_box(&bmin, &bmax, mask, shapes, &count);
+    nh = 0;
+    float best = 0.0f;
+    obstacle = 0;
+    vector4* hp = hits;
+    for (int i = 0; i < count; i++) {
+        shape_base* sh = shapes[i];
+        if (shape_contact_count(&cap, sh, 1, &contact) == 0)
+            continue;
+        bool ok = true;
+        float d = np.y * contact.normal.y + contact.normal.x * np.x + contact.normal.z * np.z;
+        if (d > 0.0f) {
+            ok = false;
+        } else if (shapes[i]->shape_type() == 2 && static_cast<face*>(sh)->normal.z < 0.05f && d < best) {
+            obstacle = static_cast<face*>(sh);
+            best = d;
+        }
+        if (!(flags3c & 1)) {
+            if (contact.point.z < pos.z + 0.4f && np.z <= 0.0f && shapes[i]->shape_type() == 2 && static_cast<face*>(sh)->normal.z > 0.1f) {
+                flags3c |= 1;
+                if (this->kind == 1)
+                    set_order(0, 0x19e, 0x1000021, 1.0f);
+                else
+                    set_order(0, 3, 0x1000021, 1.0f);
+            } else if (pos.z + 0.4f < contact.point.z && contact.normal.z > 0.95f && np.z <= 0.0f) {
+                continue;
+            }
+        }
+        if (ok && nh < 16) {
+            *hp = contact.normal;
+            nh++;
+            hp++;
+        }
+    }
+    }
+    if (nh != 0) {
+        int it = 0;
+        bool ok2;
+        do {
+            ok2 = true;
+            int jj = nh;
+            vector4* hq = hits;
+            if (jj > 0) do {
+                vector4& n = *hq;
+                vector4 nn(-n.x, -n.y, -n.z);
+                float tq = np.y * nn.y + np.z * nn.z + nn.x * np.x;
+                if (tq > 1e-6f) {
+                    ok2 = false;
+                    float tx = tq * n.x;
+                    float ty = tq * n.y;
+                    float tz = tq * n.z;
+                    np.x = tx + np.x;
+                    np.y = np.y + ty;
+                    np.z = np.z + tz;
+                    push.x = push.x + tx;
+                    push.y = push.y + ty;
+                    push.z = push.z + tz;
+                }
+                hq++;
+            } while (--jj != 0);
+            it++;
+            if (it > 16) {
+                if (!ok2) {
+                    np.x = 0.0f;
+                    np.y = 0.0f;
+                    np.z = 0.0f;
+                }
+                break;
+            }
+        } while (!ok2);
+    }
+    face* nf;
+    int tries;
+    float fz;
+    rgl::world* scene = g_mission->scene;
+    if (gv.y * gv.y + gv.z * gv.z + gv.x * gv.x == 0.0f) {
+        np = pos;
+        nf = 0;
+        tries = 0;
+    } else {
+        np = vector4(np.x + pos.x, np.y + pos.y, np.z + pos.z);
+        vector4 raw = np;
+        if (np.x < g_mission->min_x)
+            np.x = g_mission->min_x;
+        if (np.y < g_mission->min_y)
+            np.y = g_mission->min_y;
+        if (np.x > g_mission->max_x)
+            np.x = g_mission->max_x;
+        if (np.y > g_mission->max_y)
+            np.y = g_mission->max_y;
+        push.x = (np.x - raw.x) + push.x;
+        push.y = (np.y - raw.y) + push.y;
+        nf = 0;
+        tries = 0;
+    }
+    do {
+        ((rgl::world*)scene)->floor_at(&np, &fz, &nf);
+        face* cur = floor_face;
+        if (cur == 0) {
+            np = mv_vadd(mv_vscale(0.95f, mv_vsub(np, pos)), pos);
+        }
+        tries++;
+        if (tries > 30) {
+            if (nf != 0)
+                break;
+            nf = cur;
+            if (nf == 0)
+                nf = (face*)scene->objs[0];
+            np = pos;
+            fz = pos.z;
+        }
+    } while (nf == 0);
+    if (flags3c & 1) {
+        float dz = pos.z - fz;
+        if (dt * vel_xy.y + 0.4f < dz || nf->normal.z < 0.1f) {
+            vector4 probe = mv_vadd(mv_vscale(0.4f, mv_unit_up(mv_vsub(np, pos))), pos);
+            float fz2;
+            face* tf;
+            ((rgl::world*)scene)->floor_at(&probe, &fz2, &tf);
+            float dz2 = pos.z - fz2;
+            bool up = false;
+            if (nh > 0) {
+                int jj = nh;
+                vector4* hq = hits;
+                do {
+                    if (hq->z > 0.0f)
+                        up = true;
+                    hq++;
+                } while (--jj != 0);
+            }
+            if (pool_id == (unsigned)g_mission->player_id || (!(dz2 > 2.5f) && !(fz < g_mission->base_z - 1.5f))) {
+                if (!up)
+                    flags3c &= ~1u;
+            } else {
+                goto reset_pos;
+            }
+        } else if (!(dz < -1.5f)) {
+            np.z = fz;
+            if (dz < -0.06f || 0.06f < dz)
+                v98.z = dz + v98.z;
+        } else {
+reset_pos:
+            nf = floor_face;
+            np = pos;
+        }
+    } else if (np.z < fz) {
+        np.z = fz;
+        flags3c |= 1;
+        int snd;
+        if (this->kind == 1) {
+            if (defs->count > 0x19e && ((anim[0].events & 0x1ffff) <= 0x21 || (anim[0].cur == -1 && anim[0].next == -1))) {
+                anim[0].next = 0x19e;
+                anim[0].events = 0x1000021;
+                anim[0].rate = 1.0f;
+                if ((defs->data[0x19e].flags & 0x400) && anim[1].cur != -1 && (anim[1].events & 0x1ffff) < 0x21)
+                    anim[1].set(-1, 0x21);
+            }
+            float var = 0.1f;
+            if (fz < g_mission->base_z) {
+                snd = 0x24;
+                play_sound_var(&snd, &var);
+            } else {
+                snd = 0x22;
+                play_sound_var(&snd, &var);
+            }
+        } else {
+            if (defs->count > 3 && ((anim[0].events & 0x1ffff) <= 0x21 || (anim[0].cur == -1 && anim[0].next == -1))) {
+                anim[0].next = 3;
+                anim[0].events = 0x1000021;
+                anim[0].rate = 1.0f;
+                if ((defs->data[3].flags & 0x400) && anim[1].cur != -1 && (anim[1].events & 0x1ffff) < 0x21)
+                    anim[1].set(-1, 0x21);
+            }
+            float var = 0.1f;
+            if (fz < g_mission->base_z) {
+                snd = 0x20;
+                play_sound_var(&snd, &var);
+            } else {
+                snd = 0x1e;
+                play_sound_var(&snd, &var);
+            }
+        }
+        vector4 vn = v56a4;
+        float len2 = (float)sqrt(vn.x * vn.x + vn.z * vn.z + vn.y * vn.y);
+        if (len2 > 1e-10f) {
+            float inv = 1.0f / len2;
+            vn.x = vn.x * inv;
+            vn.y = vn.y * inv;
+            vn.z = vn.z * inv;
+        } else {
+            vn.x = 0.0f;
+            vn.y = 1.0f;
+            vn.z = 0.0f;
+        }
+        if ((this->kind == 1 && len2 > 11.0f) || len2 > 13.0f) {
+            vector4 nrm = nf->normal;
+            vector4 nn(-nrm.x, -nrm.y, -nrm.z);
+            Blow b;
+            b.init();
+            vector4 hpos = vector4(np.x, np.y, fz + 0.01f);
+            b.pos = hpos;
+            b.dir = nf->normal;
+            b.dir2 = nf->normal;
+            b.dmg_in = nn.z * vn.z + nn.y * vn.y + vn.x * nn.x;
+            b.dmg_in = b.dmg_in * len2;
+            b.dmg_in = b.dmg_in + b.dmg_in;
+            b.flags = 0;
+            b.attacker = -1;
+            b.bone = (this->kind != 1) ? 2 : 9;
+            b.kind = 2;
+            int kind = 5;
+            play_hit_sound(&kind);
+            if ((this->kind != 0 || horse != -1) && this->kind == 1)
+                b.dmg_in = b.dmg_in + b.dmg_in;
+            reduce_blow(&b);
+            if (has_blow == 0 || !(b.dmg_out < blow.dmg_out)) {
+                blow = b;
+                has_blow = 1;
+            }
+        }
+    }
+    gv.x = np.x - pos.x;
+    gv.y = np.y - pos.y;
+    gv.z = np.z - pos.z;
+    if (dt > 1e-5f) {
+        float k5 = dt * 5.0f;
+        float inv = 1.0f / dt;
+        v = vector4(gv.x * inv, gv.y * inv, gv.z * inv);
+        float om = 1.0f - k5;
+        v56b4 = vector4(om * v56b4.x + v.x * k5, om * v56b4.y + v.y * k5, om * v56b4.z + v.z * k5);
+        vec2 pp;
+        pp.x = push.x;
+        pp.y = push.y;
+        if (pp.y * pp.y + pp.x * pp.x > 0.0f) {
+            float sp = (float)sqrt(gv.z * gv.z + gv.y * gv.y + gv.x * gv.x) * inv;
+            if (sp < vel_xy.y) {
+                if (this->kind == 1 && vel_xy.y > 3.0f && sp < 0.5f && hit_ok) {
+                    sp = 0.0f;
+                    set_order(0, 0x19c, 0x1000049, 1.0f);
+                    int kind = 4;
+                    play_hit_sound(&kind);
+                }
+                vel_xy.y = vel_xy.y - (vel_xy.y - sp) * dt * 10.0f;
+            }
+        }
+    }
+    if (np.z > -9000.0f && np.z < 9000.0f) {
+        pos = np;
+        floor_face = nf;
+    }
+    impulse = vector4(0.0f, 0.0f, 0.0f);
+}
+
+// ---- Agent::update, Agent::tick: the per-frame agent update ---------------------------------------------------------------------------
+// @ 0x45f660
+void Agent::update(float dt)
+{
+    if (f5830 == 5)
+        return;
+    if (need_name) {
+        draw_name();
+        need_name = 0;
+    }
+    {
+    float old = anim[1].scale;
+    for (int i = 0; i < 2; i++) {
+        EnvRec* c = &body->fx->env[i];
+        float p = c->phase();
+        if (c->shape_mode != 1) {
+            if (c->shape_mode == 2)
+                p = (float)sin(p * 1.5707964f);
+            else if (c->shape_mode == 5)
+                p = (float)sqrt(p);
+            else if (c->shape_mode == 4)
+                p = p * p;
+            else
+                p = 0.0f;
+        }
+        anim[i].scale = p;
+    }
+    float now = anim[1].scale;
+    if (anim[1].cur >= 0 && anim[1].sub >= 0 && (defs->data[anim[1].cur].subs[anim[1].sub].flags & 0x200)) {
+        for (int k = 0; k < 4; k++) {
+            if (old <= g_anim_set.data[anim[1].cur].subs[anim[1].sub].events[k] &&
+                g_anim_set.data[anim[1].cur].subs[anim[1].sub].events[k] < now) {
+                if (k == 0) {
+                    float pitch;
+                    switch (anim[1].cur) {
+                    case 0x7b:
+                    case 0x7c:
+                        pitch = frand() * 0.2f + 0.9f;
+                        g_sound_mgr.play(g_sound_mgr.slot[43], 0, &body->local.o, pitch, 0);
+                        break;
+                    case 0x75:
+                    case 0x77:
+                        pitch = frand() * 0.2f + 0.9f;
+                        g_sound_mgr.play(g_sound_mgr.slot[46], 0, &body->local.o, pitch, 0);
+                        break;
+                    }
+                } else if (k == 1) {
+                    float pitch;
+                    switch (anim[1].cur) {
+                    case 0x7b:
+                    case 0x7c:
+                        pitch = frand() * 0.4f + 0.8f;
+                        g_sound_mgr.play(g_sound_mgr.slot[44], 0, &body->local.o, pitch, 0);
+                        break;
+                    case 0x75:
+                    case 0x77:
+                        pitch = frand() * 0.2f + 0.9f;
+                        g_sound_mgr.play(g_sound_mgr.slot[45], 0, &body->local.o, pitch, 0);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    }
+    prev_scale1 = prev_scale0;
+    prev_scale0 = anim[0].scale;
+    float speed = a_len2(vel_xy);
+    if (anim[0].cur >= 0) {
+        unsigned flags = defs->data[anim[0].cur].subs[anim[0].sub].flags;
+        if (disabled == 0 && (flags & 0x300)) {
+            int kind = 0;
+            int k = 0;
+            float pitch;
+            do {
+                if (prev_scale1 <= g_anim_set.data[anim[0].cur].subs[anim[0].sub].events[k] &&
+                    g_anim_set.data[anim[0].cur].subs[anim[0].sub].events[k] < prev_scale0) {
+                    if ((flags & 0x200) && k == 0) {
+                        switch (anim[0].cur) {
+                        case 0x11a:
+                        case 0x11b:
+                        case 0x11c:
+                        case 0x11d:
+                        case 0x11e:
+                        case 0x11f:
+                        case 0x120:
+                        case 0x121:
+                        case 0x122:
+                        case 0x123:
+                        case 0x125:
+                        case 0x1a2:
+                        case 0x1a3:
+                        case 0x1a4: {
+                            pitch = frand() * 0.4f + 0.8f;
+                            g_sound_mgr.play(g_sound_mgr.slot[90], 0, &body->local.o, pitch, 0);
+                        }
+                        }
+                    }
+                    if (flags & 0x100) {
+                        if (pos.z < g_mission->base_z) {
+                            if (this->kind == 0 || k == 3 || k == 4)
+                                play_pain_sound(g_mission->base_z - pos.z);
+                        } else {
+                            play_hit_sound(&kind);
+                        }
+                        if (fx1b0 && speed > 0.0f) {
+                            if (pos.z < g_mission->base_z) {
+                                float s = 0.2f;
+                                if (this->kind == 1)
+                                    s = 0.9f;
+                                ::pos m;
+                                identity_pos((::pos*)&m);
+                                vec2 d;
+                                d.x = vel_xy.x;
+                                d.y = vel_xy.y;
+                                d.normalize();
+                                m.o.x = s * d.x;
+                                m.o.y = s * d.y;
+                                m.f.x = vel_xy.x;
+                                m.f.y = vel_xy.y;
+                                m.f.z = 0.0f;
+                                m.f.normalize();
+                                m.orthonormalize();
+                                fx1b0->local = m;
+                                fx1b4->local = m;
+                                float v;
+                                if (this->kind == 1)
+                                    v = speed * 10.0f + 20.0f;
+                                else
+                                    v = speed * 3.0f + 5.0f;
+                                fx1b0->reset_pending((int)(v * 0.5f));
+                                fx1b4->reset_pending((int)(v * 0.4f));
+                                a_v2 u = a_v2(d.x, d.y) * 0.7f;
+                                a_add2(&m.o.x, u);
+                                fx1b8->local = m;
+                                fx1b8->reset_pending(1);
+                            } else if (fx1ac) {
+                                float v = 0.0f;
+                                if (this->kind == 1) {
+                                    if (speed > 5.5f && floor_face && (floor_face->m8 & 0x4000))
+                                        v = speed + 10.0f;
+                                    if (fx1ac->tag != g_emit_defs.used[4])
+                                        v = v * 3.0f;
+                                    fx1ac->reset_pending((int)(v * 0.15f));
+                                }
+                            }
+                        }
+                    }
+                }
+                k++;
+                kind = k;
+            } while (k < 4);
+        }
+    }
+    float dt0 = dt;
+    smooth_turn(dt0);
+    if (rider == -1) {
+        if (f7c != 2) {
+            ai_idle_tick(&dt);
+            poll_input(dt0, &in_now);
+        }
+        if (horse >= 0) {
+            unsigned id = horse;
+            Agent* o = g_mission->agents.pages[id >> 4] + (id & 0xf);
+            o->in_now = in_now;
+        }
+    }
+    if (dt > 0.0f) {
+        process_blow(dt0);
+        update_controls(dt0);
+        update_attack(dt0);
+        if (horse == -1)
+            move_step(dt0);
+    }
+    update_pitch(dt0);
+    int j = 0;
+    do {
+        if ((&v98.x)[j] < -0.3f)
+            (&v98.x)[j] = -0.3f;
+        else if ((&v98.x)[j] > 0.3f)
+            (&v98.x)[j] = 0.3f;
+        if ((&v98.x)[j] < -0.001f) {
+            if (j == 2)
+                (&v98.x)[2] = ((((&v98.x)[2] - 0.7f) * dt) * 5.0f + 1.0f) * (&v98.x)[2];
+            else
+                (&v98.x)[j] = (1.0f - (&v98.x)[j]) * dt + (&v98.x)[j];
+            if ((&v98.x)[j] > 0.0f)
+                (&v98.x)[j] = 0.0f;
+        } else if ((&v98.x)[j] > 0.001f) {
+            a_dec(&v98.x, j, dt);
+            if ((&v98.x)[j] < 0.0f)
+                (&v98.x)[j] = 0.0f;
+        } else {
+            (&v98.x)[j] = 0.0f;
+        }
+        j++;
+    } while (j < 3);
+    update_aim_error();
+}
+// @ 0x45ff30
+void Agent::tick()
+{
+    if (body) {
+        update_anims(*(int*)&g_step_tbl[2]);
+        if (horse >= 0) {
+            unsigned id = horse;
+            Agent* o = g_mission->agents.pages[id >> 4] + (id & 0xf);
+            pos = o->pos;
+            vel = o->vel;
+            rot[0] = o->rot[0];
+            v56b4 = o->v56b4;
+            v56a4 = o->v56a4;
+            floor_face = o->floor_face;
+            vel_xy.x = o->vel_xy.x;
+            vel_xy.y = o->vel_xy.y;
+            flags3c = o->flags3c;
+            v98 = o->v98;
+        }
+        if (dismount_state && f5830 == 2 && rider == -1 &&
+            (pos.x - g_mission->min_x < 1.0f || pos.y - g_mission->min_y < 1.0f ||
+             g_mission->max_x - pos.x < 1.0f || g_mission->max_y - pos.y < 1.0f)) {
+            f5830 = 3;
+            restart_inl(tm);
+            draw_name();
+        }
+        tick_death();
+        ragdoll_update();
+        if (channel >= 0 && snd_length < ((float)(g_ticks[snd_stamp.clock] - snd_stamp.start) * 1e-05f))
+            channel = -1;
+    }
+}
+

@@ -174,9 +174,6 @@
 "src/engine/render/mesh_rgl_particles.h",
 "src/engine/render/render_cache.h"
 ],
-"src/engine/render/mesh_edit_members.cpp": [
-"src/game/agent/agent_logic.h"
-],
 "src/engine/render/particle_system.cpp": [
 "src/engine/core/identity_value.h",
 "src/engine/core/rgl_string.h",
@@ -489,16 +486,13 @@
 "src/engine/scene/shape_clone.h",
 "src/engine/scene/world.h"
 ],
-"src/game/agent/agent_effects_sound.cpp": [
-"src/game/agent/agent_logic.h"
-],
-"src/game/agent/agent_frame_update.cpp": [
-"src/game/agent/agent_logic.h"
-],
 "src/game/agent/agent_item_pick.cpp": [
 "src/game/common/game_util.h",
 "src/game/data/record_destructors.h",
 "src/game/input/key_groups.h"
+],
+"src/game/agent/agent_logic.cpp": [
+"src/game/agent/agent_logic.h"
 ],
 "src/game/agent/agent_queries.cpp": [
 "src/engine/fx/env_curve.h",
@@ -506,37 +500,13 @@
 "src/game/agent/physics/phys_set.h",
 "src/game/data/item_kind.h"
 ],
-"src/game/agent/agent_ragdoll_blood.cpp": [
-"src/game/agent/agent_logic.h"
-],
 "src/game/agent/agent_stats.cpp": [
 "src/game/agent/agent_stats.h",
 "src/game/agent/ai/agent_ai.h",
 "src/game/agent/ai/agent_types.h"
 ],
-"src/game/agent/ai/agent_ai.cpp": [
-"src/game/agent/agent_logic.h"
-],
-"src/game/agent/ai/agent_targeting.cpp": [
-"src/game/agent/agent_logic.h"
-],
-"src/game/agent/combat/agent_attack_checks.cpp": [
-"src/game/agent/agent_logic.h"
-],
-"src/game/agent/combat/agent_blows.cpp": [
-"src/game/agent/agent_logic.h"
-],
-"src/game/agent/combat/agent_damage.cpp": [
-"src/game/agent/agent_logic.h"
-],
 "src/game/agent/hud/hud_vector_instances.cpp": [
 "src/game/ui/hud/agent_hud.h"
-],
-"src/game/agent/movement/agent_corpse_and_controls.cpp": [
-"src/game/agent/agent_logic.h"
-],
-"src/game/agent/physics/agent_static_collision.cpp": [
-"src/game/agent/agent_logic.h"
 ],
 "src/game/app/game_app.cpp": [
 "src/game/campaign/game_tick.h",

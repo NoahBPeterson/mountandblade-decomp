@@ -194,3 +194,31 @@ driver ran one row at a time until it was accepted). Results: work/equiv_results
 Verdicts: 22 WEAK, 8 UNSUPPORTED (0 valid inputs: heap exhaustion / faults on soup objects; 0x50a1c0 has 5 of 5 valid), 1 PASS
 (0x4c2170), 1 FAIL (0x49b1c0: a shard reports "heap size", a harness limit of the library `_Insert_n` instance). 31 notes in
 the `.nonmatching.txt` files carry the new verdict.
+
+## restructure rows (2026-11-22): the nine rows the agent_logic split knocked out of byte-exact
+
+Setup: batch B (54e24615) cut agent_logic.cpp into 11 files; nine rows stopped matching (chk.py aligned: pick_front 85, pick_duel 164,
+fire_check 12, pick_threat 10, pick_reachable_goal 32, Font::draw_glyph 17, refresh_carried 6, gui_manager::add 523, update_attack 282).
+The pre-split text matches all nine (chk.py on the old source: 2/2 for the first two, the rest were manifest rows of 7d9c7934).
+`tools/contrib/c2.py icount 0x<va>` was run on each row in its part (8 in parallel, 2 to 14 minutes each: the laptop compiles one
+big TU per row; update_attack's 1401-instruction analysis took 14 min and 1.4 GB).
+
+| row | question | c2scope's answer | held? |
+|---|---|---|---|
+| pick_front 0x43b9e0 | `icount`: why 123 instructions vs 121? | 2 extra: `mov ebx,[ebx]` (the `n = g_mission->agents.count` load, class "structure") and `mov edi,[g_mission]` OPENTERLOAD: Globregs made g_mission a register candidate across the loop (prio 48, 4 refs) and the original keeps it in memory; lever offered: "fewer uses or a shorter live range make it a non-candidate" | The diagnosis held (after the fix the object has the original's 121 instructions); the offered lever was wrong: no source edit of the function's own uses is needed, the cause is outside the function (a callee body that the part cannot see). c2scope cannot say that: it traces one TU and reports what differs in it, not what the TU lacks |
+| pick_front | `regs --why ?g_mission`: why a candidate? | pop 25, prio 48 = sum of block terms (refs +12, +28, +24, +12; live-through blocks -2..-6), assigned edi | held as arithmetic; no lever |
+| pick_duel 0x43bb80 | `icount`: 151 vs 150 | `_this` and `g_mission` are Globregs candidates (OPENTERLOAD, `mov ebp,[esp+0x20]`, `lea ecx,[ebp+4]`) where the original reads memory and recomputes `add ecx,4`; one `mov edx,[g_mission]` reload the original keeps is removed by GlobalOptimize/LocalCopyProp | held: same cause as pick_front (the same fix returned both) |
+| gui_manager::add 0x452c00 | `icount`: 224 vs 227 | the original CALLS `0x428e80` (`vector4::vector4(float,float,float)`); ours inlined it (missing "removed after Inline"); further misses are register coalescing (`mov ecx,edi`, `lea edi,[edx+esi+0x1728]` kept by Globregs in the original) | held in the sense that the rejoined object has the call again (893 bytes, 0 diff); not tested alone |
+| fire_check, pick_threat, pick_reachable_goal, draw_glyph, refresh_carried, update_attack | `icount` | the same instruction count (232/232, 118/118, 90/90, 67/67, 222/222, 1401/1401) and "lift: no difference the rules can see"; only "moved" instructions (a load or a store at another position) | held: these 6 differ in order only, which is what a different memory-dependence / side-effect picture of the callees does to the scheduler; icount cannot name the callee |
+
+Bisect that actually found the cause (no c2scope; 4 compiles of the old file truncated at 2233, 3363, 6432, 7603 lines, then 3405, 4732, 4765,
+5613, 5991): pick_front matches with the file cut at line 3405 and not at 3363, i.e. the text between them is what it needs; that text is the
+agent_ai part's prelude, whose "More bodies the original's object saw" block holds `inline __declspec(noinline) vector4::normalize()` (plus rot,
+cross, fmax_ref). Pasting just those 19 lines into the targeting part also made pick_front and pick_duel exact (chk.py 2/2), which proved the
+mechanism; the other seven rows have 40-odd more such bodies (the old file's "visible body" blocks) and no single one was looked for.
+
+Outcome: all nine byte-exact again by rejoining the parts (source_tree.md section 10), chk.py 9/9, clean source (the pre-split text, no extra
+header). Value of c2scope here: it confirmed in 14 minutes of laptop time that two of the nine are Globregs/inlining differences and six are
+order-only, and it ruled out a per-row source cause (no spelling lever); it did not find the cross-part cause and its lever text for the first
+two rows pointed the wrong way. `c2.py` cannot be used on a row that is already byte-exact (task.py has no source line for it: "knows no
+source for 0x..."), so the "after" confirmation for pick_duel / gui_manager::add is chk.py's 0-diff, not an icount.

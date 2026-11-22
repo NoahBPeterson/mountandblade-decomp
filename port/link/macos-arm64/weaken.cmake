@@ -53,14 +53,6 @@ mb_weaken(src/engine/render/mesh.cpp
     __ZTSNSt9__mb_vc7112length_errorE
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
-mb_weaken(src/engine/render/mesh_edit_members.cpp
-    __ZTINSt9__mb_vc7111logic_errorE
-    __ZTINSt9__mb_vc7112length_errorE
-    __ZTINSt9__mb_vc7112out_of_rangeE
-    __ZTSNSt9__mb_vc7111logic_errorE
-    __ZTSNSt9__mb_vc7112length_errorE
-    __ZTSNSt9__mb_vc7112out_of_rangeE
-    ___clang_call_terminate)
 mb_weaken(src/engine/render/particle_system.cpp
     __ZTINSt9__mb_vc7111logic_errorE
     __ZTINSt9__mb_vc7112length_errorE
@@ -129,15 +121,7 @@ mb_weaken(src/engine/scene/strategic_entity.cpp
     __ZTSNSt9__mb_vc7112length_errorE
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
-mb_weaken(src/game/agent/agent_effects_sound.cpp
-    __ZTINSt9__mb_vc7111logic_errorE
-    __ZTINSt9__mb_vc7112length_errorE
-    __ZTINSt9__mb_vc7112out_of_rangeE
-    __ZTSNSt9__mb_vc7111logic_errorE
-    __ZTSNSt9__mb_vc7112length_errorE
-    __ZTSNSt9__mb_vc7112out_of_rangeE
-    ___clang_call_terminate)
-mb_weaken(src/game/agent/agent_ragdoll_blood.cpp
+mb_weaken(src/game/agent/agent_logic.cpp
     __ZTI9PlacedObj
     __ZTINSt9__mb_vc7111logic_errorE
     __ZTINSt9__mb_vc7112length_errorE
@@ -150,52 +134,7 @@ mb_weaken(src/game/agent/agent_ragdoll_blood.cpp
 mb_weaken(src/game/agent/agent_stats.cpp
     __ZNK5Agent9slot_pairEi
     ___clang_call_terminate)
-mb_weaken(src/game/agent/ai/agent_ai.cpp
-    __ZTINSt9__mb_vc7111logic_errorE
-    __ZTINSt9__mb_vc7112length_errorE
-    __ZTINSt9__mb_vc7112out_of_rangeE
-    __ZTSNSt9__mb_vc7111logic_errorE
-    __ZTSNSt9__mb_vc7112length_errorE
-    __ZTSNSt9__mb_vc7112out_of_rangeE
-    ___clang_call_terminate)
-mb_weaken(src/game/agent/ai/agent_targeting.cpp
-    __ZTINSt9__mb_vc7111logic_errorE
-    __ZTINSt9__mb_vc7112length_errorE
-    __ZTINSt9__mb_vc7112out_of_rangeE
-    __ZTSNSt9__mb_vc7111logic_errorE
-    __ZTSNSt9__mb_vc7112length_errorE
-    __ZTSNSt9__mb_vc7112out_of_rangeE
-    ___clang_call_terminate)
-mb_weaken(src/game/agent/combat/agent_attack_checks.cpp
-    __ZTI9PlacedObj
-    __ZTINSt9__mb_vc7111logic_errorE
-    __ZTINSt9__mb_vc7112length_errorE
-    __ZTINSt9__mb_vc7112out_of_rangeE
-    __ZTS9PlacedObj
-    __ZTSNSt9__mb_vc7111logic_errorE
-    __ZTSNSt9__mb_vc7112length_errorE
-    __ZTSNSt9__mb_vc7112out_of_rangeE
-    ___clang_call_terminate)
-mb_weaken(src/game/agent/combat/agent_blows.cpp
-    __ZN8Animator6blood1Ej
-    __ZN8Animator6blood2Ej)
-mb_weaken(src/game/agent/combat/agent_damage.cpp
-    __ZTINSt9__mb_vc7111logic_errorE
-    __ZTINSt9__mb_vc7112length_errorE
-    __ZTINSt9__mb_vc7112out_of_rangeE
-    __ZTSNSt9__mb_vc7111logic_errorE
-    __ZTSNSt9__mb_vc7112length_errorE
-    __ZTSNSt9__mb_vc7112out_of_rangeE
-    ___clang_call_terminate)
 mb_weaken(src/game/agent/hud/hud_vector_instances.cpp
-    __ZTINSt9__mb_vc7111logic_errorE
-    __ZTINSt9__mb_vc7112length_errorE
-    __ZTINSt9__mb_vc7112out_of_rangeE
-    __ZTSNSt9__mb_vc7111logic_errorE
-    __ZTSNSt9__mb_vc7112length_errorE
-    __ZTSNSt9__mb_vc7112out_of_rangeE
-    ___clang_call_terminate)
-mb_weaken(src/game/agent/physics/agent_static_collision.cpp
     __ZTINSt9__mb_vc7111logic_errorE
     __ZTINSt9__mb_vc7112length_errorE
     __ZTINSt9__mb_vc7112out_of_rangeE

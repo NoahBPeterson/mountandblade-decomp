@@ -1543,7 +1543,7 @@ def test_stale_w_of_an_own_dead_temporary_is_uninitialised():
     """process_blow 0x457b40 copies vector4(k * dir) (w never set) to Agent+0x5694: the original's w slot was never
     written (0xCCCCCCCC), ours held a float an earlier temp of ours left in the slot cl reused. Both are the unset w;
     stale_w now accepts a w slot whose last write was the function's own dword store before x, y, z."""
-    r = _row("agent_blows", 0x457b40, "src/game/agent/combat/agent_blows.cpp", "--inputs", "120", "--fp-tol")
+    r = _row("agent_blows", 0x457b40, "src/game/agent/agent_logic.cpp", "--inputs", "120", "--fp-tol")
     assert r["verdict"] != "FAIL", r
 
 
