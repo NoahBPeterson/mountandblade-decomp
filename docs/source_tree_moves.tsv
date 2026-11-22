@@ -1,0 +1,948 @@
+kind	old_path	new_path	from_line	to_line	addr_lo	addr_hi	approx_lines	prelude_lines	note
+cpp	src/dxframework/d3dapp.cpp	src/platform/dxframework/d3dapp.cpp	1	1574	0x401000	0x403120	1574		
+cpp	src/dxframework/d3denumeration.cpp	src/platform/dxframework/d3denumeration.cpp	1	711	0x4035d0	0x404480	711		
+cpp	src/dxframework/d3dfont.cpp	src/platform/dxframework/d3dfont.cpp	1	561	0x404500	0x404f00	561		
+cpp	src/dxframework/d3dsettings.cpp	src/platform/dxframework/d3dsettings.cpp	1	874	0x4055e0	0x407230	874		
+cpp	src/dxframework/d3dutil.cpp	src/platform/dxframework/d3dutil.cpp	1	88	0x407250	0x407250	88		
+cpp	src/dxframework/dxutil.cpp	src/platform/dxframework/dxutil.cpp	1	331	0x407660	0x407bc0	331		
+cpp	src/tinyxml/tinystr.cpp	third_party/tinyxml/tinystr.cpp	1	93	0x42d820	0x42d950	93		
+cpp	src/tinyxml/tinyxml.cpp	third_party/tinyxml/tinyxml.cpp	1	1120	0x42d9a0	0x42f6c0	1120		
+cpp	src/tinyxml/tinyxmlparser.cpp	third_party/tinyxml/tinyxmlparser.cpp	1	1281	0x42f720	0x431050	1281		
+cpp	src/rgl/core/frustum_grid.cpp	src/engine/scene/frustum_grid.cpp	1	140	0x41e470	0x41ef1a	140		
+cpp	src/rgl/core/resmgr.cpp	src/engine/resource/resource_manager.cpp	1	1218	0x419190	0x41e46f	1218		
+cpp	src/rgl/resource_manager.cpp	src/engine/resource/resource_manager_init.cpp	1	695	0x417bb0	0x41918f	695		
+cpp	src/rgl/core/resource_io.cpp	src/engine/resource/resource_io.cpp	1	722	0x415900	0x417010	722		
+cpp	src/rgl/mem_stream.cpp	src/engine/io/mem_stream.cpp	1	364	0x417010	0x417baf	364		
+cpp	src/rgl/text_stream.cpp	src/engine/io/text_stream.cpp	1	534	0x4150f0	0x4158ff	534		
+cpp	src/rgl/noise.cpp	src/engine/math/noise.cpp	1	242	0x414ae0	0x4150ef	242		
+cpp	src/rgl/psys.cpp	src/engine/render/particle_system.cpp	1	269	0x413b60	0x414adf	269		
+cpp	src/rgl/particles/mesh_obj.cpp	src/engine/render/mesh.cpp	1	832	0x40e940	0x413b5f	832		
+cpp	src/game/renderer.cpp	src/engine/render/renderer.cpp	1	428	0x461630	0x4625d0	428		
+cpp	src/rgl/shapes/shapes.cpp	src/engine/physics/collision_shapes.cpp	1	1521	0x407c10	0x40e940	1521		
+cpp	src/rgl/dynamic/dynamic_entity.cpp	src/engine/physics/rigid_body.cpp	1	308	0x425370	0x426490	308		
+cpp	src/rgl/dynamic/world_collide.cpp	src/engine/physics/world_collide.cpp	1	350	0x426490	0x427d80	350		
+cpp	src/rgl/dynamic/world_cells.cpp	src/engine/physics/world_cells.cpp	1	183	0x423c00	0x424100	183		
+cpp	src/rgl/dynamic/world_grid.cpp	src/engine/physics/world_grid.cpp	1	185	0x424100	0x425370	185		
+cpp	src/rgl/dynamic/fx_anim.cpp	src/engine/fx/fx_animation.cpp	1	225	0x421df0	0x422db0	225		
+cpp	src/rgl/dynamic/fx_keys.cpp	src/engine/fx/fx_key_frames.cpp	1	333	0x422db0	0x423c00	333		
+cpp	src/game/agent/curve.cpp	src/engine/fx/env_curve.cpp	1	78	0x4338e0	0x433bf0	78		
+cpp	src/rgl/scene/entity_base.cpp	src/engine/scene/entity.cpp	1	118	0x41fba0	0x41fee0	118		
+cpp	src/rgl/scene/entity_recalc.cpp	src/engine/scene/entity_recalc.cpp	1	102	0x41fee0	0x4201b0	102		
+cpp	src/rgl/scene/entity_render.cpp	src/engine/scene/entity_render.cpp	1	105	0x4201b0	0x4205b0	105		
+cpp	src/rgl/scene/entity_types.cpp	src/engine/scene/entity_types.cpp	1	182	0x427d80	0x4285e0	182		
+cpp	src/game/entity.cpp	src/engine/scene/fx_element_pool.cpp	1	155	0x41f1d0	0x41fee0	155		
+cpp	src/rgl/scene/scene_objects.cpp	src/engine/scene/scene_objects.cpp	1	461	0x4205b0	0x4218e0	461		
+cpp	src/rgl/scene/render_scene.cpp	src/engine/scene/render_scene.cpp	1	282	0x429670	0x42a090	282		
+cpp	src/rgl/scene/world_items.cpp	src/engine/scene/world_items.cpp	1	103	0x41ef30	0x41f1d0	103		
+cpp	src/rgl/scene/shape_load.cpp	src/engine/scene/shape_load.cpp	1	83	0x4285e0	0x428820	83		
+cpp	src/game/strat/strat_entity.cpp	src/engine/scene/strategic_entity.cpp	1	416	0x42a090	0x42b6d0	416		
+cpp	src/game/strat/strat_ctx.cpp	src/engine/scene/strategic_shadow.cpp	1	122	0x42b6d0	0x42bac0	122		
+cpp	src/rgl/scene/fx_support.cpp	src/engine/fx/fx_support.cpp	1	144	0x428b10	0x428ff0	144		
+cpp	src/rgl/scene/fxdef_init.cpp	src/engine/fx/fx_def_init.cpp	1	82	0x428820	0x428b10	82		
+cpp	src/rgl/scene/fxdef_render.cpp	src/engine/fx/fx_def_render.cpp	1	52	0x428ff0	0x4291c0	52		
+cpp	src/rgl/scene/fxdef_set_color.cpp	src/engine/fx/fx_def_set_color.cpp	1	35	0x4218e0	0x421990	35		
+cpp	src/rgl/scene/fxdef_skin.cpp	src/engine/fx/fx_def_skin.cpp	1	111	0x4291c0	0x429670	111		
+cpp	src/rgl/scene/mesh_list_color.cpp	src/engine/fx/mesh_list_color.cpp	1	32	0x421990	0x4219c0	32		
+cpp	src/rgl/scene/strategic_emitters.cpp	src/engine/fx/strategic_emitters.cpp	1	119	0x4219c0	0x421df0	119		
+cpp	src/game/strat/tstring.cpp	src/engine/core/tstring.cpp	1	406	0x42bac0	0x42cb70	406		
+cpp	src/game/strat/gui_manager.cpp	src/game/ui/gui_manager.cpp	1	218	0x42cb70	0x42d820	218		
+cpp	src/rgl/xmlcfg/records.cpp	src/game/data/record_destructors.cpp	1	87	0x431400	0x4320af	87		
+cpp	src/rgl/xmlcfg/key_groups.cpp	src/game/input/key_groups.cpp	1	46	0x4320b0	0x432350	46		
+cpp	src/rgl/xmlcfg/game_util.cpp	src/game/common/game_util.cpp	1	348	0x4320b0	0x4338df	348		
+cpp	src/rgl/xmlcfg/agent_pick.cpp	src/game/agent/agent_item_pick.cpp	1	213	0x433040	0x4338df	213		
+cpp	src/rgl/mesh2/rec_tables.cpp	src/game/data/module_option_records.cpp	1	694	0x4c2c50	0x4c48d0	694		
+cpp	src/rgl/mesh2/gui_edit.cpp	src/game/editor/editor_selection_and_translation.cpp	1	1750	0x4c48d0	0x4ca600	1750		
+cpp	src/rgl/mesh2/mesh_2.cpp	src/game/editor/poly_mesh_edge_face_ops.cpp	1	740	0x4ca600	0x4ce720	740		
+cpp	src/game/agent/agent.cpp	src/game/agent/agent_queries.cpp	1	1180	0x434b20	0x437770	1180		
+cpp	src/game/agent/item_kind.cpp	src/game/data/item_kind.cpp	1	335	0x433bf0	0x434b20	335		
+cpp	src/game/agent/troop_adjust.cpp	src/game/data/troop_proficiency.cpp	1	37	0x437770	0x437830	37		
+cpp	src/game/agent2/agent_stats.cpp	src/game/agent/agent_stats.cpp	1	1080	0x437830	0x43a280	1080		
+cpp	src/game/agent5/agent_hud.cpp	src/game/agent/hud/agent_hud.cpp	1	1798	0x4f7d70	0x501a20	1798		
+cpp	src/game/agent5/agent_vec.cpp	src/game/agent/hud/hud_vector_instances.cpp	1	100	0x4fe0b0	0x4fe860	100		
+cpp	src/game/agent5/editor_dialog.cpp	src/game/editor/terrain_brush_dialog.cpp	1	605	0x4fe860	0x500ad0	605		
+cpp	src/game/agent5/party_create.cpp	src/game/ui/screens/inventory/inventory_window_create.cpp	1	330	0x500ad0	0x501a20	330		
+cpp	src/game/party/party_window.cpp	src/game/ui/screens/inventory/inventory_window.cpp	1	399	0x501a20	0x502cc0	399		
+cpp	src/game/inventory_panel/inventory_panel.cpp	src/game/ui/screens/inventory/inventory_panel.cpp	1	1207	0x50fe20	0x513b10	1207		
+cpp	src/game/inventory_panel/party_screen.cpp	src/game/ui/screens/party_screen.cpp	1	1355	0x502cc0	0x507400	1355		
+cpp	src/game/inventory_panel/char_sheet.cpp	src/game/ui/screens/character_sheet/character_sheet_init.cpp	1	473			473		
+cpp	src/game/inventory_panel/char_window.cpp	src/game/ui/screens/character_sheet/character_sheet_helpers.cpp	1	167	0x5093d0	0x509770	167		
+cpp	src/game/inventory_panel/view_open.cpp	src/game/ui/screens/character_sheet/character_sheet_view.cpp	1	217			217		
+cpp	src/game/char_sheet/cs_update.cpp	src/game/ui/screens/character_sheet/character_sheet_update.cpp	1	229	0x4eeb10	0x4eeb10	229		
+cpp	src/game/char_sheet/cs_troop.cpp	src/game/ui/screens/character_sheet/character_sheet_troop.cpp	1	144	0x4ef420	0x4ef6d0	144		
+cpp	src/game/char_sheet/cs_detail.cpp	src/game/ui/screens/character_sheet/character_sheet_detail.cpp	1	151			151		
+cpp	src/game/char_sheet/cs_panels.cpp	src/game/ui/screens/character_sheet/character_sheet_panels.cpp	1	112			112		
+cpp	src/game/char_sheet/cs_weapons.cpp	src/game/ui/screens/character_sheet/character_sheet_weapons.cpp	1	73	0x4f04f0	0x4f06f0	73		
+cpp	src/game/inventory_panel/note_window.cpp	src/game/ui/screens/notes_window.cpp	1	757			757		
+cpp	src/game/inventory_panel/widget_text.cpp	src/game/ui/widgets/text_box.cpp	1	214	0x50cc60	0x50d520	214		
+cpp	src/game/inventory_panel/loading_screen.cpp	src/game/app/loading_screen.cpp	1	273	0x50d140	0x50fbf0	273		
+cpp	src/game/inventory_panel/module_files.cpp	src/game/data/module_files_loader.cpp	1	310	0x50d5e0	0x50d5e0	310		
+cpp	src/game/inventory_panel/game_app.cpp	src/game/app/game_app.cpp	1	309	0x50f130	0x50f390	309		
+cpp	src/game/inventory_panel/skeleton_load.cpp	src/engine/resource/skeleton_load.cpp	1	47	0x50fc60	0x50fc60	47		
+cpp	src/game/inventory_panel/hero_ammo.cpp	src/game/mission/hero_ammo.cpp	1	50	0x513eb0	0x513f80	50		
+cpp	src/game/inventory_panel/mission_ctx.cpp	src/game/mission/mission_context.cpp	1	1194	0x513b10	0x516ac0	1194		
+cpp	src/game/inventory_panel/game_tick.cpp	src/game/campaign/game_tick.cpp	1	669	0x516ac0	0x518680	669		
+cpp	src/game/inventory_panel/party_tracks.cpp	src/game/campaign/party_tracks.cpp	1	256	0x518680	0x5191e0	256		
+cpp	src/game/inventory_panel/map_panel.cpp	src/game/campaign/map_panel.cpp	1	904	0x5191e0	0x51be20	904		
+cpp	src/game/inventory_panel/map_tooltip.cpp	src/game/campaign/map_tooltip.cpp	1	213	0x51be20	0x51c090	213		
+cpp	src/game/party/game.cpp	src/game/campaign/game_state_load.cpp	1	986	0x51d2b0	0x51db70	986		
+cpp	src/game/mission5/troop_rec.cpp	src/game/campaign/new_game_setup.cpp	1	697	0x51eb90	0x520b20	697		
+cpp	src/game/mission5/game_2.cpp	src/game/campaign/map_builder_and_data_load.cpp	1	1464	0x520b20	0x525160	1464		
+cpp-split	src/game/mission5/mission_5.cpp	src/game/mission/mission_frame_update.cpp	114	1297	0x525160	0x5284a0	1297	1-113	`// ===== slice s0052...` banner above `// @ 0x525160`; TU 116 "mission_5" of the map (0x5249f0..0x52cf60, T regime, so class changes only; 2 possible inner splits); this file starts at 0x525160 (class change after the record readers of game_2); cut at MissionBlocker::update_view: class change from frame tick / save to the view controller and HUD
+cpp-split	src/game/mission5/mission_5.cpp	src/game/mission/mission_hud_and_orders.cpp	1298	2868	0x5284a0	0x52bf40	1684	1-113	`// @ 0x5284a0`; MissionBlocker / Mission view, HUD and order members; ends where the editor-side Terrain members start
+cpp-split	src/game/mission5/mission_5.cpp	src/game/editor/terrain_brush.cpp	2869	3224	0x52bf40	0x52cf60	469	1-113	`// @ 0x52bf40`; class change MissionBlocker -> Terrain; the TU ends at 0x52cf60 where the map editor mesh object (mesh_3) starts
+cpp	src/game/mission5/mesh_3.cpp	src/game/editor/poly_mesh_pick.cpp	1	302	0x52cf60	0x52dae0	302		
+cpp	src/game/mission5/mesh_vert_ray.cpp	src/game/editor/poly_mesh_vert_ray.cpp	1	54	0x52dae0	0x52dcc0	54		
+cpp	src/game/mission5/mesh_edge_ray.cpp	src/game/editor/poly_mesh_edge_ray.cpp	1	75	0x52dcc0	0x52dfd0	75		
+cpp	src/game/mission5/mesh_poly_ray.cpp	src/game/editor/poly_mesh_poly_ray_edit.cpp	1	766	0x52dfd0	0x5305b0	766		
+cpp	src/game/map_editor/map_editor.cpp	src/game/editor/map_editor_update.cpp	1	330	0x5305b0	0x531590	330		
+cpp	src/game/map_editor/exchange_screens.cpp	src/game/ui/screens/mission_menu_and_exchange_screens.cpp	1	925	0x531590	0x533a60	925		
+cpp	src/game/map_editor/list_screens.cpp	src/game/ui/screens/scroll_list_screen.cpp	1	257	0x533a60	0x5342a6	257		
+cpp	src/game/mesh_slot/mesh_ops.cpp	src/game/mission/mesh_vertex_ops.cpp	1	588	0x47aa40	0x47cae0	588		
+cpp	src/game/mesh_slot/mesh_scene.cpp	src/game/mission/scene_entities.cpp	1	642	0x47cae0	0x47e520	642		
+cpp	src/game/mesh_slot/mesh_pass.cpp	src/game/mission/render_passes.cpp	1	381	0x47e520	0x47f650	381		
+cpp	src/game/mesh_slot/mesh_char.cpp	src/game/mission/character_meshes.cpp	1	255	0x47f650	0x47ff60	255		
+cpp	src/game/mesh_slot/mesh_terrain.cpp	src/game/mission/terrain_water_regen.cpp	1	905	0x480db0	0x482240	905		
+cpp	src/game/mesh_slot/mesh_appear.cpp	src/game/mission/agent_appearance.cpp	1	340	0x482240	0x4832b0	340		
+cpp	src/game/mesh_slot/mesh_game.cpp	src/game/mission/agent_spawn_and_tick.cpp	1	443	0x4832b0	0x484590	443		
+cpp	src/game/mesh_slot/mesh_start.cpp	src/game/mission/mission_start_setup.cpp	1	1010	0x484590	0x4875e0	1010		
+cpp	src/game/mesh_slot/slot.cpp	src/game/input/input_device.cpp	1	399	0x4875e0	0x488560	399		
+cpp	src/game/terrain_b/mission.cpp	src/game/mission/scene_container_grid.cpp	1	717	0x478830	0x47aa40	717		
+cpp	src/game/terrain_b/poly_mesh.cpp	src/game/terrain/poly_mesh.cpp	1	1784	0x470a00	0x478830	1784		
+cpp	src/game/terrain_b/terrain_b.cpp	src/game/terrain/terrain_scene_renderer.cpp	1	746	0x46e590	0x470a00	746		
+cpp	src/game/terrain_a/terrain_a.cpp	src/game/terrain/terrain_cells.cpp	1	1071	0x464200	0x466cd0	1071		
+cpp	src/game/terrain_a/terrain_emit.cpp	src/game/terrain/terrain_particles.cpp	1	425	0x466cd0	0x467f80	425		
+cpp	src/game/terrain_a/terrain_render.cpp	src/game/terrain/terrain_render.cpp	1	1860	0x4681b0	0x46e590	1860		
+cpp	src/game/terrain_a/game_state.cpp	src/game/terrain/scene_paths_and_wind_noise.cpp	1	348	0x4636d0	0x464200	348		
+cpp	src/game/terrain_a/wind.cpp	src/game/terrain/wind_helpers.cpp	1	103	0x461200	0x461630	103		
+cpp	src/game/char_sheet/dust.cpp	src/game/terrain/dust_particles.cpp	1	190	0x4f47f0	0x4f49c6	190		
+cpp	src/game/char_sheet/terrain_page.cpp	src/game/editor/terrain_page/terrain_page.cpp	1	118	0x4f2730	0x4f2ae0	118		
+cpp	src/game/char_sheet/terrain_page_input.cpp	src/game/editor/terrain_page/terrain_page_input.cpp	1	167	0x4f3570	0x4f3cf0	167		
+cpp	src/game/char_sheet/terrain_page_update.cpp	src/game/editor/terrain_page/terrain_page_update.cpp	1	166	0x4f34c0	0x4f34c0	166		
+cpp	src/game/char_sheet/facegen_win.cpp	src/game/editor/terrain_page/terrain_page_init.cpp	1	243	0x4f1460	0x4f2610	243		
+cpp	src/game/char_sheet/facegen_init.cpp	src/game/ui/screens/face_generator/face_generator_init.cpp	1	227	0x4f49d0	0x4f49d0	227		
+cpp	src/game/char_sheet/facegen_misc.cpp	src/game/ui/screens/face_generator/face_generator_refresh.cpp	1	246	0x4eb270	0x4ebb80	246		
+cpp	src/game/char_sheet/cam_view.cpp	src/game/ui/screens/face_generator/face_generator_update.cpp	1	216	0x4ea8e0	0x4eb050	216		
+cpp	src/game/char_sheet/editor_ui.cpp	src/game/editor/editor_widgets.cpp	1	281	0x4f5d20	0x4f6680	281		
+cpp	src/game/char_sheet/save_game.cpp	src/game/save/save_game.cpp	1	196	0x4e87d0	0x4e8e70	196		
+cpp	src/game/char_sheet/save_state.cpp	src/game/save/save_state.cpp	1	240	0x4e8f10	0x4e97e0	240		
+cpp	src/game/char_sheet/save_records.cpp	src/game/save/save_records.cpp	1	245	0x4e9850	0x4e9fe0	245		
+cpp	src/game/char_sheet/save_panel.cpp	src/game/ui/screens/save_panel.cpp	1	210	0x4ea850	0x4ea850	210		
+cpp	src/game/char_sheet/screen.cpp	src/game/ui/screens/screen_misc.cpp	1	267	0x4ebc10	0x4ec460	267		
+cpp	src/game/char_sheet/screen_init.cpp	src/game/campaign/campaign_screen_init.cpp	1	195	0x4ecce0	0x4ecce0	195		
+cpp	src/game/char_sheet/screen_camera.cpp	src/game/campaign/campaign_screen_camera.cpp	1	182	0x4ed630	0x4ed6b0	182		
+cpp	src/game/char_sheet/render_shape.cpp	src/game/campaign/map_widget_render.cpp	1	25	0x4ed6f0	0x4ed6f0	25		
+cpp	src/game/char_sheet/pick_entity.cpp	src/game/mission/pick_entity.cpp	1	187			187		
+cpp	src/game/char_sheet/quest_log.cpp	src/game/ui/screens/quest_log.cpp	1	191	0x4ee230	0x4eea90	191		
+cpp	src/game/char_sheet/conv_open.cpp	src/game/ui/screens/conversation/conversation_init.cpp	1	213			213		
+cpp	src/game/char_sheet/conv_refresh.cpp	src/game/ui/screens/conversation/conversation_refresh.cpp	1	152			152		
+cpp	src/game/char_sheet/msg_log_ui.cpp	src/game/ui/msg_log_ui.cpp	1	29	0x4f1390	0x4f13f0	29		
+cpp	src/game/cls_map/cls_map.cpp	src/game/app/winmain_and_menu_screens.cpp	1	2296	0x4d92c0	0x4e3eb0	2296		
+cpp	src/game/cls_map/progress_bar.cpp	src/game/ui/screens/progress_bar_and_load_screens.cpp	1	1370	0x4e3eb0	0x4e87d0	1370		
+cpp	src/game/cls_map/mission_window.cpp	src/game/ui/screens/mission_window.cpp	1	242	0x4dae40	0x4db810	242		
+cpp	src/game/config/config.cpp	src/game/config/config.cpp	1	1852	0x4b9e70	0x4be730	1852		
+cpp	src/game/config/options_dlg.cpp	src/game/config/launcher_options_dialog.cpp	1	465	0x4b8f40	0x4b9e70	465		
+cpp	src/game/options_panel/config_dialog.cpp	src/game/config/launcher_config_dialog.cpp	1	291	0x4cf100	0x4d0620	291		
+cpp	src/game/triggers/trigger_vec.cpp	src/game/app/options_dialog_and_module_tables.cpp	1	1585	0x4be742	0x4c2c50	1585		
+cpp	src/game/options_panel/world_app.cpp	src/game/app/world_app.cpp	1	420	0x4d3720	0x4d4b80	420		
+cpp	src/game/config/ui_widgets_c.cpp	src/game/ui/widgets/text_editor_widget.cpp	1	171	0x48baa0	0x48be00	171		
+cpp	src/game/config/widget_mgr.cpp	src/game/ui/widgets/widget_manager.cpp	1	398	0x499830	0x49ad20	398		
+cpp	src/game/config/widget_node.cpp	src/game/ui/widgets/drop_down_list.cpp	1	80	0x49ad20	0x49b1c0	80		
+cpp	src/game/ui/mission_ui.cpp	src/game/ui/widgets/widget_base.cpp	1	1672	0x488560	0x48b2d0	1672		
+cpp	src/game/ui/ui_widgets_a.cpp	src/game/ui/widgets/toggle_and_text_fit.cpp	1	142	0x48b2d0	0x48b550	142		
+cpp	src/game/ui/ui_slider.cpp	src/game/ui/widgets/slider_value.cpp	1	28	0x48b550	0x48b5a0	28		
+cpp	src/game/ui/ui_slider_key.cpp	src/game/ui/widgets/slider_input.cpp	1	59	0x48b5a0	0x48b6e0	59		
+cpp	src/game/ui/ui_widgets_b.cpp	src/game/ui/widgets/label_and_progress_bar.cpp	1	81	0x48b6e0	0x48b930	81		
+cpp	src/game/mission_ui2/ui_d_value.cpp	src/game/ui/widgets/progress_bar_value.cpp	1	28	0x48b930	0x48b960	28		
+cpp	src/game/mission_ui2/ui_d_key.cpp	src/game/ui/widgets/progress_bar_input.cpp	1	63	0x48b960	0x48baa0	63		
+cpp	src/game/ui/widget_slots.cpp	src/game/ui/widgets/widget_virtual_slots.cpp	1	126	0x42cd60	0x42d170	126		
+cpp	src/game/world_data/mesh_hud.cpp	src/game/ui/widgets/hud_bar_widgets.cpp	1	793	0x4958f0	0x499050	793		
+cpp	src/game/mission_ui2/mission_4.cpp	src/game/ui/widgets/container_and_tableau_misc.cpp	1	235	0x48ef40	0x48f790	235		
+cpp	src/game/mission_ui2/slot_api.cpp	src/game/ui/widgets/widget_overlay_api.cpp	1	303	0x48e5d0	0x48ef40	303		
+cpp	src/game/world_data/obj_tbl.cpp	src/game/data/object_table_spawners.cpp	1	190	0x499050	0x499830	190		
+cpp	src/game/world_data/world_data.cpp	src/game/campaign/game_data_party_quest.cpp	1	2036	0x490030	0x4958f0	2036		
+cpp	src/game/mission_ui2/game_data.cpp	src/game/party/party_tree_ops.cpp	1	52	0x48fd60	0x490030	52		
+cpp	src/game/mission_ui2/party.cpp	src/game/party/party_members.cpp	1	137	0x48f790	0x48fd60	137		
+cpp	src/game/mission_ui2/mission_3.cpp	src/game/party/stacks_and_loot.cpp	1	872	0x48c330	0x48e5d0	872		
+cpp	src/game/mission_ui2/stat_panel_x.cpp	src/game/data/troop_inventory_stats.cpp	1	246	0x48be00	0x48c330	246		
+cpp	src/game/ui/item_ref.cpp	src/game/data/item_ref.cpp	1	154	0x4625d0	0x462ac0	154		
+cpp	src/game/ui/troop_inv.cpp	src/game/data/troop_inventory.cpp	1	408	0x462ac0	0x4636d0	408		
+cpp	src/game/triggers/item_rec.cpp	src/game/data/item_head_records.cpp	1	35	0x4ce870	0x4ce960	35		
+cpp	src/game/options_panel/mission_items.cpp	src/game/data/mission_item_records.cpp	1	206	0x4ce960	0x4cf0d0	206		
+cpp	src/game/options_panel/module_load.cpp	src/game/data/module_record_loaders.cpp	1	127	0x4c8ba0	0x4d1360	127		
+cpp	src/game/options_panel/ragdoll_models.cpp	src/game/data/ragdoll_models.cpp	1	97	0x4d3330	0x4d3720	97		
+cpp	src/game/options_panel/rec_slots_c4c.cpp	src/game/data/record_slots_screen_records.cpp	1	25	0x595740	0x596c68	25		
+cpp	src/game/options_panel/rec_slots_hc.cpp	src/game/data/record_slots_head_rec.cpp	1	14	0x595740	0x596c68	14		
+cpp	src/game/options_panel/rec_slots_tr.cpp	src/game/data/record_slots_trigger.cpp	1	22			22		
+cpp	src/game/options_panel/trigger_records.cpp	src/game/data/trigger_records.cpp	1	46	0x4c3120	0x4d0620	46		
+cpp	src/game/options_panel/hud.cpp	src/game/ui/hud/mission_hud_buttons.cpp	1	195	0x4d4b80	0x4d5410	195		
+cpp	src/game/options_panel/hud_source.cpp	src/game/ui/hud/mission_item_source.cpp	1	171	0x4d5410	0x4d5ba0	171		
+cpp	src/game/options_panel/keys_page.cpp	src/game/ui/screens/options/keys_page.cpp	1	335	0x4d6b80	0x4d7270	335		
+cpp	src/game/options_panel/options_panel.cpp	src/game/ui/screens/options/options_panel.cpp	1	657	0x4d7370	0x4d92c0	657		
+cpp	src/game/options_panel/quest_page.cpp	src/game/ui/screens/options/quest_page.cpp	1	289	0x4d5ba0	0x4d6300	289		
+cpp	src/game/options_panel/video_page.cpp	src/game/ui/screens/options/video_page.cpp	1	252			252		
+cpp	src/game/options_panel/mesh_edit.cpp	src/game/editor/poly_mesh_edit_ops.cpp	1	530	0x4d1410	0x4d2df0	530		
+cpp	src/game/dialog_manager.cpp	src/game/dialog/dialog_manager.cpp	1	433	0x460160	0x461200	433		
+cpp-split	src/game/party2/party_2.cpp	src/game/party/party_stacks_and_orders.cpp	47	1742	0x4b1160	0x4b4a00	1742	1-46	`// ---- the tableau render callback` above `// @ 0x4b1160`; TU 93 "party_2" of the map (0x4b14b0..0x4b8f40, 81 functions, 10 possible inner splits; the file starts at 0x4b1160 because the tableau callback 0x4b1160..0x4b14b0 was kept with it, TU 92 per the map); cut at Party::think, where the AI/battle/nav driver begins (function boundary inside the Party class run; the file is 3,158 lines and has no recovered inner boundary)
+cpp-split	src/game/party2/party_2.cpp	src/game/party/party_think_and_nav.cpp	1743	3158	0x4b4a00	0x4b8f40	1462	1-46	`// @ 0x4b4a00`; per-frame driver of the map party and the world-map path finder; no TU evidence inside, cut is by function size and theme only (weakest cut of the four)
+cpp	src/game/party2/party_2_copy.cpp	src/game/party/party_track_allocator.cpp	1	8	0x4b2160	0x4b2160	8		
+cpp-split	src/game/script/script_interpreter.cpp	src/game/script/script_support.cpp	163	739	0x49b1c0	0x49cc60	739	1-162	banner "slice s0049aca0 (namespace c49aca0)"; TU 92 "camera" of the map (0x49b1c0..0x4b14b0, high at both ends by forward calls, 20 possible inner splits) is ONE object, so this is a class-change cut: GameData / Mission helper members before the validators (the first 0x49b1c0 vector<NodeA*>::_Insert_n is config/widget_node.cpp's); no static or register-convention function crosses
+cpp-split	src/game/script/script_interpreter.cpp	src/game/script/operation_execute.cpp	740	6798	0x49cc60	0x4b0940	6221	1-162	banner "by-reference helpers, validators (0x49cc60..0x49d4b0)"; NOT cut further: the 14 validators take register arguments (ECX/EAX/EDI/EDX/ESI) and are called only by execute, so they must share its object; Camera is proven merged with the interpreter (original_tus.md A2: exact only with the real body visible); execute is one function and cannot be split
+cpp-split	src/game/script/script_interpreter.cpp	src/game/script/dialog_block_runner.cpp	6799	7044	0x4b0940	0x4b1160	408	1-162	`// @ 0x4b0940`; class change after execute (inside TU 92); the TU ends at 0x4b1160 (tableau callback 0x4b14b0 is called forward from execute: medium-high boundary)
+cpp-split	src/game/agent4/agent_logic.cpp	src/game/agent/ai/agent_targeting.cpp	111	1462	0x43a280	0x43e190	1462	1-110	banner "0x43a280..0x43b100, from agent_stats.cpp" (start) to the banner "0x43e190..0x441360" (end); TU 45 "agent_3" of the map (0x439fc0..0x43e190, class changes at both ends); the file starts at 0x43a280 because the first 0x2c0 bytes of the TU stay in agent_stats.cpp (old module seam, the register-convention static ui_weapon_class_name starts here). The old agent_ai seam at 0x43b100 is NOT kept: it is no map boundary
+cpp-split	src/game/agent4/agent_logic.cpp	src/game/agent/combat/agent_attack_checks.cpp	1463	2233	0x43e190	0x441360	881	1-110	banner "0x43e190..0x441360 (+ the std::logic_error family ...), from agent_combat.cpp"; TU 46 "agent_4" of the map: class change Agent|Font at 0x43e190 and Agent|PhysSet at 0x441360 (both low)
+cpp-split	src/game/agent4/agent_logic.cpp	src/game/agent/physics/agent_static_collision.cpp	2234	2421	0x441360	0x441ff0	298	1-110	banner "0x441360..0x441ff0, from phys_set.cpp"; TU 47 "phys_set" of the map (5 functions, class PhysSet; class changes at both ends, low)
+cpp-split	src/game/agent4/agent_logic.cpp	src/game/agent/agent_effects_sound.cpp	2422	3363	0x441ff0	0x444c50	1052	1-110	banner "0x441ff0..0x444c50, from agent_fx_sound.cpp"; TU 48 "agent_5" of the map (class changes PhysSet|Poser at 0x441ff0 and Agent|NavMesh at 0x444c50, low; 14 possible inner splits unexplored)
+cpp-split	src/game/agent4/agent_logic.cpp	src/game/agent/ai/agent_ai.cpp	3364	6432	0x444c50	0x44e970	3179	1-110	banner "0x444c50..0x460160" (first section) up to the line before the rgl::mesh members block above `// @ 0x44e970`; TU 49 "agent_6" of the map, kept whole (about 3,190 lines with the prelude): class change Agent|NavMesh at 0x444c50, Agent|mesh at 0x44e970 (low)
+cpp-split	src/game/agent4/agent_logic.cpp	src/engine/render/mesh_edit_members.cpp	6433	6696	0x44e970	0x44f5d0	374	1-110	`// @ 0x44e970`, taking the `using` / `#define` / `// ---- rgl::mesh members` block directly above it; start of TU 50 "agent_7" (map boundary 0x44e970, class change Agent|mesh); TU 50 is 5,280 lines and has to be cut inside: its first class run is rgl::mesh (engine code), ends at Font::draw_glyph (class change)
+cpp-split	src/game/agent4/agent_logic.cpp	src/game/agent/agent_ragdoll_blood.cpp	6697	7603	0x44f5d0	0x452c00	1017	1-110	`// @ 0x44f5d0`; inside TU 50: class change rgl::mesh -> Font / Missile / PhysSet / Agent; ends before gui_manager::add (message log)
+cpp-split	src/game/agent4/agent_logic.cpp	src/game/agent/combat/agent_damage.cpp	7604	8665	0x452c00	0x4554c0	1172	1-110	`// @ 0x452c00`; inside TU 50: class change Agent ragdoll/blood -> gui_manager message log and the damage chain
+cpp-split	src/game/agent4/agent_logic.cpp	src/game/agent/movement/agent_corpse_and_controls.cpp	8666	9424	0x4554c0	0x457b40	869	1-110	`// @ 0x4554c0`; inside TU 50: damage chain -> corpse / death state / control update; ends where process_blow (the caller of ui_weapon_class_name) begins
+cpp-split	src/game/agent4/agent_logic.cpp	src/game/agent/combat/agent_blows.cpp	9425	10531	0x457b40	0x45c220	1217	1-110	`// @ 0x457b40`; inside TU 50: the blow delivery and swing trace pair (two functions of 7 KB each)
+cpp-split	src/game/agent4/agent_logic.cpp	src/game/agent/agent_frame_update.cpp	10532	11720	0x45c220	0x460160	1299	1-110	`// @ 0x45c220` (cut above the update_attack comment and its #define block); inside TU 50: per-frame update chain; ends at 0x460160 where the dialog TU (TU 51) starts
+sidecar	src/dxframework/d3dapp.manifest.txt	src/platform/dxframework/d3dapp.manifest.txt	1	26			26		follows its .cpp
+sidecar	src/dxframework/d3dapp.nonmatching.txt	src/platform/dxframework/d3dapp.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/dxframework/d3denumeration.manifest.txt	src/platform/dxframework/d3denumeration.manifest.txt	1	12			12		follows its .cpp
+sidecar	src/dxframework/d3denumeration.nonmatching.txt	src/platform/dxframework/d3denumeration.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/dxframework/d3dfont.manifest.txt	src/platform/dxframework/d3dfont.manifest.txt	1	10			10		follows its .cpp
+sidecar	src/dxframework/d3dsettings.manifest.txt	src/platform/dxframework/d3dsettings.manifest.txt	1	21			21		follows its .cpp
+sidecar	src/dxframework/d3dsettings.nonmatching.txt	src/platform/dxframework/d3dsettings.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/dxframework/d3dutil.manifest.txt	src/platform/dxframework/d3dutil.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/dxframework/dxutil.manifest.txt	src/platform/dxframework/dxutil.manifest.txt	1	7			7		follows its .cpp
+sidecar	src/tinyxml/tinystr.manifest.txt	third_party/tinyxml/tinystr.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/tinyxml/tinyxml.manifest.txt	third_party/tinyxml/tinyxml.manifest.txt	1	66			66		follows its .cpp
+sidecar	src/tinyxml/tinyxmlparser.manifest.txt	third_party/tinyxml/tinyxmlparser.manifest.txt	1	21			21		follows its .cpp
+sidecar	src/rgl/core/frustum_grid.manifest.txt	src/engine/scene/frustum_grid.manifest.txt	1	8			8		follows its .cpp
+sidecar	src/rgl/core/frustum_grid.nonmatching.txt	src/engine/scene/frustum_grid.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/rgl/core/resmgr.manifest.txt	src/engine/resource/resource_manager.manifest.txt	1	75			75		follows its .cpp
+sidecar	src/rgl/core/resmgr.nonmatching.txt	src/engine/resource/resource_manager.nonmatching.txt	1	11			11		follows its .cpp
+sidecar	src/rgl/resource_manager.manifest.txt	src/engine/resource/resource_manager_init.manifest.txt	1	38			38		follows its .cpp
+sidecar	src/rgl/resource_manager.nonmatching.txt	src/engine/resource/resource_manager_init.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/core/resource_io.manifest.txt	src/engine/resource/resource_io.manifest.txt	1	32			32		follows its .cpp
+sidecar	src/rgl/core/resource_io.nonmatching.txt	src/engine/resource/resource_io.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/rgl/mem_stream.manifest.txt	src/engine/io/mem_stream.manifest.txt	1	30			30		follows its .cpp
+sidecar	src/rgl/text_stream.manifest.txt	src/engine/io/text_stream.manifest.txt	1	24			24		follows its .cpp
+sidecar	src/rgl/noise.manifest.txt	src/engine/math/noise.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/noise.nonmatching.txt	src/engine/math/noise.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/rgl/psys.manifest.txt	src/engine/render/particle_system.manifest.txt	1	5			5		follows its .cpp
+sidecar	src/rgl/psys.nonmatching.txt	src/engine/render/particle_system.nonmatching.txt	1	4			4		follows its .cpp
+sidecar	src/rgl/psys.partial.txt	src/engine/render/particle_system.partial.txt	1	0			0		follows its .cpp
+sidecar	src/rgl/particles/mesh_obj.manifest.txt	src/engine/render/mesh.manifest.txt	1	134			134		follows its .cpp
+sidecar	src/rgl/particles/mesh_obj.nonmatching.txt	src/engine/render/mesh.nonmatching.txt	1	6			6		follows its .cpp
+sidecar	src/game/renderer.manifest.txt	src/engine/render/renderer.manifest.txt	1	19			19		follows its .cpp
+sidecar	src/game/renderer.nonmatching.txt	src/engine/render/renderer.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/rgl/shapes/shapes.manifest.txt	src/engine/physics/collision_shapes.manifest.txt	1	117			117		follows its .cpp
+sidecar	src/rgl/shapes/shapes.nonmatching.txt	src/engine/physics/collision_shapes.nonmatching.txt	1	32			32		follows its .cpp
+sidecar	src/rgl/shapes/shapes.partial.txt	src/engine/physics/collision_shapes.partial.txt	1	0			0		follows its .cpp
+sidecar	src/rgl/dynamic/dynamic_entity.manifest.txt	src/engine/physics/rigid_body.manifest.txt	1	13			13		follows its .cpp
+sidecar	src/rgl/dynamic/dynamic_entity.nonmatching.txt	src/engine/physics/rigid_body.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/rgl/dynamic/world_collide.manifest.txt	src/engine/physics/world_collide.manifest.txt	1	16			16		follows its .cpp
+sidecar	src/rgl/dynamic/world_collide.nonmatching.txt	src/engine/physics/world_collide.nonmatching.txt	1	11			11		follows its .cpp
+sidecar	src/rgl/dynamic/world_cells.manifest.txt	src/engine/physics/world_cells.manifest.txt	1	7			7		follows its .cpp
+sidecar	src/rgl/dynamic/world_cells.nonmatching.txt	src/engine/physics/world_cells.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/rgl/dynamic/world_grid.manifest.txt	src/engine/physics/world_grid.manifest.txt	1	9			9		follows its .cpp
+sidecar	src/rgl/dynamic/world_grid.nonmatching.txt	src/engine/physics/world_grid.nonmatching.txt	1	16			16		follows its .cpp
+sidecar	src/rgl/dynamic/fx_anim.manifest.txt	src/engine/fx/fx_animation.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/rgl/dynamic/fx_anim.nonmatching.txt	src/engine/fx/fx_animation.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/dynamic/fx_keys.manifest.txt	src/engine/fx/fx_key_frames.manifest.txt	1	17			17		follows its .cpp
+sidecar	src/rgl/dynamic/fx_keys.nonmatching.txt	src/engine/fx/fx_key_frames.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/agent/curve.manifest.txt	src/engine/fx/env_curve.manifest.txt	1	6			6		follows its .cpp
+sidecar	src/rgl/scene/entity_base.manifest.txt	src/engine/scene/entity.manifest.txt	1	15			15		follows its .cpp
+sidecar	src/rgl/scene/entity_recalc.manifest.txt	src/engine/scene/entity_recalc.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/rgl/scene/entity_recalc.nonmatching.txt	src/engine/scene/entity_recalc.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/rgl/scene/entity_render.manifest.txt	src/engine/scene/entity_render.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/scene/entity_render.nonmatching.txt	src/engine/scene/entity_render.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/scene/entity_types.manifest.txt	src/engine/scene/entity_types.manifest.txt	1	15			15		follows its .cpp
+sidecar	src/rgl/scene/entity_types.nonmatching.txt	src/engine/scene/entity_types.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/entity.manifest.txt	src/engine/scene/fx_element_pool.manifest.txt	1	19			19		follows its .cpp
+sidecar	src/game/entity.nonmatching.txt	src/engine/scene/fx_element_pool.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/rgl/scene/scene_objects.manifest.txt	src/engine/scene/scene_objects.manifest.txt	1	26			26		follows its .cpp
+sidecar	src/rgl/scene/scene_objects.nonmatching.txt	src/engine/scene/scene_objects.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/rgl/scene/render_scene.manifest.txt	src/engine/scene/render_scene.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/rgl/scene/render_scene.nonmatching.txt	src/engine/scene/render_scene.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/scene/world_items.manifest.txt	src/engine/scene/world_items.manifest.txt	1	5			5		follows its .cpp
+sidecar	src/rgl/scene/shape_load.manifest.txt	src/engine/scene/shape_load.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/rgl/scene/shape_load.nonmatching.txt	src/engine/scene/shape_load.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/strat/strat_entity.manifest.txt	src/engine/scene/strategic_entity.manifest.txt	1	5			5		follows its .cpp
+sidecar	src/game/strat/strat_entity.nonmatching.txt	src/engine/scene/strategic_entity.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/strat/strat_entity.partial.txt	src/engine/scene/strategic_entity.partial.txt	1	0			0		follows its .cpp
+sidecar	src/game/strat/strat_ctx.manifest.txt	src/engine/scene/strategic_shadow.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/rgl/scene/fx_support.manifest.txt	src/engine/fx/fx_support.manifest.txt	1	5			5		follows its .cpp
+sidecar	src/rgl/scene/fx_support.nonmatching.txt	src/engine/fx/fx_support.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/scene/fxdef_init.manifest.txt	src/engine/fx/fx_def_init.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/rgl/scene/fxdef_render.manifest.txt	src/engine/fx/fx_def_render.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/scene/fxdef_set_color.manifest.txt	src/engine/fx/fx_def_set_color.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/scene/fxdef_skin.manifest.txt	src/engine/fx/fx_def_skin.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/rgl/scene/fxdef_skin.nonmatching.txt	src/engine/fx/fx_def_skin.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/scene/mesh_list_color.manifest.txt	src/engine/fx/mesh_list_color.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/scene/strategic_emitters.manifest.txt	src/engine/fx/strategic_emitters.manifest.txt	1	5			5		follows its .cpp
+sidecar	src/rgl/scene/strategic_emitters.nonmatching.txt	src/engine/fx/strategic_emitters.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/strat/tstring.manifest.txt	src/engine/core/tstring.manifest.txt	1	37			37		follows its .cpp
+sidecar	src/game/strat/tstring.nonmatching.txt	src/engine/core/tstring.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/strat/gui_manager.manifest.txt	src/game/ui/gui_manager.manifest.txt	1	16			16		follows its .cpp
+sidecar	src/game/strat/gui_manager.nonmatching.txt	src/game/ui/gui_manager.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/xmlcfg/records.manifest.txt	src/game/data/record_destructors.manifest.txt	1	14			14		follows its .cpp
+sidecar	src/rgl/xmlcfg/key_groups.manifest.txt	src/game/input/key_groups.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/rgl/xmlcfg/game_util.manifest.txt	src/game/common/game_util.manifest.txt	1	26			26		follows its .cpp
+sidecar	src/rgl/xmlcfg/game_util.nonmatching.txt	src/game/common/game_util.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/rgl/xmlcfg/agent_pick.manifest.txt	src/game/agent/agent_item_pick.manifest.txt	1	17			17		follows its .cpp
+sidecar	src/rgl/xmlcfg/agent_pick.nonmatching.txt	src/game/agent/agent_item_pick.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/rgl/mesh2/rec_tables.manifest.txt	src/game/data/module_option_records.manifest.txt	1	46			46		follows its .cpp
+sidecar	src/rgl/mesh2/rec_tables.nonmatching.txt	src/game/data/module_option_records.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/rgl/mesh2/rec_tables.partial.txt	src/game/data/module_option_records.partial.txt	1	0			0		follows its .cpp
+sidecar	src/rgl/mesh2/gui_edit.manifest.txt	src/game/editor/editor_selection_and_translation.manifest.txt	1	91			91		follows its .cpp
+sidecar	src/rgl/mesh2/gui_edit.nonmatching.txt	src/game/editor/editor_selection_and_translation.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/rgl/mesh2/gui_edit.partial.txt	src/game/editor/editor_selection_and_translation.partial.txt	1	0			0		follows its .cpp
+sidecar	src/rgl/mesh2/mesh_2.manifest.txt	src/game/editor/poly_mesh_edge_face_ops.manifest.txt	1	71			71		follows its .cpp
+sidecar	src/rgl/mesh2/mesh_2.nonmatching.txt	src/game/editor/poly_mesh_edge_face_ops.nonmatching.txt	1	7			7		follows its .cpp
+sidecar	src/rgl/mesh2/mesh_2.partial.txt	src/game/editor/poly_mesh_edge_face_ops.partial.txt	1	0			0		follows its .cpp
+sidecar	src/game/agent/agent.manifest.txt	src/game/agent/agent_queries.manifest.txt	1	66			66		follows its .cpp
+sidecar	src/game/agent/agent.nonmatching.txt	src/game/agent/agent_queries.nonmatching.txt	1	5			5		follows its .cpp
+sidecar	src/game/agent/item_kind.manifest.txt	src/game/data/item_kind.manifest.txt	1	6			6		follows its .cpp
+sidecar	src/game/agent/item_kind.nonmatching.txt	src/game/data/item_kind.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/agent/troop_adjust.manifest.txt	src/game/data/troop_proficiency.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/game/agent2/agent_stats.manifest.txt	src/game/agent/agent_stats.manifest.txt	1	48			48		follows its .cpp
+sidecar	src/game/agent2/agent_stats.nonmatching.txt	src/game/agent/agent_stats.nonmatching.txt	1	9			9		follows its .cpp
+sidecar	src/game/agent5/agent_hud.manifest.txt	src/game/agent/hud/agent_hud.manifest.txt	1	18			18		follows its .cpp
+sidecar	src/game/agent5/agent_hud.nonmatching.txt	src/game/agent/hud/agent_hud.nonmatching.txt	1	8			8		follows its .cpp
+sidecar	src/game/agent5/agent_vec.manifest.txt	src/game/agent/hud/hud_vector_instances.manifest.txt	1	7			7		follows its .cpp
+sidecar	src/game/agent5/agent_vec.nonmatching.txt	src/game/agent/hud/hud_vector_instances.nonmatching.txt	1	4			4		follows its .cpp
+sidecar	src/game/agent5/editor_dialog.manifest.txt	src/game/editor/terrain_brush_dialog.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/agent5/editor_dialog.nonmatching.txt	src/game/editor/terrain_brush_dialog.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/agent5/party_create.manifest.txt	src/game/ui/screens/inventory/inventory_window_create.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/agent5/party_create.nonmatching.txt	src/game/ui/screens/inventory/inventory_window_create.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/party/party_window.manifest.txt	src/game/ui/screens/inventory/inventory_window.manifest.txt	1	9			9		follows its .cpp
+sidecar	src/game/party/party_window.nonmatching.txt	src/game/ui/screens/inventory/inventory_window.nonmatching.txt	1	4			4		follows its .cpp
+sidecar	src/game/inventory_panel/inventory_panel.manifest.txt	src/game/ui/screens/inventory/inventory_panel.manifest.txt	1	16			16		follows its .cpp
+sidecar	src/game/inventory_panel/inventory_panel.nonmatching.txt	src/game/ui/screens/inventory/inventory_panel.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/inventory_panel/party_screen.manifest.txt	src/game/ui/screens/party_screen.manifest.txt	1	8			8		follows its .cpp
+sidecar	src/game/inventory_panel/party_screen.nonmatching.txt	src/game/ui/screens/party_screen.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/inventory_panel/char_sheet.manifest.txt	src/game/ui/screens/character_sheet/character_sheet_init.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/inventory_panel/char_sheet.nonmatching.txt	src/game/ui/screens/character_sheet/character_sheet_init.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/inventory_panel/char_window.manifest.txt	src/game/ui/screens/character_sheet/character_sheet_helpers.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/inventory_panel/char_window.nonmatching.txt	src/game/ui/screens/character_sheet/character_sheet_helpers.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/inventory_panel/view_open.manifest.txt	src/game/ui/screens/character_sheet/character_sheet_view.manifest.txt	1	0			0		follows its .cpp
+sidecar	src/game/inventory_panel/view_open.nonmatching.txt	src/game/ui/screens/character_sheet/character_sheet_view.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/cs_update.manifest.txt	src/game/ui/screens/character_sheet/character_sheet_update.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/cs_update.nonmatching.txt	src/game/ui/screens/character_sheet/character_sheet_update.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/cs_troop.manifest.txt	src/game/ui/screens/character_sheet/character_sheet_troop.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/cs_troop.nonmatching.txt	src/game/ui/screens/character_sheet/character_sheet_troop.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/char_sheet/cs_detail.nonmatching.txt	src/game/ui/screens/character_sheet/character_sheet_detail.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/cs_panels.nonmatching.txt	src/game/ui/screens/character_sheet/character_sheet_panels.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/cs_weapons.manifest.txt	src/game/ui/screens/character_sheet/character_sheet_weapons.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/inventory_panel/note_window.manifest.txt	src/game/ui/screens/notes_window.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/inventory_panel/note_window.nonmatching.txt	src/game/ui/screens/notes_window.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/inventory_panel/widget_text.manifest.txt	src/game/ui/widgets/text_box.manifest.txt	1	5			5		follows its .cpp
+sidecar	src/game/inventory_panel/widget_text.nonmatching.txt	src/game/ui/widgets/text_box.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/inventory_panel/loading_screen.manifest.txt	src/game/app/loading_screen.manifest.txt	1	10			10		follows its .cpp
+sidecar	src/game/inventory_panel/loading_screen.nonmatching.txt	src/game/app/loading_screen.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/inventory_panel/module_files.manifest.txt	src/game/data/module_files_loader.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/inventory_panel/module_files.nonmatching.txt	src/game/data/module_files_loader.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/inventory_panel/game_app.manifest.txt	src/game/app/game_app.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/inventory_panel/game_app.nonmatching.txt	src/game/app/game_app.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/inventory_panel/skeleton_load.manifest.txt	src/engine/resource/skeleton_load.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/inventory_panel/skeleton_load.nonmatching.txt	src/engine/resource/skeleton_load.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/inventory_panel/hero_ammo.manifest.txt	src/game/mission/hero_ammo.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/inventory_panel/hero_ammo.nonmatching.txt	src/game/mission/hero_ammo.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/inventory_panel/mission_ctx.manifest.txt	src/game/mission/mission_context.manifest.txt	1	22			22		follows its .cpp
+sidecar	src/game/inventory_panel/mission_ctx.nonmatching.txt	src/game/mission/mission_context.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/inventory_panel/game_tick.manifest.txt	src/game/campaign/game_tick.manifest.txt	1	9			9		follows its .cpp
+sidecar	src/game/inventory_panel/game_tick.nonmatching.txt	src/game/campaign/game_tick.nonmatching.txt	1	5			5		follows its .cpp
+sidecar	src/game/inventory_panel/party_tracks.manifest.txt	src/game/campaign/party_tracks.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/inventory_panel/party_tracks.nonmatching.txt	src/game/campaign/party_tracks.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/inventory_panel/map_panel.manifest.txt	src/game/campaign/map_panel.manifest.txt	1	6			6		follows its .cpp
+sidecar	src/game/inventory_panel/map_panel.nonmatching.txt	src/game/campaign/map_panel.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/inventory_panel/map_tooltip.manifest.txt	src/game/campaign/map_tooltip.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/game/inventory_panel/map_tooltip.nonmatching.txt	src/game/campaign/map_tooltip.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/party/game.manifest.txt	src/game/campaign/game_state_load.manifest.txt	1	29			29		follows its .cpp
+sidecar	src/game/party/game.nonmatching.txt	src/game/campaign/game_state_load.nonmatching.txt	1	10			10		follows its .cpp
+sidecar	src/game/party/game.partial.txt	src/game/campaign/game_state_load.partial.txt	1	0			0		follows its .cpp
+sidecar	src/game/mission5/troop_rec.manifest.txt	src/game/campaign/new_game_setup.manifest.txt	1	10			10		follows its .cpp
+sidecar	src/game/mission5/troop_rec.nonmatching.txt	src/game/campaign/new_game_setup.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/mission5/game_2.manifest.txt	src/game/campaign/map_builder_and_data_load.manifest.txt	1	19			19		follows its .cpp
+sidecar	src/game/mission5/game_2.nonmatching.txt	src/game/campaign/map_builder_and_data_load.nonmatching.txt	1	12			12		follows its .cpp
+sidecar-split	src/game/mission5/mission_5.manifest.txt	src/game/mission/mission_frame_update.manifest.txt		 	0x525160	0x5284a0			keep the rows whose address column (3rd field) is in [0x525160,0x5284a0)
+sidecar-split	src/game/mission5/mission_5.manifest.txt	src/game/mission/mission_hud_and_orders.manifest.txt		 	0x5284a0	0x52bf40			keep the rows whose address column (3rd field) is in [0x5284a0,0x52bf40)
+sidecar-split	src/game/mission5/mission_5.manifest.txt	src/game/editor/terrain_brush.manifest.txt		 	0x52bf40	0x52cf60			keep the rows whose address column (3rd field) is in [0x52bf40,0x52cf60)
+sidecar-split	src/game/mission5/mission_5.nonmatching.txt	src/game/mission/mission_frame_update.nonmatching.txt		 	0x525160	0x5284a0			keep the rows whose address column (3rd field) is in [0x525160,0x5284a0)
+sidecar-split	src/game/mission5/mission_5.nonmatching.txt	src/game/mission/mission_hud_and_orders.nonmatching.txt		 	0x5284a0	0x52bf40			keep the rows whose address column (3rd field) is in [0x5284a0,0x52bf40)
+sidecar-split	src/game/mission5/mission_5.nonmatching.txt	src/game/editor/terrain_brush.nonmatching.txt		 	0x52bf40	0x52cf60			keep the rows whose address column (3rd field) is in [0x52bf40,0x52cf60)
+sidecar	src/game/mission5/mesh_3.manifest.txt	src/game/editor/poly_mesh_pick.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/mission5/mesh_3.nonmatching.txt	src/game/editor/poly_mesh_pick.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/mission5/mesh_vert_ray.manifest.txt	src/game/editor/poly_mesh_vert_ray.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/mission5/mesh_vert_ray.nonmatching.txt	src/game/editor/poly_mesh_vert_ray.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/mission5/mesh_edge_ray.manifest.txt	src/game/editor/poly_mesh_edge_ray.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/mission5/mesh_edge_ray.nonmatching.txt	src/game/editor/poly_mesh_edge_ray.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/mission5/mesh_poly_ray.manifest.txt	src/game/editor/poly_mesh_poly_ray_edit.manifest.txt	1	8			8		follows its .cpp
+sidecar	src/game/mission5/mesh_poly_ray.nonmatching.txt	src/game/editor/poly_mesh_poly_ray_edit.nonmatching.txt	1	4			4		follows its .cpp
+sidecar	src/game/map_editor/map_editor.manifest.txt	src/game/editor/map_editor_update.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/game/map_editor/map_editor.nonmatching.txt	src/game/editor/map_editor_update.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/map_editor/exchange_screens.manifest.txt	src/game/ui/screens/mission_menu_and_exchange_screens.manifest.txt	1	11			11		follows its .cpp
+sidecar	src/game/map_editor/exchange_screens.nonmatching.txt	src/game/ui/screens/mission_menu_and_exchange_screens.nonmatching.txt	1	5			5		follows its .cpp
+sidecar	src/game/map_editor/list_screens.manifest.txt	src/game/ui/screens/scroll_list_screen.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/map_editor/list_screens.nonmatching.txt	src/game/ui/screens/scroll_list_screen.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_ops.manifest.txt	src/game/mission/mesh_vertex_ops.manifest.txt	1	6			6		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_ops.nonmatching.txt	src/game/mission/mesh_vertex_ops.nonmatching.txt	1	7			7		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_scene.manifest.txt	src/game/mission/scene_entities.manifest.txt	1	9			9		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_scene.nonmatching.txt	src/game/mission/scene_entities.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_pass.manifest.txt	src/game/mission/render_passes.manifest.txt	1	0			0		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_pass.nonmatching.txt	src/game/mission/render_passes.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_char.manifest.txt	src/game/mission/character_meshes.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_char.nonmatching.txt	src/game/mission/character_meshes.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_terrain.manifest.txt	src/game/mission/terrain_water_regen.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_terrain.nonmatching.txt	src/game/mission/terrain_water_regen.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_appear.manifest.txt	src/game/mission/agent_appearance.manifest.txt	1	0			0		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_appear.nonmatching.txt	src/game/mission/agent_appearance.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_game.manifest.txt	src/game/mission/agent_spawn_and_tick.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_game.nonmatching.txt	src/game/mission/agent_spawn_and_tick.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_start.manifest.txt	src/game/mission/mission_start_setup.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/mesh_slot/mesh_start.nonmatching.txt	src/game/mission/mission_start_setup.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/mesh_slot/slot.manifest.txt	src/game/input/input_device.manifest.txt	1	7			7		follows its .cpp
+sidecar	src/game/mesh_slot/slot.nonmatching.txt	src/game/input/input_device.nonmatching.txt	1	4			4		follows its .cpp
+sidecar	src/game/terrain_b/mission.manifest.txt	src/game/mission/scene_container_grid.manifest.txt	1	13			13		follows its .cpp
+sidecar	src/game/terrain_b/mission.nonmatching.txt	src/game/mission/scene_container_grid.nonmatching.txt	1	6			6		follows its .cpp
+sidecar	src/game/terrain_b/mission.partial.txt	src/game/mission/scene_container_grid.partial.txt	1	0			0		follows its .cpp
+sidecar	src/game/terrain_b/poly_mesh.manifest.txt	src/game/terrain/poly_mesh.manifest.txt	1	99			99		follows its .cpp
+sidecar	src/game/terrain_b/poly_mesh.nonmatching.txt	src/game/terrain/poly_mesh.nonmatching.txt	1	10			10		follows its .cpp
+sidecar	src/game/terrain_b/terrain_b.manifest.txt	src/game/terrain/terrain_scene_renderer.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/game/terrain_b/terrain_b.nonmatching.txt	src/game/terrain/terrain_scene_renderer.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/terrain_a/terrain_a.manifest.txt	src/game/terrain/terrain_cells.manifest.txt	1	31			31		follows its .cpp
+sidecar	src/game/terrain_a/terrain_a.nonmatching.txt	src/game/terrain/terrain_cells.nonmatching.txt	1	5			5		follows its .cpp
+sidecar	src/game/terrain_a/terrain_a.partial.txt	src/game/terrain/terrain_cells.partial.txt	1	0			0		follows its .cpp
+sidecar	src/game/terrain_a/terrain_emit.manifest.txt	src/game/terrain/terrain_particles.manifest.txt	1	27			27		follows its .cpp
+sidecar	src/game/terrain_a/terrain_emit.nonmatching.txt	src/game/terrain/terrain_particles.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/terrain_a/terrain_render.manifest.txt	src/game/terrain/terrain_render.manifest.txt	1	58			58		follows its .cpp
+sidecar	src/game/terrain_a/terrain_render.nonmatching.txt	src/game/terrain/terrain_render.nonmatching.txt	1	10			10		follows its .cpp
+sidecar	src/game/terrain_a/game_state.manifest.txt	src/game/terrain/scene_paths_and_wind_noise.manifest.txt	1	17			17		follows its .cpp
+sidecar	src/game/terrain_a/game_state.nonmatching.txt	src/game/terrain/scene_paths_and_wind_noise.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/terrain_a/wind.manifest.txt	src/game/terrain/wind_helpers.manifest.txt	1	8			8		follows its .cpp
+sidecar	src/game/terrain_a/wind.nonmatching.txt	src/game/terrain/wind_helpers.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/char_sheet/dust.manifest.txt	src/game/terrain/dust_particles.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/char_sheet/dust.nonmatching.txt	src/game/terrain/dust_particles.nonmatching.txt	1	6			6		follows its .cpp
+sidecar	src/game/char_sheet/terrain_page.manifest.txt	src/game/editor/terrain_page/terrain_page.manifest.txt	1	9			9		follows its .cpp
+sidecar	src/game/char_sheet/terrain_page_input.manifest.txt	src/game/editor/terrain_page/terrain_page_input.manifest.txt	1	8			8		follows its .cpp
+sidecar	src/game/char_sheet/terrain_page_input.nonmatching.txt	src/game/editor/terrain_page/terrain_page_input.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/terrain_page_update.manifest.txt	src/game/editor/terrain_page/terrain_page_update.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/terrain_page_update.nonmatching.txt	src/game/editor/terrain_page/terrain_page_update.nonmatching.txt	1	20			20		follows its .cpp
+sidecar	src/game/char_sheet/facegen_win.manifest.txt	src/game/editor/terrain_page/terrain_page_init.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/game/char_sheet/facegen_win.nonmatching.txt	src/game/editor/terrain_page/terrain_page_init.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/facegen_init.manifest.txt	src/game/ui/screens/face_generator/face_generator_init.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/facegen_init.nonmatching.txt	src/game/ui/screens/face_generator/face_generator_init.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/facegen_misc.manifest.txt	src/game/ui/screens/face_generator/face_generator_refresh.manifest.txt	1	12			12		follows its .cpp
+sidecar	src/game/char_sheet/facegen_misc.nonmatching.txt	src/game/ui/screens/face_generator/face_generator_refresh.nonmatching.txt	1	4			4		follows its .cpp
+sidecar	src/game/char_sheet/cam_view.manifest.txt	src/game/ui/screens/face_generator/face_generator_update.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/cam_view.nonmatching.txt	src/game/ui/screens/face_generator/face_generator_update.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/editor_ui.manifest.txt	src/game/editor/editor_widgets.manifest.txt	1	12			12		follows its .cpp
+sidecar	src/game/char_sheet/editor_ui.nonmatching.txt	src/game/editor/editor_widgets.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/save_game.manifest.txt	src/game/save/save_game.manifest.txt	1	7			7		follows its .cpp
+sidecar	src/game/char_sheet/save_game.nonmatching.txt	src/game/save/save_game.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/save_state.manifest.txt	src/game/save/save_state.manifest.txt	1	17			17		follows its .cpp
+sidecar	src/game/char_sheet/save_state.nonmatching.txt	src/game/save/save_state.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/save_records.manifest.txt	src/game/save/save_records.manifest.txt	1	6			6		follows its .cpp
+sidecar	src/game/char_sheet/save_records.nonmatching.txt	src/game/save/save_records.nonmatching.txt	1	4			4		follows its .cpp
+sidecar	src/game/char_sheet/save_panel.manifest.txt	src/game/ui/screens/save_panel.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/save_panel.nonmatching.txt	src/game/ui/screens/save_panel.nonmatching.txt	1	5			5		follows its .cpp
+sidecar	src/game/char_sheet/screen.manifest.txt	src/game/ui/screens/screen_misc.manifest.txt	1	5			5		follows its .cpp
+sidecar	src/game/char_sheet/screen.nonmatching.txt	src/game/ui/screens/screen_misc.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/screen_init.manifest.txt	src/game/campaign/campaign_screen_init.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/screen_init.nonmatching.txt	src/game/campaign/campaign_screen_init.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/screen_camera.manifest.txt	src/game/campaign/campaign_screen_camera.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/screen_camera.nonmatching.txt	src/game/campaign/campaign_screen_camera.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/render_shape.manifest.txt	src/game/campaign/map_widget_render.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/render_shape.nonmatching.txt	src/game/campaign/map_widget_render.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/pick_entity.nonmatching.txt	src/game/mission/pick_entity.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/quest_log.manifest.txt	src/game/ui/screens/quest_log.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/char_sheet/quest_log.nonmatching.txt	src/game/ui/screens/quest_log.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/char_sheet/conv_open.nonmatching.txt	src/game/ui/screens/conversation/conversation_init.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/conv_refresh.nonmatching.txt	src/game/ui/screens/conversation/conversation_refresh.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/char_sheet/msg_log_ui.manifest.txt	src/game/ui/msg_log_ui.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/cls_map/cls_map.manifest.txt	src/game/app/winmain_and_menu_screens.manifest.txt	1	70			70		follows its .cpp
+sidecar	src/game/cls_map/cls_map.nonmatching.txt	src/game/app/winmain_and_menu_screens.nonmatching.txt	1	10			10		follows its .cpp
+sidecar	src/game/cls_map/progress_bar.manifest.txt	src/game/ui/screens/progress_bar_and_load_screens.manifest.txt	1	34			34		follows its .cpp
+sidecar	src/game/cls_map/progress_bar.nonmatching.txt	src/game/ui/screens/progress_bar_and_load_screens.nonmatching.txt	1	11			11		follows its .cpp
+sidecar	src/game/cls_map/mission_window.manifest.txt	src/game/ui/screens/mission_window.manifest.txt	1	5			5		follows its .cpp
+sidecar	src/game/cls_map/mission_window.nonmatching.txt	src/game/ui/screens/mission_window.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/config/config.manifest.txt	src/game/config/config.manifest.txt	1	64			64		follows its .cpp
+sidecar	src/game/config/config.nonmatching.txt	src/game/config/config.nonmatching.txt	1	8			8		follows its .cpp
+sidecar	src/game/config/config.partial.txt	src/game/config/config.partial.txt	1	1			1		follows its .cpp
+sidecar	src/game/config/options_dlg.manifest.txt	src/game/config/launcher_options_dialog.manifest.txt	1	10			10		follows its .cpp
+sidecar	src/game/config/options_dlg.nonmatching.txt	src/game/config/launcher_options_dialog.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/options_panel/config_dialog.manifest.txt	src/game/config/launcher_config_dialog.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/options_panel/config_dialog.nonmatching.txt	src/game/config/launcher_config_dialog.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/triggers/trigger_vec.manifest.txt	src/game/app/options_dialog_and_module_tables.manifest.txt	1	73			73		follows its .cpp
+sidecar	src/game/triggers/trigger_vec.nonmatching.txt	src/game/app/options_dialog_and_module_tables.nonmatching.txt	1	4			4		follows its .cpp
+sidecar	src/game/options_panel/world_app.manifest.txt	src/game/app/world_app.manifest.txt	1	16			16		follows its .cpp
+sidecar	src/game/options_panel/world_app.nonmatching.txt	src/game/app/world_app.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/config/ui_widgets_c.manifest.txt	src/game/ui/widgets/text_editor_widget.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/game/config/ui_widgets_c.nonmatching.txt	src/game/ui/widgets/text_editor_widget.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/config/ui_widgets_c.partial.txt	src/game/ui/widgets/text_editor_widget.partial.txt	1	0			0		follows its .cpp
+sidecar	src/game/config/widget_mgr.manifest.txt	src/game/ui/widgets/widget_manager.manifest.txt	1	10			10		follows its .cpp
+sidecar	src/game/config/widget_mgr.nonmatching.txt	src/game/ui/widgets/widget_manager.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/config/widget_node.manifest.txt	src/game/ui/widgets/drop_down_list.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/config/widget_node.nonmatching.txt	src/game/ui/widgets/drop_down_list.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/ui/mission_ui.manifest.txt	src/game/ui/widgets/widget_base.manifest.txt	1	118			118		follows its .cpp
+sidecar	src/game/ui/mission_ui.nonmatching.txt	src/game/ui/widgets/widget_base.nonmatching.txt	1	2			2		follows its .cpp
+sidecar	src/game/ui/mission_ui.partial.txt	src/game/ui/widgets/widget_base.partial.txt	1	0			0		follows its .cpp
+sidecar	src/game/ui/ui_widgets_a.manifest.txt	src/game/ui/widgets/toggle_and_text_fit.manifest.txt	1	7			7		follows its .cpp
+sidecar	src/game/ui/ui_widgets_a.nonmatching.txt	src/game/ui/widgets/toggle_and_text_fit.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/ui/ui_widgets_a.partial.txt	src/game/ui/widgets/toggle_and_text_fit.partial.txt	1	0			0		follows its .cpp
+sidecar	src/game/ui/ui_slider.manifest.txt	src/game/ui/widgets/slider_value.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/ui/ui_slider_key.manifest.txt	src/game/ui/widgets/slider_input.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/ui/ui_widgets_b.manifest.txt	src/game/ui/widgets/label_and_progress_bar.manifest.txt	1	6			6		follows its .cpp
+sidecar	src/game/ui/ui_widgets_b.nonmatching.txt	src/game/ui/widgets/label_and_progress_bar.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/mission_ui2/ui_d_value.manifest.txt	src/game/ui/widgets/progress_bar_value.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/mission_ui2/ui_d_key.manifest.txt	src/game/ui/widgets/progress_bar_input.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/mission_ui2/ui_d_key.nonmatching.txt	src/game/ui/widgets/progress_bar_input.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/ui/widget_slots.manifest.txt	src/game/ui/widgets/widget_virtual_slots.manifest.txt	1	5			5		follows its .cpp
+sidecar	src/game/ui/widget_slots.nonmatching.txt	src/game/ui/widgets/widget_virtual_slots.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/world_data/mesh_hud.manifest.txt	src/game/ui/widgets/hud_bar_widgets.manifest.txt	1	14			14		follows its .cpp
+sidecar	src/game/world_data/mesh_hud.nonmatching.txt	src/game/ui/widgets/hud_bar_widgets.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/mission_ui2/mission_4.manifest.txt	src/game/ui/widgets/container_and_tableau_misc.manifest.txt	1	9			9		follows its .cpp
+sidecar	src/game/mission_ui2/mission_4.nonmatching.txt	src/game/ui/widgets/container_and_tableau_misc.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/mission_ui2/slot_api.manifest.txt	src/game/ui/widgets/widget_overlay_api.manifest.txt	1	14			14		follows its .cpp
+sidecar	src/game/mission_ui2/slot_api.nonmatching.txt	src/game/ui/widgets/widget_overlay_api.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/world_data/obj_tbl.manifest.txt	src/game/data/object_table_spawners.manifest.txt	1	7			7		follows its .cpp
+sidecar	src/game/world_data/obj_tbl.nonmatching.txt	src/game/data/object_table_spawners.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/world_data/world_data.manifest.txt	src/game/campaign/game_data_party_quest.manifest.txt	1	82			82		follows its .cpp
+sidecar	src/game/world_data/world_data.nonmatching.txt	src/game/campaign/game_data_party_quest.nonmatching.txt	1	9			9		follows its .cpp
+sidecar	src/game/mission_ui2/game_data.manifest.txt	src/game/party/party_tree_ops.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/game/mission_ui2/game_data.nonmatching.txt	src/game/party/party_tree_ops.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/mission_ui2/party.manifest.txt	src/game/party/party_members.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/mission_ui2/party.nonmatching.txt	src/game/party/party_members.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/mission_ui2/mission_3.manifest.txt	src/game/party/stacks_and_loot.manifest.txt	1	38			38		follows its .cpp
+sidecar	src/game/mission_ui2/mission_3.nonmatching.txt	src/game/party/stacks_and_loot.nonmatching.txt	1	3			3		follows its .cpp
+sidecar	src/game/mission_ui2/stat_panel_x.manifest.txt	src/game/data/troop_inventory_stats.manifest.txt	1	7			7		follows its .cpp
+sidecar	src/game/mission_ui2/stat_panel_x.nonmatching.txt	src/game/data/troop_inventory_stats.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/ui/item_ref.manifest.txt	src/game/data/item_ref.manifest.txt	1	7			7		follows its .cpp
+sidecar	src/game/ui/item_ref.nonmatching.txt	src/game/data/item_ref.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/ui/troop_inv.manifest.txt	src/game/data/troop_inventory.manifest.txt	1	13			13		follows its .cpp
+sidecar	src/game/ui/troop_inv.nonmatching.txt	src/game/data/troop_inventory.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/triggers/item_rec.manifest.txt	src/game/data/item_head_records.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/game/triggers/item_rec.nonmatching.txt	src/game/data/item_head_records.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/options_panel/mission_items.manifest.txt	src/game/data/mission_item_records.manifest.txt	1	12			12		follows its .cpp
+sidecar	src/game/options_panel/mission_items.nonmatching.txt	src/game/data/mission_item_records.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/options_panel/module_load.manifest.txt	src/game/data/module_record_loaders.manifest.txt	1	17			17		follows its .cpp
+sidecar	src/game/options_panel/module_load.nonmatching.txt	src/game/data/module_record_loaders.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/options_panel/ragdoll_models.manifest.txt	src/game/data/ragdoll_models.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/game/options_panel/ragdoll_models.nonmatching.txt	src/game/data/ragdoll_models.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/options_panel/rec_slots_c4c.manifest.txt	src/game/data/record_slots_screen_records.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/options_panel/rec_slots_hc.manifest.txt	src/game/data/record_slots_head_rec.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/options_panel/rec_slots_tr.manifest.txt	src/game/data/record_slots_trigger.manifest.txt	1	1			1		follows its .cpp
+sidecar	src/game/options_panel/trigger_records.manifest.txt	src/game/data/trigger_records.manifest.txt	1	3			3		follows its .cpp
+sidecar	src/game/options_panel/trigger_records.nonmatching.txt	src/game/data/trigger_records.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/options_panel/hud.manifest.txt	src/game/ui/hud/mission_hud_buttons.manifest.txt	1	2			2		follows its .cpp
+sidecar	src/game/options_panel/hud.nonmatching.txt	src/game/ui/hud/mission_hud_buttons.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/options_panel/hud_source.manifest.txt	src/game/ui/hud/mission_item_source.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/options_panel/hud_source.nonmatching.txt	src/game/ui/hud/mission_item_source.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/options_panel/keys_page.manifest.txt	src/game/ui/screens/options/keys_page.manifest.txt	1	10			10		follows its .cpp
+sidecar	src/game/options_panel/keys_page.nonmatching.txt	src/game/ui/screens/options/keys_page.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/options_panel/options_panel.manifest.txt	src/game/ui/screens/options/options_panel.manifest.txt	1	14			14		follows its .cpp
+sidecar	src/game/options_panel/options_panel.nonmatching.txt	src/game/ui/screens/options/options_panel.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/options_panel/quest_page.manifest.txt	src/game/ui/screens/options/quest_page.manifest.txt	1	4			4		follows its .cpp
+sidecar	src/game/options_panel/quest_page.nonmatching.txt	src/game/ui/screens/options/quest_page.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/options_panel/video_page.manifest.txt	src/game/ui/screens/options/video_page.manifest.txt	1	0			0		follows its .cpp
+sidecar	src/game/options_panel/video_page.nonmatching.txt	src/game/ui/screens/options/video_page.nonmatching.txt	1	1			1		follows its .cpp
+sidecar	src/game/options_panel/mesh_edit.manifest.txt	src/game/editor/poly_mesh_edit_ops.manifest.txt	1	6			6		follows its .cpp
+sidecar	src/game/options_panel/mesh_edit.nonmatching.txt	src/game/editor/poly_mesh_edit_ops.nonmatching.txt	1	0			0		follows its .cpp
+sidecar	src/game/dialog_manager.manifest.txt	src/game/dialog/dialog_manager.manifest.txt	1	24			24		follows its .cpp
+sidecar	src/game/dialog_manager.nonmatching.txt	src/game/dialog/dialog_manager.nonmatching.txt	1	1			1		follows its .cpp
+sidecar-split	src/game/party2/party_2.manifest.txt	src/game/party/party_stacks_and_orders.manifest.txt		 	0x4b1160	0x4b4a00			keep the rows whose address column (3rd field) is in [0x4b1160,0x4b4a00)
+sidecar-split	src/game/party2/party_2.manifest.txt	src/game/party/party_think_and_nav.manifest.txt		 	0x4b4a00	0x4b8f40			keep the rows whose address column (3rd field) is in [0x4b4a00,0x4b8f40)
+sidecar-split	src/game/party2/party_2.nonmatching.txt	src/game/party/party_stacks_and_orders.nonmatching.txt		 	0x4b1160	0x4b4a00			keep the rows whose address column (3rd field) is in [0x4b1160,0x4b4a00)
+sidecar-split	src/game/party2/party_2.nonmatching.txt	src/game/party/party_think_and_nav.nonmatching.txt		 	0x4b4a00	0x4b8f40			keep the rows whose address column (3rd field) is in [0x4b4a00,0x4b8f40)
+sidecar	src/game/party2/party_2_copy.manifest.txt	src/game/party/party_track_allocator.manifest.txt	1	1			1		follows its .cpp
+sidecar-split	src/game/script/script_interpreter.manifest.txt	src/game/script/script_support.manifest.txt		 	0x49b1c0	0x49cc60			keep the rows whose address column (3rd field) is in [0x49b1c0,0x49cc60)
+sidecar-split	src/game/script/script_interpreter.manifest.txt	src/game/script/operation_execute.manifest.txt		 	0x49cc60	0x4b0940			keep the rows whose address column (3rd field) is in [0x49cc60,0x4b0940)
+sidecar-split	src/game/script/script_interpreter.manifest.txt	src/game/script/dialog_block_runner.manifest.txt		 	0x4b0940	0x4b1160			keep the rows whose address column (3rd field) is in [0x4b0940,0x4b1160)
+sidecar-split	src/game/script/script_interpreter.nonmatching.txt	src/game/script/script_support.nonmatching.txt		 	0x49b1c0	0x49cc60			keep the rows whose address column (3rd field) is in [0x49b1c0,0x49cc60)
+sidecar-split	src/game/script/script_interpreter.nonmatching.txt	src/game/script/operation_execute.nonmatching.txt		 	0x49cc60	0x4b0940			keep the rows whose address column (3rd field) is in [0x49cc60,0x4b0940)
+sidecar-split	src/game/script/script_interpreter.nonmatching.txt	src/game/script/dialog_block_runner.nonmatching.txt		 	0x4b0940	0x4b1160			keep the rows whose address column (3rd field) is in [0x4b0940,0x4b1160)
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/game/agent/ai/agent_targeting.manifest.txt		 	0x43a280	0x43e190			keep the rows whose address column (3rd field) is in [0x43a280,0x43e190)
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/game/agent/combat/agent_attack_checks.manifest.txt		 	0x43e190	0x441360			keep the rows whose address column (3rd field) is in [0x43e190,0x441360); also the std::logic_error rows 0x40c2c0..0x40c670
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/game/agent/physics/agent_static_collision.manifest.txt		 	0x441360	0x441ff0			keep the rows whose address column (3rd field) is in [0x441360,0x441ff0); also the two post-CRT rows _$E1 0x547d80 and _$E2 0x5484b0 (g_phys initialiser and its atexit thunk)
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/game/agent/agent_effects_sound.manifest.txt		 	0x441ff0	0x444c50			keep the rows whose address column (3rd field) is in [0x441ff0,0x444c50)
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/game/agent/ai/agent_ai.manifest.txt		 	0x444c50	0x44e970			keep the rows whose address column (3rd field) is in [0x444c50,0x44e970)
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/engine/render/mesh_edit_members.manifest.txt		 	0x44e970	0x44f5d0			keep the rows whose address column (3rd field) is in [0x44e970,0x44f5d0)
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/game/agent/agent_ragdoll_blood.manifest.txt		 	0x44f5d0	0x452c00			keep the rows whose address column (3rd field) is in [0x44f5d0,0x452c00)
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/game/agent/combat/agent_damage.manifest.txt		 	0x452c00	0x4554c0			keep the rows whose address column (3rd field) is in [0x452c00,0x4554c0)
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/game/agent/movement/agent_corpse_and_controls.manifest.txt		 	0x4554c0	0x457b40			keep the rows whose address column (3rd field) is in [0x4554c0,0x457b40)
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/game/agent/combat/agent_blows.manifest.txt		 	0x457b40	0x45c220			keep the rows whose address column (3rd field) is in [0x457b40,0x45c220)
+sidecar-split	src/game/agent4/agent_logic.manifest.txt	src/game/agent/agent_frame_update.manifest.txt		 	0x45c220	0x460160			keep the rows whose address column (3rd field) is in [0x45c220,0x460160)
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/game/agent/ai/agent_targeting.nonmatching.txt		 	0x43a280	0x43e190			keep the rows whose address column (3rd field) is in [0x43a280,0x43e190)
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/game/agent/combat/agent_attack_checks.nonmatching.txt		 	0x43e190	0x441360			keep the rows whose address column (3rd field) is in [0x43e190,0x441360); also the std::logic_error rows 0x40c2c0..0x40c670
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/game/agent/physics/agent_static_collision.nonmatching.txt		 	0x441360	0x441ff0			keep the rows whose address column (3rd field) is in [0x441360,0x441ff0); also the two post-CRT rows _$E1 0x547d80 and _$E2 0x5484b0 (g_phys initialiser and its atexit thunk)
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/game/agent/agent_effects_sound.nonmatching.txt		 	0x441ff0	0x444c50			keep the rows whose address column (3rd field) is in [0x441ff0,0x444c50)
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/game/agent/ai/agent_ai.nonmatching.txt		 	0x444c50	0x44e970			keep the rows whose address column (3rd field) is in [0x444c50,0x44e970)
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/engine/render/mesh_edit_members.nonmatching.txt		 	0x44e970	0x44f5d0			keep the rows whose address column (3rd field) is in [0x44e970,0x44f5d0)
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/game/agent/agent_ragdoll_blood.nonmatching.txt		 	0x44f5d0	0x452c00			keep the rows whose address column (3rd field) is in [0x44f5d0,0x452c00)
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/game/agent/combat/agent_damage.nonmatching.txt		 	0x452c00	0x4554c0			keep the rows whose address column (3rd field) is in [0x452c00,0x4554c0)
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/game/agent/movement/agent_corpse_and_controls.nonmatching.txt		 	0x4554c0	0x457b40			keep the rows whose address column (3rd field) is in [0x4554c0,0x457b40)
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/game/agent/combat/agent_blows.nonmatching.txt		 	0x457b40	0x45c220			keep the rows whose address column (3rd field) is in [0x457b40,0x45c220)
+sidecar-split	src/game/agent4/agent_logic.nonmatching.txt	src/game/agent/agent_frame_update.nonmatching.txt		 	0x45c220	0x460160			keep the rows whose address column (3rd field) is in [0x45c220,0x460160)
+header	src/dxframework/d3dapp.h	src/platform/dxframework/d3dapp.h	1	173			173		stem: declares the code of its .cpp (follows it)
+header	src/dxframework/d3denumeration.h	src/platform/dxframework/d3denumeration.h	1	136			136		stem: declares the code of its .cpp (follows it)
+header	src/dxframework/d3dfont.h	src/platform/dxframework/d3dfont.h	1	67			67		stem: declares the code of its .cpp (follows it)
+header	src/dxframework/d3dsettings.h	src/platform/dxframework/d3dsettings.h	1	119			119		stem: declares the code of its .cpp (follows it)
+header	src/dxframework/d3dutil.h	src/platform/dxframework/d3dutil.h	1	21			21		stem: declares the code of its .cpp (follows it)
+header	src/dxframework/dxutil.h	src/platform/dxframework/dxutil.h	1	103			103		stem: declares the code of its .cpp (follows it)
+header	src/game/agent/agent.h	src/game/agent/agent_queries.h	1	90			90		stem: declares the code of its .cpp (follows it)
+header	src/game/agent/curve.h	src/engine/fx/env_curve.h	1	25			25		stem: declares the code of its .cpp (follows it)
+header	src/game/agent/item_kind.h	src/game/data/item_kind.h	1	16			16		stem: declares the code of its .cpp (follows it)
+header	src/game/agent/phys_set.h	src/game/agent/physics/phys_set.h	1	47			47		origin dir game/agent (its owner subsystem)
+header	src/game/agent2/agent_ai.h	src/game/agent/ai/agent_ai.h	1	14			14		origin dir game/agent2 (its owner subsystem)
+header	src/game/agent2/agent_stats.h	src/game/agent/agent_stats.h	1	34			34		stem: declares the code of its .cpp (follows it)
+header	src/game/agent2/agent_types.h	src/game/agent/ai/agent_types.h	1	103			103		origin dir game/agent2 (its owner subsystem)
+header	src/game/agent3/agent_combat.h	src/game/agent/combat/agent_combat.h	1	50			50		origin dir game/agent3 (its owner subsystem)
+header	src/game/agent3/agent_fx_sound.h	src/game/agent/combat/agent_fx_sound.h	1	89			89		origin dir game/agent3 (its owner subsystem)
+header	src/game/agent3/agent_types.h	src/game/agent/combat/agent_types.h	1	68			68		origin dir game/agent3 (its owner subsystem)
+header	src/game/agent4/agent_logic.h	src/game/agent/agent_logic.h	1	109			109		stem of a SPLIT file: one header shared by all parts, named for the primary part
+header	src/game/agent5/agent_hud.h	src/game/agent/hud/agent_hud.h	1	157			157		stem: declares the code of its .cpp (follows it)
+header	src/game/agent_ai.h	src/game/agent/ai/agent_ai_game.h	1	100			100		manual (by class owner); NAME COLLISION with game/agent2/agent_ai.h, suffixed
+header	src/game/agent_obj.h	src/game/agent/agent_obj.h	1	411			411		manual (by class owner)
+header	src/game/alloc_construct.h	src/engine/core/alloc_construct.h	1	27			27		engine-wide shared (topic table)
+header	src/game/anim_slot.h	src/game/agent/anim_slot.h	1	36			36		manual (by class owner)
+header	src/game/animator.h	src/game/agent/animator.h	1	52			52		manual (by class owner)
+header	src/game/appearance_lods.h	src/game/mission/appearance_lods.h	1	12			12		manual (by class owner)
+header	src/game/arr_set.h	src/engine/core/arr_set.h	1	26			26		engine-wide shared (topic table)
+header	src/game/blow.h	src/game/agent/blow.h	1	44			44		manual (by class owner)
+header	src/game/campaign_screen.h	src/game/campaign/campaign_screen.h	1	67			67		manual (by class owner)
+header	src/game/char_sheet/cam_view.h	src/game/ui/screens/face_generator/face_generator_update.h	1	41			41		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/conv_open.h	src/game/ui/screens/conversation/conversation_init.h	1	126			126		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/conv_refresh.h	src/game/ui/screens/conversation/conversation_refresh.h	1	86			86		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/cs_common.h	src/game/ui/screens/character_sheet/cs_common.h	1	86			86		origin dir game/char_sheet (its owner subsystem)
+header	src/game/char_sheet/cs_detail.h	src/game/ui/screens/character_sheet/character_sheet_detail.h	1	66			66		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/cs_mat.h	src/game/ui/screens/character_sheet/cs_mat.h	1	7			7		origin dir game/char_sheet (its owner subsystem)
+header	src/game/char_sheet/cs_panels.h	src/game/ui/screens/character_sheet/character_sheet_panels.h	1	59			59		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/cs_troop.h	src/game/ui/screens/character_sheet/character_sheet_troop.h	1	41			41		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/cs_update.h	src/game/ui/screens/character_sheet/character_sheet_update.h	1	60			60		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/cs_weapons.h	src/game/ui/screens/character_sheet/character_sheet_weapons.h	1	29			29		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/dust.h	src/game/terrain/dust_particles.h	1	71			71		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/editor_ui.h	src/game/editor/editor_widgets.h	1	63			63		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/facegen_init.h	src/game/ui/screens/face_generator/face_generator_init.h	1	88			88		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/facegen_misc.h	src/game/ui/screens/face_generator/face_generator_refresh.h	1	76			76		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/facegen_win.h	src/game/editor/terrain_page/terrain_page_init.h	1	63			63		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/msg_log_ui.h	src/game/ui/msg_log_ui.h	1	8			8		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/pick_entity.h	src/game/mission/pick_entity.h	1	54			54		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/quest_log.h	src/game/ui/screens/quest_log.h	1	70			70		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/render_shape.h	src/game/campaign/map_widget_render.h	1	36			36		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/save_game.h	src/game/save/save_game.h	1	81			81		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/save_panel.h	src/game/ui/screens/save_panel.h	1	31			31		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/save_records.h	src/game/save/save_records.h	1	62			62		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/save_state.h	src/game/save/save_state.h	1	57			57		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/screen.h	src/game/ui/screens/screen_misc.h	1	96			96		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/screen_camera.h	src/game/campaign/campaign_screen_camera.h	1	125			125		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/screen_init.h	src/game/campaign/campaign_screen_init.h	1	56			56		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/terrain_page.h	src/game/editor/terrain_page/terrain_page.h	1	62			62		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/terrain_page_input.h	src/game/editor/terrain_page/terrain_page_input.h	1	68			68		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet/terrain_page_update.h	src/game/editor/terrain_page/terrain_page_update.h	1	85			85		stem: declares the code of its .cpp (follows it)
+header	src/game/char_sheet_panel.h	src/game/ui/screens/character_sheet/char_sheet_panel.h	1	109			109		manual (by class owner)
+header	src/game/cls_map/cls_map.h	src/game/app/winmain_and_menu_screens.h	1	150			150		stem: declares the code of its .cpp (follows it)
+header	src/game/cls_map/progress_bar.h	src/game/ui/screens/progress_bar_and_load_screens.h	1	56			56		stem: declares the code of its .cpp (follows it)
+header	src/game/config/config.h	src/game/config/config.h	1	109			109		stem: declares the code of its .cpp (follows it)
+header	src/game/config/config_block.h	src/game/config/config_block.h	1	55			55		origin dir game/config (its owner subsystem)
+header	src/game/config/core.h	src/game/config/core.h	1	97			97		origin dir game/config (its owner subsystem)
+header	src/game/config/options_dlg.h	src/game/config/launcher_options_dialog.h	1	43			43		stem: declares the code of its .cpp (follows it)
+header	src/game/config/ui_widgets_c.h	src/game/ui/widgets/text_editor_widget.h	1	24			24		stem: declares the code of its .cpp (follows it)
+header	src/game/config/widget_mgr.h	src/game/ui/widgets/widget_manager.h	1	76			76		stem: declares the code of its .cpp (follows it)
+header	src/game/conv_screen.h	src/game/ui/screens/conversation/conv_screen.h	1	57			57		manual (by class owner)
+header	src/game/dev_buffer.h	src/engine/render/dev_buffer.h	1	52			52		engine-wide shared (topic table)
+header	src/game/dialog_manager.h	src/game/dialog/dialog_manager.h	1	28			28		stem: declares the code of its .cpp (follows it)
+header	src/game/dialog_mgr.h	src/game/dialog/dialog_mgr.h	1	54			54		manual (by class owner)
+header	src/game/emit.h	src/game/data/emit.h	1	47			47		manual (by class owner)
+header	src/game/engvec.h	src/engine/core/engvec.h	1	23			23		engine-wide shared (topic table)
+header	src/game/env_row.h	src/game/data/env_row.h	1	29			29		manual (by class owner)
+header	src/game/event.h	src/game/campaign/event.h	1	62			62		manual (by class owner)
+header	src/game/event_pool.h	src/game/campaign/event_pool.h	1	16			16		manual (by class owner)
+header	src/game/face_gen.h	src/game/ui/screens/face_generator/face_gen.h	1	75			75		manual (by class owner)
+header	src/game/float_consts.h	src/engine/math/float_consts.h	1	29			29		engine-wide shared (topic table)
+header	src/game/font.h	src/engine/render/font.h	1	46			46		engine-wide shared (topic table)
+header	src/game/game_globals.h	src/game/common/game_globals.h	1	112			112		manual (by class owner)
+header	src/game/game_keys.h	src/game/input/game_keys.h	1	26			26		manual (by class owner)
+header	src/game/glyph_hash.h	src/engine/core/glyph_hash.h	1	31			31		engine-wide shared (topic table)
+header	src/game/glyph_table_calls.h	src/engine/core/glyph_table_calls.h	1	16			16		engine-wide shared (topic table)
+header	src/game/head_rec.h	src/game/data/head_rec.h	1	81			81		manual (by class owner)
+header	src/game/hnode.h	src/engine/core/hnode.h	1	36			36		engine-wide shared (topic table)
+header	src/game/ini_file.h	src/game/config/ini_file.h	1	34			34		manual (by class owner)
+header	src/game/inventory_panel/game_tick.h	src/game/campaign/game_tick.h	1	42			42		stem: declares the code of its .cpp (follows it)
+header	src/game/inventory_panel/inv_common.h	src/game/mission/inv_common.h	1	71			71		origin dir game/inventory_panel (its owner subsystem)
+header	src/game/inventory_panel/map_panel.h	src/game/campaign/map_panel.h	1	7			7		stem: declares the code of its .cpp (follows it)
+header	src/game/inventory_panel/mission_ctx.h	src/game/mission/mission_context.h	1	63			63		stem: declares the code of its .cpp (follows it)
+header	src/game/inventory_panel/mission_ctx_rec.h	src/game/mission/mission_ctx_rec.h	1	88			88		origin dir game/inventory_panel (its owner subsystem)
+header	src/game/inventory_panel/party_screen.h	src/game/ui/screens/party_screen.h	1	46			46		stem: declares the code of its .cpp (follows it)
+header	src/game/item_ref.h	src/game/data/item_ref.h	1	52			52		manual (by class owner)
+header	src/game/junk_tag.h	src/engine/core/junk_tag.h	1	8			8		engine-wide shared (topic table)
+header	src/game/key_names.h	src/game/input/key_names.h	1	6			6		manual (by class owner)
+header	src/game/light.h	src/engine/render/light.h	1	30			30		engine-wide shared (topic table)
+header	src/game/map_editor/exchange_screens.h	src/game/ui/screens/mission_menu_and_exchange_screens.h	1	112			112		stem: declares the code of its .cpp (follows it)
+header	src/game/map_editor/map_editor.h	src/game/editor/map_editor_update.h	1	59			59		stem: declares the code of its .cpp (follows it)
+header	src/game/map_flags.h	src/game/campaign/map_flags.h	1	15			15		manual (by class owner)
+header	src/game/map_icon.h	src/game/campaign/map_icon.h	1	24			24		manual (by class owner)
+header	src/game/map_widget.h	src/game/campaign/map_widget.h	1	30			30		manual (by class owner)
+header	src/game/mark_rec.h	src/game/campaign/mark_rec.h	1	30			30		manual (by class owner)
+header	src/game/mat4.h	src/engine/math/mat4.h	1	7			7		engine-wide shared (topic table)
+header	src/game/menu_rec.h	src/game/data/menu_rec.h	1	42			42		manual (by class owner)
+header	src/game/mesh_slot/mesh_build.h	src/game/mission/mesh_build.h	1	16			16		origin dir game/mesh_slot (its owner subsystem)
+header	src/game/mesh_slot/mesh_slot.h	src/game/mission/mesh_slot.h	1	66			66		origin dir game/mesh_slot (its owner subsystem)
+header	src/game/missile.h	src/game/agent/missile.h	1	55			55		manual (by class owner)
+header	src/game/mission.h	src/game/mission/mission.h	1	301			301		manual (by class owner)
+header	src/game/mission5/data_files.h	src/game/campaign/data_files.h	1	23			23		origin dir game/mission5 (its owner subsystem)
+header	src/game/mission5/game_2.h	src/game/campaign/map_builder_and_data_load.h	1	116			116		stem: declares the code of its .cpp (follows it)
+header	src/game/mission5/mesh_3.h	src/game/editor/poly_mesh_pick.h	1	307			307		stem: declares the code of its .cpp (follows it)
+header	src/game/mission5/mission_5.h	src/game/mission/mission_frame_update.h	1	395			395		stem of a SPLIT file: one header shared by all parts, named for the primary part
+header	src/game/mission5/troop_rec.h	src/game/campaign/new_game_setup.h	1	46			46		stem: declares the code of its .cpp (follows it)
+header	src/game/mission_type.h	src/game/mission/mission_type.h	1	25			25		manual (by class owner)
+header	src/game/mission_ui2/mission_3.h	src/game/party/stacks_and_loot.h	1	27			27		stem: declares the code of its .cpp (follows it)
+header	src/game/mission_ui2/mission_4.h	src/game/ui/widgets/container_and_tableau_misc.h	1	22			22		stem: declares the code of its .cpp (follows it)
+header	src/game/mission_ui2/slot_api.h	src/game/ui/widgets/widget_overlay_api.h	1	18			18		stem: declares the code of its .cpp (follows it)
+header	src/game/mission_ui2/stat_panel_x.h	src/game/data/troop_inventory_stats.h	1	15			15		stem: declares the code of its .cpp (follows it)
+header	src/game/mode_rec.h	src/game/data/mode_rec.h	1	72			72		manual (by class owner)
+header	src/game/module_name.h	src/game/data/module_name.h	1	8			8		manual (by class owner)
+header	src/game/module_settings.h	src/game/data/module_settings.h	1	68			68		manual (by class owner)
+header	src/game/music_player.h	src/engine/audio/music_player.h	1	53			53		engine-wide shared (topic table)
+header	src/game/options_panel/elem_calls.h	src/game/data/elem_calls.h	1	9			9		origin dir game/options_panel (its owner subsystem)
+header	src/game/options_panel/hud.h	src/game/ui/hud/mission_hud_buttons.h	1	57			57		stem: declares the code of its .cpp (follows it)
+header	src/game/options_panel/list_modes.h	src/game/data/list_modes.h	1	119			119		origin dir game/options_panel (its owner subsystem)
+header	src/game/options_panel/mesh_edit.h	src/game/editor/poly_mesh_edit_ops.h	1	66			66		stem: declares the code of its .cpp (follows it)
+header	src/game/options_panel/mission_item_recs.h	src/game/data/mission_item_recs.h	1	223			223		origin dir game/options_panel (its owner subsystem)
+header	src/game/options_panel/module_load.h	src/game/data/module_record_loaders.h	1	40			40		stem: declares the code of its .cpp (follows it)
+header	src/game/options_panel/options_panel.h	src/game/ui/screens/options/options_panel.h	1	48			48		stem: declares the code of its .cpp (follows it)
+header	src/game/options_panel/trigger_records.h	src/game/data/trigger_records.h	1	36			36		stem: declares the code of its .cpp (follows it)
+header	src/game/party/externs.h	src/game/campaign/externs.h	1	16			16		origin dir game/party (its owner subsystem)
+header	src/game/party/game.h	src/game/campaign/game_state_load.h	1	122			122		stem: declares the code of its .cpp (follows it)
+header	src/game/party/party_window.h	src/game/ui/screens/inventory/inventory_window.h	1	39			39		stem: declares the code of its .cpp (follows it)
+header	src/game/party/party_window_class.h	src/game/campaign/party_window_class.h	1	107			107		origin dir game/party (its owner subsystem)
+header	src/game/party2/camera.h	src/game/mission/camera.h	1	37			37		origin dir game/party2 (its owner subsystem)
+header	src/game/party2/camera_class.h	src/game/mission/camera_class.h	1	62			62		origin dir game/party2 (its owner subsystem)
+header	src/game/party2/party_2.h	src/game/party/party_map.h	1	102			102		stem of a SPLIT file: one header shared by all parts, named for the primary part
+header	src/game/party2/party_model.h	src/game/mission/party_model.h	1	15			15		origin dir game/party2 (its owner subsystem)
+header	src/game/party_screen_class.h	src/game/ui/screens/party_screen_class.h	1	95			95		manual (by class owner)
+header	src/game/party_x.h	src/game/party/party_x.h	1	32			32		manual (by class owner)
+header	src/game/placed_obj.h	src/game/mission/placed_obj.h	1	62			62		manual (by class owner)
+header	src/game/presentation.h	src/game/data/presentation.h	1	71			71		manual (by class owner)
+header	src/game/ptype.h	src/game/data/ptype.h	1	39			39		manual (by class owner)
+header	src/game/render_batch.h	src/engine/render/render_batch.h	1	82			82		engine-wide shared (topic table)
+header	src/game/renderer.h	src/engine/render/renderer.h	1	51			51		stem: declares the code of its .cpp (follows it)
+header	src/game/renderer_xform.h	src/engine/render/renderer_xform.h	1	16			16		engine-wide shared (topic table)
+header	src/game/res_mgr.h	src/engine/resource/res_mgr.h	1	10			10		engine-wide shared (topic table)
+header	src/game/result_window.h	src/game/ui/screens/result_window.h	1	57			57		manual (by class owner)
+header	src/game/screen_records.h	src/game/ui/screens/screen_records.h	1	362			362		manual (by class owner)
+header	src/game/script/script_globals.h	src/game/script/script_globals.h	1	10			10		origin dir game/script (its owner subsystem)
+header	src/game/script/script_interpreter.h	src/game/script/script_interpreter.h	1	254			254		stem of a SPLIT file: one header shared by all parts, named for the primary part
+header	src/game/script/script_opcodes.h	src/game/script/script_opcodes.h	1	622			622		origin dir game/script (its owner subsystem)
+header	src/game/shadow_map.h	src/engine/render/shadow_map.h	1	49			49		engine-wide shared (topic table)
+header	src/game/shared_vars.h	src/game/common/shared_vars.h	1	26			26		manual (by class owner)
+header	src/game/skeleton.h	src/engine/resource/skeleton.h	1	17			17		engine-wide shared (topic table)
+header	src/game/skill_cap.h	src/game/data/skill_cap.h	1	7			7		manual (by class owner)
+header	src/game/slot.h	src/game/input/slot.h	1	43			43		manual (by class owner)
+header	src/game/slot_array.h	src/game/party/slot_array.h	1	18			18		manual (by class owner)
+header	src/game/std_vec_insert_n.h	src/engine/core/std_vec_insert_n.h	1	10			10		engine-wide shared (topic table)
+header	src/game/std_vec_out_of_line.h	src/engine/core/std_vec_out_of_line.h	1	17			17		engine-wide shared (topic table)
+header	src/game/std_vec_push_back.h	src/engine/core/std_vec_push_back.h	1	8			8		engine-wide shared (topic table)
+header	src/game/str_table.h	src/game/data/str_table.h	1	34			34		manual (by class owner)
+header	src/game/strat/gui_manager.h	src/game/ui/gui_manager.h	1	184			184		stem: declares the code of its .cpp (follows it)
+header	src/game/strat/strat_entity.h	src/engine/scene/strategic_entity.h	1	17			17		stem: declares the code of its .cpp (follows it)
+header	src/game/strat/strat_ext.h	src/engine/scene/strat_ext.h	1	61			61		origin dir game/strat (its owner subsystem)
+header	src/game/string_table.h	src/game/data/string_table.h	1	28			28		manual (by class owner)
+header	src/game/terrain_a/common.h	src/game/terrain/common.h	1	27			27		origin dir game/terrain_a (its owner subsystem)
+header	src/game/terrain_a/game_state.h	src/game/terrain/scene_paths_and_wind_noise.h	1	46			46		stem: declares the code of its .cpp (follows it)
+header	src/game/terrain_a/misc.h	src/game/terrain/misc.h	1	97			97		origin dir game/terrain_a (its owner subsystem)
+header	src/game/terrain_a/terrain.h	src/game/terrain/terrain.h	1	281			281		origin dir game/terrain_a (its owner subsystem)
+header	src/game/terrain_a/wind.h	src/game/terrain/wind_helpers.h	1	16			16		stem: declares the code of its .cpp (follows it)
+header	src/game/terrain_b/agent_rec.h	src/game/terrain/agent_rec.h	1	9			9		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/cell_grid.h	src/game/terrain/cell_grid.h	1	19			19		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/emit.h	src/game/terrain/emit.h	1	17			17		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/face.h	src/game/terrain/face.h	1	13			13		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/face_gen.h	src/game/terrain/face_gen.h	1	11			11		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/frustum.h	src/game/terrain/frustum.h	1	14			14		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/game_data.h	src/game/terrain/game_data.h	1	11			11		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/mission.h	src/game/mission/scene_container_grid.h	1	68			68		stem: declares the code of its .cpp (follows it)
+header	src/game/terrain_b/nav_data.h	src/game/terrain/nav_data.h	1	91			91		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/physics.h	src/game/terrain/physics.h	1	20			20		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/poly_mesh.h	src/game/terrain/poly_mesh.h	1	199			199		stem: declares the code of its .cpp (follows it)
+header	src/game/terrain_b/records.h	src/game/terrain/records.h	1	43			43		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/render_batch.h	src/game/terrain/render_batch.h	1	96			96		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/scene_file.h	src/game/terrain/scene_file.h	1	71			71		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/shadow_map.h	src/game/terrain/shadow_map.h	1	11			11		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_b/terrain.h	src/game/terrain/terrain_game_terrain_b.h	1	12			12		origin dir game/terrain_b (its owner subsystem); NAME COLLISION with game/terrain_a/terrain.h, suffixed
+header	src/game/terrain_b/terrain_b.h	src/game/terrain/terrain_scene_renderer.h	1	52			52		stem: declares the code of its .cpp (follows it)
+header	src/game/terrain_b/troop_mgr.h	src/game/terrain/troop_mgr.h	1	11			11		origin dir game/terrain_b (its owner subsystem)
+header	src/game/terrain_desc.h	src/game/terrain/terrain_desc.h	1	39			39		manual (by class owner)
+header	src/game/terrain_page.h	src/game/editor/terrain_page/terrain_page_game.h	1	88			88		manual (by class owner); NAME COLLISION with game/char_sheet/terrain_page.h, suffixed
+header	src/game/track_rec.h	src/game/campaign/track_rec.h	1	37			37		manual (by class owner)
+header	src/game/trial_mode.h	src/game/mission/trial_mode.h	1	6			6		manual (by class owner)
+header	src/game/trigger_vecs.h	src/game/data/trigger_vecs.h	1	40			40		manual (by class owner)
+header	src/game/triggers/item_rec.h	src/game/data/item_head_records.h	1	66			66		stem: declares the code of its .cpp (follows it)
+header	src/game/triggers/trigger_vec.h	src/game/app/options_dialog_and_module_tables.h	1	104			104		stem: declares the code of its .cpp (follows it)
+header	src/game/tstring.h	src/engine/core/tstring.h	1	68			68		engine-wide shared (topic table)
+header	src/game/ui/container.h	src/game/ui/widgets/container.h	1	65			65		origin dir game/ui (its owner subsystem)
+header	src/game/ui/item_ref.h	src/game/data/item_ref_game_ui.h	1	27			27		stem: declares the code of its .cpp (follows it); NAME COLLISION with game/item_ref.h, suffixed
+header	src/game/ui/map_list.h	src/game/ui/widgets/map_list.h	1	31			31		origin dir game/ui (its owner subsystem)
+header	src/game/ui/mission.h	src/game/ui/widgets/mission.h	1	38			38		origin dir game/ui (its owner subsystem)
+header	src/game/ui/mission_ui.h	src/game/ui/widgets/widget_base.h	1	168			168		stem: declares the code of its .cpp (follows it)
+header	src/game/ui/note_page.h	src/game/ui/widgets/note_page.h	1	45			45		origin dir game/ui (its owner subsystem)
+header	src/game/ui/party.h	src/game/ui/widgets/party.h	1	10			10		origin dir game/ui (its owner subsystem)
+header	src/game/ui/troop_inv.h	src/game/data/troop_inventory.h	1	30			30		stem: declares the code of its .cpp (follows it)
+header	src/game/ui/ui_common.h	src/game/ui/widgets/ui_common.h	1	11			11		origin dir game/ui (its owner subsystem)
+header	src/game/ui/ui_frame.h	src/game/ui/widgets/ui_frame.h	1	10			10		origin dir game/ui (its owner subsystem)
+header	src/game/ui/ui_widgets.h	src/game/ui/widgets/ui_widgets.h	1	101			101		origin dir game/ui (its owner subsystem)
+header	src/game/ui/world.h	src/game/ui/widgets/world.h	1	29			29		origin dir game/ui (its owner subsystem)
+header	src/game/ui_globals.h	src/game/ui/ui_globals.h	1	10			10		manual (by class owner)
+header	src/game/ui_widget.h	src/game/ui/widgets/ui_widget.h	1	6			6		manual (by class owner)
+header	src/game/view_rect.h	src/game/ui/view_rect.h	1	11			11		manual (by class owner)
+header	src/game/window_mgr.h	src/game/ui/window_mgr.h	1	30			30		manual (by class owner)
+header	src/game/world_data/mesh_hud.h	src/game/ui/widgets/hud_bar_widgets.h	1	58			58		stem: declares the code of its .cpp (follows it)
+header	src/game/world_data/obj_tbl.h	src/game/data/object_table_spawners.h	1	31			31		stem: declares the code of its .cpp (follows it)
+header	src/game/world_data/raw_place.h	src/game/data/raw_place.h	1	10			10		origin dir game/world_data (its owner subsystem)
+header	src/game/world_data/scene_object.h	src/game/data/scene_object.h	1	19			19		origin dir game/world_data (its owner subsystem)
+header	src/game/world_data/tableau.h	src/game/data/tableau.h	1	12			12		origin dir game/world_data (its owner subsystem)
+header	src/game/world_data/world_data.h	src/game/campaign/game_data_party_quest.h	1	128			128		stem: declares the code of its .cpp (follows it)
+header	src/game/wret.h	src/game/ui/widgets/wret.h	1	8			8		manual (by class owner)
+header	src/include/anim_set.h	src/engine/fx/anim_set.h	1	45			45		engine-wide shared (topic table)
+header	src/include/block16.h	src/engine/core/block16.h	1	12			12		engine-wide shared (topic table)
+header	src/include/clock_table.h	src/engine/core/clock_table.h	1	10			10		engine-wide shared (topic table)
+header	src/include/constraint.h	src/engine/physics/constraint.h	1	12			12		engine-wide shared (topic table)
+header	src/include/crt.h	src/engine/core/crt.h	1	35			35		engine-wide shared (topic table)
+header	src/include/d3d_caps.h	src/engine/render/d3d_caps.h	1	7			7		engine-wide shared (topic table)
+header	src/include/d3d_xform.h	src/engine/render/d3d_xform.h	1	10			10		engine-wide shared (topic table)
+header	src/include/dialog_rec.h	src/game/dialog/dialog_rec.h	1	56			56		manual (by class owner)
+header	src/include/e68.h	src/game/data/e68.h	1	35			35		manual (by class owner)
+header	src/include/face_texture.h	src/engine/render/face_texture.h	1	25			25		engine-wide shared (topic table)
+header	src/include/fmod_api.h	src/engine/audio/fmod_api.h	1	23			23		engine-wide shared (topic table)
+header	src/include/frustum.h	src/engine/scene/frustum.h	1	39			39		engine-wide shared (topic table)
+header	src/include/fx.h	src/engine/fx/fx.h	1	191			191		engine-wide shared (topic table)
+header	src/include/game_data.h	src/game/data/game_data.h	1	550			550		manual (by class owner)
+header	src/include/game_parts.h	src/game/data/game_parts.h	1	31			31		manual (by class owner)
+header	src/include/game_recs.h	src/game/data/game_recs.h	1	121			121		manual (by class owner)
+header	src/include/ground_type.h	src/game/data/ground_type.h	1	22			22		manual (by class owner)
+header	src/include/height_field.h	src/engine/physics/height_field.h	1	30			30		engine-wide shared (topic table)
+header	src/include/iface.h	src/game/common/iface.h	1	34			34		manual (by class owner)
+header	src/include/image_addrs.h	src/platform/image_addrs.h	1	141			141		engine-wide shared (topic table)
+header	src/include/item_kind.h	src/game/data/item_kind_include.h	1	103			103		manual (by class owner); NAME COLLISION with game/agent/item_kind.h, suffixed
+header	src/include/item_mod.h	src/game/data/item_mod.h	1	16			16		manual (by class owner)
+header	src/include/key_table.h	src/game/input/key_table.h	1	22			22		manual (by class owner)
+header	src/include/keyframes.h	src/engine/fx/keyframes.h	1	32			32		engine-wide shared (topic table)
+header	src/include/layout32.h	src/engine/core/layout32.h	1	14			14		engine-wide shared (topic table)
+header	src/include/level_global.h	src/game/common/level_global.h	1	9			9		manual (by class owner)
+header	src/include/map10007.h	src/game/data/map10007.h	1	10			10		manual (by class owner)
+header	src/include/mat4.h	src/engine/math/mat4_include.h	1	15			15		engine-wide shared (topic table); NAME COLLISION with game/mat4.h, suffixed
+header	src/include/mesh_parts.h	src/engine/render/mesh_parts.h	1	59			59		engine-wide shared (topic table)
+header	src/include/mesh_prims.h	src/engine/render/mesh_prims.h	1	34			34		engine-wide shared (topic table)
+header	src/include/mesh_table.h	src/engine/render/mesh_table.h	1	18			18		engine-wide shared (topic table)
+header	src/include/mission_obj.h	src/game/mission/mission_obj.h	1	42			42		manual (by class owner)
+header	src/include/note_block.h	src/game/ui/note_block.h	1	17			17		manual (by class owner)
+header	src/include/packed_state.h	src/game/save/packed_state.h	1	15			15		manual (by class owner)
+header	src/include/party.h	src/game/party/party.h	1	258			258		manual (by class owner)
+header	src/include/phys_set.h	src/engine/physics/phys_set.h	1	59			59		engine-wide shared (topic table)
+header	src/include/pod_elems.h	src/engine/core/pod_elems.h	1	14			14		engine-wide shared (topic table)
+header	src/include/poly.h	src/engine/physics/poly.h	1	10			10		engine-wide shared (topic table)
+header	src/include/pool.h	src/engine/core/pool.h	1	64			64		engine-wide shared (topic table)
+header	src/include/prsnt_rec.h	src/game/data/prsnt_rec.h	1	19			19		manual (by class owner)
+header	src/include/prsnt_table.h	src/game/data/prsnt_table.h	1	18			18		manual (by class owner)
+header	src/include/ptr_tag.h	src/engine/core/ptr_tag.h	1	11			11		engine-wide shared (topic table)
+header	src/include/quaternion.h	src/engine/math/quaternion.h	1	24			24		engine-wide shared (topic table)
+header	src/include/rag_model.h	src/engine/physics/rag_model.h	1	30			30		engine-wide shared (topic table)
+header	src/include/rec34.h	src/game/data/rec34.h	1	28			28		manual (by class owner)
+header	src/include/rec_dtors.h	src/game/data/rec_dtors.h	1	21			21		manual (by class owner)
+header	src/include/rec_table.h	src/game/data/rec_table.h	1	15			15		manual (by class owner)
+header	src/include/render_flags.h	src/engine/render/render_flags.h	1	5			5		engine-wide shared (topic table)
+header	src/include/renderer.h	src/engine/render/renderer_include.h	1	99			99		engine-wide shared (topic table); NAME COLLISION with game/renderer.h, suffixed
+header	src/include/rgl_base.h	src/engine/core/rgl_base.h	1	10			10		engine-wide shared (topic table)
+header	src/include/rgl_globals.h	src/engine/core/rgl_globals.h	1	12			12		engine-wide shared (topic table)
+header	src/include/rot2.h	src/engine/math/rot2.h	1	19			19		engine-wide shared (topic table)
+header	src/include/script_state.h	src/game/script/script_state.h	1	88			88		manual (by class owner)
+header	src/include/shape.h	src/engine/physics/shape.h	1	198			198		engine-wide shared (topic table)
+header	src/include/skill_rec.h	src/game/data/skill_rec.h	1	22			22		manual (by class owner)
+header	src/include/skin.h	src/engine/render/skin.h	1	105			105		engine-wide shared (topic table)
+header	src/include/skinmagic.h	src/engine/render/skinmagic.h	1	15			15		engine-wide shared (topic table)
+header	src/include/sound_mgr.h	src/engine/audio/sound_mgr.h	1	50			50		engine-wide shared (topic table)
+header	src/include/tableau_table.h	src/game/data/tableau_table.h	1	49			49		manual (by class owner)
+header	src/include/tail2.h	src/engine/core/tail2.h	1	13			13		engine-wide shared (topic table)
+header	src/include/timer.h	src/engine/core/timer.h	1	50			50		engine-wide shared (topic table)
+header	src/include/trigger_entry.h	src/game/data/trigger_entry.h	1	20			20		manual (by class owner)
+header	src/include/trigger_rec.h	src/game/data/trigger_rec.h	1	32			32		manual (by class owner)
+header	src/include/troop.h	src/game/data/troop.h	1	154			154		manual (by class owner)
+header	src/include/vec.h	src/engine/math/vec.h	1	58			58		engine-wide shared (topic table)
+header	src/include/vec_elems.h	src/engine/core/vec_elems.h	1	14			14		engine-wide shared (topic table)
+header	src/include/vec_table.h	src/engine/core/vec_table.h	1	17			17		engine-wide shared (topic table)
+header	src/include/vec_xlen.h	src/engine/core/vec_xlen.h	1	16			16		engine-wide shared (topic table)
+header	src/include/view_params.h	src/engine/scene/view_params.h	1	38			38		engine-wide shared (topic table)
+header	src/include/wl_marker.h	src/platform/wl_marker.h	1	26			26		engine-wide shared (topic table)
+header	src/rgl/core/bone.h	src/engine/physics/bone.h	1	65			65		engine (topic table)
+header	src/rgl/core/frustum_grid.h	src/engine/scene/frustum_grid.h	1	10			10		stem: declares the code of its .cpp (follows it)
+header	src/rgl/core/resmgr.h	src/engine/resource/resource_manager.h	1	60			60		stem: declares the code of its .cpp (follows it)
+header	src/rgl/core/resource_io.h	src/engine/resource/resource_io.h	1	45			45		stem: declares the code of its .cpp (follows it)
+header	src/rgl/dynamic/dynamic_entity.h	src/engine/physics/rigid_body.h	1	51			51		stem: declares the code of its .cpp (follows it)
+header	src/rgl/dynamic/fx_anim.h	src/engine/fx/fx_animation.h	1	36			36		stem: declares the code of its .cpp (follows it)
+header	src/rgl/dynamic/rigid_body.h	src/engine/physics/rigid_body_rgl_dynamic.h	1	64			64		engine (topic table); NAME COLLISION with rgl/dynamic/dynamic_entity.h, suffixed
+header	src/rgl/dynamic/world_grid.h	src/engine/physics/world_grid.h	1	40			40		stem: declares the code of its .cpp (follows it)
+header	src/rgl/identity_value.h	src/engine/core/identity_value.h	1	11			11		engine (topic table)
+header	src/rgl/mem_stream.h	src/engine/io/mem_stream.h	1	17			17		stem: declares the code of its .cpp (follows it)
+header	src/rgl/mesh.h	src/engine/render/mesh.h	1	218			218		engine (topic table)
+header	src/rgl/mesh2/gui_edit.h	src/game/editor/editor_selection_and_translation.h	1	219			219		stem: declares the code of its .cpp (follows it)
+header	src/rgl/mesh2/head_rec.h	src/game/data/head_rec_rgl_mesh2.h	1	18			18		manual (by class owner); NAME COLLISION with game/head_rec.h, suffixed
+header	src/rgl/mesh2/mesh2_common.h	src/game/editor/mesh2_common.h	1	46			46		manual (by class owner)
+header	src/rgl/mesh2/mesh_2.h	src/game/editor/poly_mesh_edge_face_ops.h	1	99			99		stem: declares the code of its .cpp (follows it)
+header	src/rgl/mesh2/rec_tables.h	src/game/data/module_option_records.h	1	112			112		stem: declares the code of its .cpp (follows it)
+header	src/rgl/mesh2/screen_cfg.h	src/game/editor/screen_cfg.h	1	19			19		manual (by class owner)
+header	src/rgl/noise.h	src/engine/math/noise.h	1	14			14		stem: declares the code of its .cpp (follows it)
+header	src/rgl/options.h	src/game/config/options.h	1	47			47		manual (by class owner)
+header	src/rgl/particles/mesh_obj.h	src/engine/render/mesh_rgl_particles.h	1	54			54		stem: declares the code of its .cpp (follows it); NAME COLLISION with rgl/mesh.h, suffixed
+header	src/rgl/particles/render_cache.h	src/engine/render/render_cache.h	1	15			15		engine (topic table)
+header	src/rgl/psys.h	src/engine/render/particle_system.h	1	19			19		stem: declares the code of its .cpp (follows it)
+header	src/rgl/resource.h	src/engine/resource/resource.h	1	268			268		engine (topic table)
+header	src/rgl/resource_manager.h	src/engine/resource/resource_manager_init.h	1	23			23		stem: declares the code of its .cpp (follows it)
+header	src/rgl/rgl_math.h	src/engine/math/rgl_math.h	1	112			112		engine (topic table)
+header	src/rgl/rgl_string.h	src/engine/core/rgl_string.h	1	24			24		engine (topic table)
+header	src/rgl/scene/emitter.h	src/engine/scene/emitter.h	1	70			70		engine (topic table)
+header	src/rgl/scene/frustum.h	src/engine/scene/frustum_rgl_scene.h	1	7			7		engine (topic table); NAME COLLISION with include/frustum.h, suffixed
+header	src/rgl/scene/fx.h	src/engine/fx/fx_rgl_scene.h	1	18			18		engine (topic table); NAME COLLISION with include/fx.h, suffixed
+header	src/rgl/scene/scene.h	src/engine/scene/scene.h	1	31			31		engine (topic table)
+header	src/rgl/scene/scene_entity.h	src/engine/scene/scene_entity.h	1	190			190		engine (topic table)
+header	src/rgl/scene/scene_math.h	src/engine/math/scene_math.h	1	24			24		engine (topic table)
+header	src/rgl/scene/shape_clone.h	src/engine/scene/shape_clone.h	1	14			14		engine (topic table)
+header	src/rgl/scene/world.h	src/engine/scene/world.h	1	165			165		engine (topic table)
+header	src/rgl/scene_rec.h	src/engine/scene/scene_rec.h	1	76			76		engine (topic table)
+header	src/rgl/shapes/shapes.h	src/engine/physics/collision_shapes.h	1	81			81		stem: declares the code of its .cpp (follows it)
+header	src/rgl/stream.h	src/engine/io/stream.h	1	282			282		engine (topic table)
+header	src/rgl/stream_inline.h	src/engine/io/stream_inline.h	1	16			16		engine (topic table)
+header	src/rgl/text_stream.h	src/engine/io/text_stream.h	1	13			13		stem: declares the code of its .cpp (follows it)
+header	src/rgl/texture_ctor.h	src/engine/render/texture_ctor.h	1	24			24		engine (topic table)
+header	src/rgl/xmlcfg/game_util.h	src/game/common/game_util.h	1	65			65		stem: declares the code of its .cpp (follows it)
+header	src/rgl/xmlcfg/key_groups.h	src/game/input/key_groups.h	1	9			9		stem: declares the code of its .cpp (follows it)
+header	src/rgl/xmlcfg/records.h	src/game/data/record_destructors.h	1	50			50		stem: declares the code of its .cpp (follows it)
+header	src/tinyxml/tinystr.h	third_party/tinyxml/tinystr.h	1	322			322		stem: declares the code of its .cpp (follows it)
+header	src/tinyxml/tinyxml.h	third_party/tinyxml/tinyxml.h	1	970			970		stem: declares the code of its .cpp (follows it)
+notes	src/dxframework/MIGRATION.md	docs/migration/dxframework.md	1	212			212		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/MIGRATION.md	docs/migration/game.md	1	188			188		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/agent/MIGRATION.md	docs/migration/game_agent.md	1	173			173		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/agent2/MIGRATION.md	docs/migration/game_agent2.md	1	187			187		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/agent3/MIGRATION.md	docs/migration/game_agent3.md	1	134			134		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/agent4/MIGRATION.md	docs/migration/game_agent4.md	1	166			166		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/agent5/MIGRATION.md	docs/migration/game_agent5.md	1	119			119		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/char_sheet/MIGRATION.md	docs/migration/game_char_sheet.md	1	112			112		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/cls_map/MIGRATION.md	docs/migration/game_cls_map.md	1	102			102		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/config/MIGRATION.md	docs/migration/game_config.md	1	118			118		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/inventory_panel/MIGRATION.md	docs/migration/game_inventory_panel.md	1	157			157		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/map_editor/MIGRATION.md	docs/migration/game_map_editor.md	1	133			133		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/mesh_slot/MIGRATION.md	docs/migration/game_mesh_slot.md	1	82			82		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/mission5/MIGRATION.md	docs/migration/game_mission5.md	1	126			126		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/mission_ui2/MIGRATION.md	docs/migration/game_mission_ui2.md	1	46			46		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/options_panel/MIGRATION.md	docs/migration/game_options_panel.md	1	198			198		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/party/MIGRATION.md	docs/migration/game_party.md	1	51			51		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/party2/MIGRATION.md	docs/migration/game_party2.md	1	170			170		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/script/NOTES.md	docs/migration/game_script_NOTES.md	1	400			400		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/script/PROGRESS.md	docs/migration/game_script_PROGRESS.md	1	29			29		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/strat/MIGRATION.md	docs/migration/game_strat.md	1	137			137		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/terrain_a/MIGRATION.md	docs/migration/game_terrain_a.md	1	159			159		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/terrain_b/MIGRATION.md	docs/migration/game_terrain_b.md	1	126			126		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/triggers/MIGRATION.md	docs/migration/game_triggers.md	1	127			127		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/ui/MIGRATION.md	docs/migration/game_ui.md	1	163			163		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/game/world_data/MIGRATION.md	docs/migration/game_world_data.md	1	80			80		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/rgl/MIGRATION.md	docs/migration/rgl.md	1	230			230		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/rgl/core/MIGRATION.md	docs/migration/rgl_core.md	1	93			93		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/rgl/dynamic/MIGRATION.md	docs/migration/rgl_dynamic.md	1	88			88		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/rgl/mesh2/MIGRATION.md	docs/migration/rgl_mesh2.md	1	121			121		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/rgl/particles/MIGRATION.md	docs/migration/rgl_particles.md	1	253			253		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/rgl/scene/MIGRATION.md	docs/migration/rgl_scene.md	1	251			251		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/rgl/shapes/MIGRATION.md	docs/migration/rgl_shapes.md	1	212			212		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/rgl/xmlcfg/MIGRATION.md	docs/migration/rgl_xmlcfg.md	1	127			127		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+notes	src/tinyxml/MIGRATION.md	docs/migration/tinyxml.md	1	178			178		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
