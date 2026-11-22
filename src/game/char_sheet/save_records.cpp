@@ -124,7 +124,7 @@ void GameData::write_missions(stream_base* out)
 // @ 0x4e9c50    void PartyMgr::write_table(stream_base* out)   (thiscall, ret 4)
 void PartyMgr::write_table(stream_base* out)
 {
-    out->w_int(count);
+    out->w_int(&count);
     out->w_int(serial);
     int i = 0;
     int* pi = &i;

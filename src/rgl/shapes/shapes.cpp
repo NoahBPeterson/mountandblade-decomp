@@ -5,6 +5,7 @@
 // Boundary: the start 0x407c10 follows dxutil's CArrayList; the end 0x40e940 is only the next agent's start (renderer::
 // set_blend_mode and the psys region continue the same emission order). See MIGRATION.md.
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copies 0x407ca0 / 0x407cd0 / 0x407d00 of the inline vector4 operators
+#include "../../include/iface.h"
 #include <string>
 #include <exception>
 #include <stdexcept>
@@ -103,6 +104,7 @@ vector4* shape_base::get_max(vector4* out) { out->x = 0; out->y = 0; out->z = 0;
 void shape_base::set_m8(int v) { m8 = v; }
 // @ 0x408080
 void shape_base::or_m8(int v) { m8 |= v; }
+void IfaceB::slot1() {}                                    // 0x477b70 (folded with shape_base::draw)
 void shape_base::draw() {}                                 // 0x477b70 (the empty function of another object)
 
 // ---- sphere (0x408020 .. 0x4085d0) ---------------------------------------------------------------------------

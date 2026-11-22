@@ -11,6 +11,7 @@ TOOL (docs: ../vs2005-cpp/docs/c2/<name>.md; `c2.py doc NAME` prints one):
   icount       why our function has more/fewer instructions: each extra/missing one traced to the c2 pass
   sched        what the list scheduler did (instruction order)
   tsweep       compile every alternative of a template (`{{a|b|c}}` choices, see doc tsweep) and rank by bdiff
+  schedwant    which DAG changes give the original's instruction order in a scheduling region
   helpersweep  inline-helper rewrites that fix a colouring order (--want 'A>B')
   effectmine   mutations mined for a wanted effect (mine; --want drop:N ...)
   doc NAME     print ../vs2005-cpp/docs/c2/NAME.md (e.g. tracer, regalloc, icount, tsweep, effectmine, x87)
@@ -29,8 +30,9 @@ PY = os.path.join(ROOT, ".venv", "bin", "python")
 TOOLS = {"regs": ["tools/c2trace.py", "regs"], "regmap": ["tools/c2trace.py", "regmap"],
          "scratch": ["tools/c2trace.py", "scratch"], "slots": ["tools/c2trace.py", "slots"],
          "icount": ["tools/icount.py"], "sched": ["tools/c2sched.py"], "tsweep": ["tools/tsweep.py"],
-         "helpersweep": ["tools/helpersweep.py"], "effectmine": ["tools/effectmine.py", "mine"]}
-ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine"}      # take --asm-vs
+         "helpersweep": ["tools/helpersweep.py"], "effectmine": ["tools/effectmine.py", "mine"],
+         "schedwant": ["tools/schedwant.py"]}
+ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine", "schedwant"}      # take --asm-vs
 SLOTS, MAXJOBS = 8, 4
 
 
@@ -62,6 +64,10 @@ def main():
         i = rest.index("--src"); src = rest[i + 1]; del rest[i:i + 2]
     if any(x.startswith("--c2") or x == "--" for x in rest):
         die("--c2 and the cl flags are filled in by the wrapper; leave them out")
+    for opt in ("--orig", "--export", "--keep"):     # the tools run in ../vs2005-cpp: a relative path would resolve there
+        if opt in rest:
+            i = rest.index(opt) + 1
+            rest[i] = os.path.abspath(rest[i])
     if "--jobs" in rest:
         i = rest.index("--jobs"); rest[i + 1] = str(min(MAXJOBS, int(rest[i + 1])))
     elif tool in ("tsweep", "helpersweep", "effectmine"):
@@ -101,7 +107,7 @@ def main():
     cmd = [os.path.join(VS, ".venv", "bin", "python")] + TOOLS[tool] + [os.path.join(ROOT, src)]
     cmd += ["--func", func, "--c2", "13.10.3052" if tool == "tsweep" else "13.10"]
     if tool in ASM:
-        cmd += ["--asm-vs", orig] + (["--asm-func", func] if tool in ("regmap", "tsweep") else [])
+        cmd += ["--asm-vs", orig] + (["--asm-func", func] if tool in ("regmap", "tsweep", "schedwant") else [])
     cmd += rest + ["--"] + flags + inc
 
     os.makedirs(os.path.join(ROOT, "work", "match", ".c2slots"), exist_ok=True)

@@ -56,9 +56,9 @@ struct stream_base {
     // stream that writes nothing leaves it unchanged, as the slot does; declared
     // after the slots (cl 7.1 orders the vtable by declaration, overloads of a virtual name included).
     stream_base& r_int(unsigned& v) { return r_int((int*)&v); }
-    stream_base& w_int(unsigned v) { int t = (int)v; return w_int(&t); }
+    stream_base& w_int(const unsigned& v) { return w_int((int*)const_cast<unsigned*>(&v)); }
     stream_base& r_bool(bool& v) { char t = v; r_bool(&t); v = t != 0; return *this; }
-    stream_base& w_bool(bool v) { char t = v; return w_bool(&t); }
+    stream_base& w_bool(const bool& v) { return w_bool((char*)const_cast<bool*>(&v)); }
 };
 
 // The typed slots of the classes that declare all of them.

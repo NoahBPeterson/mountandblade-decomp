@@ -91,14 +91,11 @@ void CharSheet::load_troop()
 void CharSheet::fill_skills()
 {
     int n = 0;
-    int* out = skill_id;
     for (int i = 0; i < 42; i++) {
         unsigned char c = (unsigned char)(g_skill_tbl[i].attr >> 8);
         c = ~c;
         if (c & 1) {
-            *out = i;
-            n++;
-            out++;
+            skill_id[n++] = i;
         }
     }
     num_skills = n;

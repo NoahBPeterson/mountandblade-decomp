@@ -185,7 +185,9 @@ def our_calls(coff, sym):
         if n.startswith("__imp_"):
             return "imp:" + bare(n)
         if n in c["slot_of"]:
-            return c["slot_of"][n]
+            # several methods can share one address (ICF'd empty virtuals: IfaceB::slot1, head_rec::slot_empty_4,
+            # shape_base::draw at 0x477b70); the original side labels the address by va_slot, so use the same label
+            return c["va_slot"].get(name_va.get(n)) or c["slot_of"][n]
         va = name_va.get(n)
         if va and mem is not None:                   # call [sym + addend] (a vtable slot, a function pointer):
             return "p:%08x" % ((va + mem) & 0xFFFFFFFF)   # the slot's address, as orig_calls reports it
