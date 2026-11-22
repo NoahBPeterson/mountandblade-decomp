@@ -222,3 +222,30 @@ header). Value of c2scope here: it confirmed in 14 minutes of laptop time that t
 order-only, and it ruled out a per-row source cause (no spelling lever); it did not find the cross-part cause and its lever text for the first
 two rows pointed the wrong way. `c2.py` cannot be used on a row that is already byte-exact (task.py has no source line for it: "knows no
 source for 0x..."), so the "after" confirmation for pick_duel / gui_manager::add is chk.py's 0-diff, not an icount.
+
+### re-split attempt with a shared header (2026-11-22, the coordinator's reading: normalize and the rgl::mesh members are header inlines)
+
+Hypothesis (coordinator): the visible `rgl::vector4::normalize` body and the other foreign-class members in agent_logic.cpp are header inline
+functions whose out-of-line COMDAT the linker kept from this object, so they are not evidence for one .cpp; give them a header and re-split.
+Test: `tools/migrate/resplit_agent_logic.py` cuts the single file at the planned 11 seams and moves into `agent_logic_shared.h` every
+`inline __declspec(noinline)` visible body (about 50, wherever in the file) plus every helper two parts use (position-bound names, e.g.
+the a_vadd overloads, are copied into later parts only). All 11 parts compile; `rows_after_split.py` then settled the manifests.
+
+| row | single file | split + shared header | held? |
+|---|---|---|---|
+| pick_front 0x43b9e0, pick_duel 0x43bb80, fire_check 0x441020 | exact | exact | the hypothesis holds for these three: their dependency was the visible foreign bodies (normalize ...) |
+| pick_threat 0x443430 (10) | exact | 10 | no: `icount` 118/118 instructions, "lift: no difference", one instruction moved |
+| pick_reachable_goal 0x445720 (32) | exact | 32 | no: 90/90, four instructions moved |
+| Font::draw_glyph 0x44f5d0 (17) | exact | 17 | no: 67/67, three moved |
+| refresh_carried 0x452650 (6) | exact | 6 | no: 222/222, two moved |
+| gui_manager::add 0x452c00 (523) | exact | 523 | no: 224 vs 227: the original calls vector4(float,float,float) 0x428e80, the part inlines it; the other misses are register coalescing |
+| update_attack 0x45c220 (282) | exact | 282 | no: `icount` 1401/1401, "lift: no difference", no moved instruction listed (the 282 aligned bytes are scheduling / register order inside 5.6 KB) |
+
+c2scope names the symptom (order-only differences = the scheduler's memory-dependence picture of the callees; an inlined ctor), not the
+cause. Cause found by a hypothesis test: pick_threat calls Agent::line_of_sight 0x440e30 and Agent::fire_check 0x441020, REAL functions of the
+attack_checks part (rows of their own, no header inline). A scratch copy of the effects_sound part with those two bodies appended as
+`inline __declspec(noinline)` copies is byte-exact (chk.py MATCH). So cl uses the bodies of same-object callees (side effects, registers
+they clobber), which is the "visible callee" knowledge of docs/codegen.md 6.3. The remaining rows call functions of the other parts the same
+way: pick_reachable_goal calls 0x43cb30 / 0x43dd70 (targeting part) and 0x443870 / 0x443aa0 / 0x444370 (effects_sound part); draw_glyph and
+refresh_carried call 0x44e970 (mesh members), 0x441ff0, 0x443aa0 and 0x4520b0. The calls chain every part to its neighbours, so no seam is
+left that no row crosses: the object is one translation unit in practice. Outcome: the single file stays (source_tree.md section 10).

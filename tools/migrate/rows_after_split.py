@@ -12,6 +12,8 @@ Prints what it did. Idempotent (a settled row is not in the manifest any more).
 import os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC      # noqa: E402
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 sys.path.insert(0, os.path.join(ROOT, "tools", "port"))
@@ -36,7 +38,7 @@ def main(parts):
             sys.exit("compile failed: %s\n%s" % (p, log[-800:]))
         from coff import Coff
         syms[p] = set(Coff(obj).functions())      # statics and COMDATs too (O.symbols suffixes a non-external name with its section)
-    man = {p: rows(os.path.join(ROOT, p[:-4] + ".manifest.txt")) for p in parts}
+    man = {p: rows(SC.manifest_for(p)) for p in parts}
     # 1. rows whose symbol lives in another part
     for p in parts:
         keep = []
@@ -58,9 +60,9 @@ def main(parts):
     for p in parts:
         vas = [l.split()[2] for l in man[p]]
         if not vas:
-            open(os.path.join(ROOT, p[:-4] + ".manifest.txt"), "w").write("")
+            open(SC.manifest_for(p), "w").write("")
             continue
-        mp = os.path.join(ROOT, p[:-4] + ".manifest.txt")
+        mp = SC.manifest_for(p)
         open(mp, "w").write("\n".join(man[p]) + "\n")
         ra = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "matching", "run_all.py"), "--jobs", "3", "--manifest", mp],
                             cwd=ROOT, capture_output=True, text=True)
@@ -75,7 +77,7 @@ def main(parts):
             va = l.split()[2].lower()
             d, al = fig.get(va, (0, 0))
             (drop if d else keep).append((l, al))
-        nmp = os.path.join(ROOT, p[:-4] + ".nonmatching.txt")
+        nmp = SC.nonmatching_for(p)
         nm = rows(nmp)
         for l, al in drop:
             f = l.split()
@@ -84,7 +86,7 @@ def main(parts):
             print("demote %s %s: aligned %d" % (f[2], f[1][:50], al))
         nm.sort(key=lambda l: int(l.split()[0], 16))
         open(nmp, "w").write("\n".join(nm) + ("\n" if nm else ""))
-        open(os.path.join(ROOT, p[:-4] + ".manifest.txt"), "w").write("\n".join(l for l, _ in keep) + ("\n" if keep else ""))
+        open(SC.manifest_for(p), "w").write("\n".join(l for l, _ in keep) + ("\n" if keep else ""))
 
 
 if __name__ == "__main__":

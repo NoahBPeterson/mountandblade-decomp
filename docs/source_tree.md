@@ -766,3 +766,15 @@ match/manifests/game/agent/ai/agent_ai.manifest.txt). A row's first field (`../s
 `all_nonmatching()`, `all_partials()`, `source_for(sidecar)`, `stem_of`, `kind_of`); the ~60 tools that globbed `src/**/*.manifest.txt`, took
 `src[:-4] + ".manifest.txt"` or compared suffixes use it; `docs/equiv_verdicts.json` "file" fields and the docs follow. Sections 1 to 9 describe
 the plan in terms of sidecars beside their .cpp; read "beside" as "under match/manifests/".
+
+### 10.1 Re-split with a shared header (tried, not kept)
+
+The reading that `vector4::normalize` and the other foreign-class members are header inlines whose COMDAT the linker kept from this
+object (so not evidence for one .cpp) was tested with `tools/migrate/resplit_agent_logic.py`: the planned 11 parts, every visible
+body and every helper two parts use in `agent_logic_shared.h`. All parts compile; pick_front, pick_duel and fire_check are byte-exact
+again (that part of the reading holds). pick_threat (10), pick_reachable_goal (32), Font::draw_glyph (17), refresh_carried (6),
+gui_manager::add (523) and update_attack (282) are not: c2scope `icount` shows the same instruction counts with moved instructions
+(order only) and one inlined ctor, and a scratch copy of the effects_sound part with Agent::line_of_sight 0x440e30 and
+Agent::fire_check 0x441020 appended as `inline __declspec(noinline)` copies makes pick_threat byte-exact: cl uses the bodies of real
+functions of the same object. Those rows call functions of the neighbouring parts, so every seam is crossed by a row; the single file
+stays (the user's rule: keep it if not all nine hold). Details: docs/c2scope_evaluation.md, "re-split attempt".
