@@ -16,6 +16,8 @@ position: our ??_7X@@6B@ resolved to the original vtable at V, so slot i stands 
 import argparse, collections, glob, json, multiprocessing, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import heavy                                    # machine-wide worker-pool gate (heavy.py)
@@ -32,7 +34,7 @@ def module_rows():
         if os.sep + "src" + os.sep not in src:
             continue
         vas = []
-        for f in (src[:-4] + ".manifest.txt", src[:-4] + ".nonmatching.txt"):
+        for f in (SC.manifest_for(src), SC.nonmatching_for(src)):
             if not os.path.exists(f):
                 continue
             for line in open(f, errors="replace"):
@@ -180,7 +182,7 @@ def resolver_env():
     _md5_files(h, code)
     data = glob.glob(os.path.join(ROOT, "symbols", "**", "*"), recursive=True) + \
         glob.glob(os.path.join(ROOT, "match", "slices", "*", "manifest.txt")) + \
-        glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True) + \
+        SC.all_manifests() + \
         [os.path.join(ROOT, "work", "mb.analysis.bin"), os.path.join(ROOT, "work", "oss", "crt_matches.csv")]
     _md5_files(h, [f for f in data if os.path.isfile(f)])
     files = glob.glob(os.path.join(ROOT, "src", "**", "*.h"), recursive=True) + \

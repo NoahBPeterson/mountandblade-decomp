@@ -15,14 +15,16 @@ first pick. Rows whose aligned figure is 0 are symbol-less fragments, not work, 
 import argparse, collections, glob, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path[:0] = [os.path.join(ROOT, "tools", "matching"), os.path.join(ROOT, "tools", "difftest")]
 
 
 def rows():
-    """[(va, aligned, note, src, nonmatching file)] from every src/**/*.nonmatching.txt."""
+    """[(va, aligned, note, src, nonmatching file)] from every match/manifests/**/*.nonmatching.txt."""
     out = []
-    for nm in glob.glob(os.path.join(ROOT, "src", "**", "*.nonmatching.txt"), recursive=True):
-        src = nm[:-len(".nonmatching.txt")] + ".cpp"
+    for nm in SC.all_nonmatching():
+        src = SC.source_for(nm)
         for l in open(nm, encoding="utf-8", errors="replace"):
             p = l.rstrip("\n").split(None, 2)
             if len(p) < 2 or not re.fullmatch(r"[0-9a-fA-F]{8}", p[0]):
@@ -36,7 +38,7 @@ def rows():
 
 
 def manifest_row(va):
-    for mf in glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True):
+    for mf in SC.all_manifests():
         for l in open(mf, encoding="utf-8", errors="replace"):
             p = l.split("#", 1)[0].split()
             if len(p) >= 3:
@@ -94,7 +96,7 @@ def body(src, va):
 
 
 def flags_for(src):
-    mf = src[:-4] + ".manifest.txt"
+    mf = SC.manifest_for(src)
     if os.path.exists(mf):
         for l in open(mf):
             p = l.split("#", 1)[0].split()

@@ -47,6 +47,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 
@@ -494,7 +496,7 @@ def sources():
 
 
 def flags_for(src):
-    man = src[:-4] + ".manifest.txt" if src.endswith(".cpp") else src + ".manifest.txt"
+    man = SC.manifest_for(src) if src.endswith(".cpp") else src + ".manifest.txt"
     return CA.manifest_flags(man) or list(CA.DEFAULT)
 
 

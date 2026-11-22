@@ -29,6 +29,8 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 os.environ.setdefault("MB_PP", "0")          # the second cache level costs GBs per miss and buys nothing here
 import slice as S  # noqa: E402
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC  # noqa: E402  (where the sidecar files live)
 from coff import Coff  # noqa: E402
 
 IGNORED = (".debug", ".sxdata", ".drectve")
@@ -79,15 +81,14 @@ def includers(headers, graph=None):
 # ---------------------------------------------------------------- flags
 
 def flag_sets(src):
-    base = src.rsplit(".", 1)[0]
     sets = set()
-    man = base + ".manifest.txt"
+    man = SC.manifest_for(src)
     if os.path.exists(man):
         for line in open(man, errors="replace"):
             p = line.split("#", 1)[0].split()
             if len(p) >= 4:
                 sets.add(tuple(t for t in p[3:] if t.startswith("/")))
-    nm = base + ".nonmatching.txt"
+    nm = SC.nonmatching_for(src)
     if os.path.exists(nm):
         for line in open(nm, errors="replace"):
             for m in S.EXPLICIT_RE.finditer(line):

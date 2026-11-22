@@ -28,6 +28,8 @@ than half of the comparable slots already agree is left alone and reported: its 
 import argparse, bisect, glob, json, os, re, struct, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
@@ -357,7 +359,7 @@ def patch_objects(sets, rmap):
         if not srcs:
             sys.exit("patch set %r: no patches/%s/*.cpp" % (name, name))
         for src in srcs:
-            o, log = S.compile_obj(src, C.manifest_flags(src[:-4] + ".manifest.txt") or C.DEFAULT)
+            o, log = S.compile_obj(src, C.manifest_flags(SC.manifest_for(src)) or C.DEFAULT)
             if not o:
                 sys.exit("patch %s does not compile:\n%s" % (os.path.relpath(src, ROOT), log))
             objs.append(o)

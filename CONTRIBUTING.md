@@ -56,7 +56,8 @@ sessions keep it warm with `tools/matching/keepalive.sh <hours>`.
 ## Workflow: matching an equivalent function
 
 Source lives in `src/`, one `.cpp` per original translation unit (e.g. `src/engine/core/tstring.cpp`), each function
-preceded by a `// @ 0x<va>` marker. Next to each `.cpp`:
+preceded by a `// @ 0x<va>` marker. In the mirror tree `match/manifests/<path under src/>/` (e.g. `match/manifests/engine/core/tstring.*.txt`;
+tools find them through `tools/common/sidecars.py`):
 - `<stem>.manifest.txt`: byte-exact functions, one row each (`../src/... <symbol> <va> <flags>`);
 - `<stem>.nonmatching.txt`: complete and equivalent but not byte-exact, `<va> <diff> <note>`.
 
@@ -76,7 +77,7 @@ preceded by a `// @ 0x<va>` marker. Next to each `.cpp`:
 4. **When it matches:** move the row from `<stem>.nonmatching.txt` to `<stem>.manifest.txt` (the row chk prints),
    then verify the whole module and make sure nothing else in it moved:
    ```sh
-   .venv/bin/python tools/matching/run_all.py --manifest src/engine/core/tstring.manifest.txt
+   .venv/bin/python tools/matching/run_all.py --manifest match/manifests/engine/core/tstring.manifest.txt
    ```
    Every row of the module must still match. Header changes can move other functions; `run_all.py` is the
    arbiter.

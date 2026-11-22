@@ -122,7 +122,7 @@ Conflicts worked around locally:
   The equivalence harness was not run on `execute` (70 KB, custom-register callees, the presentation /
   tableau / mission objects); this reading is the check.
 - `chk.py src/game/script/operation_execute.cpp 0x49fa10`: see script_interpreter.nonmatching.txt for the current figures.
-  `run_all.py --manifest src/game/script/script_interpreter.manifest.txt`: 23 / 23 byte-exact.
+  `run_all.py --manifest match/manifests/game/script/script_interpreter.manifest.txt`: 23 / 23 byte-exact.
 - Resolution audit (resaudit.py's `audit()` driven by `work/match/scratch_si_resaudit.py`, with
   `work/match/scratch_si_symbols.txt` for the globals above the annotation range, see open problems):
   the five byte-exact rows agree completely. `execute`: 280 references agree, 46 unverified (strings, our own

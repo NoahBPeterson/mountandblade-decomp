@@ -21,6 +21,8 @@ Needs work/relink/standalone/resolve_map.json (tools/relink/build.py writes it).
 import argparse, collections, difflib, json, multiprocessing, os, re, struct, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import heavy                                    # machine-wide worker-pool gate (heavy.py)
@@ -378,7 +380,7 @@ def main():
             if want not in vas:
                 continue
             vas = [want]
-        man = src[:-4] + ".manifest.txt"
+        man = SC.manifest_for(src)
         if os.path.exists(man) and not a.all:
             for line in open(man):
                 p = line.split()

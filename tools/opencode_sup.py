@@ -20,6 +20,8 @@ import base64, glob, json, os, re, subprocess, sys, time, urllib.error, urllib.p
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 W = lambda *p: os.path.join(ROOT, *p)
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC  # noqa: E402  (where the sidecar files live)
 for _try in range(10):  # `opencode service status` sometimes prints nothing useful; retry
     _m = re.search(r"http://[0-9.:]+", subprocess.run(["opencode", "service", "status"], capture_output=True,
                                                       text=True).stdout)
@@ -100,8 +102,8 @@ def progress(k):
         if BATCH[i].get("module"):
             # migration entry: count this entry's VAs in the module's bookkeeping files
             want = {v.lower().lstrip("0x") for v in BATCH[i]["vas"]}
-            for f, isok in (("manifest.txt", 1), ("nonmatching.txt", 0), ("partial.txt", 0)):
-                p = W("src/game", BATCH[i]["module"], f)
+            for f, isok in (("manifest", 1), ("nonmatching", 0), ("partial", 0)):
+                p = SC.sidecar_for(BATCH[i]["module"] + ".cpp", f)       # "module": the source path under the repository root, without .cpp
                 if not os.path.exists(p):
                     continue
                 for l in open(p):

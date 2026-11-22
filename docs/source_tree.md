@@ -756,3 +756,13 @@ Decision (the user's rule: a file is one or more whole original TUs): the eleven
 including the rgl::mesh members that had been moved to `src/engine/render/mesh_edit_members.cpp` (they sit inside the same object, the
 first class run of TU 50 is not a TU boundary). All nine rows are byte-exact again (chk.py 9/9). Sections 3.1 and the agent_logic parts of
 sections 2 and 9 are superseded; script_interpreter.cpp and mission_5.cpp keep the split of section 3 (see their own notes).
+
+## 11. Batch C (2026-11-22): the sidecars leave src/
+
+The 357 `*.manifest.txt`, `*.nonmatching.txt` and `*.partial.txt` files moved (`git mv`, contents unchanged) to the mirror tree
+`match/manifests/<path under src/>/<stem>.<kind>.txt` (src/game/agent/ai/agent_ai.cpp ->
+match/manifests/game/agent/ai/agent_ai.manifest.txt). A row's first field (`../src/<path>.cpp`) is relative to `match/` and did not change.
+`tools/common/sidecars.py` is the one module that knows the layout (`manifest_for(source)`, `nonmatching_for`, `partial_for`, `all_manifests()`,
+`all_nonmatching()`, `all_partials()`, `source_for(sidecar)`, `stem_of`, `kind_of`); the ~60 tools that globbed `src/**/*.manifest.txt`, took
+`src[:-4] + ".manifest.txt"` or compared suffixes use it; `docs/equiv_verdicts.json` "file" fields and the docs follow. Sections 1 to 9 describe
+the plan in terms of sidecars beside their .cpp; read "beside" as "under match/manifests/".

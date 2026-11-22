@@ -18,6 +18,8 @@ Exit 0 on MATCH, 1 otherwise.
 import argparse, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import task as T   # noqa: E402
 
@@ -29,7 +31,7 @@ def run(args):
 
 
 def module_ok(src):
-    mf = src[:-4] + ".manifest.txt"
+    mf = SC.manifest_for(src)
     if not os.path.exists(mf):
         return True, "no manifest"
     r = run([os.path.join(ROOT, "tools", "matching", "run_all.py"), "--manifest", mf])
@@ -72,7 +74,7 @@ def main():
             return 1
         # a byte-exact row: re-check its file's manifest, so an edit to it is still verified (2026-11-19: agents read
         # "byte-exact already" as a pass while nothing had been compiled)
-        ok, why = module_ok(mf[:-len(".manifest.txt")] + ".cpp")
+        ok, why = module_ok(SC.source_for(mf))
         print("0x%08x is a byte-exact row (%s); its file now: %s" % (va, os.path.relpath(mf, ROOT), "OK " + why if ok
               else "BROKE\n" + why))
         return 0 if ok else 1
@@ -110,7 +112,7 @@ def main():
         return 1
     if match:
         rowl = [l for l in out.splitlines() if re.match(r"\S+\s+\S+\s+%08x\s" % va, l)]
-        mf = src[:-4] + ".manifest.txt"
+        mf = SC.manifest_for(src)
         print("MATCH  0x%08x  %s" % (va, line.split()[-2] if len(line.split()) > 2 else ""))
         if not rowl:
             print("  (chk.py printed no manifest row: the manifest may already name it)")

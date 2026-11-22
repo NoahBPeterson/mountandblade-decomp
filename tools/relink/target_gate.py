@@ -28,6 +28,8 @@ A baseline entry that no longer shows is reported as fixed; --update rewrites th
 import argparse, collections, glob, json, os, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 BASE = os.path.join(ROOT, "tools", "relink", "target_gate_baseline.json")
 SKIP_SYMS = ("$L", "_$E", "static", "compiler-generated")
 
@@ -35,7 +37,7 @@ SKIP_SYMS = ("$L", "_$E", "static", "compiler-generated")
 def manifest_rows():
     """{va: (manifest path, symbol)}, and the clone findings."""
     rows, clones = {}, []
-    for f in sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True)):
+    for f in sorted(SC.all_manifests()):
         by_sym = collections.defaultdict(list)
         for l in open(f, encoding="utf-8", errors="replace"):
             p = l.split()

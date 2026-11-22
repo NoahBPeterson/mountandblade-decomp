@@ -12,6 +12,8 @@ noise; a one-for-one pair of near-identical strings is the shape to look at firs
 import argparse, collections, difflib, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
@@ -71,7 +73,7 @@ def main():
         if a.filter and a.filter not in src:
             continue
         exact = set()
-        man = src[:-4] + ".manifest.txt"
+        man = SC.manifest_for(src)
         if os.path.exists(man):
             for line in open(man):
                 p = line.split()

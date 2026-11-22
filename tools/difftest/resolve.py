@@ -10,7 +10,7 @@ the same real globals. Methods, tried in order (the report records which one fir
                 in the slice source, matched by identifier and enclosing class (tried before symbols/:
                 names are not unique across slices)
   symbols       exact mangled name in symbols/*.txt, symbols/slices/*.txt, byte-exact manifest rows
-                (match/slices/*/manifest.txt, src/**/*.manifest.txt), pdb_globals.json, or a
+                (match/slices/*/manifest.txt, match/manifests/**/*.manifest.txt), pdb_globals.json, or a
                 unique qualified name there (only when our object has no overload of that name)
   hex-name      an address embedded in the name (FUN_00abcdef, Fn9467b0, g_01582df8, ..._0167a6d0)
   bare-annot.   the row source's own unqualified declaration of a scoped symbol (an out-of-line
@@ -42,6 +42,8 @@ from capstone import x86_const as X
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 sys.path.insert(0, HERE)
 import imgcache  # noqa: E402
@@ -264,7 +266,7 @@ class SymbolDB:
         # callee our object references but symbols/ never listed (an out-of-line vector::resize matched in a
         # neighbouring slice) would otherwise run as our own copy and its inner calls misalign the call trace
         for f in glob.glob(os.path.join(ROOT, "match", "slices", "*", "manifest.txt")) + \
-                glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True):
+                SC.all_manifests():
             for line in open(f, encoding="utf-8", errors="replace"):
                 p = line.split()
                 if len(p) >= 3 and p[1].startswith(("?", "_")) and re.fullmatch(r"[0-9a-fA-F]{6,8}", p[2]):

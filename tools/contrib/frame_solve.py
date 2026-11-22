@@ -53,6 +53,8 @@ Variant files live in work/vsearch/; the trace files in work/match/trace_<va>* a
 import argparse, collections, concurrent.futures as cf, itertools, json, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 V = os.path.join(os.path.dirname(ROOT), "vs2005-cpp")
 sys.path[:0] = [os.path.join(ROOT, "tools", "contrib"), os.path.join(ROOT, "tools", "matching")]
 sys.path.append(os.path.join(V, "tools"))        # last: vs2005-cpp's coff.py / card.py must not shadow ours
@@ -198,12 +200,12 @@ _SYM_VAS = None
 
 
 def sym_vas():
-    """{decorated symbol: original VA} from every src/**/*.manifest.txt row."""
+    """{decorated symbol: original VA} from every match/manifests/**/*.manifest.txt row."""
     global _SYM_VAS
     if _SYM_VAS is None:
         import glob
         _SYM_VAS = {}
-        for mf in glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True):
+        for mf in SC.all_manifests():
             for l in open(mf, errors="replace"):
                 p = l.split("#", 1)[0].split()
                 if len(p) >= 3 and re.fullmatch(r"[0-9a-fA-F]{8}", p[2]):

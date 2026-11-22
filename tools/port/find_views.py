@@ -57,6 +57,8 @@ CORE_INCLUDE, CORE_RGL = set(_core.get('shared_include', ())), set(_core.get('rg
 OLD_DIR = _core.get('old_dir', {})
 def old_dir(rel): return OLD_DIR.get(rel, os.path.dirname(rel))
 SRC = os.path.join(ROOT, 'src')
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC  # noqa: E402  (where the sidecar files live)
 PATH_DOCS = ['port/INTEGRATION_STATUS.md', 'docs/layout64_inventory.md']
 
 KEYWORDS = set('''if for while switch return sizeof else do case new delete throw catch operator typedef using
@@ -368,19 +370,16 @@ def find_funcs(f, recs):
 
 def load_rows():
     rows, nonm = {}, set()
-    for dp, dn, fn in os.walk(SRC):
-        for x in fn:
-            p = os.path.join(dp, x)
-            if x.endswith('.manifest.txt'):
-                for l in open(p, errors='replace'):
-                    a = l.split()
-                    if len(a) >= 3 and re.fullmatch(r'[0-9a-fA-F]{6,8}', a[2]):
-                        rows[int(a[2], 16)] = a[1]
-            elif x.endswith('.nonmatching.txt'):
-                for l in open(p, errors='replace'):
-                    a = l.split()
-                    if a and re.fullmatch(r'[0-9a-fA-F]{6,8}', a[0]):
-                        nonm.add(int(a[0], 16))
+    for p in SC.all_manifests(ROOT):
+        for l in open(p, errors='replace'):
+            a = l.split()
+            if len(a) >= 3 and re.fullmatch(r'[0-9a-fA-F]{6,8}', a[2]):
+                rows[int(a[2], 16)] = a[1]
+    for p in SC.all_nonmatching(ROOT):
+        for l in open(p, errors='replace'):
+            a = l.split()
+            if a and re.fullmatch(r'[0-9a-fA-F]{6,8}', a[0]):
+                nonm.add(int(a[0], 16))
     return rows, nonm
 
 

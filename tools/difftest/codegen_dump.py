@@ -5,7 +5,7 @@ header-only change actually changed.
 usage: codegen_dump.py --out FILE.json [--filter substr] [--jobs N=4]
        codegen_dump.py --diff BEFORE.json AFTER.json [--rows]
 
-A row is every VA in src/**/<m>.manifest.txt and <m>.nonmatching.txt. Its fingerprint is the SHA-1 of the
+A row is every VA in match/manifests/**/<m>.manifest.txt and <m>.nonmatching.txt. Its fingerprint is the SHA-1 of the
 function's bytes, its relocations (offset, type, target symbol name) and its symbol name, from one compile
 of the module with the flags equiv.py would use. --diff prints the rows whose fingerprint changed, appeared
 or vanished; rows with identical fingerprints compile to the same code against the same symbols, so their
@@ -17,6 +17,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, HERE)
 os.environ.setdefault("DIFFTEST_NO_LEDGER", "1")
 import slice as S          # noqa: E402
@@ -34,9 +36,8 @@ def norm(name):
 
 def modules(filt):
     out = []
-    for man in sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True)):
-        base = man[:-len(".manifest.txt")]
-        src = base + ".cpp"
+    for man in sorted(SC.all_manifests()):
+        src = SC.source_for(man)
         if filt and filt not in os.path.relpath(src, ROOT):
             continue
         vas = {}
@@ -44,7 +45,7 @@ def modules(filt):
             p = line.split()
             if len(p) >= 3 and not line.startswith("#"):
                 vas[p[2].lower()] = "exact"
-        nm = base + ".nonmatching.txt"
+        nm = SC.nonmatching_for(src)
         if os.path.exists(nm):
             for line in open(nm, encoding="utf-8", errors="replace"):
                 p = line.split()

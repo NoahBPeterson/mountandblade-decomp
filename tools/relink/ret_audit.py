@@ -15,6 +15,8 @@ across it, not a return), body-set, tail-set (written within 8 instructions of a
 import argparse, collections, glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 EAX = {"eax", "ax", "al", "ah"}
 PARTIAL = ("mov", "movzx", "movsx", "fnstsw", "sete", "setne", "setg", "setge", "setl", "setle", "seta", "setae", "setb", "setbe", "setp", "setnp", "sets", "setns", "lahf", "or")
@@ -85,7 +87,7 @@ def main():
     defined = {int(v, 16): d[0] for v, d in rm["defined_at"].items()}
     defined.update({int(v, 16): d[0] for v, d in rm["static_at"].items()})
     exact = set()
-    for mf in glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True):
+    for mf in SC.all_manifests():
         for l in open(mf):
             p = l.split()
             if len(p) >= 3:

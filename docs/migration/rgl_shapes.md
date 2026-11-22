@@ -43,8 +43,8 @@ worse. 0x409980 gets to 104 bytes with `vector4::operator-`/`length()` instead o
 
 - `chk.py` on all 154 VAs: 134 MATCH, the rest are the rows above (interior VAs are checked with COMDAT-wide
   comparisons of the parents).
-- `run_all.py --manifest src/engine/physics/collision_shapes.manifest.txt`: 134 / 134 byte-exact.
-- Resolution audit (`resaudit_all.py --slices src:src/engine/physics/collision_shapes.manifest.txt`): 132 agree, 2 unverified
+- `run_all.py --manifest match/manifests/engine/physics/collision_shapes.manifest.txt`: 134 / 134 byte-exact.
+- Resolution audit (`resaudit_all.py --slices src:match/manifests/engine/physics/collision_shapes.manifest.txt`): 132 agree, 2 unverified
   (0x40c140 `_Copy`: its only reference is `operator delete`, 0x40cb50 `manifold::clone`: a 5-byte tail jump),
   0 disagree, no local copies.
 - Equivalence (`equiv.py shapes <va> --src ... --flags "/O2 /MT /Gy /TP"`): PASS 0x408bd0, 0x409980, 0x409d20,

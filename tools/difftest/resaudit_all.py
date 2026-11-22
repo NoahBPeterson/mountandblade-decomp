@@ -6,13 +6,15 @@ rows can only be trusted when every mapped reference agrees with the original. T
 audits only; nothing is emulated.
 
 usage: resaudit_all.py [--slices id,...] [--part K/N] [--out work/resaudit/<name>.jsonl]
-  default: every match/slices/*/{manifest,nonmatching}.txt row and every src/**/*.manifest.txt row.
+  default: every match/slices/*/{manifest,nonmatching}.txt row and every match/manifests/**/*.manifest.txt row.
   --part K/N audits every N-th source file starting at K (run N processes for parallelism).
 Summary: resaudit_all.py --summary work/resaudit/*.jsonl"""
 import glob, json, os, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, HERE)
 
 
@@ -46,7 +48,7 @@ def rows():
                         out.append(("nonmatching", sid, src, int(p[0], 16), None))
                     except ValueError:
                         pass
-    for m in sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True)):
+    for m in sorted(SC.all_manifests()):
         for line in open(m, errors="replace"):
             p = line.split("#", 1)[0].split()
             if len(p) >= 3 and _hex(p[2]):

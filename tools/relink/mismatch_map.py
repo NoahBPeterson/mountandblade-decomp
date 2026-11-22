@@ -17,6 +17,8 @@ or correct the local declaration); the trial link then resolves it.
 import argparse, collections, glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 import slice as S          # noqa: E402
@@ -44,7 +46,7 @@ def defined_symbols():
             continue
         coff = Coff(o)
         vas = set()
-        for f in (src[:-4] + ".manifest.txt", src[:-4] + ".nonmatching.txt"):
+        for f in (SC.manifest_for(src), SC.nonmatching_for(src)):
             if not os.path.exists(f):
                 continue
             for line in open(f, errors="replace"):

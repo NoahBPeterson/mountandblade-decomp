@@ -3,7 +3,7 @@
 
 usage: run_all.py [--filter substr] [-v] [--manifest path] [--jobs N] [--no-reloc-gate]
 
-Manifests: match/manifest.txt, match/slices/*/manifest.txt, match/clones.txt, match/synth/*.manifest, src/**/*.manifest.txt.
+Manifests: match/manifest.txt, match/slices/*/manifest.txt, match/clones.txt, match/synth/*.manifest, match/manifests/**/*.manifest.txt.
 Each distinct (source, flags) pair is compiled once, in parallel, into its own object file; every
 function is then compared in-process (relocations masked on both sides). Only one run_all may run
 at a time (work/run_all.lock). Results are written to work/verify_results.json.
@@ -30,6 +30,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 import slice as S                                       # the shared object cache (compile_obj)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 IMAGE = os.path.join(ROOT, "work", "mb.analysis.bin")
 OUT = os.path.join(ROOT, "work", "match")
 DEFAULT_FLAGS = ["/O2", "/MT", "/Gy", "/TP"]  # cl 13.10; static CRT; /EHsc only where the original has EH frames
@@ -70,7 +72,7 @@ def manifests(only=None):
     if os.path.exists(os.path.join(ROOT, "match", "clones.txt")):
         m.append(os.path.join(ROOT, "match", "clones.txt"))
     m += sorted(glob.glob(os.path.join(ROOT, "match", "synth", "*.manifest")))
-    m += sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True))   # the decompiled modules
+    m += sorted(SC.all_manifests())   # the decompiled modules
     return m
 
 

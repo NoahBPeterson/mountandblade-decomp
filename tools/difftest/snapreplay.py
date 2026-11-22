@@ -23,6 +23,8 @@ import argparse, bisect, collections, glob, json, os, re, struct, sys
 os.environ.setdefault("DIFFTEST_OBJ_BASE", "0x38000000")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 
@@ -67,8 +69,8 @@ def parse(path):
 
 def module_of(va):
     """(module stem, source path) whose bookkeeping lists va."""
-    for f in glob.glob(os.path.join(ROOT, "src", "**", "*.nonmatching.txt"), recursive=True) + \
-            glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True):
+    for f in SC.all_nonmatching() + \
+            SC.all_manifests():
         for line in open(f, errors="replace"):
             p = line.split()
             if p and ("%08x" % va) in p[:3]:

@@ -31,6 +31,8 @@ equiv.prepare / Splicer path as every other hook. Combine with --hook to add the
 import argparse, glob, json, os, struct, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 import pefile                                   # noqa: E402
 from coff import REL_DIR32, REL_DIR32NB, REL_REL32   # noqa: E402
@@ -110,9 +112,9 @@ def manifest_targets(paths):
     for path in paths:
         path = os.path.abspath(path)
         if path.endswith(".nonmatching.txt"):
-            # this project's module layout: src/<area>/<dir>/<stem>.nonmatching.txt next to <stem>.cpp; the module stem
+            # this project's module layout: match/manifests/<area>/<dir>/<stem>.nonmatching.txt for src/<area>/<dir>/<stem>.cpp; the module stem
             # is the id equiv.py and the sweeps use for it (slice.choose_flags reads <stem>.manifest.txt)
-            src = path[:-len(".nonmatching.txt")] + ".cpp"
+            src = SC.source_for(path)
             sid = os.path.basename(src)[:-4]
             for line in open(path):
                 p = line.split("#")[0].split()
@@ -674,7 +676,7 @@ def main():
     ap.add_argument("--no-patches", action="store_true")
     ap.add_argument("--hook", default="none", help="pass | none | FILE of '<slice> <va>' lines")
     ap.add_argument("--hook-manifest", nargs="+", metavar="NONMATCHING",
-                    help="hook the functions of module TUs: src/**/<stem>.nonmatching.txt files, or 'all' for every "
+                    help="hook the functions of module TUs: match/manifests/**/<stem>.nonmatching.txt files, or 'all' for every "
                          "one (the older src/game/<dir>/<Stem>/nonmatching.txt layout is still read)")
     ap.add_argument("--manifest-verdicts", choices=("pass", "weak", "all"), default="pass",
                     help="--hook-manifest rows to hook: 'pass' (default) = those whose latest strict equiv verdict in "
@@ -707,7 +709,7 @@ def main():
         targets = [] if a.hook == "none" else pass_targets() if a.hook == "pass" else file_targets(a.hook)
         if a.hook_manifest:
             if a.hook_manifest == ["all"]:
-                a.hook_manifest = sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.nonmatching.txt"), recursive=True))
+                a.hook_manifest = sorted(SC.all_nonmatching())
             mt = manifest_targets(a.hook_manifest)
             print("%d manifest targets from %d file(s)" % (len(mt), len(a.hook_manifest)))
             if a.manifest_verdicts != "all":

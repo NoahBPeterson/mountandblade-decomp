@@ -2,7 +2,7 @@
 
 Read-only analysis (nothing under `src/` was touched). Inputs: `work/migrate/facts.json` (per-function calls, absolute
 data references, register-argument scan), the shared analysis image (`resolve.R.Image()`: `.CRT$XCU` table at
-0x5a8008..0x5a80c0 and relocations), `src/**/*.manifest.txt` / `*.nonmatching.txt` for our module of each function
+0x5a8008..0x5a80c0 and relocations), `match/manifests/**/*.manifest.txt` / `*.nonmatching.txt` for our module of each function
 (3277 rows cover 3265 of the 3298 functions below 0x534300) and the unmatched bytes (the diff-byte column of the
 nonmatching rows; `work/near_miss.json` has no byte count for 130 of its rows, so I used the row files). The tree is
 being edited while I read it (for example `map_panel.cpp` already holds the former map_update/map_picker/map_info, with map_tooltip kept separate because `update` needs its bodies opaque), so

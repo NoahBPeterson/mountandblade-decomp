@@ -15,6 +15,8 @@ import argparse, collections, difflib, glob, json, os, re, sys
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 os.chdir(ROOT)
 import capstone, coff, equiv as E, slice as S   # noqa: E402
@@ -90,8 +92,8 @@ def align(img, c, sym, va):
 
 def rows():
     out = {}
-    for nm in sorted(glob.glob("src/**/*.nonmatching.txt", recursive=True)):
-        src = nm[:-len(".nonmatching.txt")] + ".cpp"
+    for nm in sorted(SC.all_nonmatching()):
+        src = SC.source_for(nm)
         if os.path.exists(src):
             for line in open(nm, encoding="utf-8", errors="replace"):
                 m = re.match(r"^([0-9a-fA-F]{8})\s", line)

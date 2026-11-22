@@ -19,6 +19,8 @@ launcher), waits, ends it, and collects the snapshots.
 import argparse, glob, os, re, shutil, struct, subprocess, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
@@ -32,7 +34,7 @@ COPY = "mb_capture.exe"
 
 def nonmatching_vas():
     vas = set()
-    for f in glob.glob(os.path.join(ROOT, "src", "**", "*.nonmatching.txt"), recursive=True):
+    for f in SC.all_nonmatching():
         for line in open(f, errors="replace"):
             p = line.split()
             if p and re.fullmatch(r"[0-9a-fA-F]{8}", p[0]):

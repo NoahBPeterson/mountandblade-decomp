@@ -16,6 +16,8 @@ Coverage is computed by tools/status.py itself (run via runpy), so the numbers m
 import collections, contextlib, datetime, glob, io, json, os, re, runpy, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC  # noqa: E402  (where the sidecar files live)
 W = lambda *p: os.path.join(ROOT, *p)
 
 _argv, sys.argv = sys.argv, [W("tools", "status.py"), "--no-write"]
@@ -534,18 +536,19 @@ def _verdict_data():
 def _files_by_function():
     """VA -> source/manifest file that claims it (first claim wins), from the src module and slice manifests."""
     out = {}
-    for pat, col in (("src/**/*.manifest.txt", 2), ("src/**/*.nonmatching.txt", 0), ("src/**/*.partial.txt", 0),
-                     ("match/manifest.txt", 2), ("match/slices/*/manifest.txt", 2),
+    claims = [(f, 2, os.path.splitext(SC.source_rel_for(f))[0]) for f in SC.all_manifests()] + \
+             [(f, 0, os.path.splitext(SC.source_rel_for(f))[0]) for f in SC.all_nonmatching() + SC.all_partials()]
+    for pat, col in (("match/manifest.txt", 2), ("match/slices/*/manifest.txt", 2),
                      ("match/slices/*/nonmatching.txt", 0), ("match/slices/*/partial.txt", 0)):
-        for f in glob.glob(W(pat), recursive=True):
-            rel = os.path.relpath(f, ROOT).replace(os.sep, "/")
-            for line in open(f):
-                p = line.split("#", 1)[0].split()
-                if len(p) > col:
-                    try:
-                        out.setdefault(int(p[col], 16), rel)
-                    except ValueError:
-                        pass
+        claims += [(f, col, os.path.relpath(f, ROOT).replace(os.sep, "/")) for f in glob.glob(W(pat), recursive=True)]
+    for f, col, rel in claims:       # rel: the module's source path without extension (src/...), or the slice file
+        for line in open(f):
+            p = line.split("#", 1)[0].split()
+            if len(p) > col:
+                try:
+                    out.setdefault(int(p[col], 16), rel)
+                except ValueError:
+                    pass
     return out
 
 

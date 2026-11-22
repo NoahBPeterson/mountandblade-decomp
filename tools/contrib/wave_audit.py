@@ -22,6 +22,8 @@ Exit 1 if anything was flagged.
 import argparse, json, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC  # noqa: E402  (where the sidecar files live)
 PY = sys.executable
 
 
@@ -49,17 +51,15 @@ def measure(src, va):
 
 
 def all_rows():
-    """Every address listed by any .nonmatching.txt or .manifest.txt in src/ now."""
+    """Every address listed by any .nonmatching.txt or .manifest.txt now."""
     out = set()
-    for d, _, fs in os.walk(os.path.join(ROOT, "src")):
-        for f in fs:
-            if f.endswith(".nonmatching.txt"):
-                out.update(rows_of(open(os.path.join(d, f), errors="replace").read()))
-            elif f.endswith(".manifest.txt"):
-                for l in open(os.path.join(d, f), errors="replace"):
-                    p = l.split("#", 1)[0].split()
-                    if len(p) >= 3 and re.fullmatch(r"[0-9a-fA-F]{8}", p[2]):
-                        out.add(p[2].lower())
+    for p in SC.all_nonmatching():
+        out.update(rows_of(open(p, errors="replace").read()))
+    for p in SC.all_manifests():
+        for l in open(p, errors="replace"):
+            p_ = l.split("#", 1)[0].split()
+            if len(p_) >= 3 and re.fullmatch(r"[0-9a-fA-F]{8}", p_[2]):
+                out.add(p_[2].lower())
     return out
 
 
@@ -100,7 +100,8 @@ def main():
     flagged = 0
     listed = all_rows()
     for mod, vas in sorted(mods.items()):
-        cpp, nm = mod + ".cpp", mod + ".nonmatching.txt"
+        cpp = mod + ".cpp"
+        nm = os.path.relpath(SC.nonmatching_for(cpp), ROOT)
         head = git("show", "HEAD:" + cpp)
         cur = open(os.path.join(ROOT, cpp), errors="replace").read() if os.path.exists(os.path.join(ROOT, cpp)) else ""
         if head and len(cur.split("\n")) < len(head.split("\n")) / 2:

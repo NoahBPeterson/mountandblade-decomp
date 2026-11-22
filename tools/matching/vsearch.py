@@ -33,6 +33,8 @@ from cmpobj import parse_coff, REL_SIZES, coff_constants, constant_diffs   # noq
 from run_all import Original, winpath, CL, DEFAULT_FLAGS, INCLUDE, ROOT, resolve_flags   # noqa: E402
 from card import load_funcs, bounds   # noqa: E402
 import chk   # noqa: E402
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC   # noqa: E402  (where the sidecar files live)
 
 WORK = os.path.join(ROOT, "work", "vsearch")
 KEYWORDS = set("""if else for while do return break continue switch case default goto sizeof int unsigned signed char short
@@ -737,7 +739,7 @@ def search(src, va, rounds=8, jobs=24, keep_unsafe=False, log=print, beam=1):
 
 
 def row_flags(src, va):
-    mf = src.rsplit(".", 1)[0] + ".manifest.txt"
+    mf = SC.manifest_for(src)
     if os.path.exists(mf):
         for l in open(mf):
             p = l.split("#", 1)[0].split()
@@ -770,8 +772,8 @@ def report(r, apply=False, keep_unsafe=False, log=print):
 
 def nonmatching_rows(max_aligned):
     rows = []
-    for nm in glob.glob(os.path.join(ROOT, "src", "**", "*.nonmatching.txt"), recursive=True):
-        src = nm[:-len(".nonmatching.txt")] + ".cpp"
+    for nm in SC.all_nonmatching():
+        src = SC.source_for(nm)
         if not os.path.exists(src):
             continue
         text = open(src).read()

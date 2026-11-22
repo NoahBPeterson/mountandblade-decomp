@@ -8,7 +8,7 @@ after the CRT: the constructors of the game's file-scope globals; src/game/stati
 and unwind funclets are compiler-generated with their parent functions and are not counted separately.
 
 Tiers (from match/manifest.txt, match/slices/*/{manifest,nonmatching,partial}.txt and the migrated modules'
-src/**/<module>.{manifest,nonmatching,partial}.txt):
+match/manifests/**/<module>.{manifest,nonmatching,partial}.txt):
   byte-exact  - listed in a manifest (run_all.py verifies them; results in work/match/... json)
   equivalent  - complete source, not byte-exact (nonmatching.txt)
   partial     - incomplete source (partial.txt), not counted as decompiled
@@ -19,6 +19,8 @@ usage: status.py [--no-write]
 import csv, glob, os, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC  # noqa: E402  (where the sidecar files live)
 W = lambda *p: os.path.join(ROOT, *p)
 GAME_END = 0x5342A6
 INIT_LO, INIT_HI = 0x5479A0, 0x54856E    # the game's dynamic initializers and their atexit destructors
@@ -43,8 +45,9 @@ game = {a for a in starts if (a < GAME_END or INIT_LO <= a < INIT_HI) and a not 
 
 
 def rows(pattern, col):
+    """the rows of the files matching a glob under the repository root, or of a list of files (SC.all_*())"""
     out = set()
-    for f in glob.glob(W(pattern), recursive=True):
+    for f in (pattern if isinstance(pattern, list) else glob.glob(W(pattern), recursive=True)):
         for line in open(f):
             p = line.split("#", 1)[0].split()
             if len(p) > col:
@@ -55,11 +58,11 @@ def rows(pattern, col):
     return out
 
 
-src_exact = rows("src/**/*.manifest.txt", 2)
-src_equiv = rows("src/**/*.nonmatching.txt", 0) - src_exact
+src_exact = rows(SC.all_manifests(), 2)
+src_equiv = rows(SC.all_nonmatching(), 0) - src_exact
 exact = rows("match/manifest.txt", 2) | rows("match/slices/*/manifest.txt", 2) | src_exact
 equiv = (rows("match/slices/*/nonmatching.txt", 0) | src_equiv) - exact
-partial = (rows("match/slices/*/partial.txt", 0) | rows("src/**/*.partial.txt", 0)) - exact - equiv
+partial = (rows("match/slices/*/partial.txt", 0) | rows(SC.all_partials(), 0)) - exact - equiv
 migrated = src_exact | src_equiv
 G, B = len(game), sum(size[a] for a in game)
 pct = lambda n, d: "%.2f%%" % (100.0 * n / d) if d else "-"

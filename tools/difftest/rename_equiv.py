@@ -3,7 +3,7 @@
 differently?
 
 usage: rename_equiv.py [--filter SUBSTR] [--va VA ...] [--json OUT] [-v]
-       (default: every src/**/*.nonmatching.txt row)
+       (default: every match/manifests/**/*.nonmatching.txt row)
 
 No emulation. Both instruction lists are paired one to one: the same count, the same mnemonics, the same operand
 shapes and sizes, branches to the same instruction index, and every non-stack memory operand / immediate address /

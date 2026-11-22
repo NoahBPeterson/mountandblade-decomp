@@ -54,8 +54,8 @@ reports `link_inputs STALE` when a source change needs `--write-inputs`. The `--
 ## Source tree
 `src/engine/` is the rgl layer (render, scene, physics, resources, math, streams), `src/game/<subsystem>/` the Mount & Blade code
 (agent, campaign, mission, party, script, ui ...), `src/platform/dxframework/` the DirectX sample framework and
-`src/third_party/tinyxml/` TinyXML. Every `#include` is rooted at `src/` (`"engine/math/mat4.h"`, `"game/data/troop.h"`); a `.cpp` keeps its
-`.manifest.txt` / `.nonmatching.txt` / `.partial.txt` beside it. The plan and the old-to-new table are `docs/source_tree.md` and
+`src/third_party/tinyxml/` TinyXML. Every `#include` is rooted at `src/` (`"engine/math/mat4.h"`, `"game/data/troop.h"`); a `.cpp`'s
+`.manifest.txt` / `.nonmatching.txt` / `.partial.txt` sidecars live in the mirror tree `match/manifests/<path under src/>/` (`tools/common/sidecars.py` is the one place that knows). The plan and the old-to-new table are `docs/source_tree.md` and
 `docs/source_tree_moves.tsv`, the notes of the former directories `docs/migration/`, the tool that moved everything
 `tools/migrate/restructure.py`.
 

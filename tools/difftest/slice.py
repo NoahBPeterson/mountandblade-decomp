@@ -7,6 +7,8 @@ import glob, hashlib, os, re, subprocess, sys, threading, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC  # noqa: E402  (where the sidecar files live)
 
 from coff import Coff  # noqa: E402
 from winnative import CL, WIN, winpath  # noqa: E402  (cl.sh under wine on the Mac, cl.exe on Windows; wine / native paths)
@@ -52,7 +54,7 @@ def manifest_rows(sid):
     if not os.path.exists(path):
         # a migrated module (src/<area>/<stem>.cpp): its rows are in src/<area>/<stem>.manifest.txt, and the mangled
         # names there are the only binding for compiler-generated functions and same-size template instances
-        hits = glob.glob(os.path.join(ROOT, "src", "**", sid + ".manifest.txt"), recursive=True)
+        hits = [f for f in SC.all_manifests() if SC.stem_of(f) == sid]
         if len(hits) != 1:
             return out
         path = hits[0]

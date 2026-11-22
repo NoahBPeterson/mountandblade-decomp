@@ -3,7 +3,7 @@
 
 usage: insn_exact_sweep.py [--jobs 4] [--filter SUBSTR] [--out docs/insn_exact.json]
 
-Rows come from src/**/<module>.nonmatching.txt (their source is <module>.cpp next to it). Byte-exact rows
+Rows come from match/manifests/**/<module>.nonmatching.txt (their source is src/<same path>/<module>.cpp; tools/common/sidecars.py). Byte-exact rows
 (manifest.txt) are instruction-exact by definition and are not re-checked. A function whose row says it is a
 switch with a jump table is also compared case by case (--cases) when insn_exact.py finds a dispatch; the case
 summary is recorded next to the function verdict. tools/progress.py reads the output file.
@@ -12,14 +12,16 @@ import argparse, datetime, glob, json, os, re, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 TOOL = os.path.join(ROOT, "tools", "matching", "insn_exact.py")
 PY = sys.executable
 
 
 def rows():
     out = {}
-    for nm in sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.nonmatching.txt"), recursive=True)):
-        src = nm[:-len(".nonmatching.txt")] + ".cpp"
+    for nm in sorted(SC.all_nonmatching()):
+        src = SC.source_for(nm)
         if not os.path.exists(src):
             continue
         for l in open(nm, encoding="utf-8", errors="replace"):

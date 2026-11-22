@@ -47,7 +47,7 @@ s00413320 4 (of which `vector<vertex60>::erase/resize` are `particle_system.cpp`
   (`local_a1 ? kf : parent->get_kf()`, `get_kf` an out-of-line, non-inlined loop) the frame matches.
 
 **Regressions:** none. Every function that was byte-exact in its slice is byte-exact in `mesh_obj`
-(`run_all.py --manifest src/engine/render/mesh.manifest.txt`: 114 / 114).
+(`run_all.py --manifest match/manifests/engine/render/mesh.manifest.txt`: 114 / 114).
 
 **Closer, still nonmatching** (diff bytes, slice -> module):
 0x413750 `mesh::render` 16 -> 8, 0x412fe0 `mesh::append` 561 -> 360 (their remaining diffs below).
@@ -213,7 +213,7 @@ the less obvious ones):
 
 ## Resolution audit
 
-`resaudit_all.py --slices src:src/engine/render/mesh.manifest.txt` (114 rows, `scratch_particles_audit.jsonl`):
+`resaudit_all.py --slices src:match/manifests/engine/render/mesh.manifest.txt` (114 rows, `scratch_particles_audit.jsonl`):
 **109 agree**, 5 unverified, 0 not-audited, 0 disagree.
 - The 5 unverified are the large `_Insert_n` instances (0x40fed0, 0x4101a0, 0x4108b0, 0x410b60, 0x410dc0): the
   audit decodes only up to the next function symbol, and the calls they make (`_Uninit_copy`, `fill`,

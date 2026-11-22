@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """sweep_nonmatching.py: re-run equiv on every nonmatching row (match/slices/*/nonmatching.txt and
-src/**/*.nonmatching.txt) and tally every mismatch, not just the first (equiv's mismatch_sigs).
+match/manifests/**/*.nonmatching.txt) and tally every mismatch, not just the first (equiv's mismatch_sigs).
 
 usage: sweep_nonmatching.py [--out DIR=work/sweep] [--workers N=6] [--filter substr] [--tally] [--extra "..."]
 Each row runs `equiv.py <id> <va> [--src <module.cpp>] --fp-tol --max-mismatch 200 --json <out>/<id>_<va>.json`;
@@ -13,6 +13,8 @@ import argparse, collections, glob, json, os, re, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 PY = os.path.join(ROOT, ".venv", "Scripts", "python.exe") if sys.platform == "win32" else os.path.join(ROOT, ".venv", "bin", "python")
 EQ = os.path.join(ROOT, "tools", "difftest", "equiv.py")
 ROW = re.compile(r"^([0-9a-fA-F]{8})\s+\S+\s+(.*)$")
@@ -82,9 +84,9 @@ def _claims():
             if m:
                 out.append({"id": sid, "va": m[1].lower(), "src": None, "reason": m[2][:2000],
                             "file": os.path.relpath(p, ROOT)})
-    for p in sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.nonmatching.txt"), recursive=True)):
-        mod = os.path.basename(p)[:-len(".nonmatching.txt")]
-        src = p[:-len(".nonmatching.txt")] + ".cpp"
+    for p in sorted(SC.all_nonmatching()):
+        mod = SC.stem_of(p)
+        src = SC.source_for(p)
         for line in open(p, encoding="utf-8", errors="replace"):
             m = ROW.match(line.strip())
             if m:
@@ -96,9 +98,9 @@ def _claims():
 def _module_manifest_vas():
     """VA -> (module, module source) for every function a src module's manifest binds (its compiled object)."""
     out = {}
-    for p in sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True)):
-        mod = os.path.basename(p)[:-len(".manifest.txt")]
-        src = os.path.relpath(p[:-len(".manifest.txt")] + ".cpp", ROOT)
+    for p in sorted(SC.all_manifests()):
+        mod = SC.stem_of(p)
+        src = os.path.relpath(SC.source_for(p), ROOT)
         for line in open(p, encoding="utf-8", errors="replace"):
             q = line.split("#", 1)[0].split()
             if len(q) > 2:

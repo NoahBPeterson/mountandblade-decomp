@@ -8,7 +8,7 @@ their source changed in ways that keep the behaviour but move the frame layout, 
   uv run python tools/equiv/corpus/perturb.py negatives [--sample 20] [--remote]
   uv run python tools/equiv/corpus/perturb.py summary
 
-gen: the rows of the byte-exact manifests (src/**/*.manifest.txt, match/slices/*/manifest.txt) whose original
+gen: the rows of the byte-exact manifests (match/manifests/**/*.manifest.txt, match/slices/*/manifest.txt) whose original
 allocates a frame (sub esp, N >= 8), at most --max-funcs of them. Each source is taken from git HEAD (src/ is never
 edited: the copy goes to work/equiv/perturb/src/<id>/), compiled unchanged first (the baseline: the function must
 still be byte-exact there, else the source is skipped), then once per perturbation of one function:
@@ -38,6 +38,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 HERE = os.path.dirname(os.path.abspath(__file__))
 EQ = os.path.dirname(HERE)
 ROOT = os.path.dirname(os.path.dirname(EQ))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 PROVED = ("EQUIVALENT", "EQUIVALENT-O")    # prove.py PROVED (EQUIVALENT-O: under the frame model, assumption O)
 WORK = os.path.join(ROOT, "work", "equiv", "perturb")
 sys.path.insert(0, EQ)
@@ -411,7 +413,7 @@ def perturbations(src, sym, rng):
 # ============================================================================ manifests, compile, classify
 def manifest_rows():
     rows = []
-    files = glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True) + \
+    files = SC.all_manifests() + \
         glob.glob(os.path.join(ROOT, "match", "slices", "*", "manifest.txt"))
     for f in sorted(files):
         for ln in open(f):

@@ -138,7 +138,7 @@ a real call (0x4378a0) except in the two functions where the original inlines it
 
 ## Verification
 
-- `tools/matching/run_all.py --manifest src/game/agent4/agent_logic.manifest.txt`: 23 / 23 byte-exact.
+- `tools/matching/run_all.py --manifest match/manifests/game/agent4/agent_logic.manifest.txt`: 23 / 23 byte-exact.
 - `tools/matching/compile_all.py --filter src/game/agent4`: compiled.
 - Resolution audit (`tools/difftest/resaudit_all.py`): 23 of 23 agree (`symbols/slices/agent_logic.txt` names
   `rgl::mat4::operator*` 0x40e870 and the symbols the nonmatching rows need).

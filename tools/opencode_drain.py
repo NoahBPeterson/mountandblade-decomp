@@ -28,6 +28,8 @@ import argparse, base64, glob, json, os, re, subprocess, sys, time, urllib.error
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 W = lambda *p: os.path.join(ROOT, *p)
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC  # noqa: E402  (where the sidecar files live)
 
 
 def svc():
@@ -113,13 +115,13 @@ def progress(k, unsettled=None):
                 done += len(left)
                 want -= left
             seen = set()
-            for f in ("manifest.txt", "nonmatching.txt", "partial.txt"):
-                p = W("src/game", BATCH[i]["module"], f)
+            for f in SC.KINDS:
+                p = SC.sidecar_for(BATCH[i]["module"] + ".cpp", f)       # "module": the source path under the repository root, without .cpp
                 if not os.path.exists(p):
                     continue
                 for l in open(p):
                     parts = l.split("#", 1)[0].split()
-                    va = (parts[2] if f == "manifest.txt" and len(parts) > 2 else parts[0] if parts else "").lower()
+                    va = (parts[2] if f == "manifest" and len(parts) > 2 else parts[0] if parts else "").lower()
                     va = va[2:] if va.startswith("0x") else va
                     if va in want:
                         seen.add(va)

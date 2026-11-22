@@ -31,6 +31,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 import slice as S                                   # noqa: E402
@@ -142,8 +144,8 @@ def notes():
     global _NOTES
     if _NOTES is None:
         _NOTES = {}
-        for p in sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.nonmatching.txt"), recursive=True)):
-            mod = os.path.basename(p)[:-len(".nonmatching.txt")]
+        for p in sorted(SC.all_nonmatching()):
+            mod = SC.stem_of(p)
             rel = os.path.relpath(p, ROOT)
             for va, _diff, reason in S.read_rows(p):
                 _NOTES[va] = (mod, rel, reason)
@@ -181,7 +183,7 @@ def module_source(row, override=None):
         return os.path.abspath(override)
     f = row.get("file") or ""
     if f.endswith(".nonmatching.txt"):
-        p = os.path.join(ROOT, f[:-len(".nonmatching.txt")] + ".cpp")
+        p = os.path.join(ROOT, SC.source_for(f))
         if os.path.exists(p):
             return p
     if f.endswith(".cpp"):

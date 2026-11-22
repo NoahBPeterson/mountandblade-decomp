@@ -5,9 +5,11 @@ import glob, json, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "difftest"))
 os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import slice as S, coff, equiv as E
+sys.path.insert(0, os.path.join(os.getcwd(), "tools", "common"))
+import sidecars as SC
 img = E.context()["img"]
 rows = []
-for m in glob.glob("match/slices/*/manifest.txt") + glob.glob("src/**/*.manifest.txt", recursive=True):
+for m in glob.glob("match/slices/*/manifest.txt") + SC.all_manifests():
     for l in open(m):
         p = l.split("#", 1)[0].split()
         if len(p) >= 3:

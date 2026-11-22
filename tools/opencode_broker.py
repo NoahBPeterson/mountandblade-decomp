@@ -38,8 +38,10 @@ if SRC_MODULES:
     # Byte-matching batches: "module" is the full source path without .cpp. A session may write that .cpp, its two
     # bookkeeping files, its symbol slice and scratch files; never a header.
     MODS = "(?:" + "|".join(map(re.escape, MODULES)) + ")"
-    ALLOWED_PATH = re.compile(r"^(?:%s/)?(?:%s(?:\.cpp|\.manifest\.txt|\.nonmatching\.txt)|symbols/slices/%s\.txt|work/match/.*)$"
-                              % (re.escape(ROOT), MODS, IDS))
+    # the sidecars sit in the mirror tree match/manifests/<path under src/> (tools/common/sidecars.py)
+    MODS_SC = "(?:" + "|".join(re.escape("match/manifests/" + m[len("src/"):]) for m in MODULES) + ")"
+    ALLOWED_PATH = re.compile(r"^(?:%s/)?(?:%s\.cpp|%s\.(?:manifest|nonmatching)\.txt|symbols/slices/%s\.txt|work/match/.*)$"
+                              % (re.escape(ROOT), MODS, MODS_SC, IDS))
     MIGRATE_TOOL = ""
 elif MODULES:
     MODS = "(?:" + "|".join(map(re.escape, MODULES)) + ")"

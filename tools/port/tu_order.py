@@ -12,14 +12,15 @@ usage: tu_order.py [--check]     (--check: exit 1 if the file is out of date)
 import glob, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC  # noqa: E402  (where the sidecar files live)
 OUT = os.path.join(ROOT, "port", "link", "tu_order.txt")
 HEX = re.compile(r"^[0-9a-fA-F]{8}$")
 
 
 def lowest_va(cpp):
-    stem = cpp[:-4]
     best = None
-    for path, col in ((stem + ".manifest.txt", 2), (stem + ".nonmatching.txt", 0)):
+    for path, col in ((SC.manifest_for(cpp), 2), (SC.nonmatching_for(cpp), 0)):
         if not os.path.exists(path):
             continue
         for line in open(path, encoding="utf-8", errors="replace"):

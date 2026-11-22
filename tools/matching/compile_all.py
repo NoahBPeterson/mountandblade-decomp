@@ -10,6 +10,8 @@ import argparse, collections, glob, json, os, sys
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+import sidecars as SC          # noqa: E402  (where the sidecar files live)
 sys.path.insert(0, os.path.join(ROOT, "tools", "difftest"))
 import slice as S                                   # noqa: E402
 
@@ -42,7 +44,7 @@ def sources():
             continue
         if os.path.basename(src).startswith("_dataaudit_"):
             continue        # data_size_audit.py's probe copies (left behind when a build is killed mid-audit)
-        out.append((src, manifest_flags(src[:-4] + ".manifest.txt") or DEFAULT))
+        out.append((src, manifest_flags(SC.manifest_for(src)) or DEFAULT))
     return out
 
 
