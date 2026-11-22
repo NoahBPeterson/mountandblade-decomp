@@ -43,14 +43,16 @@ Columns: row, diff class (from `check.py`), c2scope tools used, what it predicte
   defined as `{}` in shapes.cpp next to shape_base::draw (the linker folds the two empty bodies, as in the original).
   One compile, 6 min including reading why the previous lane used a call to 0x477b70.
 
-### 0x4e9d10 Party::write, 0x4e99d0 Pool<Event>::write_table, 0x4e9c50 PartyMgr::write_table: byte-exact, then withdrawn
+### 0x4e9d10 Party::write, 0x4608d0, 0x4bdd50 (stream rows): byte-exact with the right field types
 - Class: codegen shape (a copy of the member to a stack temp, `lea eax,[esp+0x14]`, instead of `lea eax,[edi+0x74]`).
-- c2scope not used: `check.py` showed it. The by-value `w_int(unsigned v)` / `w_bool(bool v)` of stream.h copy the member to a
-  temp; the original passes the member's address. Passing the address needs `(int*)&v` (or a const_cast): a view cast over
-  an unsigned / bool, which this phase removes. Landed with `w_int(unsigned&)` and then withdrawn on review: all four typed
-  wrappers are the seeded-temporary form again (`int t = (int)v; r_int(&t); v = (unsigned)t`), the three rows (and 0x4bdd50,
-  0x4608d0, 0x51e840, which matched only through the direct `r_int(unsigned&)`) are back in their nonmatching files with a
-  re-run equiv verdict. `write_table`'s `w_int(&count)` (count is an int) stays: it calls the int slot directly.
+- c2scope not used: `check.py` showed it. stream.h had typed by-value / reference wrappers (`w_int(unsigned v)`, `r_int(unsigned&)`
+  via `(int*)&v`, a temporary, or a const_cast); all four are deleted. The call sites call the slot the original calls
+  (`insn_align` showed a 1-byte vtable displacement difference when a site used r_uint where the original has r_int) and the
+  field has the type that slot takes: Party::personality, DialogRec::flags, SpawnRec::flags2 are int, Party::flag a char.
+  Pool::serial and SkillRec::attr stay unsigned (the original compares / shifts them unsigned, share_experience 0x494b60 and
+  fill_skills 0x509730 break when they are int) and use r_uint / w_uint: the three rows that touch serial (0x4e99d0, 0x4e9c50,
+  0x51e840) are 1 byte off (slot 7 / 16 against the original's 8 / 19, one ICF'd function); equiv FAIL there is the harness
+  (its fake stream tells the slots apart). So the original source evidently read an unsigned field through the int slot.
 
 ## Rows where c2scope explained the diff but gave no lever
 
@@ -117,11 +119,11 @@ constructor order). Rows that are allocator / scheduler / frame diffs and were t
 | row | question | answer | held? | outcome |
 |---|---|---|---|---|
 | 0x529d80 sync_scene_props (12) | `regmap`: why eax/edi swap? | t146 wants eax: "RewriteAsReal/RegSimpleAssign without a RegAssign call (not modelled by rasim)" | true but the model has no edit for it | none |
-| same | `icount` (14 s): which instruction? | MISSING `lea edi,[eax+ecx]` (line 1844 `r = &props[i]`) removed by Riscify_undo: "a split memory operand put back into its use, as a new tuple, unless the scheduler separated them"; ours folds the add into `[edi+ecx+0x10]` and adds later | yes, exactly the diff | not a source edit; tsweep of 6 spellings of `r` (reference, index, begin()+i, ...): rdiff 5 for the base, 24-29 for the others; effectmine --want bdiff (200 compiles, running at the time of writing) |
+| same | `icount` (14 s): which instruction? | MISSING `lea edi,[eax+ecx]` (line 1844 `r = &props[i]`) removed by Riscify_undo: "a split memory operand put back into its use, as a new tuple, unless the scheduler separated them"; ours folds the add into `[edi+ecx+0x10]` and adds later | yes, exactly the diff | not a source edit; tsweep of 6 spellings of `r` (reference, index, begin()+i, ...): rdiff 5 for the base, 24-29 for the others; effectmine --want bdiff (210 traced compiles, 40 min on a shared laptop; first run void, see tool state): best variants rdiff 5 bdiff 6 = the base, all code-neutral; 0 improve |
 | 0x524420 Troop::read_file (8) | `regmap` | t814 (`base += ftoi_floor(t)`) wants ebp: `add ebp,eax` not `add eax,ebp`: "the IL's operand order" | yes | `symkeys sites` shows line 31 `OPADD(ftoi_floor temp [SU0 n2 h027c], base [SU0 n1 h0120])`: the count (2 vs 1) decides, `levers --site '31:_base>_t@ftoi_floor#1'` with 2880 single edits: 0 sets: correct and explains why no key edit helps; tsweep of 5 spellings (`+=`, `a = a + b`, `b + a`, via a local): identical code. The other diff of this row (the second table read is `[ebx+4]` of one symbol in ours, a separate label in the original) is data identity, not the allocator |
 | 0x406e50 DialogProc | `realize.py --from scratch` (the automatic scratch-pick realiser) | "18 of 18 known picks on the original's register ... 0 answers read" | WRONG: `regmap` and `rasim scratch` on the same function say picks 6 and 7 are swapped; realize reads the wrong snapshot (or counts only picks it knows) and searches nothing | tool gap: no answer |
 | 0x51c090 draw_party_line | `realize.py --from slots` (60 compiles) | its candidates are `if ((int)x & 1) ... else ...` arms (construct `eqif`), which move the `_info` / `_skill` offsets but cost +100 bytes; closest 5/14 offsets right | model right, constructs unusable (they are the README's "not what the original had" trick) | none |
-| 0x4ea030 id_remove | `rwsweep` (475 mechanical rewrites: wrap 49, alias 43, touch 355 ...) | see below | | |
+| 0x4ea030 id_remove (8) | `rwsweep` (all families, 475 compiled variants: wrap 49, alias 43, swap 2, split 2, reread 2, touch 355, cflow 9, cmp 4, paren 5, const 4; 42 min on a shared laptop) | "0 code-neutral variants improve the gap or the score; 0 variants that change the code improve the score" (base rdiff 1 bdiff 4) | the search space is right (a moved store is exactly what touch / alias / swap perturb) and it is exhaustive for those families | not matched; first attempt (22 min) was void: I edited stream.h while it ran and its variants stopped compiling (rwsweep and effectmine read the live tree's headers: never edit during a run) |
 | 0x4cee50 / 0x4dc350 | `sched --all` | the difference is in the pre-schedule order / an 81-tuple region cut | | none |
 
 Tool state for 13.10 (what is broken or thin, exactly):
@@ -131,8 +133,9 @@ Tool state for 13.10 (what is broken or thin, exactly):
 - `realize.py --from scratch` reports 18/18 picks right on 0x406e50 where `regmap` / `rasim scratch` report two wrong picks.
 - `tools/contrib/c2.py` passes `--c2 13.10.3052` to tsweep and `13.10` (3077) to the rest; the docs say both builds give identical
   listings, no difference was seen.
-- `effectmine` costs 5 to 38 minutes per row (the laptop was shared) and found nothing in 4 runs (item_events, blend_indexed,
-  draw_party_line, sync_scene_props); its best variants were always code-changing (`eqif`) or neutral.
+- `rwsweep` / `effectmine` read the working tree's headers while they run: an edit during a run makes the later variants fail to compile (it happened to two runs here; both were re-run on a stable tree).
+- `effectmine` costs 5 to 38 minutes per row (the laptop was shared) and found nothing in 4 runs (item_events 5 min, blend_indexed 38 min,
+  draw_party_line 11 min, sync_scene_props 40 min); its best variants were always code-changing (`eqif`) or neutral.
 - c2scope's own `tools/c2trace.py` (local wine) works for 13.10 on M&B sources (6 s); remote traced compiles go through
   `../vs2005-cpp`'s client.
 
@@ -149,7 +152,7 @@ Rows worked this session (type-recovery rows that were nonmatching):
 
 | outcome | rows |
 |---|---|
-| back to byte-exact | 0x509730, 0x489820 (batch 1) + 0x48c570 (`static_cast<Rec8*>(memmove(..)) + n`), 0x4ca600 / 0x494260 (`unsigned char` cursor flag, gui_manager::show_cursor unsigned char): 5 by source change that stay (the stream-wrapper rows 0x4e9d10 / 0x4e99d0 / 0x4e9c50 and the stale-figure rows 0x4bdd50 / 0x4608d0 / 0x51e840 matched only with `(int*)&v` wrappers and were withdrawn) |
+| back to byte-exact | 0x509730, 0x489820 (batch 1) + 0x48c570 (`static_cast<Rec8*>(memmove(..)) + n`), 0x4ca600 / 0x494260 (`unsigned char` cursor flag, gui_manager::show_cursor unsigned char): 5 by source change + 0x4e9d10 / 0x4bdd50 / 0x4608d0 with the typed-field fix (the three rows through the unsigned Pool::serial, 0x4e99d0 / 0x4e9c50 / 0x51e840, stay nonmatching at 1 byte) |
 | diagnosed by c2scope, no source lever found | 0x51c090, 0x4ea030, 0x406e50, 0x47c810, 0x403f90, 0x4dc350 |
 | byte-exact only with a match trick (not landed) | 0x4ef730 (dead `if (!k) return;`) |
 
