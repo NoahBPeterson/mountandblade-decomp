@@ -90,12 +90,19 @@
   "Harness limit: the real std::vector body is inlined where the original calls the out-of-line 0x488930; operator new is reached through another call path."
  ],
  "004556d0": [
-  "Not classified: call #3 (0x4327f0) gets a local address where the original passes a pool address."
+  "Harness limit: the original rotates the agent's velocity in place (rotate_b 0x4327f0 with this = agent+0x60, a pool address); ours copies vel.x/vel.y into a local vec2, rotates it and writes both back (vector4 has no rotate_b, a view cast would be needed), so the callee sees a stack address.",
+  "The same row with an in-place rotation ((vec2&)vel).rotate_b(acc * dt), a scratch experiment only: WEAK, 574 valid inputs, 0 mismatches (was 5/259 FAIL, all at this call). The copy-in/copy-out has no other reader between the call and the write-back.",
+  "Verdict: harness artefact, not a source bug"
  ],
  "004fc820": [
-  "Not classified: the callee order differs at call #19 (destructor call vs 0x488b50)."
+  "Harness limit: the original frees the split() pieces through the out-of-line vector deleting destructor 0x4fd0e0 (push 3; an opaque depth-1 call), ours expands delete[] inline, so the element ~tstring calls (0x42bc40) show up in ours' call stream before the virtual set_text (0x488b50) the original reaches at call #19.",
+  "The work is the same: reverse loop of ~tstring over [arr-4] elements, then operator delete[] on arr-4. cl cannot be made to call the vector deleting destructor of a class without a virtual destructor (the old TStringArray::destroy(3) hand call was dropped for delete[] by lane L-H3).",
+  "Verdict: harness artefact, not a source bug"
  ],
  "004fd700": [
-  "Not classified: engine_new(4) in the original vs engine_new(0x10) in ours (a swap-with-empty spelled as clear(); the frame is 0x10 larger)."
+  "Harness limit: the original keeps vector<vector4>/vector<NotePage> release in 0x41f4b0 and push_back/_Insert_n in 0x4fdff0 / 0x43e7b0 (opaque depth-1 calls, their malloc/free hidden); ours expands or runs local copies of the same std::vector bodies, so engine_new/free appear in ours' call stream only (call #29: engine_new(4) vs engine_new(0x10) is a different visibility level, not a different allocation).",
+  "Allocation checked on the replayed input: the import traces of both sides are identical (free x5, malloc 4, 0x10, 4, ...), i.e. args/links grow by one int (4 bytes) and rects_a by one vector4 (0x10) in the same order. clear() is VC7.1's _Tidy (work/toolchain/vc71tk/include/vector): free the block, zero first/last/end, no allocation, exactly what the original inlines for the int lists and calls 0x41f4b0 for the others.",
+  "Making ours' _Tidy an out-of-line specialization did not change the verdict (local copies stay transparent): the original's call target is not bound to ours.",
+  "Verdict: harness artefact, not a source bug"
  ]
 }
