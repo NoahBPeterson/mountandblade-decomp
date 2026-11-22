@@ -186,3 +186,11 @@ and rwsweep were not applicable (no EH frame / nothing the mutations reach). So:
 `icount` first on any register / frame / instruction-count row (seconds), `tsweep` with your own hypothesis spellings, skip
 effectmine and schedwant auto mode for M&B. For the rows left here the missing piece is a front-end fact (what the original
 source did), not an allocator fact.
+
+## Secondary task: the "UNSUPPORTED (timeout)" rows (not c2scope)
+32 rows re-run on the laptop, 3 shards each (`tools/remote/eqremote.py` through a small driver over sweep_nonmatching's rows,
+`--full-edges` so the shards merge; the laptop declined every row at first, "at its job cap", other lanes were using it, so the
+driver ran one row at a time until it was accepted). Results: work/equiv_results/2026-11-22/bm1, `verdicts.py --add`.
+Verdicts: 22 WEAK, 8 UNSUPPORTED (0 valid inputs: heap exhaustion / faults on soup objects; 0x50a1c0 has 5 of 5 valid), 1 PASS
+(0x4c2170), 1 FAIL (0x49b1c0: a shard reports "heap size", a harness limit of the library `_Insert_n` instance). 31 notes in
+the `.nonmatching.txt` files carry the new verdict.
