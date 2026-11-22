@@ -702,3 +702,18 @@ Files that stay above ~3k after the plan: `operation_execute.cpp` (about 6,200, 
 | total .cpp lines | 105,096 | about 106,790 (+1,700: the preludes copied into the 19 parts) |
 
 (Sizes "after" include each part's copy of the prelude. Line counts are `wc -l` of the .cpp files at the commit that adds this document.)
+
+## 8. Decisions (the user, 2026-11-22: "go with your recommendations")
+
+1. Accept `script/operation_execute.cpp` at about 6,200 lines: `execute` is one function and cannot be split across files.
+2. Keep `agent_ai.cpp` (TU 49) whole: no recovered seam to cut at.
+3. `mission_5.cpp`: split as proposed (its cuts are class changes). `party_2.cpp`: keep whole (its cut has no evidence).
+4. Grab-bag names as proposed.
+5. Dissolve `rgl/xmlcfg` into game/data, game/input, game/common and game/agent as proposed.
+6. Engine-class code under src/game moves to src/engine as proposed.
+7. Depth 4 is fine.
+8. One include root `src/`, module-prefixed includes (`"engine/math/mat4.h"`).
+9. The notes files move to `docs/migration/`.
+10. The 12 same-name headers keep the directory suffix now; merging them is a later step.
+11. The 32 files under 100 lines stay separate (proven original TUs).
+12. `agent_hud.cpp` goes to `game/ui/hud/` (it is mostly mission HUD).
