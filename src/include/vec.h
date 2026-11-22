@@ -17,7 +17,6 @@ struct vec2 {
     float& operator[](int i) { return (&x)[i]; }              // by axis (the sliders' key handlers 0x48b5a0, 0x498190)
     const float& operator[](int i) const { return (&x)[i]; }
     void rotate_a(float ang);                    // 0x432600 (src/rgl/xmlcfg/game_util.cpp)
-    void rotate_b(float ang);                    // 0x4327f0 (src/rgl/xmlcfg/game_util.cpp)
 };
 
 struct int2 { int x, y; };                       // a cell coordinate (rgl/dynamic/world_grid.h; shape_base keeps the cell range it occupies)

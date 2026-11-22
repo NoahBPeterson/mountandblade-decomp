@@ -172,7 +172,7 @@ ItemRef Agent::slot_pair(int idx) const
 }
 
 // @ 0x4327f0
-void vec2::rotate_b(float ang)
+void rgl::vector4::rotate_xy(float ang)
 {
     float c = (float)cos((double)ang);
     float s = (float)sin((double)ang);
