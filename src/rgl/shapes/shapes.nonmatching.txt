@@ -26,7 +26,7 @@
 0040dfda  0  catch(...) funclet of 0x40df60 (std::_Uninit_fill_n<vector4*>): symbol-less COMDAT part, not a function. Equivalence UNSUPPORTED: not a callable function
 0040e200  0  interior of the 0x40e060 COMDAT (std::vector<mface>::_Insert_n catch / assign branches), not a function of its own. Equivalence UNSUPPORTED: not a callable function
 0040e3bb  0  catch(...) funclet of 0x40e350 (std::_Uninit_fill_n<mface*>): symbol-less COMDAT part, not a function. Equivalence UNSUPPORTED: not a callable function
-00408170	55	[2026-11-21 lane L-G4: SetTransform through set_transform (no D3DMATRIX view of cur); equiv pending] renderer::translate
-004081b0	27	[2026-11-21 lane L-G4: SetTransform through set_transform (no D3DMATRIX view of cur); equiv pending] renderer::pop
-0040e870	133	[2026-11-21 lane L-G4: the result is a matrix built member-wise (static_cast<mat3&>(t) = rot3, t.o = o), not a struct {mat3, vector4} read as a matrix; equiv pending] matrix::operator*
-0040a870	109	[2026-11-21 lane L-G4: the new frame is a matrix built member-wise + set_transform, no struct view / D3DMATRIX view; equiv pending] renderer::apply
+00408170	55	[2026-11-21 lane L-G4: SetTransform through set_transform (no D3DMATRIX view of cur)] renderer::translate [equiv: FAIL, 166/166 valid inputs mismatched; first: execution; figure 92 aligned (chk.py)]
+004081b0	27	[2026-11-21 lane L-G4: SetTransform through set_transform (no D3DMATRIX view of cur)] renderer::pop [equiv: FAIL, 200/200 valid inputs mismatched; first: execution; figure 37 aligned (chk.py)]
+0040e870	133	[2026-11-21 lane L-G4: the result is a matrix built member-wise (static_cast<mat3&>(t) = rot3, t.o = o), not a struct {mat3, vector4} read as a matrix] matrix::operator* [equiv: UNSUPPORTED, our symbol not found: no marker/name for 0x0040e870 matched an object symbol (names tried: ['matrix::operator*']); figure 89 aligned (chk.py)]
+0040a870	109	[2026-11-21 lane L-G4: the new frame is a matrix built member-wise + set_transform, no struct view / D3DMATRIX view] renderer::apply [equiv: FAIL, 200/200 valid inputs mismatched; first: execution; figure 101 aligned (chk.py)]

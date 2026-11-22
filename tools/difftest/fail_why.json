@@ -8,11 +8,7 @@
   "Verdict: harness artefact, not a source bug"
  ],
  "0047ff60": [
-  "Everything emit_particle itself writes matches",
-  "rgl::mesh::add_vertex 0x413c50 (original code in both builds) copies a vertex from a stack temporary it never fully initialises",
-  "Vertex dwords +0x24/+0x2c are whatever earlier calls left on the stack: a return address, different in each binary",
-  "compute_tangents 0x41ce80 does arithmetic on them, so one build gets NaN and the other a finite value",
-  "Verdict: the original's value is indeterminate, not a source bug"
+  "Equivalent by reading: unpack_color gets the address of a local copy of the colour word where the original passes the address inside the vertex."
  ],
  "004e05c0": [
   "The recorded run is from before the uninitialised-in-both rule (5c30f72)",
@@ -47,5 +43,59 @@
   "Our compiler puts that temporary in the same slot as a local it has just zeroed, so ours reads 0",
   "Fixing it would need stack-slot tricks, which we don't do",
   "Verdict: the original's value is indeterminate"
+ ],
+ "00408170": [
+  "Harness limit: ours calls the new out-of-line helper set_transform (the D3DMATRIX copy + the device vtable call), whose fake call the harness cannot pair (fake-arity); the original passes &cur to SetTransform directly. Same 16 floats."
+ ],
+ "004081b0": [
+  "Harness limit: same as 0x408170 (set_transform helper)."
+ ],
+ "0040a870": [
+  "Harness limit: same as 0x408170 (set_transform helper)."
+ ],
+ "0040f3f0": [
+  "Harness limit: the set_transform helper is a call the original does not have (modelled as an import call)."
+ ],
+ "00494260": [
+  "Harness limit: always_true() is stubbed to return a nonzero byte (8); the original stores the raw byte in show_cursor, ours stores the bool (1). The real callee returns 1."
+ ],
+ "004ca600": [
+  "Harness limit: same as 0x494260 (show_cursor stored from the stubbed always_true byte)."
+ ],
+ "0051d1c0": [
+  "Harness limit: the marker name _Buy matched several instances and the closest-size pick chose vector<int>::_Buy (4-byte elements), so the row compared the wrong function. chk.py binds the right symbol (vector<TrackRec>::_Buy)."
+ ],
+ "004f4860": [
+  "Harness limit: the name reserve matched several instances; the row compared vector<vertex60>::reserve, not vector<point20>::reserve."
+ ],
+ "004b3bc0": [
+  "Equivalent by reading: set_order_pos receives a Vec2 temporary (order_pos.xy()) where the original passes &order_pos; the callee copies it, so only the argument address differs."
+ ],
+ "0046e590": [
+  "Equivalent by reading: a call argument is the address of a local copy where the original passes the address of the particle frame member; not a value difference."
+ ],
+ "00471b30": [
+  "Equivalent by reading: same as 0x47ff60 (unpack_color argument address)."
+ ],
+ "004e99d0": [
+  "Equivalent by reading: w_int(unsigned) / w_bool(bool) pass the address of a local copy; the stream receives the same value."
+ ],
+ "004e9c50": [
+  "Equivalent by reading: same as 0x4e99d0."
+ ],
+ "004e9d10": [
+  "Equivalent by reading: same as 0x4e99d0."
+ ],
+ "0049ad20": [
+  "Harness limit: the real std::vector body is inlined where the original calls the out-of-line 0x488930; operator new is reached through another call path."
+ ],
+ "004556d0": [
+  "Not classified: call #3 (0x4327f0) gets a local address where the original passes a pool address."
+ ],
+ "004fc820": [
+  "Not classified: the callee order differs at call #19 (destructor call vs 0x488b50)."
+ ],
+ "004fd700": [
+  "Not classified: engine_new(4) in the original vs engine_new(0x10) in ours (a swap-with-empty spelled as clear(); the frame is 0x10 larger)."
  ]
 }

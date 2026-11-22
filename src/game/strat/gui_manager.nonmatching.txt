@@ -1,1 +1,1 @@
-0042d5c0  604  ??0gui_manager@@QAE@XZ: [2026-11-21 lane L-H3: the zeroed pairs (mouse_dx / dy, prev_mx / my) are stored by member instead of through vec2 views; 198 bytes off; equiv pending]
+0042d5c0  604  ??0gui_manager@@QAE@XZ: [2026-11-21 lane L-H3: the zeroed pairs (mouse_dx / dy, prev_mx / my) are stored by member instead of through vec2 views; 198 bytes off] [equiv: UNSUPPORTED (timeout), 60 s cap after 81 inputs (so far: 70 valid, 0); figure 69 aligned (chk.py)]

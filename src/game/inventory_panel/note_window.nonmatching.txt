@@ -1,1 +1,1 @@
-0050a1c0	39	ItemD_vt::build: [2026-11-21 lane L-D3: the pages / track readers go through the real vector API; one scratch register pair (esi / edi) swaps; equiv pending]
+0050a1c0	39	ItemD_vt::build: [2026-11-21 lane L-D3: the pages / track readers go through the real vector API; one scratch register pair (esi / edi) swaps] [equiv: UNSUPPORTED (timeout), 60 s cap after 4 inputs (so far: 4 valid, 0); figure 137 aligned (chk.py)]
