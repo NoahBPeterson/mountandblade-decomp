@@ -1,6 +1,6 @@
 {
-"when": "2026-11-22T00:33:07-06:00",
-"commit": "3c04addc",
+"when": "2026-11-22T10:12:26-06:00",
+"commit": "8634dc05",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -87,13 +87,14 @@
 "work/equiv_results/2026-11-21-vel",
 "work/equiv_results/2026-11-22/bm1b",
 "work/equiv_results/2026-11-22/bm1c",
-"work/equiv_results/2026-11-22/bm1"
+"work/equiv_results/2026-11-22/bm1",
+"work/equiv_results/2026-11-22/rxy"
 ],
 "summary": {
 "pass": 112,
 "proven": 26,
 "proven_o": 0,
-"weak": 259,
+"weak": 258,
 "fail": 19,
 "inputs": 21,
 "harness": 3,
@@ -105,7 +106,7 @@
 "pass_sz": 61866,
 "proven_sz": 13389,
 "proven_o_sz": 0,
-"weak_sz": 470704,
+"weak_sz": 469415,
 "fail_sz": 22181,
 "inputs_sz": 41683,
 "harness_sz": 971,
@@ -3591,13 +3592,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 4687
-},
-"0051c090": {
-"module": "map_tooltip",
-"file": "src/game/inventory_panel/map_tooltip.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1289
 },
 "0051c5a0": {
 "module": "game",
