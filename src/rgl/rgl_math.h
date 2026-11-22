@@ -13,7 +13,8 @@ namespace rgl {
 
 // 16 bytes: x, y, z + an unused 4th lane that whole-struct copies carry along.
 struct vector4 {
-    float x, y, z, w;
+    union { struct { float x, y; }; vec2 v2; };                                                      // the plane part x, y is a vec2 (rotate_b 0x4327f0 rotates it in place)
+    float z, w;
     vector4() {}                                                            // 0x407c20 (empty: ICF folds every empty ctor there)
     vector4(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
     vector4(float x_, float y_, float z_, float w_) : x(x_), y(y_), z(z_), w(w_) {}   // wind_noise (game_state.cpp) returns one built in its return buffer

@@ -9126,12 +9126,7 @@ void Agent::update_controls(float dt)
                 float acc = ((((float)s1 / lim) * sgn) * rmul) * dt + turn_rate;
                 turn_rate = acc;
                 rot[1] = rot[1] - ((acc * vel_xy.y) * dt) * 0.007f;
-                vec2 dir2;
-                dir2.x = vel.x;
-                dir2.y = vel.y;
-                dir2.rotate_b(acc * dt);
-                vel.x = dir2.x;
-                vel.y = dir2.y;
+                vel.v2.rotate_b(acc * dt);
                 if (in_now.bits & 0x10) {
                     if (this->kind == 1) {
                         unsigned bb = gait;

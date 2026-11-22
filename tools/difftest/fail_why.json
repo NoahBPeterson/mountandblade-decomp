@@ -89,11 +89,6 @@
  "0049ad20": [
   "Harness limit: the real std::vector body is inlined where the original calls the out-of-line 0x488930; operator new is reached through another call path."
  ],
- "004556d0": [
-  "Harness limit: the original rotates the agent's velocity in place (rotate_b 0x4327f0 with this = agent+0x60, a pool address); ours copies vel.x/vel.y into a local vec2, rotates it and writes both back (vector4 has no rotate_b, a view cast would be needed), so the callee sees a stack address.",
-  "The same row with an in-place rotation ((vec2&)vel).rotate_b(acc * dt), a scratch experiment only: WEAK, 574 valid inputs, 0 mismatches (was 5/259 FAIL, all at this call). The copy-in/copy-out has no other reader between the call and the write-back.",
-  "Verdict: harness artefact, not a source bug"
- ],
  "004fc820": [
   "Harness limit: the original frees the split() pieces through the out-of-line vector deleting destructor 0x4fd0e0 (push 3; an opaque depth-1 call), ours expands delete[] inline, so the element ~tstring calls (0x42bc40) show up in ours' call stream before the virtual set_text (0x488b50) the original reaches at call #19.",
   "The work is the same: reverse loop of ~tstring over [arr-4] elements, then operator delete[] on arr-4. cl cannot be made to call the vector deleting destructor of a class without a virtual destructor (the old TStringArray::destroy(3) hand call was dropped for delete[] by lane L-H3).",

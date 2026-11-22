@@ -1,6 +1,6 @@
 {
-"when": "2026-11-21T19:21:24-06:00",
-"commit": "a2773d3d",
+"when": "2026-11-21T20:59:07-06:00",
+"commit": "1f3307c3",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -83,14 +83,15 @@
 "work/w6_sweep3",
 "work/equiv_results/2026-11-21/sw",
 "work/equiv_results/2026-11-21/eqfix/sweep",
-"work/equiv_results/2026-11-21b/sw"
+"work/equiv_results/2026-11-21b/sw",
+"work/equiv_results/2026-11-21-vel"
 ],
 "summary": {
 "pass": 117,
-"proven": 25,
+"proven": 26,
 "proven_o": 0,
-"weak": 260,
-"fail": 21,
+"weak": 261,
+"fail": 20,
 "inputs": 16,
 "harness": 3,
 "comdat": 0,
@@ -99,10 +100,10 @@
 "notcode": 0,
 "not_run": 6,
 "pass_sz": 63662,
-"proven_sz": 13205,
+"proven_sz": 13389,
 "proven_o_sz": 0,
-"weak_sz": 462271,
-"fail_sz": 30423,
+"weak_sz": 470523,
+"fail_sz": 22171,
 "inputs_sz": 26376,
 "harness_sz": 971,
 "comdat_sz": 0,
@@ -1474,36 +1475,9 @@
 "004556d0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
+"verdict": "WEAK",
+"category": "weak",
 "size": 8252,
-"reason": "7/262 valid inputs mismatched; first: call #3 (depth 1)",
-"first_mismatch": {
-"input": 254,
-"profile": "zeroish",
-"origin": "cover",
-"observable": "call #3 (depth 1)",
-"kind": "value",
-"orig": "004327f0 FUN_004327f0 ecx=40010060 args=[4bc4fc8b]",
-"ours": "004327f0 FUN_004327f0 ecx=STK args=[4bc4fc8b]",
-"detail": "callee, this/edx and stack args (normalised)",
-"args": [
-"c44dff6f"
-],
-"regs": {
-"eax": "42a70000",
-"ecx": "40010000",
-"edx": "47090000"
-},
-"fake_calls": 0,
-"repairs": 0,
-"mapped_at_fault": [
-"00010000+10000",
-"2d980000+10000",
-"73dc0000+10000"
-],
-"input_file": "work\\difftest\\fail_inputs\\agent_logic_004556d0.pkl"
-},
 "stale_proof": "stale proof: proof of 2026-11-20 is of an older build of src/game/agent4/agent_logic.cpp (build hash differs)"
 },
 "00457b40": {
@@ -3478,6 +3452,15 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1932
+},
+"005024e0": {
+"module": "party_window",
+"file": "src/game/party/party_window.nonmatching.txt",
+"verdict": "PROVEN",
+"category": "proven",
+"size": 184,
+"tested": "PASS",
+"proof": "angr L1"
 },
 "00502620": {
 "module": "party_window",
