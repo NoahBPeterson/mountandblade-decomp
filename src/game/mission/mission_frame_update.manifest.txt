@@ -1,0 +1,11 @@
+../src/game/mission/mission_frame_update.cpp  ?frame_update@Rec1208@@UAEXM@Z  00525160  /O2 /MT /Gy /TP
+../src/game/mission/mission_frame_update.cpp  ?find_speaker_agent@Rec1208@@QAEHXZ  00526070  /O2 /MT /Gy /TP
+../src/game/mission/mission_frame_update.cpp  ?find_listener_agent@Rec1208@@QAEHXZ  00526130  /O2 /MT /Gy /TP
+../src/game/mission/mission_frame_update.cpp  ?save_scene@GameData@@QAEXH@Z  00527c90  /O2 /MT /Gy /TP
+../src/game/mission/mission_frame_update.cpp  ?save@SceneFile@@QAEXPAUstream_base@@H@Z  00527da0  /O2 /MT /Gy /TP
+../src/game/mission/mission_frame_update.cpp  ?save@PlacedObj@@QAEXPAUstream_base@@@Z  00527ef0  /O2 /MT /Gy /TP
+../src/game/mission/mission_frame_update.cpp  ?save_scene_data@Mission@@QAEXXZ  00527f90  /O2 /MT /Gy /TP
+../src/game/mission/mission_frame_update.cpp  ?save@TerrainDesc@@QAEXPAUstream_base@@@Z  00528000  /O2 /MT /Gy /TP
+../src/game/mission/mission_frame_update.cpp  ?save@TerrainDescEntry@@QAEXPAUstream_base@@PAUDims@@@Z  00528060  /O2 /MT /Gy /TP
+../src/game/mission/mission_frame_update.cpp  ?release_item@Mission@@QAEXH@Z  00528410  /O2 /MT /Gy /TP
+../src/game/mission/mission_frame_update.cpp  ?release_items@entity@rgl@@QAEXXZ  00528470  /O2 /MT /Gy /TP

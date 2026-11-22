@@ -1,19 +1,10 @@
 //-----------------------------------------------------------------------------
-// File: script_interpreter.cpp  (one translation unit of the original: at least 0x49a0b0..0x4b1160; bodies in address order)
+// File: operation_execute.cpp  (0x49cc60..0x4b0940)
 //
-// Desc: the Module System operation interpreter and everything the original object holds around it:
-//       - the slices' provisional views (namespaces c49aca0 .. c49f060): the text-list panel, the order / army records,
-//         the view camera, the scene sprites. One namespace per slice keeps their same-named classes apart.
-//       - GameData members (add_gold, remove_gold, start_quest, label_text).
-//       - the validators 0x49cc60..0x49d4b0: the original passes their value pointer in ECX (most), EAX (check_party,
-//         warn_tableau), EDI (warn_scene_prop_instance), EDX (warn_agent) or ECX+ESI (check_string_arg), i.e. cl's register
-//         conventions for functions it can see. report and the four game-table checks are byte-exact (__fastcall, external).
-//       - the operand accessors, the try linker and the Camera object (0x49d500..0x49f9e0).
-//       - Operation::execute 0x49fa10: fetches the (up to 16) operand values, dispatches on the opcode (header_operations.py
-//         numbering, `switch (op)` over 30..2385 with a 2356-entry jump table at 0x4ae458; 591 opcodes are implemented, the
-//         rest report "Unrecognized opcode"), and applies the neg / this_or_next flags to the condition result. Case bodies
-//         are in opcode order. Control opcodes below 30 are run by the block runner (DialogBlock::emit 0x4b09e0, below).
-//       See game_script_NOTES.md. Flags: /O2 /MT /Gy /TP. Names provisional except the Module System ones.
+// Desc: validators (register-convention statics), operand accessors and try linker (Elem / DialogBlock), the view Camera, party attach / spawn / deploy helpers, trigger enter/exec, trigger_item_mesh, Operation::execute (4,100-line switch over 591 opcodes)
+//       One part of what was game/script/script_interpreter.cpp (the object's functions in address order; the cut points and the evidence for
+//       them are in docs/source_tree.md section 3). The prelude and the helper definitions below are the
+//       parts of the old file's prelude and earlier sections this part's code uses.
 //-----------------------------------------------------------------------------
 
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
@@ -29,11 +20,9 @@
 #include <stdlib.h>
 #include "game/script/script_interpreter.h"
 #include "game/ui/gui_manager.h"          // gui_manager: g_gui
-// the shared headers it builds on (included again here so their address annotations are read with this file)
 #include "game/dialog/dialog_manager.h"
 #include "game/agent/agent_queries.h"
 #include "engine/core/tstring.h"
-// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "game/data/str_table.h"
 #include "engine/math/mat4_include.h"
 #include "engine/math/quaternion.h"
@@ -100,106 +89,38 @@
 #include "engine/core/clock_table.h"
 #include "game/script/script_state.h"   // ScriptState g_script (0xa70440): the one object
 #include "engine/io/text_stream.h"
-extern int g_propkind_count;                                // 0x5e29e0
-
-
 #include "game/common/shared_vars.h"
+#include "game/agent/animator.h"
+#include "game/script/script_globals.h"      // canonical declarations of the interpreter's globals (listed directly: the resolution audit reads only the source's own includes)
+#include "game/ui/ui_globals.h"      // UI / core globals
+#include "engine/core/vec_xlen.h"                                                // 0x43e2a0 std::vector<int>::_Xlen (agent3/agent_combat.cpp)
 
+// ---- definitions of the old file's prelude (the data this module owns)
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 widget_mgr* g_presentation;                                 // 0x5e299c the running presentation
-
-
-
-
-
-
-
-
-
 int g_visitor_scene;                                        // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 float g_spawn_radius = 3.0f;                                // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
-
-#include "game/agent/animator.h"
-
-#include "game/script/script_globals.h"      // canonical declarations of the interpreter's globals (listed directly: the resolution audit reads only the source's own includes)
-
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_cur_param;                                 // 0x5e2590 (.bss)
 int g_lineno;                                    // 0x5e2598 (.bss) line of the statement being run
+int g_cur_opcode;                                // 0x5e25a0 (.bss) opcode word of the statement being run
+int g_or_latch;                                  // 0x5e25a4 (.bss) this_or_next chain already satisfied
+// camera.h's views of the interpreter's callees forward to the defining classes
+template<> void std::vector< ::Party*, std::allocator< ::Party*> >::push_back(::Party* const& v);   // 0x4936b0 (every pointer vector's push_back)
+template<> void std::vector<int>::push_back(const int&);                           // 0x4936b0 game/campaign/game_data_party_quest.cpp (out-of-line instance: only declared)
+
+// ---- definitions from the old file's prelude and earlier sections that this part's code uses (copies; each is a static
+// or inline helper, a type or a macro: none of them emits code or data of its own)
 // 0x5e259c (.bss) set by report(); copied to *error at the end of execute. Every reference in the original is inside this
 // translation unit's address range (0x49cc60..0x4b10d7): it is a file static there, which is what lets cl sink the store below
 // the `id` loads in execute() (a static whose address is never taken cannot alias *this) and so sets execute's whole scratch
 // register rotation.
 static int g_script_error;                       // 0x5e259c (.bss)
-int g_cur_opcode;                                // 0x5e25a0 (.bss) opcode word of the statement being run
-int g_or_latch;                                  // 0x5e25a4 (.bss) this_or_next chain already satisfied
-#include "game/ui/ui_globals.h"      // UI / core globals
-// ---- data this module owns (docs/standalone_data.md) ----
-
-extern Font* g_font;                                // 0x5e2934
-
-// ---- the canonical owners of the callees ---------------------------------------------------------------------------------------
-// The namespaced views below (one namespace per slice) declare the engine functions they call under their own class names, which
-// the linker cannot resolve: the mangled name has to carry the class that DEFINES the function. These are member-only stubs under
-// the defining name (only their `// 0x...` callee is declared); the views forward to them with `this` cast, which compiles to the
-// same call. Each comment names the defining source.
-#include "engine/core/vec_xlen.h"                                                // 0x43e2a0 std::vector<int>::_Xlen (agent3/agent_combat.cpp)
-// level::nearest_face 0x439a50 (game/agent/agent_stats.cpp): game/terrain/cell_grid.h
-struct SphereC {
-    SphereC(rgl::vector4 c, const float* r);   // 0x4332a0 game/common/game_util.cpp (named `sphere` there)
-};
 namespace rgl { struct mesh; }
-rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);                               // 0x495b20 game/ui/widgets/hud_bar_widgets.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
 ItemRef __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 game/terrain/terrain_cells.cpp
 struct CarryCtx;
 void __cdecl place_scene_agents(rgl::strategic_entity* holder, ItemRef* table, CarryCtx* ctx);   // 0x495430 game/campaign/game_data_party_quest.cpp
-
-
-// camera.h's views of the interpreter's callees forward to the defining classes
-template<> void std::vector< ::Party*, std::allocator< ::Party*> >::push_back(::Party* const& v);   // 0x4936b0 (every pointer vector's push_back)
-template<> void std::vector<int>::push_back(const int&);                           // 0x4936b0 game/campaign/game_data_party_quest.cpp (out-of-line instance: only declared)
-
-// ======================================================================================
-// slice s0049aca0 (namespace c49aca0)
-// ======================================================================================
-namespace c49aca0 {
-// Slice s0049aca0: a mission-UI "text list" panel.  The panel (`this` of 0x49aca0/0x49ad20/0x49b4f0, a
-// MissionUi-derived widget) owns a container object (vptr 0x592848, base ctor 0x4931a0) that it builds in
-// create() and a std::vector<E100> of text rows; create() also builds one flag-widget child per row (UiA,
-// vptr 0x591d58, base ctor 0x48ae20).  Also here: the container's scalar deleting destructor, the vector
-// fast path / insert / _Insert_n, a Mission::add_placed trampoline and the text-rect layout wrapper.
-// Names and field names are provisional; every offset is read off the disassembly.
-
-using rgl::vector4;
-
-// ---- shared engine types -------------------------------------------------------------------------
-using rgl::mesh;
-
-// ---- std::vector<NodeA*> (the container's rows): push_back 0x49b120 / insert 0x49b170 are game/ui/widgets/drop_down_list.cpp's instances;
-// _Insert_n 0x49b1c0 is the real vector's, instantiated below (after the namespace)
-// ---- function definitions (in VA order) ----------------------------------------------------------
-
-// 0x49b37d is not a function: it is the catch(...) funclet inside the vector<NodeA*>::_Insert_n (std::vector<NodeA*>::_Insert_n 0x49b1c0, whose COMDAT really spans
-// 0x49b1c0..0x49b4af); see nonmatching.txt.
-
-// 0x49b4f0 is MissionUi::get_xy (game/ui/widgets/widget_manager.cpp): the base class's text-rect slot, not this panel's
-
-} // namespace c49aca0
-
-struct NodeA;                                    // the vector's element points at the container (DropDown's rows, game/ui/widgets/widget_manager.cpp)
-// @ 0x49b1c0
-template void std::vector<NodeA*>::_Insert_n(std::vector<NodeA*>::iterator, size_t, NodeA* const&);
-
-// @ 0x49b4b0
-// Mission::place: place the prop `item` (an ItemRef: id, modifier word) at the trigger block's frame.
-int Mission::place(const ItemRef* p)
-{
-    int a = -1;
-    int b = 6;
-    return add_placed(&b, &p->item, &p->word, &::g_game->trigger_frame, &a);
-}
-
 // ======================================================================================
 // slice s0049b630 (namespace c49b630)
 // ======================================================================================
@@ -240,33 +161,6 @@ typedef rgl::strategic_entity EntityFull;
 
 
 } // namespace c49b630
-
-// @ 0x49b630
-void gui_manager::set_font_mesh(const tstring* text, int arg)
-{
-    {
-        tstring name("ui_font");
-        m1480.res = (skin*)g_resmgr.get_material(name);
-    }
-    m1480.clear_geometry();
-    if (text->len <= 0) {
-        m1480.mask = 0;
-        m1220.mask = 0;
-        return;
-    }
-    float   out[2];
-    vector4 pos;
-    float   scale[2];
-    float   xmin = -0.35f;
-    float   xmax = 0.35f;
-    pos.x = -0.35f; pos.y = 0.0f; pos.z = 0.0f;
-    scale[0] = 0.017f; scale[1] = 0.017f;
-    g_font->layout_text(out, text, &pos, scale, &m1480, (const unsigned*)&arg, &xmin, &xmax, 0x100);
-    m1480.mask = 1;
-    m1220.mask = 1;
-}
-
-
 // ======================================================================================
 // slice s0049bea0 (namespace c49bea0)
 // ======================================================================================
@@ -274,149 +168,12 @@ void gui_manager::set_font_mesh(const tstring* text, int arg)
 // "taken" stamp and the label text layout. Fields not in game_data.h are reached by offset.
 // ======================================================================================
 #include "game/campaign/event.h"           // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-
-// ---- shared log tail of 0x49b720 / 0x49b820 (inlined in both; the source of the original
-// likely had a static helper, but cl 13.10 inlines it at /O2 regardless of `noinline`) ----------
-static __forceinline void value_message(GameData* m, int amount, const char* key, const int* sound_id)
-{
-    char buf[0x200];
-    {
-        tstring s(key);
-        sprintf(buf, g_strtable.lookup(s)->c_str(), m->string_value(amount).c_str());
-    }
-    g_gui.add(tstring(buf), -1);
-    g_sound_mgr.play(*sound_id, 1, &g_sound_mgr.frame.o, 1.0f, 0);
-}
-
-// @ 0x49b720
-void GameData::add_gold(int gold, int troop)
-{
-    Troop* rec = troops + troop;
-    rec->gold += gold;                             // Troop +0x3b4 (gold)
-    if (troop == 0 && f13a34 != 0 && gold != 0)
-        value_message(this, gold, "ui_you_got_value", &g_sound_mgr.slot[10]);
-}
-
-// @ 0x49b820
-void GameData::remove_gold(int gold, int troop)
-{
-    Troop* rec = troops + troop;
-    rec->gold -= gold;
-    if (rec->gold < 0)
-        rec->gold = 0;
-    if (troop == 0 && f13a34 != 0 && gold != 0)
-        value_message(this, gold, "ui_you_lost_value", &g_sound_mgr.slot[9]);
-}
-
-static inline bool quest_bit(unsigned v, int n) { return ((v >> n) & 1) != 0; }
-
-// @ 0x49b930
-void GameData::start_quest(int quest, int giver_troop)
-{
-    WL_MARKER(12)
-    quests[quest].giver_troop = giver_troop;       // +0x118
-    quests[quest].f11c = (float)(g_ticks[game_clock.clock] - game_clock.start) * 1e-5f;   // +0x11c (game time when started)
-    QuestRec* rec = &quests[quest];
-    if (quest_bit(rec->flags2, 1) || !rec->f64_flag) {
-        tstring name(quests[quest].text);
-        char buf[0x200];
-        {
-            tstring key("ui_new_quest_taken");
-            const char* n = name.c_str();
-            tstring* f = g_strtable.lookup(key);
-            mb_snprintf(buf, 0x200, f->c_str(), n);
-        }
-        g_gui.add(tstring(buf), 0xffd0f0c8);
-        g_sound_mgr.play(g_sound_mgr.slot[2], 1, &g_sound_mgr.frame.o, 1.0f, 0);
-        rec->flags = 0x100;
-        WL_MARKER(13)
-    }
-}
-
-struct LabelScale { float x, y; LabelScale(float a, float b) : x(a), y(b) {} };
-
-// @ 0x49baa0
-void GameData::label_text(rgl::mesh* m, const tstring* text, char flag, int arg, const float* h)
-{
-    unsigned flags = 0;
-    rgl::vector4 pos(0.05f, 0.1f, 0.2f);
-    LabelScale scale(0.2f, 0.2f);
-    float   xmin = 0.0f;
-    float   xmax = 1.0f;
-
-    if (flag) {
-        float x = f13acc * *h;
-        pos = rgl::vector4(0.0f, 0.1f, 0.4f);              // 0x49bb06: 0x3ecccccd
-        scale = LabelScale(x * 0.6f, x * 0.6f);
-        xmin = x * -1.0f;
-        xmax = x;
-        flags = 0x10;
-    }
-    float   out[2];
-    int     a = arg;
-    Font* font = g_font;
-    m->clear_geometry();
-    font->layout_text(out, text, &pos, (float*)&scale, m, (const unsigned*)&a, &xmin, &xmax, flags);
-}
-
 namespace c49b630 {
 using rgl::vector4;
 using rgl::matrix;
 using rgl::mesh;
 
 } // namespace c49b630
-
-// @ 0x49bbb0
-void GameData::spawn_battle_icon(unsigned id)
-{
-    Event* rec = events.atu(id);
-    rgl::strategic_entity* e = (rgl::strategic_entity*)g_script.level->create_entity(9);      // set_local_scaled is devirtualized: vtbl+0x98 is called directly
-    rec->entity = e;
-
-    {
-        float radius = 0.3f;
-        rgl::vector4 zero;
-        zero.x = 0.0f; zero.y = 0.0f; zero.z = 0.0f;
-        e->shape = new ::sphere(zero, &radius);         // operator new(0x44), then the constructor 0x4332a0 when it is not null
-    }
-
-    {
-        rgl::matrix tmp;
-        ((rgl::matrix&)e->local) = *identity_pos(&tmp);         // orig: rep movsd of 0x10 dwords, no virtual call (a real call needs the c49bea0 local identity_pos)
-    }
-    rec->bind_host();
-
-    if (rec->type == 1) {
-        parties.get_w(rec->party_a)->ai_behavior = 7;  // ai_bhvr_in_battle
-        parties.get_w(rec->party_b)->ai_behavior = 7;
-        parties.get_w(rec->party_a)->battle = id;
-        parties.get_w(rec->party_b)->battle = id;
-    }
-
-    if (rec->type == 1) {
-        {
-            tstring nm("battle_icon");
-            e->add_mesh((rgl::mesh*)((::resmgr*)&::g_resmgr)->get_object(&nm)->clone());
-        }
-        {
-            float angle = 1.5707964f;                       // 0x3fc90fdb (1.5707963f rounds to 0x3fc90fda)
-            e->meshes[0]->local_frame.rotate_about_u(&angle);
-        }
-
-        rgl::mesh* label = ::build_legend_mesh(e);   // 0x495b20
-
-        {
-            float h = 1.0f;
-            tstring kn((parties.get_w(rec->party_b)->flags & 0x400) ? "ui_siege" : "ui_battle");
-            label_text(label, g_strtable.lookup(kn), 1, 1, &h);   // 0x49baa0
-        }
-
-        e->local.o = rgl::vector4(rec->pos.x, rec->pos.y, rec->z + 0.4f);
-    }
-    e->game_id = id;
-    e->map_kind = 3;
-}
-
 // ======================================================================================
 namespace c49bea0 {
 // Slice s0049bea0: 0x49bea0 (order arrow creation) and 0x49c170 (reinforcement slot check).
@@ -453,97 +210,6 @@ static OrderObj* order_create_entity(int type)
 }
 
 } // namespace c49bea0
-
-// @ 0x49bea0
-void GameData::add_order_arrow(int id)
-{
-    using c49bea0::OrderObj;
-    rgl::vector4 zero(0.0f, 0.0f, 0.0f);
-    int idx = parties.lookup(id);
-    float radius = 0.3f;
-    float h;
-    Party* e = (&*parties.pages.begin())[idx >> 4] + (idx & 0xf);
-    OrderObj* o = c49bea0::order_create_entity(9);
-    o->shape = new ::sphere(zero, &radius);           // operator new(0x44), then the constructor 0x4332a0 when it is not null
-    e->model = o;
-    {
-        c49bea0::matrix tmp;
-        o->local = *(rgl::smat*)c49bea0::identity_pos(&tmp);
-    }
-    e->update_flags();                                // 0x49bf6d: the original calls it on the record (ecx = ebx), not e->model
-    e->label = ::build_legend_mesh(o);                // 0x495b20 (the original passes e->model, which is o)
-    // the original keeps h (+0x10, reused from the radius), scale (+0x14 = 1.0, passed by pointer) and a dead copy of flags_hi
-    float scale = 1.0f;
-    {
-        if (e->flags_lo & 0x80000) {
-            tstring s("");
-            g_game->label_text(e->label, &s, 0, 1, &scale);
-        } else {
-            const tstring* nm;
-            if ((e->flags_lo & 0x3000) == 0)
-                h = 0.5f;
-            else if ((e->flags_lo & 0x3000) == 0x1000)
-                h = 0.75f;
-            else
-                h = 1.0f;
-            if (g_module_settings.show_party_ids_instead_of_names) {
-                nm = &e->key;
-            } else {
-                // the found tstring* (or the record's own name tstring at +0xc) goes straight to label_text
-                const tstring* f = 0;
-                if (e->flag == 0)
-                    f = g_strtable.find(&e->key);
-                nm = f ? f : &e->name;
-            }
-            if (e->flags_lo & 0x400) {
-                g_game->label_text(e->label, nm, 1, (int)h, &scale);
-                tstring mat_name("map_legend_outline");
-                skin* mat = g_resmgr.get_material(mat_name);
-                skin* old = e->label->res;
-                if (old) old->refcount--;
-                e->label->res = mat;
-                if (mat) mat->refcount++;
-            } else {
-                g_game->label_text(e->label, nm, 0, (int)h, &scale);
-            }
-        }
-    }
-    o->game_id = id;
-    o->map_kind = 1;
-    if (o->get_radius() < 0.9f) {
-        id = 0x3f666666;                            // the original reuses the argument slot for the 0.9f
-        o->set_fbc((const float*)&id);
-    }
-    e->place_on_map();
-}
-
-// @ 0x49c170
-void Mission::check_slot(int id, unsigned bits)
-{
-    if (id >= 0 && id < g_mission_templates[mode].n_spawns) {
-        SpawnRec* r = &g_mission_templates[mode].recs[id];
-        int eax_, ebx_;
-
-        // the unit's mark record (::Mission::recs, mission.h MarkRec): its current frame m from the copy m1, both counts cleared
-        memcpy(&recs[r->id].m, &recs[r->id].m1, 0x40);
-        recs[r->id].cnt2 = 0;                           // r->id is re-read: the stores may alias it
-        recs[r->id].cnt = 0;
-        add_amount(id, bits);
-        int f = r->flags;
-        if (f & 1) { announce_enemies = 1; return; }
-        if (f & 2) { announce_reinforcements = 1; return; }
-        int b;
-        int a = f & 0x40;
-        if (((f & 0x40) == 0 && (f & 0x80) == 0) || (a != 0 && f6214 == 0) || ((b = f & 0x80) != 0 && f6214 == 1)) { announce_reinforcements = 1; return; }
-        if ((a != 0 && f6214 == 1) || (b != 0 && f6214 == 0)) { announce_enemies = 1; return; }
-        if ((a != 0 && f6218 == 1) || (b != 0 && f6218 == 0)) { announce_reinforcements = 1; return; }
-        if ((a != 0 && f6218 == 0) || (b != 0 && f6218 == 1)) announce_enemies = 1;
-    } else {
-        g_gui.add(tstring("Invalid entry no for add_reinforcements"), -1);
-    }
-}
-
-
 // ======================================================================================
 // slice s0049c2c0
 // ======================================================================================
@@ -557,8 +223,6 @@ void Mission::check_slot(int id, unsigned bits)
 // are provisional.
 
 #define MB_NOTHROW throw()
-
-
 // the order leaders are the mission's TeamRec records (mission.h): cls[k] are the three order slots (ClassInfo; kind is the armed state,
 // use the slot-in-use flag, pos the move target, target the extra word set by set_vec, nav the nearest face, dir the per-slot offset, sum the resting target)
 
@@ -568,174 +232,6 @@ void Mission::check_slot(int id, unsigned bits)
 
 struct TickPair { int a; int b; };
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
-
-// the agent's nav-mesh face (0x43cb30) through a forwarder: the agent pointer is formed in a scratch register, then moved to ecx
-inline int nav_face(::Agent* a) { return a->update_nav_face(); }
-
-static ::Agent* agent_by_id(Mission* m, unsigned id) {
-    return &(&*m->agents.pages.begin())[id >> 4][id & 0xf];
-}
-
-// look a localisation key up in the mission string table; the held buffer, or "" when absent
-static const char* order_string(const char* key) {
-    tstring tmp(key);
-    tstring* r = g_strtable.lookup(tmp);
-    return r->buf ? r->buf : (const char*)&r->buf;
-}
-
-// @ 0x49c2c0
-void Mission::order(int index, int order) {
-    char ordstr[0x200];                 // this+0x38: the localised order caption
-    char ordtxt[0x200];                 // this+0x238: the leader's order text
-    char msg[0x200];                    // this+0x438: the composed log line
-
-    rgl::vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
-    int k = 0;
-    ordstr[0] = 0;
-
-    if (order == 0) {                           // hold this position
-        TeamRec* L = &teams[index];
-        if (L->leader != -1) {
-            int f = nav_face(agent_by_id(this, L->leader));
-            rgl::vector4 zero;               // (0, 0, 0) with w unset, as rgl's 3-argument vector4: set_vec copies the leftover w into every armed slot
-            zero.x = 0.0f;
-            zero.y = 0.0f;
-            zero.z = 0.0f;
-            L->set_vec(&agent_by_id(this, L->leader)->pos, &f, &zero);
-            if (L->cls[0].use) L->cls[0].kind = 1;
-            if (L->cls[1].use) L->cls[1].kind = 1;
-            if (L->cls[2].use) L->cls[2].kind = 1;
-            { tstring key("ui_hold_this_position_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-        }
-    } else if (order == 1) {                    // follow me
-        TeamRec* L = &teams[index];
-        if (L->leader != -1) {
-            if (L->cls[0].use) L->cls[0].kind = 2;
-            if (L->cls[1].use) L->cls[1].kind = 2;
-            if (L->cls[2].use) L->cls[2].kind = 2;
-            int f = nav_face(agent_by_id(this, L->leader));
-            L->set_vec(&agent_by_id(this, L->leader)->pos, &f,
-                    &agent_by_id(this, L->leader)->v56b4);
-            { tstring key("ui_follow_me_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-        }
-    } else if (order == 2) {                    // charge
-        TeamRec* L = &teams[index];
-        if (L->cls[0].use) L->cls[0].kind = 0;
-        if (L->cls[1].use) L->cls[1].kind = 0;
-        if (L->cls[2].use) L->cls[2].kind = 0;
-        { tstring key("ui_charge_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 11) {                   // stand ground
-        TeamRec* L = &teams[index];
-        if (L->cls[0].use) L->cls[0].kind = 3;
-        if (L->cls[1].use) L->cls[1].kind = 3;
-        if (L->cls[2].use) L->cls[2].kind = 3;
-        { tstring key("ui_stand_ground_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 3) {                    // mount horses
-        TeamRec* L = &teams[index];
-        L->set_v(1);
-        { tstring key("ui_mount_horses_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 4) {                    // dismount
-        TeamRec* L = &teams[index];
-        L->set_v(2);
-        { tstring key("ui_dismount_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 7) {                    // stand closer
-        TeamRec* L = &teams[index];
-        L->bump(-1);
-        { tstring key("ui_stand_closer_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 8) {                    // spread out
-        TeamRec* L = &teams[index];
-        L->bump(1);
-        { tstring key("ui_spread_out_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 5) {                    // advance
-        TeamRec* L = &teams[index];
-        for (k = 0; k < 3; ++k) {
-            ClassInfo* s = &L->cls[k];
-            if (s->use == 0)
-                continue;
-            if (s->kind == 0)
-                continue;
-            p.x = s->dir.x * 7.0f + s->pos.x;
-            p.y = s->dir.y * 7.0f + s->pos.y;
-            p.z = s->dir.z * 7.0f + s->pos.z;
-            if (!point_in_rect(&p))
-                continue;
-            s->pos = p;
-            s->nav = scene->nearest_face(&p.x);
-            rgl::vector4 zero;               // (0, 0, 0) with w unset: the original copies the leftover frame word into extra.w
-            zero.x = 0.0f;
-            zero.y = 0.0f;
-            zero.z = 0.0f;
-            s->target = zero;
-            s->kind = 1;
-        }
-        { tstring key("ui_advance_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 6) {                    // fall back
-        TeamRec* L = &teams[index];
-        for (k = 0; k < 3; ++k) {
-            ClassInfo* s = &L->cls[k];
-            if (s->use == 0)
-                continue;
-            if (s->kind == 0)
-                s->pos = s->sum;
-            rgl::vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
-            p.x = s->pos.x - s->dir.x * 7.0f;
-            p.y = s->pos.y - s->dir.y * 7.0f;
-            p.z = s->pos.z - s->dir.z * 7.0f;
-            if (!point_in_rect(&p))
-                continue;
-            s->pos = p;
-            s->nav = scene->nearest_face(&p.x);
-            rgl::vector4 zero;               // (0, 0, 0) with w unset: the original copies the leftover frame word into extra.w
-            zero.x = 0.0f;
-            zero.y = 0.0f;
-            zero.z = 0.0f;
-            s->target = zero;
-            s->kind = 1;
-        }
-        { tstring key("ui_fall_back_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 9) {                    // use blunt weapons
-        set_weapon_order_1(index, 1);
-        { tstring key("ui_use_blunt_weapons_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 10) {                   // use any weapon
-        set_weapon_order_1(index, 0);
-        { tstring key("ui_use_any_weapon_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 12) {                   // hold fire
-        set_weapon_order_2(index, 1);
-        { tstring key("ui_hold_fire_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    } else if (order == 13) {                   // fire at will
-        set_weapon_order_2(index, 0);
-        { tstring key("ui_fire_at_will_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
-    }
-
-    // inform the local agent, but only about its own order group
-    if (player_id >= 0) {
-        ::Agent* la = agent_by_id(this, player_id);
-        int g = la->team;
-        if (g < 0 || g >= 8)
-            g = 7;
-        if (g == index) {
-            teams[index].make_label(ordtxt);
-            sprintf(msg, ordstr, ordtxt);
-            tstring line(msg);                  // copied into the by-value argument (0x42c110), destroyed after the call
-            g_gui.add(line, 0xfffffefb);
-        }
-    }
-
-    // re-seed the order parameters of every agent in this order group
-    ::AgentTable* tbl = &agents;
-    unsigned id = tbl->first_used();
-    while (id < (unsigned)tbl->count) {
-        ::Agent* a = agent_by_id(this, id);
-        int g = a->team;
-        if (g < 0 || g >= 8)
-            g = 7;
-        if (g == index) {
-            a->ai.ta.start = g_ticks[a->ai.ta.clock];
-            a->ai.ta_interval = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
-        }
-        tbl->next_used(&id);
-    }
-}
 
 // ======================================================================================
 // by-reference helpers, validators (0x49cc60..0x49d4b0)
@@ -6796,249 +6292,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
 #undef quest
 #undef scene
 
-// @ 0x4b0940
-char DialogBlock::run_line(__int64* locals, int* idx, int* script)
-{
-    int out;
-    char ok = ((Operation*)(items + *idx))->execute(locals, script, &out);
-    if (out > 0) {
-        char buf[512];
-        _snprintf(buf, 0x200, "At %s.", text.c_str());
-        g_gui.add(tstring(buf), 0xffff5555);
-        stream_base& lg = g_log;
-        lg.w_cstr(buf);
-    }
-    return ok;
-}
-// @ 0x4b09e0
-// The mission script runner. Steps over the statements `items[idx]` of this holder. Each opcode is run
-// through one of the interpreter helpers, then step_less decides whether to fall through or jump to the
-// statement's skip target (f90). While the script is "inside a key frame" (the tag matches the current
-// line, or the frame was opened earlier) the input frames are polled for the abort/return/continue keys.
-char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigned tag)
-{
-    char last_ok = 1;                           // local_b05
-    char done = 0;                              // local_b07
-    char in_key = 0;                            // local_b06
-    char brk = 0;                               // local_afa
-    char first = 0;                             // local_af9
-    char ok = 1;                                // local_af4
-    int saved;                                  // local_af0
-    int which;                                  // local_b04
-    int idx = 0;                                // local_b00
-    char advance = 1;                           // local_b08
-    int pr_lo, pr_hi;                           // local_ae4 / local_ae0
-    int out1;                                   // local_aec
-    int out2;                                   // local_ad8
-    int out3;                                   // local_ac4
-    int range_lo, range_hi;                     // local_ad4 / local_adc
-    int nsub;                                   // local_ae8
-    long long value;                            // local_ad0 / local_acc
-    DialogBlock* self = this;                   // local_af8
-    __int64 locals[128];                        // local_a10: the block's local variables
-    PairStack buf2;                           // local_410
-    char msg[512];                              // local_610
-    __declspec(align(8)) __int64 sub[16];                            // auStack_a98 + 2
-
-    g_script_error = 0;
-    link();
-    if (g_script_error > 0) {
-        const char* q = text.c_str();
-        _snprintf(msg, 0x200, "At %s.", q);
-        g_gui.add(tstring(msg), 0xffff5555);
-        stream_base& lg = g_log;
-        lg.w_cstr(msg);
-    }
-    g_script_error = 0;
-    buf2.count = 0;
-    buf2.pad = 0;
-    last_ok = 1;
-    g_or_latch = 0;
-    idx = 0;
-    in_key = 0;
-    done = 0;
-    advance = 1;
-
-    while (idx < count) {
-        brk = 0;
-        if ((tag & 0xffff) == (unsigned)idx || in_key) {
-            in_key = 1;
-            first = 0;
-            for (;;) {
-                g_keyboard.update(0.0f);
-                if (!first) {
-                    first = 1;
-                    tstring s0 = renumber(locals, idx, 1, &pr_lo, &pr_hi);
-                    set_progress_range(pr_lo, pr_hi);
-                    refresh_settings_list(&s0, 1);
-                }
-                if ((g_keyboard.down[0x3b] && !g_keyboard.prev[0x3b]) || g_game->debugger.active == 0) {
-                    g_game->debugger.active = 0;
-                    set_debug_label();
-                    tag = 0xffffffff;
-                    done = 1;
-                    break;
-                }
-                if (g_keyboard.down[0x3a] && !g_keyboard.prev[0x3a]) {
-                    tag = 0xffffffff;
-                    done = 1;
-                    break;
-                }
-                if (g_keyboard.down[0x39] && !g_keyboard.prev[0x39]) {
-                    int e = (int)tag >> 16;
-                    if (g_scripts[e].name.equals(g_game->debugger.script))
-                        tag = ((unsigned)e << 16) | (unsigned)g_game->debugger.line;
-                    done = 1;
-                    break;
-                }
-                if (g_keyboard.down[0x38] && !g_keyboard.prev[0x38]) {
-                    brk = 1;
-                    break;
-                }
-                if (g_keyboard.down[0x37] && !g_keyboard.prev[0x37])
-                    break;
-                pump_messages();
-            }
-            pump_messages();
-        }
-
-        int line = idx;
-        int op = items[line].id & 0xfffffff;
-        g_lineno = line;
-        saved = line;
-        ok = 1;
-        g_cur_opcode = op;
-
-        if (op < 0x15 && op != 1) {
-            Elem* stmt = &items[line];
-            int id = stmt->id;
-            if (id == 3) {
-                advance = 1;
-                pop_try(locals, buf2.pairs, &idx);
-            } else if (id == 4) {
-                advance = 1;
-                buf2.push(line, 0);
-                idx = line + 1;
-            } else if (id == 5) {
-                if (advance) {
-                    idx = stmt->f90;
-                } else {
-                    idx = line + 1;
-                    advance = 1;
-                }
-            } else {
-                int v = 0;
-                advance = 1;
-                if (id == 6) {
-                    which = 1;
-                    v = (int)stmt->get_operand(locals, &which, &out2);
-                } else if (id == 7) {
-                    which = 2;
-                    v = (int)stmt->get_operand(locals, &which, &out2) - 1;
-                } else if (id == 0xc) {
-                    v = g_mission->agents.first_used();
-                } else if (id == 0xb) {
-                    v = (int)g_game->parties.first_party_id();
-                } else if (id == 0xf) {
-                    v = 0;
-                } else {
-                    mb_error("invalid opcode %d", id);
-                }
-                buf2.push(idx, v);
-                value = v;
-                items[line].set_lvalue(locals, value);
-                if (!step_less(locals, buf2.pairs)) {
-                    idx = items[line].f90;
-                    goto step_end;
-                }
-                idx++;
-            }
-        } else if (op < 0x1e) {
-            if (op == 1) {
-                which = 0;
-                int id = (int)items[line].get_operand(locals, &which, &out1);
-                if (id < 0 || id >= g_scripts.count || depth >= 0x100) {
-                    ok = 0;
-                    goto fail;
-                }
-                {
-                Elem* s = &items[line];
-                int i = 1;
-                which = i;
-                for (; i < s->n; i++) {
-                    sub[i - 1] = s->get_operand(locals, &which, &out1);
-                    s = &items[line];
-                    which = i + 1;
-                }
-                }
-                unsigned t;
-                if (brk)
-                    t = 0;
-                else if (g_game->debugger.active != 0 && g_scripts[id].name.equals(g_game->debugger.script))
-                    t = ((unsigned)id << 16) | (unsigned)g_game->debugger.line;
-                else
-                    t = 0xffffffff;
-                nsub = items[line].n - 1;
-                ok = g_scripts[id].body.emit(script, depth + 1, &nsub, sub, t);
-                goto after;
-            } else if (op == 0x15) {
-                which = 0;
-                if (check_script_param(&which, limit))
-                    items[line].set_lvalue(locals, vals[0]);
-                idx++;
-            } else if (op == 0x16) {
-                which = 1;
-                if (check_script_param(&which, limit))
-                    items[line].set_lvalue(locals, vals[1]);
-                idx++;
-            } else if (op == 0x17) {
-                which = 1;
-                int k = (int)items[line].get_operand(locals, &which, &out3) - 1;
-                which = k;
-                if (check_script_param(&which, limit))
-                    items[line].set_lvalue(locals, vals[k]);
-                idx++;
-            } else {
-                idx++;
-            }
-        } else {
-            ok = run_line(locals, &idx, &script);
-        after:
-            if (ok) {
-                idx++;
-            } else {
-            fail:
-                advance = 0;
-                idx = items[line].f90;
-            }
-        }
-
-    step_end:
-        if (buf2.count == 0)
-            last_ok = ok;
-        if (in_key) {
-            if (done) {
-                in_key = 0;
-                done = 0;
-            }
-            // the original reads `saved` into a register before the first call (which stores the block end back into the
-            // slot through its last argument); both calls take the statement index, not the clobbered slot
-            int at = saved;
-            tstring s2 = renumber(locals, at, 1, &which, &saved);
-            tstring s1 = renumber(locals, at, ok, &range_lo, &range_hi);
-            set_progress_range(range_lo, range_hi);
-            refresh_settings_list(&s1, 0);
-        }
-        if (g_script_error > 0) {
-            const char* q = self->text.c_str();
-            _snprintf(msg, 0x200, "At %s.", q);
-            g_gui.add(tstring(msg), 0xffff5555);
-            stream_base& lg = g_log;
-            lg.w_cstr(msg);
-        }
-        if (!last_ok)
-            break;
-    }
-
-    return last_ok;
-}
+// ---- the file static g_script_error (0x5e259c) is shared with dialog_block_runner.cpp, which was one object with this file:
+// its code reaches the variable through these two functions (no address of the static is taken here)
+int script_error_get() { return g_script_error; }
+void script_error_set(int v) { g_script_error = v; }

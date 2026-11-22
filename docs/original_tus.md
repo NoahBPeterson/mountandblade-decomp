@@ -180,7 +180,7 @@ I did not find a module that contains two obviously separate original files with
 | game/agent2/agent_ai.cpp | 43b100-43e190 | 27 | 7168 | 1 |  |
 | game/agent/phys_set.cpp | 441360-441ff0 | 5 | 1811 | 1 |  |
 | game/agent3/agent_fx_sound.cpp | 441ff0-444c50 | 29 | 4834 | 1 |  |
-| game/agent4/agent_logic.cpp | 444c50-460160 | 65 | 77679 | 1 |  |
+| game/agent/ai/agent_ai.cpp | 444c50-460160 | 65 | 77679 | 1 |  |
 | game/dialog/dialog_manager.cpp | 460160-461200 | 21 | 0 | 1 |  |
 | game/terrain/wind_helpers.cpp | 461200-461630 | 8 | 207 | 1 |  |
 | engine/render/renderer.cpp | 461630-4625d0 | 21 | 0 | 1 |  |
@@ -219,7 +219,7 @@ I did not find a module that contains two obviously separate original files with
 | game/data/object_table_spawners.cpp | 499050-499830 | 7 | 316 | 1 |  |
 | game/ui/widgets/widget_manager.cpp | 499830-49ad20 (+1) | 11 | 2027 | 2 | 49b4f0-49b630 |
 | game/ui/widgets/drop_down_list.cpp | 49ad20-49b1c0 | 4 | 741 | 1 |  |
-| game/script/script_interpreter.cpp | 49b630-4b1160 (+1) | 61 | 57403 | 2 | 49b1c0-49b4f0 |
+| game/script/script_support.cpp | 49b630-4b1160 (+1) | 61 | 57403 | 2 | 49b1c0-49b4f0 |
 | game/party/party_map.cpp | 4b2180-4b8f40 (+1) | 81 | 14752 | 2 | 4b1160-4b2160 |
 | game/party/party_track_allocator.cpp | 4b2160-4b2180 | 1 | 0 | 1 |  |
 | game/config/launcher_options_dialog.cpp | 4b8f40-4b9e70 | 12 | 1194 | 1 |  |
@@ -295,7 +295,7 @@ I did not find a module that contains two obviously separate original files with
 | game/campaign/map_tooltip.cpp | 51be20-51c5a0 | 3 | 2 | 1 |  |
 | game/campaign/game_state_load.cpp | 51c5a0-51eb90 | 39 | 2858 | 1 |  |
 | game/campaign/new_game_setup.cpp | 51eb90-520b20 | 13 | 4188 | 1 |  |
-| game/mission5/mission_5.cpp | 525160-52cf60 | 39 | 16283 | 1 |  |
+| game/mission/mission_frame_update.cpp | 525160-52cf60 | 39 | 16283 | 1 |  |
 | game/editor/poly_mesh_pick.cpp | 52cf60-52dae0 | 2 | 1401 | 1 |  |
 | game/editor/poly_mesh_vert_ray.cpp | 52dae0-52dcc0 | 2 | 0 | 1 |  |
 | game/editor/poly_mesh_edge_ray.cpp | 52dcc0-52dfd0 | 2 | 311 | 1 |  |

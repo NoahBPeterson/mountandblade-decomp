@@ -17,7 +17,6 @@
 0054add8 ??_7bin_writer@@6B@  # file binary writer vtable
 005e292c g_mission  # current Mission*
 005e2930 g_game  # current GameData*
-00529ec0 Screen_s29ec0::f_529ec0  # per-frame interaction probe: 10.5 m facing capsule -> level face hit, 0.1 m capsule over collect_entities(9) for talk/mount/chest/baggage/map-object/equip/border targets, validates distance and riding skill, resets the HUD line cache (0x5d7850..) and draws the localised "name" (+" action"), then stores mode/selection/valid into Screen+0x2c8/+0x2cc/+0x2d4
 00513710 ?m@Mgr513710_s25160@@QAEXPAX@Z  # the map-flags commit (0x5e291c object), ret 4
 00495700 ?open@Dlg_s25160@@QAEXH@Z  # the main menu: open dialog n (0xa73980 object), ret 4
 08ed50c8 ?g_n_dialogs@@3PADA  # dialogue manager singleton, raw byte-array declaration (speaker 0x460640 / listener 0x460670)

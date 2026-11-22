@@ -1,0 +1,5 @@
+../src/game/script/script_support.cpp  ?place@Mission@@QAEHPBUItemRef@@@Z  0049b4b0  /O2 /MT /Gy /TP
+../src/game/script/script_support.cpp  ?add_gold@GameData@@QAEXHH@Z  0049b720  /O2 /MT /Gy /TP
+../src/game/script/script_support.cpp  ?remove_gold@GameData@@QAEXHH@Z  0049b820  /O2 /MT /Gy /TP
+../src/game/script/script_support.cpp  ?label_text@GameData@@QAEXPAUmesh@rgl@@PBUtstring@@DHPBM@Z  0049baa0  /O2 /MT /Gy /TP
+../src/game/script/script_support.cpp  ?check_slot@Mission@@QAEXHI@Z  0049c170  /O2 /MT /Gy /TP

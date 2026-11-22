@@ -286,10 +286,10 @@ def run(R, check=False, dump=None):
                 R.sh("git", "rm", "-q", "-f", old)
         R.sh("git", "rm", "-q", "-f", old_cpp)
         for np in parts:
-            R.sh("git", "add", np)
+            R.sh("git", "add", "-f", np)
             for ext in (".manifest.txt", ".nonmatching.txt"):
                 if os.path.exists(os.path.join(R.ROOT, np[:-4] + ext)):
-                    R.sh("git", "add", np[:-4] + ext)
+                    R.sh("git", "add", "-f", np[:-4] + ext)
         fan_out(R, old_cpp, rows, stems)
     R.prune_empty_dirs()
 
@@ -307,6 +307,14 @@ def fan_out(R, old_cpp, rows, stems):
             if lo <= va <= hi:
                 return st, next(r["new_path"] for r in rows if os.path.basename(r["new_path"])[:-4] == st)
         return None, None
+    ap = R.ANNOT
+    if os.path.exists(ap):                    # the parts read the annotations of the old file's directory
+        ann = json.load(open(ap))
+        if old_cpp in ann:
+            for np in new_paths:
+                ann[np] = ann[old_cpp]
+            del ann[old_cpp]
+            json.dump(ann, open(ap, "w"), indent=0, sort_keys=True)
     fan_out_more(R, old_cpp, rows, stem_for_va, new_paths)
     # tu_order.txt: the old line becomes the parts' lines, address order
     p = os.path.join(R.ROOT, "port", "link", "tu_order.txt")

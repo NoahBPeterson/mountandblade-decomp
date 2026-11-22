@@ -5,8 +5,8 @@ src/platform/dxframework/d3dsettings.cpp
 src/platform/dxframework/d3dutil.cpp
 src/platform/dxframework/dxutil.cpp
 src/engine/physics/collision_shapes.cpp
-src/game/agent4/agent_logic.cpp
-src/game/script/script_interpreter.cpp
+src/game/agent/ai/agent_targeting.cpp
+src/game/script/script_support.cpp
 src/engine/render/mesh.cpp
 src/engine/render/particle_system.cpp
 src/engine/math/noise.cpp
@@ -172,7 +172,7 @@ src/game/campaign/map_panel.cpp
 src/game/campaign/map_tooltip.cpp
 src/game/campaign/game_state_load.cpp
 src/game/campaign/new_game_setup.cpp
-src/game/mission5/mission_5.cpp
+src/game/mission/mission_frame_update.cpp
 src/game/editor/poly_mesh_pick.cpp
 src/game/editor/poly_mesh_vert_ray.cpp
 src/game/editor/poly_mesh_edge_ray.cpp

@@ -1,6 +1,6 @@
 # Proposed source tree
 
-Status: PROPOSAL, nothing has moved. Companion file: [`source_tree_moves.tsv`](source_tree_moves.tsv) (one row per current file; a later move tool consumes it). Generated from the tree at the commit that adds this file; the cpp line counts are those of that commit.
+Status: DONE (2026-11-22; section 9 says how it went). Was: PROPOSAL, nothing had moved. Companion file: [`source_tree_moves.tsv`](source_tree_moves.tsv) (one row per current file; a later move tool consumes it). Generated from the tree at the commit that adds this file; the cpp line counts are those of that commit.
 
 ## 1. Principles applied
 
@@ -717,3 +717,25 @@ Files that stay above ~3k after the plan: `operation_execute.cpp` (about 6,200, 
 10. The 12 same-name headers keep the directory suffix now; merging them is a later step.
 11. The 32 files under 100 lines stay separate (proven original TUs).
 12. `agent_hud.cpp` goes to `game/ui/hud/` (it is mostly mission HUD).
+
+## 9. Outcome (tools/migrate/restructure.py)
+
+Carried out by `tools/migrate/restructure.py` (batch A: every 1:1 move, `git mv`, plus the rewrite of every path reference; batch B: the splits,
+`restructure_split.py` + `cxxchunk.py`). Deviations from the plan above, all decided while doing it:
+
+- TinyXML is `src/third_party/tinyxml/`, not a top-level `third_party/`: it stays under the one include root and under every tool that walks `src/`.
+- `party_2.cpp` stays whole as `src/game/party/party_map.cpp` (section 8, item 3); `agent_hud.cpp` + `.h` are in `src/game/ui/hud/`.
+- `symbols/slices/<module>.txt` follows a renamed module (split by address for the split files).
+- The include root is `src/` (`-I src`, also put on the command line by `tools/matching/cl.sh` so the laptop compile server sees it).
+- `script_interpreter.cpp`: `g_script_error` was a file static of the one object that `execute` and `DialogBlock::run_line` shared; it stays static in
+  `operation_execute.cpp` and `dialog_block_runner.cpp` reaches it through `script_error_get()` / `script_error_set()` (two new functions).
+- Splits (batch B): agent_logic.cpp -> 11 parts, script_interpreter.cpp -> 3, mission_5.cpp -> 3 (cuts and evidence in section 3; `agent_ai.cpp` stays
+  whole). Each part carries the old file's `#include`s and the `static` / `inline` helpers, types and macros its code mentions
+  (`cxxchunk.py` finds them; nothing that emits code is copied), so the parts are a little longer than their cut.
+  `*_INSTANTIATED_HERE` defines go to the part that owns the code they make a header emit. Sidecar rows were partitioned by address
+  (`tools/migrate/rows_after_split.py` moved the rows whose symbol another part emits and demoted the rows that stopped matching).
+- Byte-exact rows after the split: 4889 -> 4880. Nine rows of agent_logic moved from a `.manifest.txt` to the part's `.nonmatching.txt` with the figure
+  `chk.py` measures (aligned bytes): `Agent::pick_front` 85, `pick_duel` 164, `fire_check` 12, `pick_threat` 10, `pick_reachable_goal` 32,
+  `Font::draw_glyph` 17, `Agent::refresh_carried` 6, `gui_manager::add` 523, `Agent::update_attack` 282. Every row of script_interpreter and mission_5
+  survived (`Operation::execute` kept its bytes). `ui_weapon_class_name` (0x43a280, a register-convention static whose only caller is
+  `process_blow`) and two implicit COMDAT rows are emitted by the part that uses them now, so their rows moved there.

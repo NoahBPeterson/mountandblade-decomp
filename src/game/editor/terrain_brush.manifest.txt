@@ -1,0 +1,5 @@
+../src/game/editor/terrain_brush.cpp  ?update@Terrain@@QAEXPAUTerrainDesc@@PAUvector4@rgl@@HHH@Z  0052bf40  /O2 /MT /Gy /TP
+../src/game/editor/terrain_brush.cpp  ?clear_brushed@Terrain@@QAEXXZ  0052c290  /O2 /MT /Gy /TP
+../src/game/editor/terrain_brush.cpp  ?clear@TerrainDescEntry@@QAEXXZ  0052ce00  /O2 /MT /Gy /TP
+../src/game/editor/terrain_brush.cpp  ?put@TerrainDescEntry@@QAEXPAH00@Z  0052ce70  /O2 /MT /Gy /TP
+../src/game/editor/terrain_brush.cpp  ?clamp_cell@Terrain@@QAEPAHPAH0@Z  0052cef0  /O2 /MT /Gy /TP

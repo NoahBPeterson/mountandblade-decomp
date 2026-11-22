@@ -329,7 +329,7 @@ def test_transparent_hides_only_the_call_boundary():
 def test_marker_names_skip_declspec():
     """`__declspec(noinline) char __fastcall check_register(...)` under a marker is check_register, not __declspec."""
     import slice as S
-    src = os.path.join(ROOT, "src", "game", "script", "script_interpreter.cpp")
+    src = os.path.join(ROOT, "src", "game", "script", "operation_execute.cpp")
     assert S.marker_names(src, 0x49cd00) == ["check_register"]
 
 
@@ -1520,7 +1520,7 @@ def test_dead_callee_frames_are_refilled():
     copy of them."""
     import shutil
     import pytest
-    sid, va, src = "script_interpreter", 0x49f3d0, os.path.join(ROOT, "src/game/script/script_interpreter.cpp")
+    sid, va, src = "operation_execute", 0x49f3d0, os.path.join(ROOT, "src/game/script/operation_execute.cpp")
     real = os.path.join(ROOT, "work", "difftest", "regress", "%s_%08x" % (sid, va))
     if not os.path.isdir(real):
         pytest.skip("no regression inputs for %s %x" % (sid, va))
@@ -1543,7 +1543,7 @@ def test_stale_w_of_an_own_dead_temporary_is_uninitialised():
     """process_blow 0x457b40 copies vector4(k * dir) (w never set) to Agent+0x5694: the original's w slot was never
     written (0xCCCCCCCC), ours held a float an earlier temp of ours left in the slot cl reused. Both are the unset w;
     stale_w now accepts a w slot whose last write was the function's own dword store before x, y, z."""
-    r = _row("agent_logic", 0x457b40, "src/game/agent4/agent_logic.cpp", "--inputs", "120", "--fp-tol")
+    r = _row("agent_blows", 0x457b40, "src/game/agent/combat/agent_blows.cpp", "--inputs", "120", "--fp-tol")
     assert r["verdict"] != "FAIL", r
 
 

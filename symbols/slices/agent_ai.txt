@@ -1,0 +1,1 @@
+00445ea0 ?_Insert_n@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEXViterator@12@IABUE56@@@Z  # std::vector<E56>::_Insert_n (8 same-named _Insert_n in the object; size alone picked Rec1c8)

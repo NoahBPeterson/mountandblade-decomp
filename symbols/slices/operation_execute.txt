@@ -1,0 +1,1 @@
+0049e580 ??_ECamera@@UAEPAXI@Z  # deleting destructor, slot 0 of the vtable ctor 0x49deb0 stores

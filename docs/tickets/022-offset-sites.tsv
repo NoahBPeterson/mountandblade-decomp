@@ -17,7 +17,7 @@ src/game/ui/screens/options/quest_page.cpp	123	55	0x4d5ba0	fill	D	tstring	0x4	co
 src/game/ui/screens/options/quest_page.cpp	135	45	0x4d5ba0	fill	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
 src/game/ui/screens/options/quest_page.cpp	157	55	0x4d5ba0	fill	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	mb_snprintf(buf, 0x200, e->buf ? e->buf : (const char*)&e->buf, QREC->f64_lo);
 src/game/ui/screens/options/quest_page.cpp	196	45	0x4d6300	update_difficulty	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
-src/game/script/script_interpreter.cpp	583	30	0x49c170	order_string	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return r->buf ? r->buf : (const char*)&r->buf;
+src/game/script/script_support.cpp	583	30	0x49c170	order_string	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return r->buf ? r->buf : (const char*)&r->buf;
 src/game/terrain/terrain_render.cpp	1475	33	0x46d060	upload	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	char* dst = (char*)scratch + elem_size * n;
 src/game/terrain/terrain_render.cpp	1523	25	0x46d060	upload	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	char* dst = (char*)scratch + elem_size * n;
 src/game/terrain/terrain_render.cpp	1576	21	0x46d060	upload	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	char* dst = (char*)scratch + elem_size * n;

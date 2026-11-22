@@ -222,7 +222,7 @@
     ],
     "why": "strip_tags scans for '<' ... '>' pairs; the typed strings' alphabet (a-z0-9_) never contains them and the length field (+0xc) is independent of the buffer, so the loop body was never entered (14/40 edges). --text-chars adds markup characters to the generated strings, the hint keeps len within the buffer. Nothing is discarded."
   },
-  "agent_logic 0043b4d0": {
+  "agent_targeting 0043b4d0": {
     "args": [
       "--hint",
       "this+50=0,3e800000@0.9",
@@ -408,7 +408,7 @@
     ],
     "why": "MapFlags::commit dispatches on MissionCtx::pop_key(), which returns the lowest set g_bit bit of g_mission_ctx.f3c (0xa7333c, zero in the harness), so only the key == 0 tail ran; the g:ADDR soft hint puts a key bit there, and 0xa73320 (byte) gates the key 0x10 branch"
   },
-  "mission_5 00525160": {
+  "mission_frame_update 00525160": {
     "args": [
       "--hint",
       "g:5d7094=c0000000@0.8",
@@ -419,7 +419,7 @@
     ],
     "why": "Game::handle_event: the HUD block needs g_mouse_x < panel.x1 and g_mouse_y > panel.y0+0.1; random floats rarely satisfy both, so the flag loop and slider branch were never entered. Soft hints only, nothing discarded."
   },
-  "agent_logic 00453710": {
+  "agent_damage 00453710": {
     "args": [
       "--typed-share",
       "0.9",
@@ -467,25 +467,25 @@
     ],
     "why": "Party::update_nav switches on the order kind (+0x5998: 1, 2, 3), the moving flag (+0x5980) and the re-path flag (+0x5988); random ints are almost never 1/2/3, so the kind-2/3 branches, start_path success and the can_move advance loop were never entered (37/58 edges). Soft hints only, nothing is discarded: 52/57 edges, 80.6% insns, 476 valid inputs, 0 mismatches."
   },
-  "agent_logic 004428c0": {
+  "agent_effects_sound 004428c0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "script_interpreter 0049bbb0": {
+  "script_support 0049bbb0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "script_interpreter 0049bea0": {
+  "script_support 0049bea0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "script_interpreter 0049f060": {
+  "operation_execute 0049f060": {
     "args": [
       "--party-table"
     ],
@@ -593,19 +593,19 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "mission_5 00529670": {
+  "mission_hud_and_orders 00529670": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "mission_5 00529840": {
+  "mission_hud_and_orders 00529840": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "mission_5 00529c30": {
+  "mission_hud_and_orders 00529c30": {
     "args": [
       "--party-table",
       "--inputs",
@@ -818,7 +818,7 @@
     ],
     "why": "--item-table: item-type branches need g_items records of each type; the hints point the agent's slot item ids (this+0x1d0..) and slot indices (this+0x22c..) into the table; --party-table because the row reads g_game"
   },
-  "agent_logic 00443aa0": {
+  "agent_effects_sound 00443aa0": {
     "args": [
       "--item-table=0.6",
       "--hint",
@@ -857,7 +857,7 @@
     ],
     "why": "--item-table: item-type branches need g_items records of each type; the hints point the agent's slot item ids (this+0x1d0..) and slot indices (this+0x22c..) into the table; --party-table because the row reads g_game"
   },
-  "agent_logic 004532f0": {
+  "agent_damage 004532f0": {
     "args": [
       "--item-table=0.6",
       "--hint",
@@ -944,7 +944,7 @@
     ],
     "why": "the static vector's first/last at 0xa180ec must be non-null to reach the destroy loop"
   },
-  "agent_logic 00443730": {
+  "agent_effects_sound 00443730": {
     "args": [
       "--rand-seeded"
     ],
@@ -968,7 +968,7 @@
     ],
     "why": "the branch needs the global at 0x5e28fc set and a this+0x10 field selecting case 0xc"
   },
-  "agent_logic 0044f240": {
+  "mesh_edit_members 0044f240": {
     "args": [
       "--typed-share",
       "0.8",
@@ -977,7 +977,7 @@
     ],
     "why": "the outer loop runs twice only with a count of 2+ at this+0xac"
   },
-  "agent_logic 00451710": {
+  "agent_ragdoll_blood 00451710": {
     "args": [
       "--rand-seeded",
       "--typed-share",
@@ -1065,7 +1065,7 @@
     ],
     "why": "a config-table entry for party_b_member_h (key 0x59a1fc, value \"1\") and a 2.1 width reach the clamp"
   },
-  "agent_logic 0043e190": {
+  "agent_attack_checks 0043e190": {
     "args": [
       "--hint",
       "arg0=3e8@1",
@@ -1163,7 +1163,7 @@
     ],
     "why": "Faction ctor: the original builds its tstring names[8] member through the out-of-line vector constructor iterator ??_H (0x401800: push 0x42bbd0; push 8; push 0x10; a plain loop calling the ctor count times), ours expands that loop inline, so the original's 8 tstring::tstring calls were hidden inside one ??_H call at depth 1. Same constructor, same 8 this pointers (+0x10 stride) in the same order; replay of the saved FAIL input with --transparent 401800 shows no difference (bm7ct 2026-11-08)."
   },
-  "mission_5 00529ec0": {
+  "mission_hud_and_orders 00529ec0": {
     "args": [
       "--stub",
       "418b30,418c10,418c80,418cf0,419540,4e43e0"
@@ -1177,7 +1177,7 @@
     ],
     "why": "decode_utf8 is file-static, and cl gave each build its own register convention: the original takes s in edi and out_len in edx (buf, maxn on the stack), ours s in edi and out_len, buf, maxn on the stack. --param-regs hands each build the same arguments its own way (PASS 200/200, 20/20 edges, bit-identical)."
   },
-  "script_interpreter 0049e9c0": {
+  "operation_execute 0049e9c0": {
     "args": [
       "--stub",
       "418b30,418c10,418c80,418cf0,419540,49bbb0"

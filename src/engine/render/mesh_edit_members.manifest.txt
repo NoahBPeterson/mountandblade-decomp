@@ -1,0 +1,3 @@
+../src/engine/render/mesh_edit_members.cpp  ?add_quad@mesh@rgl@@QAEXPBUvector4@2@0PBUvec2@@1PBI@Z  0044e970  /O2 /MT /Gy /TP
+../src/engine/render/mesh_edit_members.cpp  ?scale@mesh@rgl@@QAEXM@Z  0044f0c0  /O2 /MT /Gy /TP
+../src/engine/render/mesh_edit_members.cpp  ?translate@mesh@rgl@@QAEXPBUvector4@2@@Z  0044f240  /O2 /MT /Gy /TP

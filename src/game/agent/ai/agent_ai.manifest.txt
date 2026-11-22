@@ -1,0 +1,12 @@
+../src/game/agent/ai/agent_ai.cpp  ?add_mesh@entity@rgl@@QAEXPAUmesh@2@@Z  00442110  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ?reachable@PolyMesh@@QAE_NPBH00@Z  004452f0  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ??$_Ucopy@PAUPhysRec@@@?$vector@UPhysRec@@V?$allocator@UPhysRec@@@std@@@std@@IAEPAUPhysRec@@PAU2@00@Z  00445700  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ?goal_near_for_class@Agent@@QAEXPBUvector4@rgl@@PBM@Z  00445850  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ?plan_path@Agent@@QAE_NXZ  00445910  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ?play_class_sound@Agent@@QAEXPBH@Z  004459c0  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ?on_wield_reset@Agent@@QAEXXZ  00445a20  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ?_Ufill@?$vector@UPhysRec@@V?$allocator@UPhysRec@@@std@@@std@@IAEPAUPhysRec@@PAU3@IABU3@@Z  00445e70  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ?_Insert_n@?$vector@UPhysRec@@V?$allocator@UPhysRec@@@std@@@std@@IAEXViterator@12@IABUPhysRec@@@Z  00445ea0  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ?set_weapon_mode@Agent@@QAEXH@Z  004461e0  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ?start_attack@Agent@@QAEXH@Z  004464d0  /O2 /MT /Gy /TP
+../src/game/agent/ai/agent_ai.cpp  ?insert@?$vector@UPhysRec@@V?$allocator@UPhysRec@@@std@@@std@@QAE?AViterator@12@V312@ABUPhysRec@@@Z  0044cf90  /O2 /MT /Gy /TP

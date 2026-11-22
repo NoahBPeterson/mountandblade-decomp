@@ -9,7 +9,7 @@ and a clean place to add game hooks or an embedded scripting language.
 
 ## Evidence
 
-- `Operation::execute(__int64* locals, int* context, int* error)` 0x49fa10 (src/game/script/script_interpreter.cpp, 4,585 lines; game_script_NOTES.md): `switch (opcode - 30)` over a 2,356-entry jump table (0x4ae458), **591 real cases**; unknown ids hit
+- `Operation::execute(__int64* locals, int* context, int* error)` 0x49fa10 (src/game/script/operation_execute.cpp, 4,585 lines; game_script_NOTES.md): `switch (opcode - 30)` over a 2,356-entry jump table (0x4ae458), **591 real cases**; unknown ids hit
   `sprintf("Unrecognized opcode %d.")` (line 4571). Control opcodes < 30 are handled by the block runner 0x4b09e0. Flags: `op::neg` 0x80000000, `op::this_or_next` 0x40000000. Names for every opcode are in
   `src/game/script/script_opcodes.h` (622 lines, `namespace op`).
 - Operands are 64-bit values with a type word (`__int64 params[16]`, `int types[16]`); results via `set_lvalue` 0x49d500 (register, global variable or local). **16 operand slots** per operation.

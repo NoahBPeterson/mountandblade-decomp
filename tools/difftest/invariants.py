@@ -342,7 +342,7 @@ SPECS = {
     ("collision_shapes", 0x40B0F0): [FACE_INV],
     ("strategic_entity", 0x42B080): [NIDS_INV, GFACE_INV],
     ("terrain_cells", 0x465AF0): [TERRAIN_INV],
-    ("script_interpreter", 0x49FA10): [ELEM_N_INV],
+    ("operation_execute", 0x49FA10): [ELEM_N_INV],
     ("poly_mesh_poly_ray_edit", 0x52DFD0): [POLY_RAY_INV],
 }
 

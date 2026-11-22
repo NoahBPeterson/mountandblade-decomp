@@ -1,0 +1,3 @@
+../src/game/agent/movement/agent_corpse_and_controls.cpp  ?spawn_corpse@Agent@@QAEXXZ  004554c0  /O2 /MT /Gy /TP
+../src/game/agent/movement/agent_corpse_and_controls.cpp  ?tick_death@Agent@@QAEXXZ  00457710  /O2 /MT /Gy /TP
+../src/game/agent/movement/agent_corpse_and_controls.cpp  ?note_blow@Agent@@QAEXPAUBlow@@@Z  00457af0  /O2 /MT /Gy /TP

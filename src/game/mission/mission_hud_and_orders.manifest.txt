@@ -1,0 +1,11 @@
+../src/game/mission/mission_hud_and_orders.cpp  ?tick@MissionCtx@@QAEXXZ  005295a0  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?refresh_markers@MissionCtx@@QAEXXZ  00529600  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?reset_party_heroes@MissionCtx@@QAEXH@Z  00529670  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?record_killed@Mission@@QAEXPAUAgent@@@Z  00529b70  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?remove_from_stack@@YGXPAUAgent@@H@Z  00529bc0  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?drop_stack_seed@Mission@@QAEXPAUSeedRow@@HHHH@Z  00529c30  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?record_wounded@Mission@@QAEXPAUAgent@@@Z  00529d00  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?init_order_markers@Mission@@QAEXXZ  0052ae70  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?order_tick@MissionBlocker@@QAEXXZ  0052b300  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?draw_order_menu@MissionBlocker@@QAEXXZ  0052b3c0  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?update_cursor@MissionBlocker@@QAEXXZ  0052bc80  /O2 /MT /Gy /TP

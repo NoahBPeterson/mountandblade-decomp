@@ -53,6 +53,14 @@ mb_weaken(src/engine/render/mesh.cpp
     __ZTSNSt9__mb_vc7112length_errorE
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
+mb_weaken(src/engine/render/mesh_edit_members.cpp
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
+    ___clang_call_terminate)
 mb_weaken(src/engine/render/particle_system.cpp
     __ZTINSt9__mb_vc7111logic_errorE
     __ZTINSt9__mb_vc7112length_errorE
@@ -121,8 +129,63 @@ mb_weaken(src/engine/scene/strategic_entity.cpp
     __ZTSNSt9__mb_vc7112length_errorE
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
+mb_weaken(src/game/agent/agent_effects_sound.cpp
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
+    ___clang_call_terminate)
+mb_weaken(src/game/agent/agent_ragdoll_blood.cpp
+    __ZTI9PlacedObj
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTS9PlacedObj
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
+    ___clang_call_terminate)
 mb_weaken(src/game/agent/agent_stats.cpp
     __ZNK5Agent9slot_pairEi
+    ___clang_call_terminate)
+mb_weaken(src/game/agent/ai/agent_ai.cpp
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
+    ___clang_call_terminate)
+mb_weaken(src/game/agent/ai/agent_targeting.cpp
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
+    ___clang_call_terminate)
+mb_weaken(src/game/agent/combat/agent_attack_checks.cpp
+    __ZTI9PlacedObj
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTS9PlacedObj
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
+    ___clang_call_terminate)
+mb_weaken(src/game/agent/combat/agent_blows.cpp
+    __ZN8Animator6blood1Ej
+    __ZN8Animator6blood2Ej)
+mb_weaken(src/game/agent/combat/agent_damage.cpp
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
 mb_weaken(src/game/agent/hud/hud_vector_instances.cpp
     __ZTINSt9__mb_vc7111logic_errorE
@@ -132,12 +195,10 @@ mb_weaken(src/game/agent/hud/hud_vector_instances.cpp
     __ZTSNSt9__mb_vc7112length_errorE
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
-mb_weaken(src/game/agent4/agent_logic.cpp
-    __ZTI9PlacedObj
+mb_weaken(src/game/agent/physics/agent_static_collision.cpp
     __ZTINSt9__mb_vc7111logic_errorE
     __ZTINSt9__mb_vc7112length_errorE
     __ZTINSt9__mb_vc7112out_of_rangeE
-    __ZTS9PlacedObj
     __ZTSNSt9__mb_vc7111logic_errorE
     __ZTSNSt9__mb_vc7112length_errorE
     __ZTSNSt9__mb_vc7112out_of_rangeE
@@ -366,6 +427,16 @@ mb_weaken(src/game/mission/mission_context.cpp
     __ZN8PartyMgr3getEi
     __ZTI9PlacedObj
     __ZTS9PlacedObj)
+mb_weaken(src/game/mission/mission_hud_and_orders.cpp
+    __ZTI9PlacedObj
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTS9PlacedObj
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
+    ___clang_call_terminate)
 mb_weaken(src/game/mission/render_passes.cpp
     __ZTINSt9__mb_vc7111logic_errorE
     __ZTINSt9__mb_vc7112length_errorE
@@ -398,16 +469,6 @@ mb_weaken(src/game/mission/terrain_water_regen.cpp
     __ZTSNSt9__mb_vc7112length_errorE
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
-mb_weaken(src/game/mission5/mission_5.cpp
-    __ZTI9PlacedObj
-    __ZTINSt9__mb_vc7111logic_errorE
-    __ZTINSt9__mb_vc7112length_errorE
-    __ZTINSt9__mb_vc7112out_of_rangeE
-    __ZTS9PlacedObj
-    __ZTSNSt9__mb_vc7111logic_errorE
-    __ZTSNSt9__mb_vc7112length_errorE
-    __ZTSNSt9__mb_vc7112out_of_rangeE
-    ___clang_call_terminate)
 mb_weaken(src/game/party/party_map.cpp
     __ZNK7NavData6sharesERKiS1_
     __ZTINSt9__mb_vc7111logic_errorE
@@ -425,7 +486,12 @@ mb_weaken(src/game/save/save_game.cpp
     __ZTSNSt9__mb_vc7112length_errorE
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
-mb_weaken(src/game/script/script_interpreter.cpp
+mb_weaken(src/game/script/dialog_block_runner.cpp
+    __Z18check_script_paramPiS_
+    __ZN3rgl12identity_posEPNS_6matrixE
+    __ZN3rgl9identity3EPNS_4mat3E
+    __ZN8PartyMgr14first_party_idEv)
+mb_weaken(src/game/script/operation_execute.cpp
     __Z10rand_belowPKi
     __Z11clamp_indexPKiS0_S0_
     __Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE
@@ -476,6 +542,14 @@ mb_weaken(src/game/script/script_interpreter.cpp
     __ZTINSt9__mb_vc7112length_errorE
     __ZTINSt9__mb_vc7112out_of_rangeE
     __ZTS9PlacedObj
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
+    ___clang_call_terminate)
+mb_weaken(src/game/script/script_support.cpp
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
     __ZTSNSt9__mb_vc7111logic_errorE
     __ZTSNSt9__mb_vc7112length_errorE
     __ZTSNSt9__mb_vc7112out_of_rangeE

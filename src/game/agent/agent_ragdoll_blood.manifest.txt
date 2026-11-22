@@ -1,0 +1,7 @@
+../src/game/agent/agent_ragdoll_blood.cpp  ?make_ranged_mesh@Missile@@QAEPAUmesh@rgl@@XZ  0044f6a0  /O2 /MT /Gy /TP
+../src/game/agent/agent_ragdoll_blood.cpp  ?push_back@?$vector@UPhysRec@@V?$allocator@UPhysRec@@@std@@@std@@QAEXABUPhysRec@@@Z  0044fa40  /O2 /MT /Gy /TP
+../src/game/agent/agent_ragdoll_blood.cpp  ?create_world@PhysSet@@QAEIXZ  0044fad0  /O2 /MT /Gy /TP
+../src/game/agent/agent_ragdoll_blood.cpp  ?append_plain@mesh@rgl@@QAEXPAU12@PBUmatrix@2@@Z  004520b0  /O2 /MT /Gy /TP
+../src/game/agent/agent_ragdoll_blood.cpp  ?skin_lods@FxDef@@QAEXPAUlod_mesh@rgl@@H@Z  00452530  /O2 /MT /Gy /TP
+../src/game/agent/agent_ragdoll_blood.cpp  ?drop_held@Agent@@QAEXXZ  004529e0  /O2 /MT /Gy /TP
+../src/game/agent/agent_ragdoll_blood.cpp  ?layout_clear@Font@@QAEPAUvector4@rgl@@PAU23@PBUtstring@@PBU23@PBMPAUmesh@3@PBH33I@Z  00452bb0  /O2 /MT /Gy /TP
