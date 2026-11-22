@@ -746,6 +746,30 @@
    "offset_sites_at": "2026-11-21T15:12",
    "exact_rows": 4881,
    "manifest_rows": 4881
+  },
+  "2026-11-21T19:03:30-06:00": {
+   "commit": "d1a60178",
+   "views": 27,
+   "views_64wrong": 0,
+   "view_casts": 78,
+   "w64_W": 0,
+   "w64_V": 0,
+   "w64_L": 11,
+   "w64_C": 0,
+   "w64_I": 345,
+   "w64_classes_W": 0,
+   "raw_offsets": 60,
+   "int_ptr": 0,
+   "pad_ptr": 0,
+   "slot_calls": 0,
+   "traps_i686": 0,
+   "traps_macos": 0,
+   "offset_sites": 0,
+   "offset_sites_nonmember": 26,
+   "offset_sites_at": "2026-11-21T16:02",
+   "exact_rows": 4881,
+   "manifest_rows": 4881,
+   "note": "after L-H5 (d1a60178), end of the type phase's lanes"
   }
  }
 }

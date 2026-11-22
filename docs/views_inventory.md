@@ -91,31 +91,29 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 
 | class | views | 64-bit wrong (yes) | on the port path | cast sites |
 |---|---:|---:|---:|---:|
-| A | 26 | 0 | 9 | 116 |
+| A | 22 | 0 | 7 | 78 |
 | B | 0 | 0 | 0 | 0 |
 | C | 0 | 0 | 0 | 0 |
 | D | 3 | 0 | 0 | 0 |
 | E | 1 | 0 | 0 | 0 |
 | F | 1 | 0 | 1 | 0 |
-| all | 31 | 0 | 10 | 116 |
+| all | 27 | 0 | 8 | 78 |
 
-### A. Fold into the real type (26)
+### A. Fold into the real type (22)
 
 | view | file:line | overlays | fields named | casts (files) | 64? | path | rows e/n/- | conf | notes |
 |---|---|---|---|---|---|---|---|---|---|
 | scene_ms2 | game/mesh_slot/mesh_slot.h:38 | scene (rgl/scene_rec.h:41) | - | 54 (mesh_char.cpp, mesh_pass.cpp) | no | - | 18/36/0 | high | fold into scene (pads cover the fields) |
-| string_view_ | game/script/script_interpreter.h:43 | tstring (game/tstring.h:19) | 1 methods | 36 (script_interpreter.cpp, script_interpreter.h) | no | reach:35 | 1/34/1 | medium | method twin: declare the 1 method(s) on tstring |
 | EV | game/options_panel/mesh_edit.cpp:131 | std::vector<MEdge> | v | 6 (mesh_edit.cpp) | no | - | 6/0/0 | medium | fold into std::vector<MEdge> (pads cover the fields) |
 | sel_list | game/inventory_panel/widget_text.cpp:81 | std::vector | v | 4 (note_window.cpp) | likely | doc | 0/4/0 | medium | fold into std::vector (pads cover the fields) |
 | EquipSet | game/mesh_slot/mesh_appear.cpp:32 | ItemRef (game/item_ref.h:14) | weapon, helmet, body, boots | 3 (agent_hud.cpp, mesh_game.cpp +1) | no | reach:1 | 1/1/1 | high | fold into ItemRef (real type has no offsets there: check) |
 | vec4n | game/agent4/agent_logic.cpp:7229 | vector4 (rgl/rgl_math.h:15) | 2 methods | 3 (agent_logic.cpp) | no | reach:3 | 0/3/0 | medium | method twin: declare the 2 method(s) on vector4 |
 | Profile | game/char_sheet/cs_update.h:54 | ? | troop | 2 (cs_update.cpp) | likely | - | 2/0/0 | medium | a screen in g_windows.arr[n] (slot_as<T>(n)): fold into that slot's screen class (head_rec family, game/screen_records.h) |
-| skin_calls | game/terrain_b/render_batch.h:63 | skin (rgl/resource.h:97) | 1 methods | 2 (terrain_b.cpp) | no | - | 0/2/0 | high | method twin: declare the 1 method(s) on skin |
 | Blk2dd0 | game/options_panel/module_load.h:29 | EnvRow (game/env_row.h:13) | 1 methods | 1 (module_load.cpp) | no | - | 1/0/0 | medium | method twin: declare the 1 method(s) on EnvRow |
 | Team | game/inventory_panel/mission_ctx.h:39 | TeamRec (game/mission.h:59) | f0, leader, cls, relation | 1 (mission_ctx.cpp) | no | - | 1/0/0 | medium | fold into TeamRec (pads cover the fields) |
 | TroopIO | game/party/game.h:75 | Troop (include/troop.h:20) | 1 methods | 1 (game.cpp) | no | - | 1/0/0 | high | method twin: declare the 1 method(s) on Troop |
 | TroopX | game/mission_ui2/stat_panel_x.cpp:38 | Troop (include/troop.h:20) | 1 methods | 1 (stat_panel_x.cpp) | no | reach:1 | 1/0/0 | high | method twin: declare the 1 method(s) on Troop |
-| key_clip | rgl/resource.h:156 | named_object (rgl/resource.h:19) | tracks, extra | 1 (resmgr.cpp) | likely | reach:1 | 0/1/0 | low | fold into named_object (real type has no offsets there: check) |
+| key_clip | rgl/resource.h:159 | named_object (rgl/resource.h:19) | tracks, extra | 1 (resmgr.cpp) | likely | reach:1 | 0/1/0 | low | fold into named_object (real type has no offsets there: check) |
 | mesh_anim_x | game/mesh_slot/mesh_scene.cpp:430 | mesh (rgl/mesh.h:48) | 1 methods | 1 (mesh_scene.cpp) | no | reach:1 | 1/0/0 | high | method twin: declare the 1 method(s) on mesh |
 | BlowInit | game/blow.h:39 | Agent (game/agent_obj.h:52) | 2 methods | 0 | no | doc | - | high | method twin: declare the 2 method(s) on Agent |
 | MissionV | game/inventory_panel/mission_ctx.h:14 | Mission (game/mission.h:78) | 2 methods | 0 | no | - | - | high | method twin: declare the 2 method(s) on Mission |
@@ -124,10 +122,8 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 | V2_s29130 | game/mission5/mission_5.cpp:1551 | V2 (include/vec.h:35) | 3 methods | 0 | no | - | - | high | method twin: declare the 3 method(s) on V2 |
 | V2r | game/config/widget_mgr.cpp:236 | V2 (include/vec.h:35) | 1 methods | 0 | no | - | - | high | method twin: declare the 1 method(s) on V2 |
 | mat3_value | rgl/identity_value.h:8 | mat3 (rgl/rgl_math.h:62) | - | 0 | no | - | - | high | fold into mat3 (pads cover the fields) |
-| mat4_ro | game/renderer.h:40 | rgl::mat3 (rgl/rgl_math.h:62) | 1 methods | 0 | no | - | - | high | fold into rgl::mat3 (pads cover the fields) |
+| mat4_ro | game/renderer.h:34 | rgl::mat3 (rgl/rgl_math.h:62) | 1 methods | 0 | no | - | - | high | fold into rgl::mat3 (pads cover the fields) |
 | mesh_calls | game/terrain_b/render_batch.h:33 | mesh (rgl/mesh.h:48) | 2 methods | 0 | no | - | - | high | method twin: declare the 2 method(s) on mesh |
-| string_view_ | rgl/shapes/shapes.h:32 | string_view_ (game/script/script_interpreter.h:43) | 1 methods | 0 | no | - | - | high | method twin: declare the 1 method(s) on string_view_ |
-| tstr | game/script/script_interpreter.h:82 | tstring (game/tstring.h:19) | 1 methods | 0 | no | reach:1 | - | high | method twin: declare the 1 method(s) on tstring |
 | vec2c | game/strat/strat_ext.h:33 | vec2 (include/vec.h:13) | 1 methods | 0 | no | - | - | high | method twin: declare the 1 method(s) on vec2 |
 
 ### B. Real type exists but conflicts (0)
@@ -170,7 +166,7 @@ only directly; their pads are the members still to name.
 - `game/config` (2): InputSet (config.h:46) 6/0x72c, Config (config_block.h:13) 1/0x4
 - `game/inventory_panel` (2): MissionCtx (mission_ctx_rec.h:7) 4/0x150, BigRec (map_panel.cpp:79) 2/0x84
 - `game/ui` (5): MissionUi (mission_ui.h:31) 1/0x5, NodeA (container.h:45) 1/0x7, PairStack (mission_ui.h:155) 1/0x4, UiA (ui_widgets.h:14) 1/0x2, UiC (ui_widgets.h:58) 1/0x3
-- `game/script` (3): SiteRec (script_interpreter.cpp:2307) 2/0x1cc, EntryPoint (script_interpreter.h:235) 1/0xf0, PickArg (script_interpreter.cpp:2306) 1/0x400
+- `game/script` (3): SiteRec (script_interpreter.cpp:2307) 2/0x1cc, EntryPoint (script_interpreter.h:231) 1/0xf0, PickArg (script_interpreter.cpp:2306) 1/0x400
 - `game/terrain_b` (2): SceneFile (scene_file.h:39) 2/0x80, MEdge (poly_mesh.h:36) 1/0x8
 - `game/terrain_a` (2): TerrainParticle (terrain.h:79) 2/0x8, Terrain (terrain.h:129) 1/0x5dd
 - `game/char_sheet` (2): cell_rec (dust.h:62) 2/0x28, SaveCtx (save_game.h:51) 1/0xc
