@@ -1,6 +1,6 @@
 {
-"when": "2026-11-21T20:59:07-06:00",
-"commit": "1f3307c3",
+"when": "2026-11-21T22:25:23-06:00",
+"commit": "b486bd0d",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -84,14 +84,15 @@
 "work/equiv_results/2026-11-21/sw",
 "work/equiv_results/2026-11-21/eqfix/sweep",
 "work/equiv_results/2026-11-21b/sw",
-"work/equiv_results/2026-11-21-vel"
+"work/equiv_results/2026-11-21-vel",
+"work/equiv_results/2026-11-22/bm1b"
 ],
 "summary": {
-"pass": 117,
+"pass": 114,
 "proven": 26,
 "proven_o": 0,
-"weak": 261,
-"fail": 20,
+"weak": 258,
+"fail": 21,
 "inputs": 16,
 "harness": 3,
 "comdat": 0,
@@ -99,11 +100,11 @@
 "funclet": 43,
 "notcode": 0,
 "not_run": 6,
-"pass_sz": 63662,
+"pass_sz": 63197,
 "proven_sz": 13389,
 "proven_o_sz": 0,
-"weak_sz": 470523,
-"fail_sz": 22171,
+"weak_sz": 470124,
+"fail_sz": 22556,
 "inputs_sz": 26376,
 "harness_sz": 971,
 "comdat_sz": 0,
@@ -1511,9 +1512,31 @@
 "004608d0": {
 "module": "dialog_manager",
 "file": "src/game/dialog_manager.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 251
+"verdict": "FAIL",
+"category": "fail",
+"size": 251,
+"reason": "3/3 valid inputs mismatched; first: call #1 (depth 1)",
+"first_mismatch": {
+"input": 0,
+"profile": "zeroish",
+"origin": "regress",
+"observable": "call #1 (depth 1)",
+"kind": "value",
+"orig": "00417b10 FUN_00417b10 ecx=40020000 args=[40010020]",
+"ours": "00417b10 FUN_00417b10 ecx=40020000 args=[STK]",
+"detail": "callee, this/edx and stack args (normalised)",
+"args": [
+"40020000"
+],
+"regs": {
+"eax": "3f000000",
+"ecx": "40010000",
+"edx": "804607e0"
+},
+"fake_calls": 0,
+"repairs": 0,
+"input_file": "work\\difftest\\fail_inputs\\dialog_manager_004608d0.pkl"
+}
 },
 "00461630": {
 "module": "renderer",
@@ -2069,13 +2092,6 @@
 "size": 524,
 "stale_proof": "stale proof: proof of 2026-11-14 is of an older build of src/game/ui/mission_ui.cpp (build hash differs)"
 },
-"00489820": {
-"module": "mission_ui",
-"file": "src/game/ui/mission_ui.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 57
-},
 "0048a420": {
 "module": "mission_ui",
 "file": "src/game/ui/mission_ui.nonmatching.txt",
@@ -2096,13 +2112,6 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 195
-},
-"0048c570": {
-"module": "mission_3",
-"file": "src/game/mission_ui2/mission_3.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "weak",
-"size": 42
 },
 "0048c5c0": {
 "module": "mission_3",
@@ -2228,35 +2237,6 @@
 "fake_calls": 1,
 "repairs": 0,
 "input_file": "work/difftest/fail_inputs/world_data_00492f40.pkl"
-}
-},
-"00494260": {
-"module": "world_data",
-"file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 130,
-"reason": "10/60 valid inputs mismatched; first: memory .data @005d75e0",
-"first_mismatch": {
-"input": 5,
-"profile": "pointery",
-"origin": "mutant",
-"observable": "memory .data @005d75e0",
-"kind": "float-rounding",
-"orig": "00006d08",
-"ours": "00006d01",
-"detail": "differing dwords (addr: orig/ours): 005d75e0: 00006d08/00006d01 [as float32: 3.9113042736234294e-41 vs 3.910323364698402e-41, 7 ulp apart]",
-"args": [
-"00000004"
-],
-"regs": {
-"eax": "00000008",
-"ecx": "40010000",
-"edx": "499b0000"
-},
-"fake_calls": 4,
-"repairs": 0,
-"input_file": "work\\difftest\\fail_inputs\\world_data_00494260.pkl"
 }
 },
 "00494e40": {
@@ -2728,9 +2708,34 @@
 "004bdd50": {
 "module": "config",
 "file": "src/game/config/config.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 157
+"verdict": "FAIL",
+"category": "fail",
+"size": 157,
+"reason": "154/166 valid inputs mismatched; first: fake call #2 arg 0",
+"first_mismatch": {
+"input": 0,
+"profile": "mixed",
+"origin": "regress",
+"observable": "fake call #2 arg 0",
+"kind": "value",
+"orig": "40010008",
+"ours": "STK",
+"detail": "stack argument of a call through a generated pointer (normalised)",
+"args": [
+"40020000"
+],
+"regs": {
+"eax": "437e0000",
+"ecx": "40010000",
+"edx": "00000000"
+},
+"fake_calls": 6,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work\\difftest\\fail_inputs\\config_004bdd50.pkl"
+}
 },
 "004bf870": {
 "module": "trigger_vec",
@@ -2759,33 +2764,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1331
-},
-"004ca600": {
-"module": "mesh_2",
-"file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 191,
-"reason": "5/200 valid inputs mismatched; first: memory .data @005d75e0",
-"first_mismatch": {
-"input": 13,
-"profile": "zeroish",
-"origin": "mutant",
-"observable": "memory .data @005d75e0",
-"kind": "float-rounding",
-"orig": "00000003",
-"ours": "00000001",
-"detail": "differing dwords (addr: orig/ours): 005d75e0: 00000003/00000001 [as float32: 4.203895392974451e-45 vs 1.401298464324817e-45, 2 ulp apart]",
-"args": [],
-"regs": {
-"eax": "00000003",
-"ecx": "40010000",
-"edx": "00000000"
-},
-"fake_calls": 2,
-"repairs": 6,
-"input_file": "work/difftest/fail_inputs/mesh_2_004ca600.pkl"
-}
 },
 "004ca720": {
 "module": "mesh_2",
@@ -3026,11 +3004,11 @@
 "verdict": "FAIL",
 "category": "fail",
 "size": 221,
-"reason": "36/36 valid inputs mismatched; first: call #1 (depth 1)",
+"reason": "72/72 valid inputs mismatched; first: call #1 (depth 1)",
 "first_mismatch": {
 "input": 0,
 "profile": "smallint",
-"origin": "fresh",
+"origin": "regress",
 "observable": "call #1 (depth 1)",
 "kind": "value",
 "orig": "00415870 ?slot12@text_stream@@UAEAAUstream_base@@PAX@Z ecx=40020000 args=[40010024]",
@@ -3055,14 +3033,14 @@
 "verdict": "FAIL",
 "category": "fail",
 "size": 184,
-"reason": "11/11 valid inputs mismatched; first: call #0 (depth 1)",
+"reason": "29/29 valid inputs mismatched; first: call #1 (depth 1)",
 "first_mismatch": {
 "input": 0,
 "profile": "smallint",
-"origin": "fresh",
-"observable": "call #0 (depth 1)",
+"origin": "regress",
+"observable": "call #1 (depth 1)",
 "kind": "value",
-"orig": "00415870 ?slot12@text_stream@@UAEAAUstream_base@@PAX@Z ecx=40020000 args=[400238b8]",
+"orig": "00415870 ?slot12@text_stream@@UAEAAUstream_base@@PAX@Z ecx=40020000 args=[400238dc]",
 "ours": "00415870 ?slot12@text_stream@@UAEAAUstream_base@@PAX@Z ecx=40020000 args=[STK]",
 "detail": "callee, this/edx and stack args (normalised)",
 "args": [
@@ -3084,11 +3062,11 @@
 "verdict": "FAIL",
 "category": "fail",
 "size": 718,
-"reason": "15/15 valid inputs mismatched; first: fake call #6 arg 0",
+"reason": "20/20 valid inputs mismatched; first: fake call #6 arg 0",
 "first_mismatch": {
 "input": 0,
 "profile": "zeroish",
-"origin": "fresh",
+"origin": "regress",
 "observable": "fake call #6 arg 0",
 "kind": "value",
 "orig": "40010074",
@@ -3103,7 +3081,7 @@
 "edx": "00000000"
 },
 "fake_calls": 60,
-"repairs": 2,
+"repairs": 0,
 "mapped_at_fault": [
 "00000000+10000"
 ],
@@ -3514,13 +3492,6 @@
 "tested": "PASS",
 "proof": "rename L1"
 },
-"00509730": {
-"module": "char_window",
-"file": "src/game/inventory_panel/char_window.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 59
-},
 "00509980": {
 "module": "view_open",
 "file": "src/game/inventory_panel/view_open.nonmatching.txt",
@@ -3781,9 +3752,32 @@
 "0051e840": {
 "module": "game",
 "file": "src/game/party/game.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 298
+"verdict": "FAIL",
+"category": "fail",
+"size": 298,
+"reason": "29/31 valid inputs mismatched; first: fake call #1 arg 0; NOTE resolution audit: 4 agree, 0 same-code, 0 unverified, 0 disagree, 1 local copies [our own copy runs where the original calls: ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z -> 0043e7b0]",
+"first_mismatch": {
+"input": 0,
+"profile": "smallint",
+"origin": "regress",
+"observable": "fake call #1 arg 0",
+"kind": "value",
+"orig": "40010024",
+"ours": "STK",
+"detail": "stack argument of a call through a generated pointer (normalised)",
+"args": [
+"46190000",
+"8043e7b0"
+],
+"regs": {
+"eax": "8051e918",
+"ecx": "40010000",
+"edx": "00000007"
+},
+"fake_calls": 2,
+"repairs": 0,
+"input_file": "work\\difftest\\fail_inputs\\game_0051e840.pkl"
+}
 },
 "0051ee80": {
 "module": "troop_rec",

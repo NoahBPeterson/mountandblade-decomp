@@ -51,14 +51,13 @@ struct stream_base {
     virtual void set_autoflush(char f);                    // 24 0x415270
     virtual char get_autoflush();                          // 25 0x415280
     virtual int flush();                                   // 26 0x408020 (returns 0; ICF-shared)
-    // Typed overloads for members the file format holds as an int (a byte) but the record declares unsigned (bool); r_int reads straight
-    // into the member (the same bytes as the int slot; signedness aliases), r_bool through a temporary seeded with the member so a
-    // stream that writes nothing leaves it unchanged, as the slot does; declared
+    // Typed overloads for members the file format holds as an int (a byte) but the record declares unsigned (bool). Each goes through a
+    // temporary seeded with the member, so a stream that reads or writes nothing leaves the member as the slot would; declared
     // after the slots (cl 7.1 orders the vtable by declaration, overloads of a virtual name included).
-    stream_base& r_int(unsigned& v) { return r_int((int*)&v); }
-    stream_base& w_int(unsigned& v) { return w_int((int*)&v); }                          // a member: its address, as the original passes it (the slot is shared with the readers, so it takes a non-const int*)
+    stream_base& r_int(unsigned& v) { int t = (int)v; r_int(&t); v = (unsigned)t; return *this; }
+    stream_base& w_int(unsigned v) { int t = (int)v; return w_int(&t); }
     stream_base& r_bool(bool& v) { char t = v; r_bool(&t); v = t != 0; return *this; }
-    stream_base& w_bool(bool& v) { return w_bool((char*)&v); }
+    stream_base& w_bool(bool v) { char t = v; return w_bool(&t); }
 };
 
 // The typed slots of the classes that declare all of them.

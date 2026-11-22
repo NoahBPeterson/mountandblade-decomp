@@ -43,14 +43,14 @@ Columns: row, diff class (from `check.py`), c2scope tools used, what it predicte
   defined as `{}` in shapes.cpp next to shape_base::draw (the linker folds the two empty bodies, as in the original).
   One compile, 6 min including reading why the previous lane used a call to 0x477b70.
 
-### 0x4e9d10 Party::write, 0x4e99d0 Pool<Event>::write_table, 0x4e9c50 PartyMgr::write_table: MATCH
+### 0x4e9d10 Party::write, 0x4e99d0 Pool<Event>::write_table, 0x4e9c50 PartyMgr::write_table: byte-exact, then withdrawn
 - Class: codegen shape (a copy of the member to a stack temp, `lea eax,[esp+0x14]`, instead of `lea eax,[edi+0x74]`).
-- c2scope not used: `check.py` showed it. Cause: stream.h's `w_int(unsigned v)` / `w_bool(bool v)` took the value and wrote it
-  to a temp; the original passes the member's address. Now `w_int(const unsigned&)` / `w_bool(const bool&)` pass the
-  address: `w_int(unsigned&)` / `w_bool(bool&)` (the same `(int*)&v` pattern as the existing `r_int(unsigned&)`; the base slot
-  takes a non-const `int*` because readers and writers share it, so a const overload would need a const_cast, which was the
-  first version; a by-value + by-reference pair is ambiguous in cl 13.10 for an lvalue), and `write_table` writes `&count`
-  (int). Three rows (one was recorded FAIL by equiv because of the fake-call argument).
+- c2scope not used: `check.py` showed it. The by-value `w_int(unsigned v)` / `w_bool(bool v)` of stream.h copy the member to a
+  temp; the original passes the member's address. Passing the address needs `(int*)&v` (or a const_cast): a view cast over
+  an unsigned / bool, which this phase removes. Landed with `w_int(unsigned&)` and then withdrawn on review: all four typed
+  wrappers are the seeded-temporary form again (`int t = (int)v; r_int(&t); v = (unsigned)t`), the three rows (and 0x4bdd50,
+  0x4608d0, 0x51e840, which matched only through the direct `r_int(unsigned&)`) are back in their nonmatching files with a
+  re-run equiv verdict. `write_table`'s `w_int(&count)` (count is an int) stays: it calls the int slot directly.
 
 ## Rows where c2scope explained the diff but gave no lever
 
@@ -149,7 +149,7 @@ Rows worked this session (type-recovery rows that were nonmatching):
 
 | outcome | rows |
 |---|---|
-| back to byte-exact | 0x509730, 0x489820, 0x4e9d10, 0x4e99d0, 0x4e9c50 (batch 1) + 0x48c570 (`static_cast<Rec8*>(memmove(..)) + n`), 0x4ca600 / 0x494260 (`unsigned char` cursor flag, gui_manager::show_cursor unsigned char): 8 by source change; 0x4bdd50, 0x4608d0, 0x51e840 were already exact (stale figures) |
+| back to byte-exact | 0x509730, 0x489820 (batch 1) + 0x48c570 (`static_cast<Rec8*>(memmove(..)) + n`), 0x4ca600 / 0x494260 (`unsigned char` cursor flag, gui_manager::show_cursor unsigned char): 5 by source change that stay (the stream-wrapper rows 0x4e9d10 / 0x4e99d0 / 0x4e9c50 and the stale-figure rows 0x4bdd50 / 0x4608d0 / 0x51e840 matched only with `(int*)&v` wrappers and were withdrawn) |
 | diagnosed by c2scope, no source lever found | 0x51c090, 0x4ea030, 0x406e50, 0x47c810, 0x403f90, 0x4dc350 |
 | byte-exact only with a match trick (not landed) | 0x4ef730 (dead `if (!k) return;`) |
 

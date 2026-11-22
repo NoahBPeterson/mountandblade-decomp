@@ -21,4 +21,3 @@
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
 ../src/game/dialog_manager.cpp  _$E1  00547e20  /O2  /MT  /Gy  /TP
 ../src/game/dialog_manager.cpp  _$E2  005484a0  /O2  /MT  /Gy  /TP
-../src/game/dialog_manager.cpp  ?read@DialogRec@@QAEXPAUstream_base@@@Z  004608d0  /O2 /MT /Gy /TP
