@@ -1,2 +1,1 @@
 
-004608d0	179	[2026-11-21 lane BM1: stream_base's typed r_int(unsigned&) / w_int(unsigned) / r_bool(bool&) / w_bool(bool) go through a temporary seeded with the member (no (int*)&v view): byte-exact with the direct pointer form, figure 179 aligned now] ?read@DialogRec@@QAEXPAUstream_base@@@Z [equiv: FAIL, 3/3 valid inputs mismatched; first: call #1 (depth 1) (harness: the stream slot receives the address of a stack temporary, the original's the member's; the mismatch is that pointer argument)]

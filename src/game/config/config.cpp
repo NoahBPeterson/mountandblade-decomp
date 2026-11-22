@@ -1589,7 +1589,7 @@ void SpawnRec::load_extras(stream_base& a)
     else if (id > 0x40)
         id = 0x40;
     RI(a, &flags);
-    a.r_int(flags2);
+    a.r_int(&flags2);
     RI(a, &f20);
     RI(a, &f14);
     int* n = &num_override_items;

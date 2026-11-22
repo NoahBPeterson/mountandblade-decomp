@@ -117,7 +117,7 @@ void Party::read(stream_base* s, int flag)
     s->r_int(&menu);
     s->r_int(&owner);
     s->r_int(&faction);
-    s->r_int(personality);
+    s->r_int(&personality);
     s->r_int(&state);
     s->r_int(&action);
     s->r_int(&state_target);
@@ -134,7 +134,7 @@ void Party::read(stream_base* s, int flag)
     }
     s->r_float(&angle);
     if (flag > 0) {
-        s->r_bool(this->flag);
+        s->r_bool(&this->flag);
         s->r_tstr((rgl::string*)&extra_text);
         stream_base* rs = &s->r_float(&morale);
         rs = &rs->r_float(&zoom);

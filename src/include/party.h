@@ -54,7 +54,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int type;                               // +4 (1 = ordinary party)   0x460ca0
     int id;                                 // +8   0x460ca0
     tstring name;                           // +0x0c   0x4c6530
-    bool flag;                              // +0x1c
+    char flag;                              // +0x1c
     tstring key;                            // +0x20   0x4c6530
     rgl::vector4 pos;                            // +0x30 map position (x, y, z, w)   0x4b2880 place_on_map, 0x4b3910, 0x4b80d0
     Vec2 dir;                               // +0x40 heading   0x4b3ce0, 0x4b80d0 (reset 0x48f180 assigns vector2 temporaries)
@@ -66,7 +66,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int in_sight;                           // +0x6c 1 while the party is within sight of the main party (GameData::update_cursor 0x5179f0 raises
                                             //   map events 0xc / 0xd on the change; 0x4b7e50, map_panel 0x51ba69)
     int faction;                            // +0x70 (script party_set_faction 0x4a73ab; the template's faction, add_sprite 0x49ebd0; 0x4b4a00)
-    unsigned personality;                   // +0x74 the template's personality: packed nibbles (low 4: aggressiveness, bits 4..7: courage,
+    int personality;                        // +0x74 the template's personality: packed nibbles (low 4: aggressiveness, bits 4..7: courage,
                                             //   0x100: banditness)   0x4b4a00, add_sprite 0x49ebd0
     float bandit_attraction;                // +0x78 (script party_set_bandit_attraction 0x4a7b59; 0x4b4a00, 0x4b2c00)
     float morale;                           // +0x7c 0..1 (script party_set_morale 0x4a8387; 0x4b2c00, 0x4b5c30)

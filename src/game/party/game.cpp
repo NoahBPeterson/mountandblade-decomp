@@ -911,7 +911,7 @@ void SpriteTable::read(stream_base* s, int arg)
         clear();
     int n;
     s->r_int(&n);
-    s->r_int(serial);
+    s->r_uint(&serial);
     for (int i = 0; i < n; i++)
         alloc();
     clear();

@@ -20,7 +20,7 @@ struct SpawnRec {                               // 0x4c bytes: a mission spawn r
     int id;                                     // +0x00
     int flags;                                  // +0x04 (see rule_accepts / pick_spawn)
     union {
-        unsigned flags2;                        // +0x08
+        int flags2;                             // +0x08
         int override_flags;                     // +0x08 (script mission_tpl_entry_set_override_flags 0x4aa79a)
     };
     union {

@@ -43,7 +43,7 @@ struct DialogBlock {                                             // 0x1c bytes
 struct DialogRec {                                         // 0x64 bytes
     tstring text;                                          // +0x00 (spoken text, underscores -> spaces; gui_edit.cpp called it `name`)
     tstring id;                                            // +0x10 (dlga_ id = the translation key)
-    unsigned flags;                                        // +0x20 speaker / repeat / auto flags
+    int flags;                                             // +0x20 speaker / repeat / auto flags
     int f24;                                               // +0x24 input state
     DialogBlock cond;                                            // +0x28
     DialogBlock conseq;                                          // +0x44

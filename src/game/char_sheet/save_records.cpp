@@ -53,7 +53,7 @@ template<> void Pool<Event>::write_table(stream_base* out)
     }
     int w = last + 1;
     out->w_int(&w);
-    out->w_int(serial);
+    out->w_uint(&serial);
     int k = 0;
     while (k <= last) {
         Event* e = pages[(unsigned)k >> 4] + (k & 0xf);
@@ -125,7 +125,7 @@ void GameData::write_missions(stream_base* out)
 void PartyMgr::write_table(stream_base* out)
 {
     out->w_int(&count);
-    out->w_int(serial);
+    out->w_uint(&serial);
     int i = 0;
     int* pi = &i;
     while (i < count) {
@@ -153,7 +153,7 @@ void Party::write(stream_base* out)
     out->w_int(&menu);
     out->w_int(&owner);
     out->w_int(&faction);
-    out->w_int(personality);
+    out->w_int(&personality);
     out->w_int(&state);
     out->w_int(&action);
     out->w_int(&state_target);
@@ -184,7 +184,7 @@ void Party::write(stream_base* out)
     // +0x7c, +0x8f4, +0x958, the raw pair +0x6c/+0x78, +0x5ab8 (int1), +0x94/+0x8c8/+0x8cc (int4), then
     // the vectors at +0x8bc and +0x59f8, the struct-of-arrays block at +0x5a08 and the 8-byte vector +0x59d8.
     out->w_float(&angle);
-    out->w_bool(flag);
+    out->w_bool(&flag);
     out->w_tstr(&extra_text);
     stream_base* s3 = &out->w_float(&morale);
     s3 = &s3->w_float(&zoom);

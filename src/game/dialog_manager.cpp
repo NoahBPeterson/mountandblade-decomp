@@ -222,7 +222,7 @@ void DialogRec::read(stream_base* s)
 {
     char buf[0x200];
     s->r_tstr(&id);
-    s->r_int(flags).r_int(&f24);
+    s->r_int(&flags).r_int(&f24);
     cond.read(s);
     _snprintf(buf, 0x200, "dialog condition: %s", id.c_str());
     {

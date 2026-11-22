@@ -1,6 +1,6 @@
 {
-"when": "2026-11-21T22:25:23-06:00",
-"commit": "b486bd0d",
+"when": "2026-11-21T22:53:31-06:00",
+"commit": "075531e2",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -85,14 +85,15 @@
 "work/equiv_results/2026-11-21/eqfix/sweep",
 "work/equiv_results/2026-11-21b/sw",
 "work/equiv_results/2026-11-21-vel",
-"work/equiv_results/2026-11-22/bm1b"
+"work/equiv_results/2026-11-22/bm1b",
+"work/equiv_results/2026-11-22/bm1c"
 ],
 "summary": {
 "pass": 114,
 "proven": 26,
 "proven_o": 0,
 "weak": 258,
-"fail": 21,
+"fail": 18,
 "inputs": 16,
 "harness": 3,
 "comdat": 0,
@@ -104,7 +105,7 @@
 "proven_sz": 13389,
 "proven_o_sz": 0,
 "weak_sz": 470124,
-"fail_sz": 22556,
+"fail_sz": 21430,
 "inputs_sz": 26376,
 "harness_sz": 971,
 "comdat_sz": 0,
@@ -1509,35 +1510,6 @@
 "category": "weak",
 "size": 2247
 },
-"004608d0": {
-"module": "dialog_manager",
-"file": "src/game/dialog_manager.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 251,
-"reason": "3/3 valid inputs mismatched; first: call #1 (depth 1)",
-"first_mismatch": {
-"input": 0,
-"profile": "zeroish",
-"origin": "regress",
-"observable": "call #1 (depth 1)",
-"kind": "value",
-"orig": "00417b10 FUN_00417b10 ecx=40020000 args=[40010020]",
-"ours": "00417b10 FUN_00417b10 ecx=40020000 args=[STK]",
-"detail": "callee, this/edx and stack args (normalised)",
-"args": [
-"40020000"
-],
-"regs": {
-"eax": "3f000000",
-"ecx": "40010000",
-"edx": "804607e0"
-},
-"fake_calls": 0,
-"repairs": 0,
-"input_file": "work\\difftest\\fail_inputs\\dialog_manager_004608d0.pkl"
-}
-},
 "00461630": {
 "module": "renderer",
 "file": "src/game/renderer.nonmatching.txt",
@@ -2705,38 +2677,6 @@
 "category": "weak",
 "size": 335
 },
-"004bdd50": {
-"module": "config",
-"file": "src/game/config/config.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 157,
-"reason": "154/166 valid inputs mismatched; first: fake call #2 arg 0",
-"first_mismatch": {
-"input": 0,
-"profile": "mixed",
-"origin": "regress",
-"observable": "fake call #2 arg 0",
-"kind": "value",
-"orig": "40010008",
-"ours": "STK",
-"detail": "stack argument of a call through a generated pointer (normalised)",
-"args": [
-"40020000"
-],
-"regs": {
-"eax": "437e0000",
-"ecx": "40010000",
-"edx": "00000000"
-},
-"fake_calls": 6,
-"repairs": 0,
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work\\difftest\\fail_inputs\\config_004bdd50.pkl"
-}
-},
 "004bf870": {
 "module": "trigger_vec",
 "file": "src/game/triggers/trigger_vec.nonmatching.txt",
@@ -3004,25 +2944,25 @@
 "verdict": "FAIL",
 "category": "fail",
 "size": 221,
-"reason": "72/72 valid inputs mismatched; first: call #1 (depth 1)",
+"reason": "47/138 valid inputs mismatched; first: fake call #1",
 "first_mismatch": {
-"input": 0,
-"profile": "smallint",
+"input": 4,
+"profile": "pointery",
 "origin": "regress",
-"observable": "call #1 (depth 1)",
+"observable": "fake call #1",
 "kind": "value",
-"orig": "00415870 ?slot12@text_stream@@UAEAAUstream_base@@PAX@Z ecx=40020000 args=[40010024]",
-"ours": "00415870 ?slot12@text_stream@@UAEAAUstream_base@@PAX@Z ecx=40020000 args=[STK]",
-"detail": "callee, this/edx and stack args (normalised)",
+"orig": "49680000",
+"ours": "41480000",
+"detail": "different generated callee",
 "args": [
 "40020000"
 ],
 "regs": {
-"eax": "47610000",
+"eax": "00000000",
 "ecx": "40010000",
-"edx": "00000002"
+"edx": "4c140000"
 },
-"fake_calls": 0,
+"fake_calls": 2,
 "repairs": 0,
 "input_file": "work\\difftest\\fail_inputs\\save_records_004e99d0.pkl"
 }
@@ -3033,45 +2973,16 @@
 "verdict": "FAIL",
 "category": "fail",
 "size": 184,
-"reason": "29/29 valid inputs mismatched; first: call #1 (depth 1)",
+"reason": "24/55 valid inputs mismatched; first: fake call #1",
 "first_mismatch": {
-"input": 0,
-"profile": "smallint",
+"input": 4,
+"profile": "mixed",
 "origin": "regress",
-"observable": "call #1 (depth 1)",
+"observable": "fake call #1",
 "kind": "value",
-"orig": "00415870 ?slot12@text_stream@@UAEAAUstream_base@@PAX@Z ecx=40020000 args=[400238dc]",
-"ours": "00415870 ?slot12@text_stream@@UAEAAUstream_base@@PAX@Z ecx=40020000 args=[STK]",
-"detail": "callee, this/edx and stack args (normalised)",
-"args": [
-"40020000"
-],
-"regs": {
-"eax": "00000000",
-"ecx": "40010000",
-"edx": "804e9d10"
-},
-"fake_calls": 0,
-"repairs": 0,
-"input_file": "work\\difftest\\fail_inputs\\save_records_004e9c50.pkl"
-}
-},
-"004e9d10": {
-"module": "save_records",
-"file": "src/game/char_sheet/save_records.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 718,
-"reason": "20/20 valid inputs mismatched; first: fake call #6 arg 0",
-"first_mismatch": {
-"input": 0,
-"profile": "zeroish",
-"origin": "regress",
-"observable": "fake call #6 arg 0",
-"kind": "value",
-"orig": "40010074",
-"ours": "STK",
-"detail": "stack argument of a call through a generated pointer (normalised)",
+"orig": "00b4bfd0",
+"ours": "39498338",
+"detail": "different generated callee",
 "args": [
 "40020000"
 ],
@@ -3080,12 +2991,9 @@
 "ecx": "40010000",
 "edx": "00000000"
 },
-"fake_calls": 60,
+"fake_calls": 2,
 "repairs": 0,
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work\\difftest\\fail_inputs\\save_records_004e9d10.pkl"
+"input_file": "work\\difftest\\fail_inputs\\save_records_004e9c50.pkl"
 }
 },
 "004ea030": {
@@ -3755,16 +3663,16 @@
 "verdict": "FAIL",
 "category": "fail",
 "size": 298,
-"reason": "29/31 valid inputs mismatched; first: fake call #1 arg 0; NOTE resolution audit: 4 agree, 0 same-code, 0 unverified, 0 disagree, 1 local copies [our own copy runs where the original calls: ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z -> 0043e7b0]",
+"reason": "9/31 valid inputs mismatched; first: fake call #1; NOTE resolution audit: 4 agree, 0 same-code, 0 unverified, 0 disagree, 1 local copies [our own copy runs where the original calls: ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z -> 0043e7b0]",
 "first_mismatch": {
 "input": 0,
 "profile": "smallint",
 "origin": "regress",
-"observable": "fake call #1 arg 0",
+"observable": "fake call #1",
 "kind": "value",
-"orig": "40010024",
-"ours": "STK",
-"detail": "stack argument of a call through a generated pointer (normalised)",
+"orig": "00000000",
+"ours": "00000006",
+"detail": "different generated callee",
 "args": [
 "46190000",
 "8043e7b0"
