@@ -27,7 +27,7 @@ target_link_libraries(mb_native_src PRIVATE mb_src_flags)
 # mb_weaken contributes its weakened object, every other one its mb_objs object. All of them are passed as objects:
 # CMake puts a target's external objects ahead of the objects it compiles itself, so a mix of the two (weakened objects
 # plus sources compiled by mb_native) would not keep this order. It did not: world_app.cpp's weakened object ran
-# GameApp::GameApp, which sets g_module_name, before trigger_vec.cpp constructed g_module_name and emptied it again
+# GameApp::GameApp, which sets g_module_name, before options_dialog_and_module_tables.cpp constructed g_module_name and emptied it again
 # ("Unable to find module info file", 2026-11-21).
 file(STRINGS "${PORT}/link/tu_order.txt" _mb_order)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PORT}/link/tu_order.txt")

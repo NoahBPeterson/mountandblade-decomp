@@ -1,0 +1,3 @@
+../src/game/editor/terrain_page/terrain_page_init.cpp  ?init_screen@TerrainPage@@UAEXXZ  004f1460  /O2 /MT /Gy /TP
+../src/game/editor/terrain_page/terrain_page_init.cpp  ?region_name@@YAXHPAD@Z  004f2610  /O2 /MT /Gy /TP
+../src/game/editor/terrain_page/terrain_page_init.cpp  ?init@frustum@rgl@@QAEXMMMM@Z  004f25a0  /O2 /MT /Gy /TP

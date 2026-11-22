@@ -51,6 +51,14 @@ code or data bytes of the original.
 No gate runs in this mode. `build.py --faithful` still needs `work/mb.analysis.bin`: it checks the build against the original and
 reports `link_inputs STALE` when a source change needs `--write-inputs`. The `--no-original` build is the faithful one (no patches).
 
+## Source tree
+`src/engine/` is the rgl layer (render, scene, physics, resources, math, streams), `src/game/<subsystem>/` the Mount & Blade code
+(agent, campaign, mission, party, script, ui ...), `src/platform/dxframework/` the DirectX sample framework and
+`src/third_party/tinyxml/` TinyXML. Every `#include` is rooted at `src/` (`"engine/math/mat4.h"`, `"game/data/troop.h"`); a `.cpp` keeps its
+`.manifest.txt` / `.nonmatching.txt` / `.partial.txt` beside it. The plan and the old-to-new table are `docs/source_tree.md` and
+`docs/source_tree_moves.tsv`, the notes of the former directories `docs/migration/`, the tool that moved everything
+`tools/migrate/restructure.py`.
+
 ## Setup
 ```sh
 uv sync   # .venv from pyproject.toml + uv.lock (pinned: unicorn/capstone versions affect equiv results)

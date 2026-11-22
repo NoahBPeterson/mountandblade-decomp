@@ -4,7 +4,7 @@
 0x59c8cc _c_dfDIKeyboard  # 0x4bc430
 0x59c914 _GUID_SysMouse  # 0x4bc430
 0x59c6c4 _c_dfDIMouse  # 0x4bc430
-0x5a9f98 ?g_cfg@@3UConfig@@A  # the option block (rgl_config.txt), src/rgl/core/resource_io.cpp calls it g_rgl_config
+0x5a9f98 ?g_cfg@@3UConfig@@A  # the option block (rgl_config.txt), src/engine/resource/resource_io.cpp calls it g_rgl_config
 0x5e2930 ?g_config@@3PAUGameConfig@@A  # the game object pointer
 0x8ee3cec ?g_screenshot_cropped@@3DA  # byte flag (the application object's m_bWindowed): crop a screenshot to the view rect
 0x5e28d0 ?g_edit_key@@3HA  # first value of the line being edited

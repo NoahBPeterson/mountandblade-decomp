@@ -74,7 +74,7 @@ Fix commit: the one of bug 2. Seen: Siege Defense (scenario 3) showed the patch 
 
 ## 8. The pointer stops above the bottom buttons (Done on the character sheet)
 Symptom: (49.png) in fullscreen the pointer cannot reach the bottom row of buttons (Reset Changes / Done).
-Cause: not the mapping (GetCursorPos, GetClientRect, the game's view 0 0 / screen 1728 x 1117 all agree with the window). src/dxframework/d3dapp.cpp
+Cause: not the mapping (GetCursorPos, GetClientRect, the game's view 0 0 / screen 1728 x 1117 all agree with the window). src/platform/dxframework/d3dapp.cpp
 calls `ClipCursor(GetWindowRect)` right after CreateDevice; SDL's fullscreen switch is asynchronous, so the window was still the windowed
 1728 x 971 and the clip (SDL mouse rect + grab, and the virtual pointer's clamp) stayed 971 high after the window became 1117 high: the
 bottom 146 points were out of reach. (Logged: `ClipCursor 0 0 1728 971 (win 0 0 1728 971)`, then GetCursorPos with the window 1728 x 1117.)

@@ -160,7 +160,7 @@ int main(int argc, char** argv)
     CHECK(SHGetFolderPathA(0, CSIDL_PERSONAL, 0, 0, folder) == S_OK && std::string(folder) == tmp + "/Documents");
     CHECK(SHGetFolderPathA(0, 0x7777, 0, 0, folder) == E_INVALIDARG);
 
-    // registry: the game's calls (world_app.cpp / options_dlg.cpp)
+    // registry: the game's calls (world_app.cpp / launcher_options_dialog.cpp)
     HKEY key = 0;
     DWORD disp = 0;
     CHECK(RegCreateKeyExA((HKEY)0x80000001, "Software\\MountAndBladeKeys", 0, 0, 0, 0x20007, 0, &key, &disp) == 0 && disp == 1);
@@ -213,7 +213,7 @@ int main(int argc, char** argv)
     CHECK(g_thread_ran == 5);
     CHECK(CloseHandle(th));
     CHECK(_beginthread(begin_thread_fn, 0x40000, (void*)9) != (uintptr_t)-1);
-    CHECK(WaitForSingleObject(g_ev_manual, 2000) == WAIT_OBJECT_0 && g_bt == 9);   // the loader-thread pattern (cls_map.cpp)
+    CHECK(WaitForSingleObject(g_ev_manual, 2000) == WAIT_OBJECT_0 && g_bt == 9);   // the loader-thread pattern (winmain_and_menu_screens.cpp)
     HANDLE both[2] = {g_ev_auto, g_ev_manual};
     SetEvent(g_ev_auto);
     CHECK(WaitForMultipleObjects(2, both, TRUE, 100) == WAIT_OBJECT_0);
@@ -310,7 +310,7 @@ int main(int argc, char** argv)
         DeleteObject(bmp);
         DeleteObject(font);
     }
-    // a .bmp from the game dir through the loader (case-insensitive), blitted between memory DCs (options_dlg.cpp's paint)
+    // a .bmp from the game dir through the loader (case-insensitive), blitted between memory DCs (launcher_options_dialog.cpp's paint)
     HBITMAP logo = (HBITMAP)LoadImageA(0, "MAIN.BMP", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     CHECK(logo != nullptr);
     if (logo) {

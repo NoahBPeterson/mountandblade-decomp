@@ -1,0 +1,3 @@
+../src/game/editor/map_editor_update.cpp  ?move_forward@pos3@@QAEXABM@Z  00531380  /O2 /MT /Gy /TP
+../src/game/editor/map_editor_update.cpp  ?remove_prop@MapMission@@QAEXH@Z  005313c0  /O2 /MT /Gy /TP
+../src/game/editor/map_editor_update.cpp  ?add_selected@MissionBlocker@@QAEXPAUmesh@rgl@@PBUmatrix@3@PAUPlacedObj@@I@Z  005314e0  /O2 /MT /Gy /TP

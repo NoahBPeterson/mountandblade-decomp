@@ -1,0 +1,3 @@
+../src/game/ui/widgets/text_editor_widget.cpp  ?set_value@UiD@@QAEXM@Z  0048baa0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/text_editor_widget.cpp  ??0UiE@@QAE@XZ  0048bb10  /O2 /MT /Gy /TP
+../src/game/ui/widgets/text_editor_widget.cpp  ?render@UiE@@UAEXPAUscene@rgl@@PAM11@Z  0048bda0  /O2 /MT /Gy /TP

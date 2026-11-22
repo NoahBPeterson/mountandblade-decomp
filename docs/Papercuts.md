@@ -10,7 +10,7 @@ Format (one entry per problem):
 ```
 
 ## Open
-- G6-char-sheet 2026-10-24: the resolution audit / equiv read address annotations only from the headers a .cpp includes itself, so moving `Animator` into src/game/animator.h left `set_anim_a` unresolved in mission5/troop_rec.cpp (equiv WEAK -> UNSUPPORTED) until the header was also listed in the .cpp — fix idea: follow nested includes (or warn when a nested header carries `// 0x...` annotations) — minutes lost: 20
+- G6-char-sheet 2026-10-24: the resolution audit / equiv read address annotations only from the headers a .cpp includes itself, so moving `Animator` into src/game/agent/animator.h left `set_anim_a` unresolved in game/campaign/new_game_setup.cpp (equiv WEAK -> UNSUPPORTED) until the header was also listed in the .cpp — fix idea: follow nested includes (or warn when a nested header carries `// 0x...` annotations) — minutes lost: 20
 - G6-char-sheet 2026-10-24: cl 13.10 gives overloads of one virtual name consecutive vtable slots in REVERSE declaration order (probe: `ov(int)`, `ov(const V2&)`, `ov()` -> +0x3c, +0x38, +0x34); the "families numbered by parameter type" theory in terrain_page_update.h was this effect. Give every virtual its own name and take offsets from the call sites, not from counting placeholders — minutes lost: 30
 - G6-char-sheet 2026-10-24: a codegen_dump fingerprint can change with no change in the function's own bytes (a referenced out-of-line function's scheduling moved when a header added types); `work/headers2/G6-char-sheet/cgdbg.py` style walks show which referenced symbol differs — fix idea: add a `--why ROW` option to codegen_dump.py — minutes lost: 25
 - wave1/s00409500 2026-10-20: `d3d9.h` does not compile with the VC7.1 toolchain (`specstrings.h` needs `sal.h`, which the Toolkit lacks), so D3D device calls need a local vtable stub (slot indices: SetRenderState 57, SetTexture 65, DrawPrimitiveUP 83, SetVertexShader 92) — fix idea: ship a stub `sal.h` in `match/include` (or a `d3d9_min.h` with IDirect3DDevice9 slots) — minutes lost: 10
@@ -61,17 +61,17 @@ Format (one entry per problem):
 - src/tinyxml 2026-10-22: resaudit_all.py on `src:` module rows ignores the module's `<module>.manifest.txt` symbol: `slice.find_symbol` only reads `match/slices/<sid>/manifest.txt`, so it falls back to `// @ 0x` markers. A marker followed by a comment instead of a definition (out-of-line copies of inline members, compiler-generated `??_G`) silently resolved to the NEXT definition in the file, giving 3 false `disagree` and 7 `unverified` rows; `??4`/`??Y`/`??_G` have no name the marker/`named` patterns can express. Worked around with plain `// 0x...:` comments (no `@`) plus `symbols/slices/<module>.txt` lines. — fix idea: have find_symbol read the `src/**/<psid>.manifest.txt` row for module sources, and make `_def_name_after` stop at a blank line / the next marker before any definition — minutes lost: 15
 - src/game/script 2026-10-22: cl 13.10 stops packing block-scope locals and temporaries into shared frame slots once a function has a few hundred candidates (synthetic switch: ~600 cases with three address-taken locals pack into 4 slots, ~700 cases into none; the 70 KB interpreter 0x49fa10 packs any 300 of its cases but not all 591), so every stack displacement of a huge function differs although the original packs fine. Routing the ~220 `set_lvalue(locals, <temporary>)` sites through one function-scope `__int64` cut the frame from 0x2d18 to 0x2630 and 6 KB of code — fix idea: note in matching.md that in very large functions by-value temporaries / named locals passed by address each cost a slot, and that shared function-scope scratch variables are the lever — minutes lost: 60
 - src/game/script 2026-10-22: resolve.py ignores annotation addresses >= 0x1900000 (the .bss globals at 0x8ed4f58..0x8ee30ec: g_dialogs and its fields, g_meshes, g_skin_count, g_in_meta_mission) and then takes the NEXT address of the same comment (a use-site citation) and reports `annotation-implausible <use site>`; such globals can only be resolved through symbols/ lines, which a module agent may not write — fix idea: accept data addresses up to SizeOfImage and only the first address of a declaration comment — minutes lost: 15
-- src/game/script 2026-10-22: equiv.prepare reads annotations only from the source and the headers IT includes with a relative path, not transitively (the module header's own includes of dialog_manager.h / agent.h were invisible: g_script, g_strtable, ItemRef::stat_21x unresolved until re-included from the .cpp), and a one-line `struct S { void f(); };   // 0x...` is not an annotation of f — fix idea: follow relative includes recursively; document both in matching.md — minutes lost: 15
+- src/game/script 2026-10-22: equiv.prepare reads annotations only from the source and the headers IT includes with a relative path, not transitively (the module header's own includes of dialog_manager.h / agent_queries.h were invisible: g_script, g_strtable, ItemRef::stat_21x unresolved until re-included from the .cpp), and a one-line `struct S { void f(); };   // 0x...` is not an annotation of f — fix idea: follow relative includes recursively; document both in matching.md — minutes lost: 15
 - src/game/script 2026-10-22: resaudit on a 70 KB function reports ~20 false `disagree` rows with `pairs: 1`: neighbouring cases of identical shape (complete/succeed/fail/cancel_quest, check_faction/check_scene, overlay creators) are paired off by one; each had to be checked by hand against the case's own call — fix idea: give single-pair evidence its own status (weak), or anchor the alignment on the jump-table targets of a switch — minutes lost: 20
 - src/game/script 2026-10-22: chk.py cannot attribute `// @ 0x` markers placed before macro-generated definitions (`SI_RANGE_CHECK(check_mesh, ...)`); it falls back to `~size` and scores a same-size sibling (all ten 65-byte validators reported as check_presentation) — fix idea: mention in chk's output when a marker exists but no definition was found after it; expand such macros — minutes lost: 10
 - reaudit-b07 2026-10-23: a struct with a hand-written vtable base (`struct dev_item : dev_rec`) puts its own virtual slots AFTER the base's, so "slot 0x04" methods compiled to +0x4c; byte diffs hid it, only the harness saw it (fake-arity). Likewise a stray padding field (one missing/extra int before a std::vector member, or `int f78` overlapping the last array element's spare word) shifts every later offset; check offsetof against the disassembly's last access, not just the first. VC7.1 std::vector / std::deque members start with an allocator word (first at +4), which is why `size()` shows as `first ? (last-first)/N : 0` and reproduces the original's reloads — fix idea: add a line to matching.md 'Writing matchable source' — minutes lost: 40
 - headers G3 2026-10-24: splitting a `char padN[..]` array of a shared class (GameData::pad8 -> pad8 + module + pad2c) changed the register allocation of unrelated NONMATCHING functions that merely include the header (party_screen 0x5059c0: two loads swapped, terrain_b 0x46e590: 18 bytes), even with a plain `char[16]` as the new member; the codegen_dump fingerprint flags them and equiv verdicts do not move, but a header-only layout merge is not always code-neutral — fix idea: none known (cl 13.10 numbering of members); to attribute a changed row, compile it in a `git archive HEAD` tree and diff the function bytes + relocation names with local labels (`$T123`, `$L45`) normalised — minutes lost: 25
 
 - names-n2 2026-10-24: `resolve.source_annotations` ignores `// 0x...` addresses >= 0x1900000, so globals at 0x08ed4f58..0x08ee3c48 resolve only through symbols/ (mangled name); renaming such a global (g_panel -> g_app_obj, g_anim_table) silently turned its relocations into unresolved names until a symbols/slices line for the new mangled name was added (symbols/slices/names_n2.txt) — fix idea: raise the range check to the image end (0x9000000) — minutes lost: 30
-- names-n2 2026-10-24: a codegen_dump row (nonmatching) changed only because a one-word rename of an UNUSED declaration in another header (`g_item_count` -> `g_item_kind_count` in ui/item_ref.h) reordered two loads in party_screen 0x5059c0: cl 13.10's register choice depends on the identifier set of the TU, so a pure rename is not always codegen-neutral — fix idea: gate renames with equiv (done), not with the fingerprint alone — minutes lost: 40
+- names-n2 2026-10-24: a codegen_dump row (nonmatching) changed only because a one-word rename of an UNUSED declaration in another header (`g_item_count` -> `g_item_kind_count` in game/data/item_ref_game_ui.h) reordered two loads in party_screen 0x5059c0: cl 13.10's register choice depends on the identifier set of the TU, so a pure rename is not always codegen-neutral — fix idea: gate renames with equiv (done), not with the fingerprint alone — minutes lost: 40
 - names-n2 2026-10-24: `resolve.source_annotations` ignores `// 0x...` addresses >= 0x1900000, so globals at 0x08ed4f58..0x08ee3c48 resolve only through symbols/ (mangled name); renaming such a global (g_panel -> g_app_obj, g_anim_table) silently turned its relocations into unresolved names until a symbols/slices line for the new mangled name was added (symbols/slices/names_n2.txt) — fix idea: raise the range check to the image end (0x9000000) — minutes lost: 30
-- names-n2 2026-10-24: a codegen_dump row (nonmatching) changed only because a one-word rename of an UNUSED declaration in another header (`g_item_count` -> `g_item_kind_count` in ui/item_ref.h) reordered two loads in party_screen 0x5059c0: cl 13.10's register choice depends on the identifier set of the TU, so a pure rename is not always codegen-neutral — fix idea: gate renames with equiv (done), not with the fingerprint alone — minutes lost: 40
-- names-n2 2026-10-24: an `_ext`/`_x`/`box3_b` twin declaration exists to give the caller an opaque callee (bound with /alternatename) in the same TU as the real definition; renaming it to the canonical name makes cl inline or re-bind the call and changes the caller (shapes.cpp: 15 exact rows), and renaming a stub's constructor (`text_stream()` -> `tstream3()`) silently turns it into a plain member — fix idea: mark twins with a `// twin` tag the rename tooling can skip — minutes lost: 30
+- names-n2 2026-10-24: a codegen_dump row (nonmatching) changed only because a one-word rename of an UNUSED declaration in another header (`g_item_count` -> `g_item_kind_count` in game/data/item_ref_game_ui.h) reordered two loads in party_screen 0x5059c0: cl 13.10's register choice depends on the identifier set of the TU, so a pure rename is not always codegen-neutral — fix idea: gate renames with equiv (done), not with the fingerprint alone — minutes lost: 40
+- names-n2 2026-10-24: an `_ext`/`_x`/`box3_b` twin declaration exists to give the caller an opaque callee (bound with /alternatename) in the same TU as the real definition; renaming it to the canonical name makes cl inline or re-bind the call and changes the caller (collision_shapes.cpp: 15 exact rows), and renaming a stub's constructor (`text_stream()` -> `tstream3()`) silently turns it into a plain member — fix idea: mark twins with a `// twin` tag the rename tooling can skip — minutes lost: 30
 - head_rec family 2026-10-28: two doc/tool hazards found while matching the family's ctor rows (mission_items 0x4ce960..). (a) `_vtable_match`'s docstring says unverifiable slots are reported, but they are *skipped* (the row can PASS on the remaining slots agreeing); combined with the family's never-constructed records (slot 0 = the deleting dtor, an external special member nothing can annotate), every such row passes with the whole table's slot 0 unchecked — the "never constructed -> rows compare vtable bytes" note in head_rec.h cites docs/Papercuts.md but no entry described what is actually verified, which cost a full mechanism trace. (b) `resolve.slot_symbol` (equiv.py:1274) compares `sy.secno` (1-based) against a 0-based section index, so it always returns None and a vtable slot whose target is a *local* symbol is unverifiable instead of agreeing; the head_rec rows currently depend on that skip (ItemRec2's stub slots pass through it), so it is documented, not fixed — fixing it would flip ItemRec2 to FAIL until its stub slots are annotated too — fix idea: fix slot_symbol's index base and re-annotate the affected rows in the same change — minutes lost: 120
 
 - bm4agn 2026-11-06: under load equiv.py runs about 1 input/s, so --time-limit ends as UNSUPPORTED ("not a verdict") and rows with heavy setup never reach the 200-input gate; the partial counts are only in that line — fix idea: a lower gate or a resume option for byte-exact rows — minutes lost: 15
@@ -133,7 +133,7 @@ Format (one entry per problem):
   — minutes lost: 90
 
 - 0x4f65f0 2026-10-25: two `struct RowRec` definitions with *different* sizes (0x20 as `: named_vec` in
-  `inventory_panel/widget_text.cpp`, and a modelled `char pad[0x1c8]` in `agent5/agent_vec.cpp`) share every
+  `game/ui/widgets/text_box.cpp`, and a modelled `char pad[0x1c8]` in `game/agent/hud/hud_vector_instances.cpp`) share every
   mangled name, so the linker folds `std::vector<RowRec>::_Uninit_copy` onto one body. The 0x1c8 body then ran
   inside the 0x20-byte row vector: `Entries::add` grew the skeleton list, `_Uninit_copy` stepped 0x1c8 bytes
   per element, read past the single-element buffer into reused heap holding text, and the record copy ctor
@@ -144,7 +144,7 @@ Format (one entry per problem):
   emitted code, not just the row's byte match (`_Insert_n` was byte-exact the whole time; its *callee* was not).
   — minutes lost: 150
 
-- 0x4d10f0 2026-10-26: `item_modifier_array_dtor` was modelled on `module_load.h`'s 0x30-byte `item_modifier`
+- 0x4d10f0 2026-10-26: `item_modifier_array_dtor` was modelled on `module_record_loaders.h`'s 0x30-byte `item_modifier`
   (`tstring name; tstring value; char hidden; int count; int* ids; int* values`), freeing `ids` at +0x28. The real
   function (0x4d10f0) steps **0x50** and frees the block at +0x44 (the bone record's `vector<R44>` data), then
   destroys the string at +0. It is the array destructor of the **bone lists** (`widget_text`/`skeleton_load`
@@ -162,7 +162,7 @@ Format (one entry per problem):
   elements only through `vec136::resize(n2, Group())`, i.e. as whatever bytes the temporary's stack slot held. In our
   build that slot held heap pointers, so `score_triggers` (0x51dac0, gate `nb[k] != -1`) treated a heap address as a
   node id and `trigger_score` (0x51db70) indexed `nodes + nb*0x88` — page fault at 0x4be8a7 on Start-New-Game.
-  Fix: build the resize template explicitly with `nb = -1`, `weights = 0` (game_2.cpp `read_map`). Probes showed the
+  Fix: build the resize template explicitly with `nb = -1`, `weights = 0` (map_builder_and_data_load.cpp `read_map`). Probes showed the
   parse itself is correct: 31 307 vertices / 62 408 groups, first six groups all `count=3 mask=2` (true in the file),
   ids at +4 varying (0,1 / 173,1 / 172,1 …). Lesson: a vector filled by `resize(n, template)` inherits *every*
   uninitialised byte of the template; if the original only survives because its stack junk is benign, initialise.
@@ -210,7 +210,7 @@ Format (one entry per problem):
 - 0xa739f8 (open) 2026-10-26: the input-free menu crash *after* the tstring one (fixed in save_panel.cpp) is the screen
   deque: `GameApp::Update+0x1ed` (0x46f6ed) reads `edx=[0xa9797c]` (blocks), `eax=[edx+eax*4]` (a block pointer, 0) then
   `[eax+ecx*4]` -> read of 0x0000000c. The object at 0xa739f8 is the `std::deque<int>` seen as `g_screen_stack`
-  (script_interpreter.h), `g_menu_vars` (facegen_misc.cpp: {pad, rows +4, count +8}) and `g_id_stack` (id_stack.h:
+  (script_interpreter.h), `g_menu_vars` (face_generator_refresh.cpp: {pad, rows +4, count +8}) and `g_id_stack` (id_stack.h:
   {f0, blocks +4, block_count +8, a +0xc, b +0x10}); its blocks array exists but the current block is null, i.e. the
   deque was never constructed - the same missing-static-constructor pattern as g_main_menu. Next: construct it in place
   once (first frame of GameApp::Update) with our std::deque<int> and check the engine's layout (0x28?) matches, or call
@@ -228,7 +228,7 @@ Format (one entry per problem):
   and assigns `this+0x1c/0x78/0x88`), **not** to the screen manager, whose `+0x78` is the deque (the original's
   `open` 0x494260: `lea esi,[edi+0x78]` then the deque's push_back/back). Our `main_menu` model inlined the record's
   fields into the manager, so constructing or assigning them landed on the deque. Fix: all record-field uses go through
-  `g_main_menu.rec` (save_panel.cpp, cam_view.cpp, video_page.cpp). Verified: four runs, deque never zeroed, no fault
+  `g_main_menu.rec` (save_panel.cpp, face_generator_update.cpp, video_page.cpp). Verified: four runs, deque never zeroed, no fault
   (`menu after 28-30 s, fault: none, alive: 3`). Lesson: one global modelled as several types needs every field offset
   kept on its own object; a stray `tstring` write looks exactly like a `std::deque` reset.
 
@@ -314,15 +314,15 @@ Format (one entry per problem):
   literal 0 crashed at `mov ecx,[ecx]` (EIP 0x5295d7). Every other call site passes `&zero`. Lesson: a `0` in a
   pointer parameter is not "unused" - check the callee before passing it.
 
-- 0x49bea0 add_order_arrow (fixed) 2026-10-26: `game_2.h` declared `add_order_arrow(int, int)` and callers passed
+- 0x49bea0 add_order_arrow (fixed) 2026-10-26: `map_builder_and_data_load.h` declared `add_order_arrow(int, int)` and callers passed
   `(id, 0)`, but the original is `ret 4` (one int). The 2-arg spelling resolved to a *different* mangled symbol, so no
   warning fired; the callee also dispatched `create_entity` through a virtual slot where the original calls 0x428440
   directly (`mov ecx,[0xa732b4]; push 9; call 0x428440`), and the object at g_level is not polymorphic. Fix: one
   argument and the direct call. Lesson: argument count must be checked against the callee's `ret N`, not the header.
 
 - config table (fixed) 2026-10-26: **every UI offset was 0** because the settings table was read through the
-  *original's address* instead of the symbol. `config_table.h`'s `CONFIG_ENTRIES`, `char_sheet.cpp`'s
-  `config_text`/`config_index`, `cs_panels.h`'s `config_float` and `note_window.cpp`'s `CONFIG` all spelled
+  *original's address* instead of the symbol. `config_table.h`'s `CONFIG_ENTRIES`, `character_sheet_init.cpp`'s
+  `config_text`/`config_index`, `character_sheet_panels.h`'s `config_float` and `notes_window.cpp`'s `CONFIG` all spelled
   `0xa44240` / `0xa4425c`, but the relink places `g_game_vars` at **0xa691c0** (`mb_standalone.map`), so the
   lookups hit a dead copy of the table: `find()` still returned the key's index (831 entries load fine) while
   `atof(value)` saw an empty buffer. Symptom: the whole character sheet stacked at y=0 and every menu row, slider
@@ -346,10 +346,10 @@ Format (one entry per problem):
   version: it pairs our mangled name with the original's at the same VA via `resolve_map.json`, and MSVC expands
   typedefs in mangling, so `mat3*` vs `rgl::mat3*` cannot produce a row. Output is bucketed VIRTUAL / CONVENTION /
   ARITY / RETURN / OTHER: currently **20 rows**, of which 2 were real: `~mesh` was compiled non-virtual
-  (`??1mesh@rgl@@QAE@XZ`) while the original's is `??1mesh@rgl@@UAE@XZ` - `strat/gui_manager.h`'s view declared it
+  (`??1mesh@rgl@@QAE@XZ`) while the original's is `??1mesh@rgl@@UAE@XZ` - `game/ui/gui_manager.h`'s view declared it
   without `virtual`; fixed by making that view polymorphic while folding the vptr into `d0` so every offset stays
   put (`char d0[0x10c - 4]`), and the row disappeared on the next run. `~RecR` (same class of issue in
-  `inventory_panel/map_panel.cpp`) is still flagged and left documented.
+  `game/campaign/map_panel.cpp`) is still flagged and left documented.
 
 - vtable slot loss (tool + fixed for Rec428/FaceGen) 2026-10-26: a class whose source declares fewer virtuals than
   the original compiles a *short* vtable, and every slot past its end is unreachable - the relink can only patch

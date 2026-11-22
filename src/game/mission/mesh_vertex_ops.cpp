@@ -1,0 +1,588 @@
+// mesh_vertex_ops.cpp: TU 63 "mesh", part 1 (0x47aa40..0x47cae0): mesh vertex rewrites (transform, colour, bone index), the
+// lod mesh operations that drive them, the per-vertex lighting pass, the mirror/seam builder, the two skin blends and
+// the ground snap. See MIGRATION.md for the boundary and the header notes.
+#include "game/mission/mesh_slot.h"
+#include "engine/render/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "game/agent/animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "engine/render/render_flags.h"
+
+using namespace rgl;
+// src/game/terrain/poly_mesh.h (pulled in through troop_mgr.h) declares a global ::vat with the same signature
+#define vat rgl::vat
+
+// the original inlines vector4::normalize: x*x + y*y + z*z, 1/len scaling, (0,1,0) when len <= 1e-10
+static __forceinline void vnorm(vector4& v)
+{
+    float len = v.length();
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        v.x *= inv; v.y *= inv; v.z *= inv;
+    } else {
+        v.x = 0.0f; v.y = 1.0f; v.z = 0.0f;
+    }
+}
+
+static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
+{
+    return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}
+
+// 0x411630 is std::vector<point20>::operator= (src/engine/render/mesh.cpp); the vectors of 0x20-byte records share it (folded), so the
+// vector<face20> v90 is assigned through it. 0x411420 is std::vector<vertex60>::push_back. Both are templates the original calls out of line:
+// their explicit specializations are only declared here.
+template<> std::vector<point20>& std::vector<point20>::operator=(const std::vector<point20>&);     // 0x411630
+template<> void std::vector<vertex60>::push_back(const vertex60&);                                // 0x411420
+
+
+// @ 0x47aa40 -- append a transformed copy of `src` to this mesh: the matrix rows are re-orthogonalised against +Z
+// (f = normalise(cross(up, s)), s = cross(f, up)), `src`'s points are rotated, flattened onto the plane of m->u and
+// offset by m->o, its vertices are rotated and tinted by the unpacked colour, and its faces are re-added with the
+// vertex indices shifted by this mesh's existing vertex count.
+void rgl::mesh::transform(mesh* src, const matrix* m, unsigned color)
+{
+    vector4 out;
+    if (!local_faces) {
+        faces = parent->faces;      // 0x411630
+        local_faces = 1;
+    }
+    ensure_local();
+
+    int n70 = (int)points.size();
+    int nverts = (int)vertices.size();
+
+    matrix mm = *m;
+    mm.u = vector4(0.0f, 0.0f, 1.0f);
+    mm.f = cross_i(mm.u, mm.s);
+    mm.f.normalize();
+    mm.s = cross_i(mm.f, mm.u);
+
+    std::vector<point20>& pts = ((rgl::mesh*)src)->get70_rec();
+    std::vector<vertex60>& sv = ((rgl::mesh*)src)->get50_rec();
+
+    for (size_t i = 0; i < pts.size(); i++) {
+        float x = mm.s.x * pts[i].a.x + mm.f.x * pts[i].a.y + mm.u.x * pts[i].a.z;
+        float y = mm.u.y * pts[i].a.z + mm.s.y * pts[i].a.x + mm.f.y * pts[i].a.y;
+        float z = mm.u.z * pts[i].a.z + mm.f.z * pts[i].a.y + mm.s.z * pts[i].a.x;
+        float zz = z - (y * m->u.y + x * m->u.x) / m->u.z;
+        out.x = x + m->o.x;
+        out.y = y + m->o.y;
+        out.z = zz + m->o.z;
+        add_point(&out);
+    }
+
+    vector4 tint = rgl::unpack_color(&color);
+
+    vertex60* sp = &*sv.begin();                     // the original walks a cached pointer (stale if src is this)
+    for (size_t j = 0; j < sv.size(); j++, sp++) {
+        vertex60 vt = *sp;
+        float x = mm.s.x * sp->pos.x + mm.u.x * sp->pos.z + mm.f.x * sp->pos.y;
+        float y = mm.s.y * sp->pos.x + mm.f.y * sp->pos.y + mm.u.y * sp->pos.z;
+        float z = mm.s.z * sp->pos.x + mm.f.z * sp->pos.y + mm.u.z * sp->pos.z;
+        vt.index += n70;
+        vector4 r(x, y, z);                          // w stays unset: the original copies the stack lane
+        vt.pos = r;
+        vt.normal = r;
+        vector4 c = rgl::unpack_color(&vt.color);
+        c.x *= tint.x;  c.y *= tint.y;  c.z *= tint.z;  c.w *= tint.w;
+        vt.color = pack_color(&c);
+        vertices.push_back(vt);                        // 0x411420
+    }
+
+    std::vector<face20>& faces = ((rgl::mesh*)src)->get90_rec();
+    for (size_t i = 0; i < faces.size(); i++)
+        add_face(faces[i].a + nverts, faces[i].b + nverts, faces[i].c + nverts);
+
+    slots[0].f28 = 1;
+    slots[1].f28 = 1;
+    compute_bounds();
+}
+
+// @ 0x47af30 -- multiply the vertex colour terms and the key-frame colours by `color`, renormalise the colour
+// vectors of every vertex, and rebuild the slot vertices when one or three components are negative.
+void rgl::mesh::set_color(vector4 color)
+{
+    ensure_local();
+
+    // 0x47af3b: the local point colours (0x70 list), both halves of every record
+    for (std::vector<point20>::iterator p = points.begin(); p < points.end(); p++) {
+        p->a.x *= color.x;  p->a.y *= color.y;  p->a.z *= color.z;
+        p->b.x *= color.x;  p->b.y *= color.y;  p->b.z *= color.z;
+    }
+
+    // 0x47af89: every key-frame record's first colour vector
+    for (unsigned i = 0; i < (unsigned)kf.count; i++) {
+        std::vector<vector4>::iterator p = kf.frames[i].verts.begin();
+        for (; p != kf.frames[i].verts.end(); p++) {
+            p->x *= color.x;  p->y *= color.y;  p->z *= color.z;
+        }
+    }
+
+    // 0x47aff3: vertex +0x30 and +0x00 terms: scale, then renormalise
+    for (size_t i = 0; i < vertices.size(); i++) {
+        vertices[i].normal.x *= color.x;  vertices[i].normal.y *= color.y;  vertices[i].normal.z *= color.z;
+        vnorm(vertices[i].normal);
+        vertices[i].pos.x *= color.x;  vertices[i].pos.y *= color.y;  vertices[i].pos.z *= color.z;
+        vnorm(vertices[i].pos);
+    }
+
+    long nneg = 0;
+    if (color.x < 0.0f) nneg = 1;
+    if (color.y < 0.0f) nneg++;
+    if (color.z < 0.0f) nneg++;
+    if (nneg == 1 || nneg == 3)
+        flip_faces();                                    // 0x4779b0
+
+    slots[0].f28 = 1;
+    bounds.min.x *= color.x;  bounds.min.y *= color.y;  bounds.min.z *= color.z;
+    bounds.max.x *= color.x;  bounds.max.y *= color.y;  bounds.max.z *= color.z;
+    bounds.update();                                // 0x416f70
+
+    // 0x47b1ff: with a negative component and shaders in use, the vertex +0x10 / +0x20 terms are scaled too
+    if (g_use_shaders && nneg > 0) {
+        for (size_t i = 0; i < vertices.size(); i++) {
+            vertex60* v = &vertices[i];
+            v->f10.x *= color.x;  v->f10.y *= color.y;  v->f10.z *= color.z;
+            vnorm(v->f10);
+            v->f20.x *= color.x;  v->f20.y *= color.y;  v->f20.z *= color.z;
+            vnorm(v->f20);
+        }
+    }
+}
+
+// @ 0x47b360 -- stamp the bone index into every vertex record, then mark the first slot dirty
+void rgl::mesh::set_bone_index(int bone)
+{
+    ensure_local();
+    for (size_t i = 0; i < vertices.size(); i++)
+        vertices[i].color = bone;                         // +0x54 (the vertex's colour word doubles as the bone index here)
+    slots[0].f28 = 1;
+}
+
+// @ 0x47b3b0
+void rgl::mesh::multiply_color(const vector4* tint)
+{
+    ensure_local();
+    for (unsigned i = 0; i < vertices.size(); i++) {
+        vertex60* v = &vertices[i];
+        vector4 c = rgl::unpack_color(&vertices[i].color);
+        unsigned keep = v->color & 0xff000000;     // read before the first store to c; written back between computing z and storing it
+        c.x = c.x * tint->x;
+        c.y = c.y * tint->y;
+        float nz = c.z * tint->z;
+        v->color = keep;
+        c.z = nz;
+        vertices[i].color |= pack_color(&c) & 0xffffff;
+    }
+    slots[0].f28 = 1;
+}
+
+// @ 0x47b480
+void rgl::mesh_list::append(mesh_list* src, int bone, const matrix* m, const unsigned* color)
+{
+    for (iterator it = src->begin(); it < src->end(); ++it) {
+        if (bone == -1) {
+            mesh* c = ((rgl::mesh*)*it)->clone();
+            push_back(c);
+        } else {
+            mesh* c = new mesh;
+            skin* old = c->res;
+            skin* nw = (*it)->res;
+            if (old)
+                old->refcount--;
+            c->res = nw;
+            if (nw)
+                nw->refcount++;
+            push_back(c);
+            ((mesh*)c)->append_skinned(*it, (const mat4*)m, bone, *color, 0);      // 0x44eb00 (rgl::mesh::append_skinned, the rgl::mat4 frame)
+        }
+    }
+}
+
+// @ 0x47b5b0
+void rgl::lod_mesh::set_color(unsigned color)
+{
+    for (int i = 0; i < count; i++) {
+        std::vector<mesh*>& l = lists[i];
+        for (std::vector<mesh*>::iterator it = l.begin(); it < l.end(); ++it)
+            ((rgl::mesh*)*it)->set_bone_index(color);
+    }
+}
+
+// @ 0x47b610
+void rgl::lod_mesh::transform(const matrix& m)
+{
+    for (int i = 0; i < count; i++) {
+        std::vector<mesh*>& l = lists[i];
+        for (std::vector<mesh*>::iterator it = l.begin(); it < l.end(); ++it)
+            ((rgl::mesh*)*it)->transform(m);
+    }
+}
+
+// @ 0x47b690
+void rgl::lod_mesh::append(lod_mesh* src, int bone, const matrix* m, const unsigned* color)
+{
+    if (count < src->count) {
+        int old = count;
+        count = src->count;
+        if (old > 0) {
+            matrix ident;
+            unsigned white;
+            for (int i = old; i < count; i++) {
+                white = 0xffffffff;
+                lists[i].append(&lists[old - 1], -1, identity_pos(&ident), &white);
+            }
+        }
+    }
+    if (src->count < count && src->count > 0) {
+        for (int i = src->count; i < count; i++)
+            lists[i].append(&src->lists[src->count - 1], bone, m, color);
+    }
+    for (int i = 0; i < src->count; i++)
+        lists[i].append(&src->lists[i], bone, m, color);
+}
+
+// @ 0x47b7b0 -- the scene lights every vertex of a mesh, bakes the result into the vertex colours and (for the
+// tangent-space material modes) also into the two extra colour words.
+void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
+{
+    struct mat_inl : matrix {
+        __forceinline vector4 rot_inl(const vector4& p) const
+        {
+            return vector4(s.x * p.x + f.x * p.y + u.x * p.z,
+                           s.y * p.x + f.y * p.y + u.y * p.z,
+                           s.z * p.x + f.z * p.y + u.z * p.z);
+        }
+    };
+    struct fn {
+        static __forceinline float dot(const vector4& a, const vector4& b)
+        {
+            return a.z * b.z + a.y * b.y + a.x * b.x;
+        }
+        static __forceinline vector4 neg(const vector4& v)
+        {
+            return vector4(-v.x, -v.y, -v.z);
+        }
+        static __forceinline void add_to(vector4& a, const vector4& o)
+        {
+            a.x = o.x + a.x;
+            a.y = o.y + a.y;
+            a.z = o.z + a.z;
+        }
+    };
+
+    m->ensure_local();
+    matrix lm = (*frame) * m->local_frame;
+
+    material* mat = m->res->shader;
+    unsigned mode = mat->stages[0].b & 0x1f;          // +0x6c
+    bool flat = (mode == 0x18) && (mat->flags20 & 0x40) != 0;
+    bool tangent = mode == 0x18;
+
+    vector4 tint = ambient;
+    vector4 dir, col;
+
+    // Flat-lit resources: no per-vertex work, just combine the scene light colour with the tint.
+    if (m->res->flags & 0x40) {
+        light_at(lm.o, lm.u, &dir, &col, flags, 1.0f);
+        vector4 c = tint;
+        c.w = 1.0f;
+        fn::add_to(c, col * 0.7f);
+        if (!g_use_shaders) {
+            c.x = (float)pow(c.x, g_ramp_gamma);
+            c.y = (float)pow(c.y, g_ramp_gamma);
+            c.z = (float)pow(c.z, g_ramp_gamma);
+        }
+        ((rgl::mesh*)m)->multiply_color(&c);
+        return;
+    }
+
+    // The base colour of the mesh itself (only used by the software colour path).
+    if (flat && !g_use_shaders) {
+        vector4 c = tint;
+        c.x = (float)pow(c.x, g_ramp_gamma);
+        c.y = (float)pow(c.y, g_ramp_gamma);
+        c.z = (float)pow(c.z, g_ramp_gamma);
+        m->color = pack_color(&c) | 0xff000000;
+    }
+
+    int count = (int)m->vertices.size();
+    if (count <= 0)
+        return;
+
+    for (int i = 0; i < count; i++) {
+        vertex60* v = &vat(m->vertices, i);
+
+        float alpha = 1.0f;
+        if (flat)
+            alpha = (float)(v->color & 0xff) * (1.0f / 255.0f);
+
+        vector4 pos = lm.transform_point_inl(vat(m->points, v->index).a);
+        vector4 nrm = ((const mat_inl&)lm).rot_inl(v->pos);
+
+        vector4 dir2, col2;
+        if (g_use_shaders) {
+            light_at(pos, nrm, &dir, &col, flags | 2, 1.0f);
+            light_at(pos, nrm, &dir2, &col2, flags | 4, 1.0f);
+        } else {
+            light_at(pos, nrm, &dir, &col, flags, alpha);
+        }
+
+        if (tangent || flat) {
+            mat3 fr;
+            fr.u = ((const mat_inl&)lm).rot_inl(v->pos);
+            fr.s = ((const mat_inl&)lm).rot_inl(v->f10);
+            fr.f = ((const mat_inl&)lm).rot_inl(v->f20);
+
+            vector4 c;
+            c.w = 1.0f;
+            vector4 nd = fn::neg(dir);
+            c.x = fn::dot(nd, fr.s);
+            c.y = fn::dot(nd, fr.f);
+            c.z = fn::dot(nd, fr.u);
+            double k = (col.x + col.y + col.z) * 0.33f;
+            c.x *= k;
+            c.y *= k;
+            c.z *= k;
+            c.y = -c.y;
+            unsigned lit = pack_signed_color((const float*)&c);
+            if (flat)
+                v->f58 = (v->f58 & 0xff000000) | (lit & 0xffffff);
+            else
+                v->f5c = (v->f5c & 0xff000000) | (lit & 0xffffff);
+
+            if (g_use_shaders && flat) {
+                vector4 c2;
+                c2.w = 1.0f;
+                vector4 nd2 = fn::neg(dir2);
+                c2.x = fn::dot(nd2, fr.s);
+                c2.y = fn::dot(nd2, fr.f);
+                c2.z = fn::dot(nd2, fr.u);
+                double k2 = (col2.x + col2.y + col2.z) * 0.33f;
+                c2.x *= k2;
+                c2.y *= k2;
+                c2.z *= k2;
+                c2.y = -c2.y;
+                v->f5c = pack_signed_color((const float*)&c2) & 0xffffff;
+            }
+        }
+
+        if (!tangent && !flat && !g_use_shaders) {
+            fn::add_to(col, tint);
+        }
+
+        if (!g_use_shaders) {
+            col.x = (float)pow(col.x, g_ramp_gamma);
+            col.y = (float)pow(col.y, g_ramp_gamma);
+            col.z = (float)pow(col.z, g_ramp_gamma);
+        }
+
+        vector4 vc = rgl::unpack_color(&v->color);
+        vc.x *= col.x;
+        vc.y *= col.y;
+        vc.z *= col.z;
+        unsigned lit = pack_color(&vc);
+        if (g_use_shaders && !tangent) {
+            v->f5c = lit & 0xffffff;
+        } else if (flat || !tangent) {
+            v->color = (v->color & 0xff000000) | (lit & 0xffffff);
+        }
+    }
+}
+
+// @ 0x47c1d0 -- mirror a mesh about x = 0: points with x > 0.001 get a reflected twin, vertices and faces follow.
+void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
+{
+    if (!m->local_faces) {
+        m->faces = m->parent->faces;
+        m->local_faces = 1;
+    }
+    m->ensure_local();
+
+    int mapv[65536];
+    int map2[65536];
+
+    for (unsigned i = 0; i < m->points.size(); i++) {
+        remap[i] = i;
+        map2[i] = -1;
+    }
+
+    int n = (int)m->points.size();
+    *count = n;
+    for (int i = 0; i < *count; i++) {        // 0x47c2d6: the bound is the stored *count, not the growing n
+        point20* p = &vat(m->points, i);
+        if (p->a.x > 0.001f) {
+            vector4 q;
+            q.x = -p->a.x;
+            remap[n] = i;
+            q.y = p->a.y;
+            q.z = p->a.z;
+            q.w = p->a.w;
+            m->add_point(&q);
+            map2[i] = n;
+            n++;
+        }
+    }
+
+    for (unsigned i = 0; i < m->vertices.size(); i++)
+        mapv[i] = -1;
+
+    int nv = (int)m->vertices.size();
+    int nw = nv;
+    for (int i = 0; i < nv; i++) {
+        vertex60* v = &vat(m->vertices, i);
+        int pi = v->index;
+        int mi = map2[pi];
+        if (!(mi < 0)) {
+            vertex60 t = *v;
+            t.pos.x = -t.pos.x;
+            t.normal = t.pos;                  // 0x47c395..0x47c3aa: the normal copies the NEGATED position
+            t.f5c = 0;
+            if (flip) {
+                t.uv.x = 1.0f - t.uv.x;
+                t.uv2.x = 1.0f - t.uv2.x;
+            }
+            t.index = mi;
+            m->vertices.push_back(t);
+            mapv[i] = nw;
+            nw++;
+        } else {
+            v->pos.x = 0.0f;
+            float len = sqrtf(v->pos.x * v->pos.x + v->pos.y * v->pos.y + v->pos.z * v->pos.z);
+            if (len > 1e-10f) {
+                float inv = 1.0f / len;
+                v->pos.x *= inv;
+                v->pos.y *= inv;
+                v->pos.z *= inv;
+            } else {
+                v->pos.x = 0.0f;
+                v->pos.y = 1.0f;
+                v->pos.z = 0.0f;
+            }
+            v->normal.x = v->pos.x;
+            v->normal.y = v->pos.y;
+            v->normal.z = v->pos.z;
+            v->normal.w = v->pos.w;
+            if (0.51f < v->uv.x) {
+                vertex60 t = *v;
+                t.f5c = 0;
+                if (flip) {
+                    t.uv.x = 1.0f - t.uv.x;
+                    t.uv2.x = 1.0f - t.uv2.x;
+                }
+                t.index = pi;
+                m->vertices.push_back(t);
+                mapv[i] = nw;
+                nw++;
+            }
+        }
+    }
+
+    int nf = (int)m->faces.size();
+    for (int i = 0; i < nf; i++) {
+        face20 f = vat(m->faces, i);
+        bool changed = false;
+        if (mapv[f.a] >= 0) {
+            f.a = mapv[f.a];
+            changed = true;
+        }
+        if (mapv[f.b] >= 0) {
+            f.b = mapv[f.b];
+            changed = true;
+        }
+        int c = mapv[f.c];
+        if (c >= 0)
+            c = mapv[f.c];
+        else if (!changed)
+            continue;
+        else
+            c = f.c;
+        int oldb = f.b;
+        f.b = c;
+        f.c = oldb;
+        m->faces.push_back(f);
+    }
+
+    m->slots[0].f28 = 1;
+    m->slots[1].f28 = 1;
+}
+
+// @ 0x47c6b0 -- weighted bone-matrix blend of the rest points
+void Skin::blend(mesh* m, int unused, const float* weights)
+{
+    m->ensure_local();
+    vector4 v;
+    vector4 d;
+    for (unsigned i = 0; i < m->points.size(); i++) {
+        for (int j = 0; j < n_face_keys; j++) {
+            if (face_keys[j].delta[i].length_squared() > 1e-10f) {
+                float w = (face_keys[j].f28 - face_keys[j].f24) * weights[j] + face_keys[j].f24;
+                vector4* t = face_keys[j].delta + i;
+                d.x = w * t->x;
+                d.y = w * t->y;
+                d.z = w * t->z;
+                point20* p = &*m->points.begin() + i;
+                v.x = p->a.x + d.x;
+                v.y = p->a.y + d.y;
+                v.z = p->a.z + d.z;
+                p->a = v;
+                p->b = v;
+            }
+        }
+    }
+}
+
+// @ 0x47c810 -- index-driven blend: `set` is an ArrSet, `*index` the slot whose point map selects the offsets
+void Skin::blend_indexed(mesh* m, ArrSet* s, int* index, const float* weights)
+{
+    m->ensure_local();
+    if ((int)m->points.size() != s->cnt[*index])
+        return;
+    for (unsigned i = 0; i < m->points.size(); i++) {
+        for (int j = 0; j < n_face_keys; j++) {
+            int bi = s->arr[*index][i];
+            FaceKey* fk = &face_keys[(unsigned)j];
+            if (fk->delta[bi].length_squared() > 1e-10f) {
+                float w = (face_keys[j].f28 - face_keys[j].f24) * weights[j] + face_keys[j].f24;
+                vector4* t = face_keys[j].delta + bi;
+                vector4 d;
+                d.x = w * t->x;
+                d.y = w * t->y;
+                d.z = w * t->z;
+                point20* p = &*m->points.begin() + i;
+                if (p->a.x < 0.0f)
+                    d.x = -d.x;
+                vector4 v;
+                v.x = p->a.x + d.x;
+                v.y = p->a.y + d.y;
+                v.z = p->a.z + d.z;
+                p->a = v;
+                p->b = v;
+            }
+        }
+    }
+}
+
+// @ 0x47c9b0 -- pull the points of a mesh toward the terrain height near the map edge
+void Terrain::snap(mesh* m)
+{
+    m->ensure_local();
+    float f;
+    vector4 v;
+    for (unsigned i = 0; i < m->points.size(); i++) {
+        point20* p = &*m->points.begin() + i;
+        vector4 g = sample(&p->a.x);
+        float dx = g.x - p->a.x;
+        float dy = g.y - p->a.y;
+        f = 1.0f - sqrtf(dx * dx + dy * dy) * 0.02f;
+        if (f < 0.0f)
+            continue;
+        else if (f >= 1.0f)
+            f = 1.0f;
+        else if (!(f > 1e-5f))
+            continue;
+        v = p->a;
+        v.z = (1.0f - f) * p->a.z + (g.z - 1.5f) * f;
+        p->a = v;
+        p->b = v;
+    }
+}

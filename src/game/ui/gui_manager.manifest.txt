@@ -1,0 +1,16 @@
+../src/game/ui/gui_manager.cpp  ?bump_counter@@YAXXZ  0042cb70  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?mb_warning@@YAXPBDZZ  0042cb80  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?file_length@@YA_JPAU_iobuf@@@Z  0042cbc0  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?flush@log_stream@@UAEHXZ  0042cc10  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?mb_error@@YAXPBDZZ  0042cc80  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?set_delay@Timer@@QAEXM@Z  0042cd20  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?set_drag@gui_manager@@QAEXPAUmesh@rgl@@@Z  0042cd80  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?set_overlay@gui_manager@@QAEXPAUmesh@rgl@@_N@Z  0042cdb0  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?reset@gui_manager@@QAEXXZ  0042d1b0  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?_Destroy@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXPAUtstring@@0@Z  0042d360  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?_Tidy@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXXZ  0042d390  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ??1gui_manager@@QAE@XZ  0042d3e0  /O2 /MT /Gy /TP
+../src/game/ui/gui_manager.cpp  ?_Buy@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@IAE_NI@Z  0042d570  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/ui/gui_manager.cpp  _$E1  005479c0  /O2  /MT  /Gy  /TP
+../src/game/ui/gui_manager.cpp  _$E2  00548140  /O2  /MT  /Gy  /TP

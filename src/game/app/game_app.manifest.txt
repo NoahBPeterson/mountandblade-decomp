@@ -1,0 +1,2 @@
+../src/game/app/game_app.cpp  ?MsgProc@GameApp@@UAEJPAUHWND__@@IIJ@Z  0050f130  /O2 /MT /Gy /TP
+../src/game/app/game_app.cpp  ?frame_update@C4c3290@@UAEXM@Z  0050f390  /O2 /MT /Gy /TP

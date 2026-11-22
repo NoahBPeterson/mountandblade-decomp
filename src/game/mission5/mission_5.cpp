@@ -10,46 +10,46 @@
 //       Names provisional. "T regime" region (docs/tu_map.md): the file keeps the binary order; every function that
 //       follows its caller is a separate (noinline) function in the original. Flags: /O2 /MT /Gy /TP.
 //
-// Boundary: starts at 0x525160 (Game::handle_event, a class change after the record readers of game_2.cpp); ends where the
-//       map editor starts (0x52cf60, class Mesh | Elem). The map's boundary 0x5249f0 is not kept (see game_2.cpp).
+// Boundary: starts at 0x525160 (Game::handle_event, a class change after the record readers of map_builder_and_data_load.cpp); ends where the
+//       map editor starts (0x52cf60, class Mesh | Elem). The map's boundary 0x5249f0 is not kept (see map_builder_and_data_load.cpp).
 //-----------------------------------------------------------------------------
 #define PLACEDOBJ_CTOR_OUT_OF_LINE   // fn_529d80 0x529d80 calls PlacedObj::PlacedObj (0x437830) for the resize(0) temporary
-#include "../../include/image_addrs.h"
-#include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
-#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
-#include "./mission_5.h"
-#include "../party/game.h"      // Game::more_start (g_game is the game constructor's Game)
-#include "../../include/troop.h"   // Troop::unequip (0x4630d0)
+#include "platform/image_addrs.h"
+#include "game/data/skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
+#include "game/config/config_block.h"      // Config g_cfg (0x5a9f98)
+#include "game/mission/mission_frame_update.h"
+#include "game/campaign/game_state_load.h"      // Game::more_start (g_game is the game constructor's Game)
+#include "game/data/troop.h"   // Troop::unequip (0x4630d0)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
-#include "../tstring.h"
-#include "../../rgl/rgl_math.h"
-#include "../../rgl/stream.h"
-#include "../../rgl/stream_inline.h"   // the file writer built on save_scene's stack: constructor inline
-#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
-__forceinline bin_writer::bin_writer() {}   // inline here (resmgr.cpp load_pack calls the out-of-line 0x417c10)
-#include "../../rgl/mesh.h"
-#include "../strat/gui_manager.h"      // g_gui (0x5d7080)
-#include "../conv_screen.h"      // Rec1208 (ConvScreen): the conversation screen record, whose slot 3 is handle_event 0x525160
-#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
-#include "../../include/item_kind.h"   // g_items 0x5e29d0
-#include "../menu_rec.h"   // g_menus 0x5e29b0
-#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
+#include "engine/core/tstring.h"
+#include "engine/math/rgl_math.h"
+#include "engine/io/stream.h"
+#include "engine/io/stream_inline.h"   // the file writer built on save_scene's stack: constructor inline
+#include "game/script/script_state.h"   // ScriptState g_script (0xa70440): the one object
+__forceinline bin_writer::bin_writer() {}   // inline here (resource_manager.cpp load_pack calls the out-of-line 0x417c10)
+#include "engine/render/mesh.h"
+#include "game/ui/gui_manager.h"      // g_gui (0x5d7080)
+#include "game/ui/screens/conversation/conv_screen.h"      // Rec1208 (ConvScreen): the conversation screen record, whose slot 3 is handle_event 0x525160
+#include "platform/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "game/data/item_kind_include.h"   // g_items 0x5e29d0
+#include "game/data/menu_rec.h"   // g_menus 0x5e29b0
+#include "game/data/mode_rec.h"   // g_mission_templates 0x5e2a00
 // the mission template's bit 1 (Mission::mode_flag1 0x435840's test, inline here: shr; test r8,1)
 static inline bool template_flag1(int id)
 {
     return ((g_mission_templates[id].flags >> 1) & 1) != 0;
 }
-#include "../presentation.h"                               // widget_mgr, g_presentation (0x5e299c)
-#include "../key_names.h"
-#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-#include "../../include/render_flags.h"
+#include "game/data/presentation.h"                               // widget_mgr, g_presentation (0x5e299c)
+#include "game/input/key_names.h"
+#include "game/data/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in game/app/options_dialog_and_module_tables.cpp)
+#include "engine/render/render_flags.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 extern const RangePair g_aim_range_tbl[7] = {{-0.5f, 3.1415927f}, {-2.0f, 2.0f}, {-1.5f, 2.5f}, {-1.0f, 3.0f}, {-1.3f, 2.8f}, {-3.0f, 1.0f}, {5.0f, 4.0f}};  // 0x59390c (rdata: the aim arc per Agent::variant)
 
-#include "../ui_globals.h"      // UI / core globals
-#include "../map_flags.h"      // MapFlags::commit 0x513710
-#include "../config/core.h"     // GameApp g_app_obj (0x8ee3c48): the map editor dialog's members
+#include "game/ui/ui_globals.h"      // UI / core globals
+#include "game/campaign/map_flags.h"      // MapFlags::commit 0x513710
+#include "game/config/core.h"     // GameApp g_app_obj (0x8ee3c48): the map editor dialog's members
 
 // The agent table's walkers: the original's bodies were visible here (cl keeps g_mission in a register across them,
 // as they write no global), though it left them out of line. agent2/agent_ai.cpp owns the rows at these addresses.
@@ -74,7 +74,7 @@ inline __declspec(noinline) int AgentTable::first_used()
     }
     return v;
 }
-// GameKeys::clicked 0x48ac90 (game/ui/mission_ui.cpp owns the row): its body was visible here too; the screen tick keeps
+// GameKeys::clicked 0x48ac90 (game/ui/widgets/widget_base.cpp owns the row): its body was visible here too; the screen tick keeps
 // g_mission and g_game in registers across its calls.
 inline __declspec(noinline) bool GameKeys::clicked(int i)
 {
@@ -92,7 +92,7 @@ inline Agent* AgentTable::get(unsigned id)
     return &pages[id >> 4][id & 0xf];
 }
 
-inline __declspec(noinline) Blow* Blow::init()      // 0x4353a0: visible too (agent/agent.cpp owns the row)
+inline __declspec(noinline) Blow* Blow::init()      // 0x4353a0: visible too (game/agent/agent_queries.cpp owns the row)
 {
     vector4 zero(0.0f, 0.0f, 0.0f);
     vector4 unit(1.0f, 0.0f, 0.0f);
@@ -349,7 +349,7 @@ static __forceinline void vsub_to_s257f0(vector4& r, const vector4& a, const vec
 }
 static __forceinline void vadd_s257f0(vector4& a, const vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
 static __forceinline float vdot_neg_s257f0(const vector4& a, const vector4& b) { return -a.x * b.x + -a.z * b.z + -a.y * b.y; }
-// 0x407d60 (rgl/shapes/shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x407d60 (engine/physics/collision_shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 namespace rgl {
 inline __declspec(noinline) float vector4::normalize()      // 0x407d60
 {
@@ -1145,7 +1145,7 @@ void Mission::save_scene_data()
         terrain.save(&rec->s414);
     }
     rec->s444.reset();
-    nav.save(rec->s444);                // 0x524f00 (game_2.cpp)
+    nav.save(rec->s444);                // 0x524f00 (map_builder_and_data_load.cpp)
 }
 
 // @ 0x528000
@@ -2523,13 +2523,13 @@ void MissionBlocker::update_ui()
 L_bb21:
     if (g_game->editor.rt_flag == 0 && g_game->editor.flag_c8 == 0) {
         g_mission->edit_obj->visible = 0;
-        update_editor();      // 0x5305b0 (map_editor.cpp)
+        update_editor();      // 0x5305b0 (map_editor_update.cpp)
         goto L_bbc5;
     }
 
 L_bb4b:
     g_mission->sel_marker->visible = 0;
-    update_placement();                      // 0x52f250 (mesh_poly_ray.cpp)
+    update_placement();                      // 0x52f250 (poly_mesh_poly_ray_edit.cpp)
     goto L_bbc5;
     } else if (m == 1 || m == 3 || m == 2) {
         g_mission->sel_marker->visible = 0;
@@ -2537,7 +2537,7 @@ L_bb4b:
         this->update_cursor();
     } else if (m == 4) {
         g_mission->marker_entity->visible = 1;
-        update_mesh_edit();                      // 0x52cf60 (mesh_3.cpp)
+        update_mesh_edit();                      // 0x52cf60 (poly_mesh_pick.cpp)
     }
 
 L_bbc5:
@@ -2597,13 +2597,13 @@ void MissionBlocker::update_ui_continue()
 L_bb21:
     if (g_game->editor.rt_flag == 0 && g_game->editor.flag_c8 == 0) {
         g_mission->edit_obj->visible = 0;
-        update_editor();      // 0x5305b0 (map_editor.cpp)
+        update_editor();      // 0x5305b0 (map_editor_update.cpp)
         goto L_bbc5;
     }
 
 L_bb4b:
     g_mission->sel_marker->visible = 0;
-    update_placement();                      // 0x52f250 (mesh_poly_ray.cpp)
+    update_placement();                      // 0x52f250 (poly_mesh_poly_ray_edit.cpp)
     goto L_bbc5;
 
     } else if (m == 1 || m == 3 || m == 2) {
@@ -2612,7 +2612,7 @@ L_bb4b:
         this->update_cursor();
     } else if (m == 4) {
         g_mission->marker_entity->visible = 1;
-        update_mesh_edit();                      // 0x52cf60 (mesh_3.cpp)
+        update_mesh_edit();                      // 0x52cf60 (poly_mesh_pick.cpp)
     }
 
 L_bbc5:
@@ -2687,7 +2687,7 @@ L_bd8a:
 //  MissionBlocker::find_position
 // =====================================================================================================
 // The segment query chain with its bodies visible, as the original's unit saw it (world::query_segment 0x439870,
-// cell::collect_masked 0x4396b0: agent2/agent_stats.cpp; cell_grid::walk 0x437290: agent/agent.cpp): the end point b and the
+// cell::collect_masked 0x4396b0: game/agent/agent_stats.cpp; cell_grid::walk 0x437290: game/agent/agent_queries.cpp): the end point b and the
 // count do not escape, so b[0] is stored after the &count push as in the original
 inline __declspec(noinline) void rgl::cell_grid::walk(const float* a, const float* b, int (*cells)[2], int* count)
 {

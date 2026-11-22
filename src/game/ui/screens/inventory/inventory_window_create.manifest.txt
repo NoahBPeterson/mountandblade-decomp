@@ -1,0 +1,1 @@
+../src/game/ui/screens/inventory/inventory_window_create.cpp  ?money_label@PartyWindow@@QAEXH@Z  00501940  /O2 /MT /Gy /TP

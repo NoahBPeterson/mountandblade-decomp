@@ -1,7 +1,7 @@
 // port/include/winsock2.h: portable-build shim (ticket 004): declares only what src/ uses.
 #pragma once
 #include <windows.h>
-// The version check to taleworlds.com (src/game/config/options_dlg.cpp) is dropped by ticket 007; declarations only.
+// The version check to taleworlds.com (src/game/config/launcher_options_dialog.cpp) is dropped by ticket 007; declarations only.
 typedef UINT_PTR SOCKET;
 typedef unsigned short u_short;
 typedef unsigned long u_long;

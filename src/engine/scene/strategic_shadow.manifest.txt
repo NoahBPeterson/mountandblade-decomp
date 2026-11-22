@@ -1,0 +1,3 @@
+../src/engine/scene/strategic_shadow.cpp  ?get_ambient@world@rgl@@QAE?AUvector4@2@XZ  0042b6d0  /O2 /MT /Gy /TP
+../src/engine/scene/strategic_shadow.cpp  ?shadow_tick@strategic_entity@rgl@@QAEXXZ  0042b790  /O2 /MT /Gy /TP
+../src/engine/scene/strategic_shadow.cpp  ?find_entity@world@rgl@@QAEPAUentity@2@H@Z  0042ba50  /O2 /MT /Gy /TP

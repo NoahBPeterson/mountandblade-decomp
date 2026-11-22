@@ -25,7 +25,7 @@ set(MB_SRC "${MB_ROOT}/src" CACHE PATH "the reconstruction")
 set(MB_TARGET "linux-i686" CACHE STRING "linux-i686 (now) | linux-x86_64 | macos-arm64 | macos-x86_64 (after ticket 006)")
 set(PORT "${CMAKE_CURRENT_SOURCE_DIR}")
 
-# Every TU of the MSVC build. d3dapp.cpp (the SDK framework's window/loop) and options_dlg.cpp (the launcher dialog) are
+# Every TU of the MSVC build. d3dapp.cpp (the SDK framework's window/loop) and launcher_options_dialog.cpp (the launcher dialog) are
 # compiled too: milestone 1 is "all of src/ compiles"; at link time port/ equivalents replace them (ticket 007).
 file(GLOB_RECURSE MB_SOURCES CONFIGURE_DEPENDS "${MB_SRC}/*.cpp")
 list(FILTER MB_SOURCES EXCLUDE REGEX "/_dataaudit_")
@@ -39,7 +39,7 @@ add_library(mb_src_flags INTERFACE)
 target_include_directories(mb_src_flags BEFORE INTERFACE
     ${PORT}/include
     ${PORT}/stl
-    ${MB_SRC}/include
+    ${MB_SRC}
     ${MB_ROOT}/match/include)
 
 # MB_SRC_WARNINGS: src/'s warning flags. Default silent; a measurement build (ticket 006's 64-bit inventory,
@@ -51,7 +51,7 @@ target_compile_options(mb_src_flags INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>    # port/stl replaces the C++ library headers
     -fms-extensions                           # __declspec(...), __int64, i64 literals, __forceinline, anonymous structs
     -fms-compatibility                        # cl's leniencies the source relies on: goto past initialisations, lookup into
-                                              # dependent bases (VecOps' iterator, shapes.h's _Buy); no _MSC_VER on this target
+                                              # dependent bases (VecOps' iterator, collision_shapes.h's _Buy); no _MSC_VER on this target
     -fexceptions -fcxx-exceptions             # (-fms-compatibility turns C++ exceptions off on a non-Windows target)
     # -fms-compatibility also drops the GNU identity macros, which glibc's headers test; restore the ones clang reports:
     -D__GNUC__=4 -D__GNUC_MINOR__=2 -D__GNUC_PATCHLEVEL__=1 -D__GNUG__=4 -D__GNUC_GNU_INLINE__=1 -D__GXX_ABI_VERSION=1002
@@ -77,7 +77,7 @@ if(MB_TARGET STREQUAL "linux-i686")
 endif()
 
 # 64-bit configurations are only valid after ticket 006 (layout-neutral fields); until then the size asserts already in the
-# tree (src/include/troop.h mb_troop_size_chk, src/game/rgl_mesh.h mesh_size_check ...) fail there, as they should.
+# tree (src/game/data/troop.h mb_troop_size_chk, src/game/rgl_mesh.h mesh_size_check ...) fail there, as they should.
 if(MB_TARGET MATCHES "x86_64|arm64")
   target_compile_definitions(mb_src_flags INTERFACE MB_LP64=1)
 endif()

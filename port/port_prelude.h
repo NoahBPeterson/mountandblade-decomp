@@ -13,7 +13,7 @@
 #define _DONT_USE_CTYPE_INLINE_ 1   // macOS <ctype.h>: isalpha & co. as extern "C" functions, as src/ declares them
 #endif
 
-// src/game/tstring.h: raw storage of hand-built tstrings is sized with MB_TSTRING_SIZE (int, char*, int, int);
+// src/engine/core/tstring.h: raw storage of hand-built tstrings is sized with MB_TSTRING_SIZE (int, char*, int, int);
 // port/main.cpp checks it against sizeof(tstring).
 #if defined(__LP64__)
 #define MB_TSTRING_SIZE 24
@@ -43,7 +43,7 @@
 #define CDECL __cdecl
 #define WINAPIV __cdecl
 
-// --- WinLicense markers (src/include/wl_marker.h) ---------------------------------------------------------------------
+// --- WinLicense markers (src/platform/wl_marker.h) ---------------------------------------------------------------------
 // 18 bytes of _emit that the protector's SDK left inline; no runtime effect. Pre-empt the header (its guard) so the
 // portable build sees an empty block instead of an MS asm block (src/ writes WL_MARKER(12) without a ';').
 #define WL_MARKER_H
@@ -58,7 +58,7 @@
 // _ReadWriteBarrier is a clang builtin under -fms-compatibility (src/ declares it itself, as for cl).
 #define _AddressOfReturnAddress() ((void*)((char*)__builtin_frame_address(0) + sizeof(void*)))
 
-// --- the vector deleting destructor called by name (src/rgl/xmlcfg/records.cpp: `return __vecDelDtor(flags);`) --------
+// --- the vector deleting destructor called by name (src/game/data/record_destructors.cpp: `return __vecDelDtor(flags);`) --------
 // MSVC's compiler-generated `??_E` member: bit 1 = an array from new[], bit 0 = free the storage.
 template<class T> inline void* mb_vec_del_dtor(T* p, unsigned flags)
 {

@@ -13,13 +13,13 @@ contained port.
 - `IDirect3DDevice9` method calls: **314 sites, ~50 methods**. Top: `SetRenderState` 114 (8 files), `SetTextureStageState` 37 (4 files), `SetSamplerState` 17,
   `SetTexture` 15, `SetTransform` 11, `Lock/Unlock` 8+8, `GetDeviceCaps` 6, `Clear` 5, `SetPixelShader` 5, `CreateVertexDeclaration` 5, `LightEnable` 4,
   `SetStreamSource` 4, `SetRenderTarget` 3, `Present` 3.
-- **Only two scene draw calls**: `DrawIndexedPrimitive(D3DPT_TRIANGLELIST, ...)` at src/game/terrain_a/terrain_a.cpp:3345 and src/game/terrain_b/terrain_b.cpp:598;
-  three `DrawPrimitiveUP(D3DPT_LINELIST)` debug draws in src/rgl/shapes/shapes.cpp:185,456,754; two `DrawPrimitive` for CD3DFont (d3dfont.cpp:542,555).
-- The state cache: `struct renderer` (`g_render`, src/include/renderer.h, 0x618 = `dev`): fog/lighting/specular/normalize/z-write/z-func flags, `light_on[64]`,
+- **Only two scene draw calls**: `DrawIndexedPrimitive(D3DPT_TRIANGLELIST, ...)` at src/game/terrain/terrain_cells.cpp:3345 and src/game/terrain/terrain_scene_renderer.cpp:598;
+  three `DrawPrimitiveUP(D3DPT_LINELIST)` debug draws in src/engine/physics/collision_shapes.cpp:185,456,754; two `DrawPrimitive` for CD3DFont (d3dfont.cpp:542,555).
+- The state cache: `struct renderer` (`g_render`, src/engine/render/renderer_include.h, 0x618 = `dev`): fog/lighting/specular/normalize/z-write/z-func flags, `light_on[64]`,
   per-stage color/alpha/xform/texgen/sampler arrays (3 stages), `blend_mode`, `alpha_mode` (0 off, 1 ref 8, 2 ref 0x88, 3 ref 0xfb), `tex_factor`, material power, matrix stack
   (20 deep), `view`/`cur` matrices; methods `set_view 0x461630, reset_state 0x4617b0, set_lighting 0x461ba0, set_stage_color 0x461bd0, set_alpha_mode 0x461cf0,
   set_stage_sampler 0x461d90, set_material 0x461e10`. This struct **is** the seam: everything that changes pipeline state goes through it or through the
-  ~51 `g_effect` references in terrain_b.cpp.
+  ~51 `g_effect` references in terrain_scene_renderer.cpp.
 - Vertex formats: 5 vertex declarations built in config.cpp:1086-1094 (`ffp`, `regular`, `normalmap`, `skinning`, `normalmap_skin`); CPU skinning exists too (`FxDef::skin` 0x4291c0
   blends position+normal over 4 bones; `mesh::ensure_skin` 0x412700).
 - Render targets / shadows: `SetRenderTarget` 3, `CreateDepthStencilSurface` 2, `D3DXCreateTexture` with `D3DUSAGE_RENDERTARGET` / `AUTOGENMIPMAP` / `DEPTHSTENCIL` (resource_manager.cpp:270-272),

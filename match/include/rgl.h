@@ -1,5 +1,5 @@
 // rgl.h: the declarations the not yet migrated slices (match/slices/*) are built on. src/ no longer includes this
-// header: its rgl::vector4 / rgl::matrix / rgl::string live in src/rgl/rgl_math.h and rgl_string.h.
+// header: its rgl::vector4 / rgl::matrix / rgl::string live in src/engine/math/rgl_math.h and rgl_string.h.
 // Kept for the slices only because they declare their own pack_color/unpack_color, tstring and by-value
 // rgl::string users next to these (the shared string has a dtor, which changes the by-value returns of s00407c10
 // and s00408110, and its colour helpers clash with the slices' own). Retire it together with those slices.
@@ -43,7 +43,7 @@ struct matrix {
     void rotate_about_u(const float* angle);                                // 0x40e770
 };
 
-// 16 bytes; ctor from a C string at 0x42bbe0 (zeroes all four dwords, then copies). Layout (src/rgl/rgl_string.h):
+// 16 bytes; ctor from a C string at 0x42bbe0 (zeroes all four dwords, then copies). Layout (src/engine/core/rgl_string.h):
 // pos +0, buffer +4, capacity +8, length +0xc.
 struct string {
     int pos; char* p; int cap, size;

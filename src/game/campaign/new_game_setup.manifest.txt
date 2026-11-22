@@ -1,0 +1,10 @@
+../src/game/campaign/new_game_setup.cpp  ?arm@SimpleTriggerVec@@QAEXXZ  0051f7c0  /O2 /MT /Gy /TP
+../src/game/campaign/new_game_setup.cpp  ?reset_items@Troop@@QAEXH@Z  0051ff90  /O2 /MT /Gy /TP
+../src/game/campaign/new_game_setup.cpp  ?apply_items@Troop@@QAEXXZ  00520110  /O2 /MT /Gy /TP
+../src/game/campaign/new_game_setup.cpp  ?raise_stats@Troop@@QAEXXZ  005204d0  /O2 /MT /Gy /TP
+../src/game/campaign/new_game_setup.cpp  ?reset_ids@PartyMgr@@QAEXXZ  0051eda0  /O2 /MT /Gy /TP
+../src/game/campaign/new_game_setup.cpp  ?raise_skills@Troop@@QAEXXZ  00520420  /O2 /MT /Gy /TP
+../src/game/campaign/new_game_setup.cpp  ?get@PartyMgr@@QAEPAUParty@@H@Z  0051ee50  /O2 /MT /Gy /TP
+../src/game/campaign/new_game_setup.cpp  ?reset@Animator@@QAEXPAUPackedState@@PBU2@@Z  00520520  /O2 /MT /Gy /TP
+../src/game/campaign/new_game_setup.cpp  ?read@PartyMgr@@QAEXPAUstream_base@@H@Z  0051eb90  /O2 /MT /Gy /TP
+../src/game/campaign/new_game_setup.cpp  ?level_up@Troop@@QAEXXZ  00520270  /O2 /MT /Gy /TP

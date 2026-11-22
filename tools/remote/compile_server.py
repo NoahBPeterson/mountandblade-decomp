@@ -105,7 +105,7 @@ class Server:
     def env(self, stage):
         s, r = (lambda *p: self.cpath(os.path.join(stage, "r", *p))), (lambda *p: self.cpath(os.path.join(self.a.repo, *p)))
         tc = ("work", "toolchain")
-        inc = [s("src", "include"), s("match", "include"), r(*tc, "vc71tk", "include"), r(*tc, "sal"),
+        inc = [s("src"), s("match", "include"), r(*tc, "vc71tk", "include"), r(*tc, "sal"),
                r(*tc, "vc9sp1", "WinSDK", "Include"), r("work", "ext", "dxsdk_jun10", "DXSDK", "Include")]
         lib = [r(*tc, "vc71tk", "lib"), r(*tc, "vc9sp1", "WinSDK", "Lib")]
         sep = ";"

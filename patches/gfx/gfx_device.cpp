@@ -15,7 +15,7 @@
 //   - D3DSAMP_MAXANISOTROPY is always N (capped by D3DCAPS9.MaxAnisotropy), on every sampler after CreateDevice/Reset
 //     and whenever the game sets it;
 //   - a LINEAR MINFILTER becomes ANISOTROPIC only while that sampler's MIPFILTER is not NONE (mip-mapped textures).
-//     POINT stays POINT (CD3DFont's text, src/dxframework/d3dfont.cpp), and so do un-mipped LINEAR samplers (render
+//     POINT stays POINT (CD3DFont's text, src/platform/dxframework/d3dfont.cpp), and so do un-mipped LINEAR samplers (render
 //     targets, shadow maps). The MINFILTER is re-derived when the MIPFILTER changes later.
 //
 // Render scale. CreateDevice drops D3DCREATE_PUREDEVICE (gfx_scale.cpp saves and restores the game's device state around

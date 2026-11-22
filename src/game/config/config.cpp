@@ -20,32 +20,32 @@
 #include <stdlib.h>
 #include <math.h>
 #include <new>
-#include "./config.h"
-#include "../renderer_xform.h"            // to_d3d (renderer::renderer 0x4bc2d0)
-#include "../../include/sound_mgr.h"   // SoundMgr::load_used 0x4be270, SoundGroup::load 0x4be200
-#include "../../rgl/options.h"      // options::set_corpse_level 0x4bc090, set_ragdoll_level 0x4bc100
-#include "../../include/trigger_rec.h"   // TriggerRec::read 0x4bd830 is defined here
-#include "../terrain_desc.h"
-#include "../map_widget.h"                // MapWidget::screen_to_world 0x4bd2f0           // TerrainDesc (constructor 0x4be6b0, destructor 0x4be6f0)
-#include "../../include/game_recs.h"   // PartyTemplate (load 0x4bdff0)
-#include "../../include/anim_set.h"   // SubAnim::read 0x4bdc00
-#include "../emit.h"                 // EmitTable (0x8ed5090): load_used 0x4bdb60
-#include "../mode_rec.h"             // SpawnRec::load_extras 0x4bdd50
-#include "../env_row.h"              // EnvRow::load 0x4bddf0
+#include "game/config/config.h"
+#include "engine/render/renderer_xform.h"            // to_d3d (renderer::renderer 0x4bc2d0)
+#include "engine/audio/sound_mgr.h"   // SoundMgr::load_used 0x4be270, SoundGroup::load 0x4be200
+#include "game/config/options.h"      // options::set_corpse_level 0x4bc090, set_ragdoll_level 0x4bc100
+#include "game/data/trigger_rec.h"   // TriggerRec::read 0x4bd830 is defined here
+#include "game/terrain/terrain_desc.h"
+#include "game/campaign/map_widget.h"                // MapWidget::screen_to_world 0x4bd2f0           // TerrainDesc (constructor 0x4be6b0, destructor 0x4be6f0)
+#include "game/data/game_recs.h"   // PartyTemplate (load 0x4bdff0)
+#include "engine/fx/anim_set.h"   // SubAnim::read 0x4bdc00
+#include "game/data/emit.h"                 // EmitTable (0x8ed5090): load_used 0x4bdb60
+#include "game/data/mode_rec.h"             // SpawnRec::load_extras 0x4bdd50
+#include "game/data/env_row.h"              // EnvRow::load 0x4bddf0
 #include <richedit.h>
-#include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
-#include "../../include/game_data.h"      // g_game 0x5e2930 (g_config is a view of it)
-#include "../../tinyxml/tinyxml.h"   // TiXmlElement::QueryDoubleAttribute 0x42f190 (CapDef::load)
-#include "../../rgl/resource.h"
+#include "engine/core/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
+#include "game/data/game_data.h"      // g_game 0x5e2930 (g_config is a view of it)
+#include "third_party/tinyxml/tinyxml.h"   // TiXmlElement::QueryDoubleAttribute 0x42f190 (CapDef::load)
+#include "engine/resource/resource.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
-#include "../dev_buffer.h"
-#include "../../include/frustum.h"
-#include "../../include/mat4.h"
-#include "../render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
-#include "../slot.h"
-#include "../../include/render_flags.h"
-#include "../../include/prsnt_rec.h"           // PresentationRec: the records PresentationTable::load_used names
+#include "engine/render/dev_buffer.h"
+#include "engine/scene/frustum.h"
+#include "engine/math/mat4_include.h"
+#include "engine/render/render_batch.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "platform/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "game/input/slot.h"
+#include "engine/render/render_flags.h"
+#include "game/data/prsnt_rec.h"           // PresentationRec: the records PresentationTable::load_used names
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 renderer g_render;                                         // 0xa17910 (constructed by the compiler: renderer::renderer 0x4bc2d0)
@@ -792,7 +792,7 @@ void options::set_ragdoll_level(int q)
     }
 }
 
-// ---- a bone's collision capsule (rgl/core/bone.h CapDef) ------------------------------------------------------------
+// ---- a bone's collision capsule (engine/physics/bone.h CapDef) ------------------------------------------------------------
 // @ 0x4bc170
 // The capsule starts at the origin with the fixed radius 0.05 and the three trailing fields cleared.
 CapDef::CapDef()

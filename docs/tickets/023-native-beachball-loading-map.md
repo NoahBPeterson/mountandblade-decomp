@@ -13,7 +13,7 @@ Not known yet: how long it stalls, whether it was the Release or the ASan build,
 
 ## Likely cause (unverified)
 
-The loader runs in steps on the main thread (`src/game/party/game.cpp`, the step function around line 150): step 3
+The loader runs in steps on the main thread (`src/game/campaign/game_state_load.cpp`, the step function around line 150): step 3
 loads the save and sets the "ui_loading_map_file" text; step 4 runs `start_new_game` (0x51f1a0) and then
 `build_map` (0x520b20) in one go before the next frame. Nothing pumps SDL events inside a step: the only
 `SDL_PollEvent` loop is `port/platform/window.cpp:318`, reached from the game's PeekMessage between frames. So any
@@ -39,7 +39,7 @@ through the CRT shim).
 
 ## Update 2026-11-20 (tools lane T1, 8cf96c37)
 
-Likely cause found: step 4 runs `Game::start_new_game`, where `TroopRec::level_up` (src/game/mission5/troop_rec.cpp)
+Likely cause found: step 4 runs `Game::start_new_game`, where `TroopRec::level_up` (src/game/campaign/new_game_setup.cpp)
 read the attributes at a raw +0x58. At 64 bits that lands inside the tstrings, so `raise_stats` spun on rand() for
 0-60 s. It now reads `Troop::attributes` (objcmp SAME, troop_rec 10/10 byte-exact). Measured after the fix (Release):
 the whole loading sequence is 0.7-1.2 s, Quick Battle Start is reached 2.3-2.8 s after launch. Left to confirm: no

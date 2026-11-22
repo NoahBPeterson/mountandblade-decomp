@@ -37,25 +37,25 @@ Files with p2i + i2p + raw offsets + F macros > 0: 90. Top of the list:
 | file | p2i | i2p | raw | F() |
 |---|---:|---:|---:|---:|
 | src/game/script/script_interpreter.cpp | 17 | 24 | 4 | 0 |
-| src/game/inventory_panel/game_tick.cpp | 0 | 0 | 3 | 31 |
-| src/game/inventory_panel/party_tracks.cpp | 0 | 0 | 1 | 31 |
-| src/rgl/dynamic/fx_anim.cpp | 31 | 0 | 0 | 0 |
+| src/game/campaign/game_tick.cpp | 0 | 0 | 3 | 31 |
+| src/game/campaign/party_tracks.cpp | 0 | 0 | 1 | 31 |
+| src/engine/fx/fx_animation.cpp | 31 | 0 | 0 | 0 |
 | src/game/mission5/mission_5.cpp | 3 | 2 | 19 | 0 |
-| src/game/inventory_panel/mission_ctx.cpp | 5 | 2 | 17 | 0 |
+| src/game/mission/mission_context.cpp | 5 | 2 | 17 | 0 |
 | src/game/config/config.cpp | 0 | 8 | 13 | 0 |
 | src/game/ui/named_rec.h | 20 | 0 | 0 | 0 |
 | src/game/agent4/agent_logic.cpp | 10 | 1 | 8 | 0 |
-| src/game/mesh_slot/mesh_appear.cpp | 16 | 0 | 1 | 0 |
-| src/game/mesh_slot/mesh_terrain.cpp | 2 | 6 | 8 | 0 |
-| src/game/char_sheet/save_panel.cpp | 3 | 0 | 12 | 0 |
-| src/rgl/mesh2/gui_edit.cpp | 0 | 12 | 1 | 0 |
-| src/game/mesh_slot/mesh_pass.cpp | 1 | 12 | 0 | 0 |
-| src/game/char_sheet/save_state.cpp | 0 | 0 | 13 | 0 |
-| src/game/terrain_a/terrain_a.cpp | 8 | 1 | 3 | 0 |
-| src/game/mesh_slot/mesh_scene.cpp | 4 | 3 | 5 | 0 |
-| src/game/inventory_panel/note_window.cpp | 4 | 1 | 7 | 0 |
-| src/game/mission5/game_2.cpp | 3 | 8 | 0 | 0 |
-| src/game/mesh_slot/mesh_start.cpp | 4 | 3 | 4 | 0 |
+| src/game/mission/agent_appearance.cpp | 16 | 0 | 1 | 0 |
+| src/game/mission/terrain_water_regen.cpp | 2 | 6 | 8 | 0 |
+| src/game/ui/screens/save_panel.cpp | 3 | 0 | 12 | 0 |
+| src/game/editor/editor_selection_and_translation.cpp | 0 | 12 | 1 | 0 |
+| src/game/mission/render_passes.cpp | 1 | 12 | 0 | 0 |
+| src/game/save/save_state.cpp | 0 | 0 | 13 | 0 |
+| src/game/terrain/terrain_cells.cpp | 8 | 1 | 3 | 0 |
+| src/game/mission/scene_entities.cpp | 4 | 3 | 5 | 0 |
+| src/game/ui/screens/notes_window.cpp | 4 | 1 | 7 | 0 |
+| src/game/campaign/map_builder_and_data_load.cpp | 3 | 8 | 0 | 0 |
+| src/game/mission/mission_start_setup.cpp | 4 | 3 | 4 | 0 |
 
 The rgl core (resource manager, mesh, material, texture, shader, stream) is nearly clean: its only casts were the render
 queue (`idx_weight` entries holding the mesh pointer) and fx_anim's bone stride. The truncations sit in the game layer
@@ -120,7 +120,7 @@ renamed symbols mapped; .sxdata / .debug ignored). Identical objects mean every 
 - the sco terrain description travels as `TerrainDesc*`: `Terrain::load_layer(TerrainDesc*, int)` (reads
   `layers[idx].type / data[x * 420 + y]`), `generate(rgl::world*, TerrainDesc*, char)` (the scene was an `int seed`),
   `update(TerrainDesc*, ..)`; manifest symbols updated.
-- world map build (game_2.cpp): the cell meshes are `rgl::mesh*` (`cmv`), `add_cell_mesh(entity*, rgl::mesh*)`,
+- world map build (map_builder_and_data_load.cpp): the cell meshes are `rgl::mesh*` (`cmv`), `add_cell_mesh(entity*, rgl::mesh*)`,
   `GameMapView::ents` is `std::vector<rgl::mesh*>`, the wind light is a `Light*`.
 - tools/port/objcmp.py: the per-symbol before/after MSVC object comparison used for every edit (`objcmp.py cmp
   [--changed] TU..`, `objcmp.py includers HEADER`).
@@ -140,7 +140,7 @@ renamed symbols mapped; .sxdata / .debug ignored). Identical objects mean every 
   views with `int name[4]` are gone); their methods are `TerrainDescEntry::clear` (0x52ce00) / `put` (0x52ce70).
 - `Terrain::water_layer_type` (+0x280, was `pad280`; the constructor zeroes it); tessellate's
   `*(void**)((char*)this + 0x60)` is `layer[1].mat2`.
-- mission_ui.h keeps a declaration-only polymorphic `ElemVt`: without a polymorphic class declared there cl 13.10 swaps
+- widget_base.h keeps a declaration-only polymorphic `ElemVt`: without a polymorphic class declared there cl 13.10 swaps
   two loads in video_page.cpp's Recf0::frame_update (0x4d63b0, run_all DIFF after batch 2); a forward declaration or
   including fx.h does not restore it.
 - `EventContext::key_a` is `rgl::lod_mesh2*`; `trigger_item` (0x48cec0) returns `rgl::lod_mesh2*` and
@@ -149,18 +149,18 @@ renamed symbols mapped; .sxdata / .debug ignored). Identical objects mean every 
   (0x4936b0, `vector<Party*>`'s) instead of `vector<int>`'s.
 
 - integration lane (2026-11-19, found running the native build, many with an ASan build): RenderScene's members before
-  fog; mesh_part is the skin it views; render_cache.h uses include/renderer.h; MissionUi::get_xy's mesh material/slots;
+  fog; mesh_part is the skin it views; render_cache.h uses engine/render/renderer_include.h; MissionUi::get_xy's mesh material/slots;
   Font / clip_pair / C4c3050 texts / manifold view / music_name / loaded_snd_table / EmitDef / flora kinds (ptype) / PMesh
-  (gui_edit.h) / E176 (material pointers) sized for 64-bit; HashTab::insert returns its HOut*; WVt slot 0 is a virtual
+  (editor_selection_and_translation.h) / E176 (material pointers) sized for 64-bit; HashTab::insert returns its HOut*; WVt slot 0 is a virtual
   destructor (Itanium's two destructor slots); IDENTITY_VALUE goes through rgl::identity_frame() (arm64 passes a struct
   result pointer in x8, not as the first argument). See port/INTEGRATION_STATUS.md.
 
 - integration lane, second session (2026-11-19): Skin::read's voice lookup through SoundGroup; PresentationRec in
-  include/prsnt_rec.h (load_used indexes it; MenuKind / MenuKindRec name the string); MissionTemplate::triggers is a
+  game/data/prsnt_rec.h (load_used indexes it; MenuKind / MenuKindRec name the string); MissionTemplate::triggers is a
   TriggerVec; the screens' fields through head_rec / C4c2fb0 (were `slot_as<int>(n)[k]`); ItemRec's item source at
   `&owned`; mesh_node / NibbleObj derive from rgl::mesh (no padded views); fix_skeletons reads frame_set and the bone's
   real leading members; growable_array is graph_obj's words (Local derives from it, no pads); simple triggers are
-  trigger_entry (include/trigger_entry.h); Troop's tail pad dropped (alignment gives 0x508, asserted); NavGraph's
+  trigger_entry (game/data/trigger_entry.h); Troop's tail pad dropped (alignment gives 0x508, asserted); NavGraph's
   first vector; grid_cell carries rgl::cell's tail; the 0x88-byte ground faces (ground_g136 x2, NavNode, GeomFace,
   Rec88) end in their `face*`; ChainGraph is rgl::vec members with sizeof strides.
 
@@ -180,10 +180,10 @@ See the per-file warning list (`build/port/macos-arm64-warn`, rebuild to refresh
   bits; out of range at 64 bits): the typed `layerno < 15 ? .. : water_layer_type` changes the row's bytes.
 - `DialogBlock::step_less` / `pop_try` (0x49d7f0 / 0x49f7c0) take `int locals` and reuse that slot as an int scratch
   (`get_operand(.., &locals)`); the script's widget_mgr calls pass `(int)&text` (`create_game_button_overlay`,
-  `add_item`, `animate_size/pos`): widget_mgr.h signatures.
+  `add_item`, `animate_size/pos`): widget_manager.h signatures.
 - `PropEnt` (game/prop_ent.h) is a 32-bit-offset view of rgl::entity (`pad4[0x108 - 4]`, `Vec` of int words): mission_3
   and terrain_a's PlacedObj should use rgl::entity's `lods` / `meshes`; `View` keeps a 32-bit pad before `list` (+0x2c).
-- `sel_list::add(int)` (0x50d0e0, widget_text.cpp / note_window.cpp) is really `gui_manager::add(MissionUi*)`: `dirty`
+- `sel_list::add(int)` (0x50d0e0, text_box.cpp / notes_window.cpp) is really `gui_manager::add(MissionUi*)`: `dirty`
   (+0x1708) and a push onto `objs` (+0); note_window passes `(int)this->panel`. sel_list stays for the index sort lists.
 - harmless as they stand (value ignored or never a pointer): `Create3DEnvironment((int)hInstance)` (unused),
   `ShadowMap::read_pixel((int)g_render.dev, ..)` (unused), `m_dw334 = (DWORD)"m"`, quest_page's `(int)(long)` id.

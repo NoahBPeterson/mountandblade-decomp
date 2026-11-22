@@ -1,0 +1,104 @@
+// options_dialog_and_module_tables.h: classes and externs of options_dialog_and_module_tables.cpp (0x4be742..0x4c2c50): the meta-mission and code tables, the
+// vector copy helpers, the application object's option dialogs and device-object handlers, the module_info.txt
+// parser, the trigger / game / mouse record vectors, the trigger-entry reader, the music monitor and the record
+// loaders. ALL NAMES PROVISIONAL. Every offset cites the function whose disassembly proves it.
+//
+// Shared classes come from their canonical headers: tstring (../tstring.h), the streams and the engine log
+// (../game/ui/gui_manager.h, ../../engine/io/stream.h), the application object `GameApp` (../config/core.h: members added for
+// 0x4bed90..0x4c1ad0, offsets unchanged), GameConfig / CreateGameOptionsPage / trigger_entry /
+// music_player / ini_file (../config/config.h), TriggerRec (../game/campaign/game_state_load.h: the full layout of the 0x78-byte
+// record), AnimDef (../../engine/fx/anim_set.h: the 0x30-byte animation), DialogMgr (../dialog_manager.h).
+#ifndef GAME_TRIGGERS_TRIGGER_VEC_H
+#define GAME_TRIGGERS_TRIGGER_VEC_H
+#include <windows.h>
+#include <stdio.h>
+#include <d3d9.h>
+#include <d3dx9.h>
+#include "engine/core/tstring.h"
+#include "game/common/game_globals.h"      // canonical g_module_path
+#include "game/ui/gui_manager.h"
+#include "game/config/core.h"
+#include "game/config/config.h"
+#include "game/campaign/game_state_load.h"
+#include "game/data/record_destructors.h"
+#define REC_TABLES_NO_GAME_VARS   // g_game_vars is declared below with the ini_file view
+#include "game/data/module_option_records.h"       // sound_engine
+float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0 (the definition's signature, engine/physics/collision_shapes.h; module_option_records.h declares it by reference)
+#include "engine/resource/resource.h"             // texture
+#include "engine/render/shadow_map.h"
+#include "engine/core/ptr_tag.h"
+#include "game/common/shared_vars.h"
+#include "engine/render/render_batch.h"
+
+// ---- the options dialog's persistent values (0x4bf170 reads them, 0x4bee10 writes them back) -------------------------
+
+// ---- meta mission (global object at 0xa73300, 0x4be742: called as MetaMission::init; the original brackets it with an
+// 18-byte WinLicense marker pair at 0x4be730 / before 0x4be7c0) ---------------------------------------------------
+#include "game/mission/mission_ctx_rec.h"      // MissionCtx (0xa73300): init is the meta mission's (0x4be742)
+#include "game/data/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in game/app/options_dialog_and_module_tables.cpp)
+
+// ---- the default key bindings (GameKeys::set_defaults 0x4be7c0: game/input/game_keys.h) -------------------------------------
+#include "game/input/game_keys.h"
+
+// ---- vectors and copy helpers (0x4be950..0x4beb70) -----------------------------------------------------------------
+// std::vector-shaped counted arrays (allocator word at +0, begin +4, end +8): element counts for 0x50 / 0x1f8 / 0xb0 byte elements
+struct vec_e50  { int n; char* begin; char* end; int size() const; };   // 0x4be950
+struct vec_e1f8 { int n; char* begin; char* end; int size() const; };   // 0x4be970
+struct vec_eb0  { int n; char* begin; char* end; int size() const; };   // 0x4be9a0
+struct clip_pair {          // list node, 0x28 bytes: two pointers and an eight-dword record (called from game/editor/editor_selection_and_translation.cpp)
+    void* a;                // +0x00
+    void* b;                // +0x04
+    int   d[8];             // +0x08
+    clip_pair(void* a_, void* b_, const int* src);              // 0x4be9c0
+};
+// (0x4be9f0..0x4beb30 are std::_Copy_opt / fill / _Copy_backward_opt of the CapDef, Constraint and int vectors)
+int*    copy_back_int(int* first, int* last, int* dst);                     // 0x4beb50
+
+// ---- registry / module folder helpers, application object (0x4beb80..0x4bf640) -----------------------------------
+void __cdecl open_keys_key(PHKEY out);                                      // 0x4b96d0 (src/game/config/launcher_options_dialog.cpp; its header cannot be mixed with config.h)
+void __cdecl read_key_string(HKEY* key, LPCSTR name, tstring* out);         // 0x4b9720
+void keys_write_value(HKEY* key, LPCSTR name, const tstring* v);            // 0x4beb80
+bool module_ini_exists(const char* module);                                 // 0x4bebc0
+void scan_module_folders(tstring* out, int* count);                         // 0x4bec60
+INT_PTR CALLBACK options_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4bf5f0
+
+// ---- the module folder dialog (0x4c03b0; 0x4c3340 jumps to it with ecx = g_app_obj, unused) ----------------------------
+INT_PTR CALLBACK folder_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4c03b0
+void load_game_variables();                                                 // 0x4c0520
+void parse_module_info();                                                   // 0x4c05b0
+
+// ---- globals of the device-object handlers and the module_info.txt parser -------------------------------------------------
+#include "engine/render/renderer_include.h"            // g_render 0xa17910
+#include "engine/render/render_flags.h"
+#include "engine/render/d3d_caps.h"
+#include "game/config/options.h"
+struct options;
+extern options g_options;                   // 0x5aa008 (engine/resource/resource_manager_init.h clashes with the log declarations here)
+extern ini_file g_module_info;          // 0xa18238 module_info.txt table (count member)
+extern ini_file g_game_vars;            // 0xa44240 game_variables.txt table
+extern int g_compatible_module_version;      // 0x5e29b8
+extern int g_module_version;                 // 0x5e29c0
+extern float g_map_min_x;                    // 0x5aa120
+extern float g_map_min_y;                    // 0x5aa124
+extern float g_map_max_x;                    // 0x5aa118
+extern float g_map_max_y;                    // 0x5aa11c
+extern int g_missile_damage_speed_power_int; // 0x5e29c8 (provisional)
+
+HRESULT build_shader();                                                     // 0x4c17c0
+HRESULT gfx_restore();                                                      // 0x4c1b00
+
+// ---- FMOD stream calls of the music monitor (0x4c25e0), stdcall thunks into fmod.dll -----------------------------------------
+extern "C" int   __stdcall FSOUND_Stream_GetOpenState(void* stream);    // 0x534318 (0 ready, -2 still loading)
+extern "C" int   __stdcall FSOUND_Stream_Play(int channel, void* stream);   // 0x534312
+extern "C" int   __stdcall FSOUND_Stream_GetLengthMs(void* stream);     // 0x53430c
+extern "C" int   __stdcall FSOUND_Stream_GetTime(void* stream);         // 0x534306
+extern "C" short __stdcall FSOUND_Stream_Close(void* stream);          // 0x5342e2 (config.cpp: FSOUND_Stream_Close)
+// ---- record vectors (0x4c1c20..0x4c23f0) ------------------------------------------------------------------------------------
+#include "engine/math/vec.h"   // V2: 8-byte vector with an empty user ctor: arrays of it go through the compiler's array-ctor helper
+#include "game/data/trigger_vecs.h"   // TriggerVec / SimpleTriggerVec
+#include "game/campaign/map_icon.h"       // MapIcon (module-file map icon record, read 0x4c20c0)
+#include "engine/fx/anim_set.h"   // AnimSet g_anim_set (0xa76628: AnimDef records, count; ~AnimSet 0x4c2200, entry_vec_resize 0x4c2250)
+#include "game/data/mode_rec.h"
+#include "game/data/prsnt_rec.h"   // PresentationRec (module-file presentation 0x4c23f0)
+#include "game/data/menu_rec.h"      // MenuRec (module-file game menu 0x4c2b20)
+#endif // GAME_TRIGGERS_TRIGGER_VEC_H

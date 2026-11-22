@@ -26,8 +26,8 @@ and writers and readers stop seeing each other). So there are four cases:
 
 - One TU defines, one shared header declares. The definition goes in the module that uses the datum most (or owns
   the object's code); put it in a `---- data this module owns ----` block right after the includes. The declaration
-  goes in the module's header, or in the object's canonical header when one exists (`src/game/menu_rec.h`,
-  `src/game/game_globals.h`, `src/include/game_recs.h`, `src/game/config/core.h`, `src/rgl/options.h`). Delete every
+  goes in the module's header, or in the object's canonical header when one exists (`src/game/data/menu_rec.h`,
+  `src/game/common/game_globals.h`, `src/game/data/game_recs.h`, `src/game/config/core.h`, `src/game/config/options.h`). Delete every
   per-module `extern` of the same global; include the canonical header instead (listed directly in the .cpp: the
   resolution audit reads only a source's own includes).
 - Keep the name the repository already uses (the resolver also maps by name). A definition always carries the
@@ -54,7 +54,7 @@ $ gen_data.py 0x5a9f28 --type 'float[2]' --extent
 float g_5a9f28[2] = {0.0f, 0.21450001f};  // 0x5a9f28
 // item 0x5a9f28..0x5a9f30 (8 bytes, borrowed from image); instruction uses at +0x0 +0x4
 $ gen_data.py 0x59736c --type 'char[]'          ->  char g_59736c[] = "ui_return_to_game";  // 0x59736c
-$ gen_data.py 0x5aa008 --type 'struct options' --header src/rgl/options.h --name g_options
+$ gen_data.py 0x5aa008 --type 'struct options' --header src/game/config/options.h --name g_options
 options g_options = {/*i00*/ 3, /*i04*/ 3, /*f08*/ 0.4f, ...};  // 0x5aa008
 $ gen_data.py 0x5924a0 --type 'void*[4]'         (pointers print as the symbol our source defines there)
 $ gen_data.py --items 0xa732f0 0xa73450          (items of an address range with the offsets the code uses)
@@ -148,7 +148,7 @@ original addresses, one storage each). Of the 66 labels only cls_map referenced 
 | bss: application object | 4 | `Core` members (`init_flag`, `hinstance`, `m_bStartFullscreen`, `m_fMinFrameTime`) |
 | bss: mission context | 7 | `MissionCtx` members (`mode`, `grid`, `cols`, `depth`, `rows`, `side`, `party[]`) |
 | bss: tables | 7 (`g_menus`, `g_5e29d0` -> `g_items`, `g_propkinds`, `g_ptypes`, `g_env_rows`, `g_map_icons`, `g_party_templates`) | the canonical typed declaration instead of a `void*`/`char*` alias |
-| bss: owned | `g_video_played`, `g_5e2928` | definitions in cls_map.cpp |
+| bss: owned | `g_video_played`, `g_5e2928` | definitions in winmain_and_menu_screens.cpp |
 
 Still labels (6, all bss): `g_presentations`, `g_main_menu_kind`, `g_menu_kind_count` (one object at 0xa75f2c that
 static_init constructs), `g_game_keys` (0xa73730, static_init memsets and fills it), `g_presentation` (5 incompatible
@@ -164,13 +164,13 @@ compiles, builds (resolve_map alone 15 min under load) and run_all.
 ## 8. Lane D3 (mission5 / mesh_slot / terrain / rgl): what the data work found
 
 - Object overlays: one object, several views is the main reason a label stays. The unifications done: the input device record
-  at 0xa170c8 is `Slot` (include `game/slot.h`; `Keyboard` is a typedef; `down[]` / `prev[]` / `axis[]` are the key tables and look
+  at 0xa170c8 is `Slot` (include `game/input/slot.h`; `Keyboard` is a typedef; `down[]` / `prev[]` / `axis[]` are the key tables and look
   axes, `init_devices` is 0x4bc430); the render state cache at 0xa17910 is `renderer` (its constructor is 0x4bc2d0, the window
   size and present interval are members at +0x74c / +0x750 / +0x7d4); `DialogMgr` (0x8ed50c8), the skill table `SkillRec[42]`
   (0x8ee3100: `max_rank` at +0x34 is what Troop::nibble clamps to, `cap` at +0x38 is the character sheet's), `item_mod[43]`
   (0xa75f70), the 0x20-byte `ptype` table and the 0x78-byte `Rec78` / `PropKind` table.
-- A partial view named like the real class mangles identically (`struct renderer { ... }` in rgl/particles/render_cache.h,
-  `struct ShadowMap` in char_sheet/cs_common.h): that is how a TU that cannot include the real header still shares the storage
+- A partial view named like the real class mangles identically (`struct renderer { ... }` in engine/render/render_cache.h,
+  `struct ShadowMap` in game/ui/screens/character_sheet/cs_common.h): that is how a TU that cannot include the real header still shares the storage
   without an alias. The same name with a different type (`extern MarkerList g_list_a`, `extern char g_cfg[]`) is a second
   symbol and a glue alias.
 - Annotations can be wrong by one field. `g_mat_vec` was annotated 0xa732c0 but the vectors begin at 0xa732bc (allocator
@@ -180,7 +180,7 @@ compiles, builds (resolve_map alone 15 min under load) and run_all.
   float vs int 0x5d70b4, `g_pending` 0x5e2a14 vs 0xa18210, `g_emit_pos` 0xa708c0 vs 0x8eb235c, `g_spawn_hi`); the D3 side was renamed
   (`g_warp_x`, `g_pending_force`, `g_world_color`).
 - A constant that cl reassociates when it is a literal (`ch * 250.0f * 0.0625f`: the power-of-two factor moves in front) is
-  defined in another TU as the original had it (`g_54ab2c` in rgl/mesh2/gui_edit.cpp).
+  defined in another TU as the original had it (`g_54ab2c` in game/editor/editor_selection_and_translation.cpp).
 - Compiler-constructed objects replace their hand stubs in static_init.cpp (`g_module_path`, `g_dialogs`, `g_item_mods`,
   `g_skeletons`, `g_render`): the stub, its destructor stub and its table entry go in the same change, and the manifest rows of
   the removed stubs go with them (the constructors themselves, 0x4c2470 / 0x4bc2d0, stay byte-exact as members).
@@ -190,15 +190,15 @@ compiles, builds (resolve_map alone 15 min under load) and run_all.
   addresses, and a module that still keeps its own (wrong-typed) extern of one of them stops compiling (`g_presentations`,
   `g_log_flag95`, `g_music_situation`, `g_display_wp_one_handed` in cls_map, progress_bar, game_app, char_sheet ...). The
   globals every UI module touches (viewport size, window-dirty flag, mission clock, developer mode, the input key/axis state)
-  live in the leaf header `src/game/ui_globals.h`, which game_globals.h includes; modules with clashing externs include only
+  live in the leaf header `src/game/ui/ui_globals.h`, which game_globals.h includes; modules with clashing externs include only
   that one. A module that needs both includes game_globals.h.
 - **Neighbour names are members.** `g_cur`, `g_dummy_mat`, `g_dummy0`, `g_dummy1` are `g_anim.cur / .weights / .scale / .time`
   (the Animator at 0x8ed4f60); `g_5a9f50` (+ `g_5a9f54` / `g_5a9f5c`) is `g_debug_log.buf` (the Logger at 0x5a9f30 is a text_stream: `buf` is +0x20); `g_log_path` / `g_log_flag78` are
   `g_log.name / .autoflush`; `g_save_prefix` is `g_module_name.buf` (the `p ? p : (char*)&p` idiom is `tstring::c_str()`);
   `g_a73a04` / `g_a73a08` are the `g_id_stack` fields; `g_a17f28` is `g_render.dev`.
-- **One class per object.** `g_strtable` had two classes (StrTable in game/str_table.h, LangTables in rgl/mesh2/mesh2_common.h)
+- **One class per object.** `g_strtable` had two classes (StrTable in game/data/str_table.h, LangTables in game/editor/mesh2_common.h)
   and eight partial copies; it is now `StrTable` (str_table.h: buckets, ctor 0x4cda20, load, find, lookup, release_strings) with
-  one definition `StrTable g_strtable;` in mesh_2.cpp, built by the compiler's initialiser; static_init's stubs 0x547a80 /
+  one definition `StrTable g_strtable;` in poly_mesh_edge_face_ops.cpp, built by the compiler's initialiser; static_init's stubs 0x547a80 /
   0x548470 are gone. Same recipe for the objects still open below.
 - **Literals are not free for x87 code.** Replacing a fake constant by its literal keeps every byte-exact function exact, but a
   few nonmatching functions move by a few bytes (register allocation shifts); see the lane report.
@@ -214,9 +214,9 @@ compiles, builds (resolve_map alone 15 min under load) and run_all.
   another object's claimed range (`data_size_audit.py`, OVERLAP; `data_overlaps_known.txt` lists the 44 pairs main already
   had, which only shrink). Rule: an address that lies inside a bigger object is a member of its class when the class is
   reachable, else a label (`extern`, no definition) -- never a definition of its own.
-- `g_gui` 0x5d7080 is ONE `gui_manager` (strat/gui_manager.h, sizeof 0xb350, every interior label a member: `screen_w`, `screen_h`,
+- `g_gui` 0x5d7080 is ONE `gui_manager` (game/ui/gui_manager.h, sizeof 0xb350, every interior label a member: `screen_w`, `screen_h`,
   `dirty` (g_gui_dirty), `wheel` (g_mission_clock), `fov_k`, `aspect` (g_div), `mouse_dx/dy`, `lines` (g_strs), `drag`, `overlay`, `label_obj`, ...),
-  defined once in strat/gui_manager.cpp and built by the compiler's initialiser; the message-log / screen-input / loading-mesh /
+  defined once in game/ui/gui_manager.cpp and built by the compiler's initialiser; the message-log / screen-input / loading-mesh /
   sound-host views are gone (static_init's 0x5479c0 / 0x548140 rows too). Because the compiler-made initialiser now sits in the
   gui_manager module's .CRT$XCU, it runs before the static_init table's entries (the original ran it second, right after
   resmgr 0x5479a0): the only inversion is gui before resmgr, and ~gui_manager now runs after ~resmgr (which clears the `res` of registered meshes; the exit-time deletes of unregistered ones read freed materials, not observed to fault in smoke). It goes away when resmgr becomes a compiler-constructed global too.
@@ -240,11 +240,11 @@ New patterns beyond the pilot:
   by two when the variable is a scalar: check the object's symbol list). The initialiser is only emitted when the
   initialising expression is not constant-foldable: if both objects are defined in one TU cl folds
   `float b = 1.0f - a` into a static value and no `_$E` exists. Put the source object in another TU (here g_5a9f20 and
-  g_5a9be0 live in progress_bar.cpp, their derived partners in cls_map.cpp).
+  g_5a9be0 live in progress_bar_and_load_screens.cpp, their derived partners in winmain_and_menu_screens.cpp).
 - **`const` datum a literal cannot replace**: `g_time_scale` (0x590e28, 60.0f) multiplies a `double`; a literal makes cl use the
   double constant and changes list_saves (2 bytes). It stays a defined datum, defined in a TU other than its reader.
-- **Typed views of a root** (g_game): `party/game.h`'s `Game` and `include/game_data.h`'s `GameData` describe one object and cannot
-  be included together. The one symbol is `GameData* g_game` (widget_text.cpp); a module that sees the object through another
+- **Typed views of a root** (g_game): `game/campaign/game_state_load.h`'s `Game` and `game/data/game_data.h`'s `GameData` describe one object and cannot
+  be included together. The one symbol is `GameData* g_game` (text_box.cpp); a module that sees the object through another
   class casts it with a macro (`g_game_G`, `g_game_ed`) instead of declaring a second `g_game` of another type (which is a
   second mangled name and a glue alias).
 - Do not let a script add `#include "game_globals.h"` / `game_data.h` / `mission.h` to every user of a name: those headers

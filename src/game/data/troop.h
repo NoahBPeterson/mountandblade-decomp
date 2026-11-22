@@ -1,0 +1,154 @@
+// troop.h: the troop record (Troop, 0x508 bytes; array behind GameData+0x13a00, game_data.h). ONE definition for src/game
+// (agent, agent2, agent3, ui, party, script, terrain_b, dialog_manager) and src/rgl (editor_selection_and_translation.cpp, game_util.cpp). The
+// slices and modules called it Troop (agent_queries.h, game/data/troop_inventory.h, game/terrain/game_data.h), Troop (agent2 / agent3 /
+// dialog_manager / gui_edit) and ItemDef (game_util.h); every name is this record. Troop derives from Troop and only adds the
+// members of the language-export side (editor_selection_and_translation.cpp) and display_name (agent2): the layout is Troop's.
+// Where two modules read one offset with different names or types, the fields overlay in anonymous unions of plain
+// members (the compiler emits the same loads as for the separate declarations): +0x30 flags as 64 bit unsigned /
+// signed or its low dword; +0x80 the weapon proficiencies as floats or ints, and exp / hp / the point budgets.
+// Offsets cite the function that proves them. Needs ItemRef (src/game/data/item_ref.h).
+#ifndef MB_TROOP_H
+#define MB_TROOP_H
+#include <stddef.h>
+#include "engine/core/layout32.h"
+#include "engine/core/tstring.h"
+#include "game/save/packed_state.h"          // PackedState: the face codes
+#include "game/ui/note_block.h"
+#include "game/data/item_ref.h"
+#include "game/party/slot_array.h"
+
+struct Troop {
+    tstring name;                           // +0x00 (the first member: 0x51c720 reads the record as a tstring; agent2 / agent3 called it `id`, 0x43a480, 0x4428c0)
+    tstring plural;                         // +0x10 (editor_selection_and_translation.cpp save_language_files 0x4c8ca0)
+    tstring key;                            // +0x20 translation key (0x460160, 0x4c62b0; agent2 / agent3 called it `name`)
+    union {
+        unsigned __int64 flags30;           // +0x30 (bit 0x10: hero / fixed stock)   0x435130, 0x462b60, 0x462c80, 0x462e20
+        unsigned __int64 flags;             // +0x30 (script: tf_* flags, troop_is_guarantee_horse 0x4a05f0)
+        __int64 flags30s;                   // +0x30 as signed (0x10 = hero, 0x1000000 / 0x4000000 = troop class bits)   0x473a60
+        unsigned flags32;                   // +0x30 low dword (low nibble 1 = female, low nibble = class)   0x460160, 0x443870
+    };
+    int tuple_reserved;                     // +0x38 the troops tuple's reserved word (Troop::read_file 0x524420 reads it; not saved: Troop::write_save 0x4e9850 skips +0x38..0x47)
+    int f3c;                                // +0x3c  no matched function of src/ reads or writes +0x3c..+0x47 on a Troop except Troop's constructor
+    int f40;                                // +0x40  (0x524710 zeroes f44 and f48 only); these three keep the loader's names
+    int f44;                                // +0x44
+    int level48;                            // +0x48 (party2/camera.cpp spawn_party_scene 0x49f3d0: the number of equipment rolls)
+    int faction;                            // +0x4c (script troop_set_faction 0x4a6948)
+    int upgrade_troop[2];                   // +0x50 (script troop_get_upgrade_troop 0x4a6ac0; [0] chains the troop tree, 0 = end: 0x48a080)
+    union {
+        int attributes[4];                  // +0x58 strength / agility / intelligence / charisma (script store_attribute_level 0x4ace05;
+                                            //   char_sheet 0x4ef420 copies the sheet's four attribute fields here, cs_detail 0x4ef9f0 indexes them; 0x462c00)
+        struct {
+            int lvl58;                      // +0x58 strength (agent_stats 0x438180)
+            int lvl5c, lvl60;               // +0x5c / +0x60 agility / intelligence (the slots of attributes[1] / [2])
+            union {
+                unsigned f64;               // +0x64 charisma as a word (low byte = alpha / colour id)   0x489370
+                unsigned char alpha;        // +0x64 its low byte (set_alpha 0x489370)
+            };
+        };
+    };
+    union {
+        unsigned nib[6];                    // +0x68 packed 4-bit skill levels, 8 per word (0x4351a0, 0x437b20); nib[3] bits 12..15 = a skill tier (0x4375b0)
+        unsigned char nib_b[24];            // +0x68 the same bytes (game/campaign/map_panel.cpp 0x51abd0 reads the byte at +0x7a)
+    };
+    union {
+        float stat[12];                     // +0x80 weapon proficiencies (clamped to 0..1000 by add_stat)   0x462c00, 0x4892d0, 0x435150, 0x437770, 0x4385e0, 0x43bdb0
+        int istat[12];                      // +0x80 the same words as ints (char_sheet 0x4ef420 copies the sheet's weapon proficiencies to +0x80..+0x98)
+        struct {
+            float prof[7];                  // +0x80 the seven weapon proficiencies (stat[0..6]; the rest of the record's words below follow)
+            union {
+                int exp;                    // +0x9c   0x4428c0
+                int xp;                     // +0x9c (script troop_get_xp 0x4a5949)
+            };
+            union {
+                float hp;                   // +0xa0 heroes
+                float hit_points;           // +0xa0 (script heal_party 0x4a4834)
+                int fa0;                    // +0xa0 as an int (char_sheet 0x4ef420 stores a sheet word here; its slice called it level)
+            };
+            int skill_points;               // +0xa4 unspent skill points (0x4ef420, 0x4eeb10; 0x4428c0 adds one per level)
+            int attr_points;                // +0xa8 unspent attribute points (0x4eeb10, 0x4428c0)
+            union {
+                int prof_points;            // +0xac unspent weapon proficiency points (0x4eeb10; += 10 per level 0x4428c0)
+                int proficiency_points;     // +0xac (script troop_add_proficiency_points 0x4a5b9a)
+            };
+        };
+    };
+    int level;                              // +0xb0   0x48a080, 0x48a290, 0x435170
+    union {
+        ItemRef inv[0x60];                  // +0xb4 inventory (inv_count() slots, at most 0x60)   0x462da0, 0x462e20, 0x463030
+        ItemRef items[0x60];                // +0xb4 (script player_has_item 0x4a04a6)
+    };
+    int gold;                               // +0x3b4 (script store_troop_gold 0x4ac9da; clamped at 0 by 0x489340)
+    union {
+        int site;                           // +0x3b8 (script remove_troop_from_site 0x4a4af1; packed by 0x489320)
+        unsigned u3b8;                      // +0x3b8 (low 16 = party/side id, bits 16..23 = rule id)
+    };
+    int used;                               // +0x3bc
+    PackedState face_keys;                  // +0x3c0 the face code (face_key_1..4; Animator::unpack 0x473800, the face generator's Done;
+                                            //   save_state 0x4e8f10 writes the first two with w_int8, 0x4e9850 all four)
+    PackedState face_keys_b;                // +0x3e0 the second face code (build_appearance 0x482240 breeds between the two)
+    SoaBlock notes;                     // +0x400 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
+    union {
+        ItemRef equip[10];                  // +0x4a4 equipment slots   0x4630d0, 0x463100, 0x489c50 (equip[8]: the horse, +0x4e4)
+        ItemRef equipment[10];              // +0x4a4 (script troop_has_item_equipped 0x4a050e, ek_horse = +0x4e4)
+    };
+    SlotArray slots;                        // +0x4f4 (script troop_set_slot 0x4a079a; write_save 0x4e9850 writes it)
+    // (0x504..0x508: the tail padding of the 8-byte alignment the __int64 members give the record)
+
+    Troop();                                // 0x524710 (the troops.txt loader's element constructor: game/campaign/map_builder_and_data_load.cpp)
+    ~Troop();                               // 0x431c40 (game/data/record_destructors.cpp)
+    void read_file(stream_base& s);         // 0x524420 (one troops.txt record: game/campaign/map_builder_and_data_load.cpp)
+    bool is_hero(); // 0x435130
+    int stat_int(int i);                    // 0x435150
+    int scaled_b0();                        // 0x435170
+    int nibble(int i);                      // 0x4351a0 (packed 4-bit field i of the skill words)
+    float falloff(float dist, float k);     // 0x4375b0
+    int steps_to_point(int idx);            // 0x4ef6d0 (game/ui/screens/character_sheet/character_sheet_troop.cpp; this = the troop record: falloff steps until stat[idx] rounds up one point, at most 1000)
+    void adjust(int i, float k);            // 0x437770
+    int max_hit_points();                   // 0x468770 (game/terrain/terrain_render.cpp): strength + 2 * ironflesh + 35
+    int inv_count();                        // 0x462b60 number of inventory slots: 90, or 30..96 by skill nibble 12 for heroes
+    int slot_value(int item);               // 0x462c00
+    bool fits_slot(ItemRef* ref, int slot); // 0x462c80
+    bool item_matches(int idx, int slot, unsigned need, unsigned forbid, int t1, int t2, int t3);   // 0x462da0
+    int pick(int seed, int slot, unsigned need, unsigned forbid, unsigned type, unsigned t2, unsigned t3, char cheapest);   // 0x462e20
+    int find_free();                        // 0x463030
+    bool add(ItemRef* s);                   // 0x463070
+    void set_flags_low(int v);              // 0x4892a0 (replaces the low nibble of flags30)
+    void add_stat(unsigned i, int amt);     // 0x4892d0
+    void set_colors(int a, int b);          // 0x489320
+    void remove_gold(int amt); // 0x489340
+    void set_alpha(int a);                  // 0x489370
+    void unequip(int i);                    // 0x4630d0
+    void unequip_all();                     // 0x4687a0 (game/terrain/terrain_cells.cpp)
+    void auto_equip(int seed, int unused, char civilian, char no_helmet);   // 0x4687e0 (game/terrain/terrain_cells.cpp, ret 0x10: gives a troop the items its flags guarantee, then fills the rest)
+    bool equip_best(int seed, int slot, unsigned need, unsigned forbid, unsigned type, unsigned t2, unsigned t3, char cheapest);   // 0x463100
+    float food_factor();                    // 0x4b21f0 (food consumption factor; heroes by +0x4e4, perks 0x18 / 0x19) (src/game/party2)
+    // ---- src/game/mission_ui2 (method declarations only: no layout change) ----
+    void set_attr(int idx, int val);        // 0x48be70 (attribute idx 0..3 at +0x58.. clamped to 0..100; then the +0xa0 minimum is raised)
+    void add_attr(int idx, int delta);      // 0x48bef0 (ret 8; steps by one through set_attr)
+    void set_skill(int idx, int val);       // 0x48bf90 (packed 4-bit skill idx in the words at +0x68)
+    void add_skill(int id, int delta);      // 0x48c090 (ret 8)
+    void sort_inv();                        // 0x48c0c0 (compacts the inventory, then a bubble pass by item value)
+    void set_slot(int item, int idx, int mod);   // 0x48c7f0 (ret 0xc)
+    // ---- src/game/save/save_records.cpp ----
+    void write_save(stream_base* out);        // 0x4e9850 (save-file serialiser of the record; the slice called the record GameRecord)
+    // ---- the language / name accessors (editor_selection_and_translation.cpp, agent_logic.cpp) and the mission5 troop code (new_game_setup.cpp) ----
+    tstring* display_name();                // 0x43a480 (the record's own name, or its key when it has none; shared with ItemKind)
+    tstring translated();                   // 0x4c62b0
+    tstring translated_plural();            // 0x4c6330
+    tstring* plural_name();                 // 0x48d6d0
+    // ---- src/game/campaign/new_game_setup.cpp (method declarations only: no layout change) ----
+    __declspec(noinline) void reset_items(int all);   // 0x51ff90 (re-initialises the item slots)
+    __declspec(noinline) void apply_items();   // 0x520110
+    __declspec(noinline) void level_up();   // 0x520270 (recomputes the two point budgets from the level, then spends them)
+    __declspec(noinline) void raise_skills();   // 0x520420
+    __declspec(noinline) void raise_stats();   // 0x5204d0
+};
+
+MB_LAYOUT32_ASSERT(troop_size_check, sizeof(Troop) == 0x508);
+
+
+
+// experience needed to reach level n (n = 1..63; [0] unused): defined in game/ui/screens/character_sheet/character_sheet_panels.cpp
+extern const int g_level_xp[64];                            // 0x5937c8
+
+#endif // MB_TROOP_H

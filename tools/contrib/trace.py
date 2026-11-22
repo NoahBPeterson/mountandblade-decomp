@@ -31,7 +31,7 @@ import task as T          # noqa: E402
 
 LINES = {"regs": 70, "slots": 90}
 TC = os.path.join(ROOT, "work", "toolchain")
-INC = ["/I" + os.path.join(ROOT, "src", "include"), "/I" + os.path.join(ROOT, "match", "include"),
+INC = ["/I" + os.path.join(ROOT, "src"), "/I" + os.path.join(ROOT, "match", "include"),
        "/I" + os.path.join(TC, "vc71tk", "include"), "/I" + os.path.join(TC, "sal"),
        "/I" + os.path.join(TC, "vc9sp1", "WinSDK", "Include"),
        "/I" + os.path.join(ROOT, "work", "ext", "dxsdk_jun10", "DXSDK", "Include")]

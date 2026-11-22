@@ -11,7 +11,7 @@ mixer on `SDL_AudioStream` + `stb_vorbis`.
 
 - Imports (work/mb.analysis.bin, 26): Init, Close, Update, SetMaxHardwareChannels, SetSFXMasterVolume, Sample_Load/SetDefaults/GetDefaults/GetLength, PlaySoundEx, StopSound, SetVolume,
   SetFrequency, SetPriority, SetPaused, SetLoopMode, SetCurrentPosition, 3D_SetAttributes, 3D_Listener_SetAttributes, 3D_SetRolloffFactor, Stream_Open/Play/Close/GetOpenState/GetLengthMs/GetTime.
-- Source uses: ~88 `FSOUND_*` tokens in 18 files; `FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0)` at src/rgl/mesh2/rec_tables.cpp:679,683 (flags 0x1000 = hardware 3D, 0x2000 = 2D);
+- Source uses: ~88 `FSOUND_*` tokens in 18 files; `FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0)` at src/game/data/module_option_records.cpp:679,683 (flags 0x1000 = hardware 3D, 0x2000 = 2D);
   `sound_engine::tick`; `SndSlotS::update`.
 - Assets in the Steam install: `Sounds/` 371 `.ogg` + 13 `.wav` (9.4 MB, ~360 loaded at start), `music/` 63 `.ogg`. No MP3.
 - Cost today: loading ~360 samples takes ~58 s under CrossOver (mod_timing.txt `sounds.txt 57823..58165 ms`; patches/devfast/no_sound_samples.cpp documents ~55 s). A decoded-on-load, in-memory sample table on native should take well under 1 s.

@@ -11,14 +11,14 @@ This ticket produces the audit and the conversions in priority order.
 
 | limit | where | note |
 |---|---|---|
-| `Troop` record = 0x508 bytes, inventory `ItemRef inv[0x60]` (96 slots), equipment array at +0x4a4, notes at +0x420 | src/include/troop.h:89-167; `SI_ASSERT(troop_size, 0x508)` | per-troop data embedded; changing a field count changes every offset |
+| `Troop` record = 0x508 bytes, inventory `ItemRef inv[0x60]` (96 slots), equipment array at +0x4a4, notes at +0x420 | src/game/data/troop.h:89-167; `SI_ASSERT(troop_size, 0x508)` | per-troop data embedded; changing a field count changes every offset |
 | `PartyV` = 0x5ac8 bytes with stacks at +0xa8, notes at +0x5a28; `PartyTemplate` 0xb0, `QuestRec` 0x138, `FactionRec` 0x300, `SceneRec` 0x494, `ItemKindX` 0x238 | src/game/script/script_interpreter.h:428-495 | the interpreter pins them with `SI_ASSERT` |
 | `GameX`: parties embedded (`PartyMgr` = 0x139d8 - 0xf8 bytes), troops pointer at +0x13a00, cloud at +0x13b3c, message log +0x13b50 ... | script_interpreter.h:661-665 | one giant object; pools sized at compile time |
 | script registers: `reg[128]` (64-bit), `str[128]`, 128 position registers (0x40 bytes), `down[256]` keys | dialog_manager.h:47-49, script_interpreter.h:289,229 | registers are per `ScriptState` (`g_script`) |
 | dialog: `DlgLine list[0x400]`, `sel[0x400]` | dialog_manager.h:75-76 | 1,024 lines |
-| operation operands: 16 (`params[16]`, `types[16]`) | NOTES.md | text-format bound |
-| UI: `widgets[2][0x60]`, `flags[2][0x60]`, `values[2][0x60]` (inventory pages), `deform_rows[0x30]` (face-gen) | party_window.h:103, inventory_panel.h:56-58, facegen_*.h | 96 slots/page, 48 face keys |
-| scene files: `ItemRef pairs114[0x40]` | terrain_b/scene_file.h:51 | 64 pairs |
+| operation operands: 16 (`params[16]`, `types[16]`) | game_script_NOTES.md | text-format bound |
+| UI: `widgets[2][0x60]`, `flags[2][0x60]`, `values[2][0x60]` (inventory pages), `deform_rows[0x30]` (face-gen) | inventory_window.h:103, inventory_panel.h:56-58, facegen_*.h | 96 slots/page, 48 face keys |
+| scene files: `ItemRef pairs114[0x40]` | game/terrain/scene_file.h:51 | 64 pairs |
 | static image: `.data` VirtualSize 0x893db94 = 143.9 MB | PE header of mount&blade.exe | pools: 126.9 MB "borrowed" .bss (data_history.json) |
 | dev/editor: nav, grids: `world_grid` cells, `CellGrid` | rgl/dynamic | sized by scene bounds |
 | other sizes not yet audited | agent array (`Agent` = 0x5928 bytes), prop pool, `ptr_vec` etc. | step 1 |

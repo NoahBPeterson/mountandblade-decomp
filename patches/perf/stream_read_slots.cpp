@@ -1,6 +1,6 @@
 // patches/perf/stream_read_slots.cpp: cheaper scalar and string reads from the in-memory binary stream (patch set "perf").
 //
-// What it changes. The binary resource reader (file_reader, resmgr.h) is a mem_stream whose whole file is already in
+// What it changes. The binary resource reader (file_reader, resource_manager.h) is a mem_stream whose whole file is already in
 // memory (text_stream::open_read -> rgl::string::read_from, one fread). Every scalar of a .brf (a float, an int) is then
 // one virtual call to a forwarding slot -> mem_stream::r_int (0x417b10) -> rgl::string::read (0x42bf00) -> memcpy: five
 // calls to copy four bytes. 148 .brf files hold ~19.7 million scalars (docs/patches.md, "perf"). These replacements do
@@ -22,10 +22,10 @@
 #include <windows.h>
 #include <string.h>
 #include <new>
-#include "../../src/rgl/rgl_string.h"
-#include "../../src/game/tstring.h"       // tstring: the class that defines the rgl::string members called below
+#include "../../src/engine/core/rgl_string.h"
+#include "../../src/engine/core/tstring.h"       // tstring: the class that defines the rgl::string members called below
 #define TS(s) ((tstring&)(s))
-#include "../../src/rgl/stream.h"
+#include "../../src/engine/io/stream.h"
 
 // @ replaces 0x417b10
 stream_base& mem_stream::r_int(int* v)

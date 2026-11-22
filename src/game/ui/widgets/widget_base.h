@@ -1,0 +1,168 @@
+// widget_base.h: the mission-UI widget base (vtable 0x591c80) and the small helper classes whose members sit
+// next to it in widget_base.cpp (0x488560..0x48b2d0). Names provisional.
+//
+// MissionUi is ONE class. The slices called it `Effect` (s00487c40, s004885e0: the six track setters, flag
+// accessors), `MissionUi` (s00488b20, s0048add0: text placement, ctor, flag setters) and `Buffer` (s004875a0:
+// its destructor 0x487c00 stores the same vtable 0x591c80); renderer.h calls the leading part `envelope`
+// (0x4624c0, 0x462540 write +0xdc..+0x100). Every member below reads a field of the one layout; the offset
+// comments cite a function that proves each.
+//
+// The slices also put members of other objects under `MissionUi` because they sit between its members; the
+// disassembly shows other `this` types (see MIGRATION.md): MissionPanel (draw), ElemList (call0 / call1),
+// PairStack (push), trigger_entry (tick), ItemRef (sort helpers), Troop (0x4892a0..0x489370).
+#ifndef GAME_UI_MISSION_UI_H
+#define GAME_UI_MISSION_UI_H
+#include "engine/core/tstring.h"
+#include "game/ui/widgets/ui_common.h"
+#include "game/data/item_ref_game_ui.h"
+#include "engine/core/timer.h"
+#include "engine/core/clock_table.h"   // g_ticks (elapsed() below)
+#include "engine/render/mesh.h"
+#include "engine/math/vec.h"
+struct Font;                              // ../font.h
+
+
+// a packed RGBA word with its channels (the animate overrides lerp them: valA.. / srcA.. below)
+union Color4 {
+    unsigned dword;
+    struct { unsigned char r, g, b, a; };
+};
+
+struct MissionUi {
+    // vtable 0x591c80, 49 slots. Names where a caller shows the signature; the rest are placeholders. Every slot is
+    // defined in widget_virtual_slots.cpp: a leaf the original's slot also holds (`return 0`, `ret`), or a bare `jmp` to the
+    // function the original's slot names (the comment on each: slot, its address and owner). A derived widget class
+    // overrides a slot with the same name and its own jmp.
+    __declspec(noinline) virtual ~MissionUi();   // +0x00 0x487c00 (game/input/input_device.cpp); the deleting destructor 0x502300 is the compiler's (called with push 1 by 0x488ad0)
+    virtual bool is_active();                     // +0x04 0x4280e0 "is active": returns 0 (UiA & co. return 1: 0x48b170; tested by 0x488720)
+    virtual void animate(int unused);       // +0x08 0x487c40 (game/input/input_device.cpp: the widgets' per-frame track animator; the argument is not used)
+    virtual void update_bounds();           // +0x0c 0x48d020 (game/party/stacks_and_loot.cpp: the union of the four shapes' bounds)
+    virtual void animate_color(float t, int v);                 // +0x10 0x488560
+    virtual void animate_alpha(float t, int v);                 // +0x14 0x4885a0
+    virtual void animate_hilight_color(float t, int v);         // +0x18 0x4885e0
+    virtual void animate_hilight_alpha(float t, int v);         // +0x1c 0x488620
+    virtual void animate_size(float t, const vec2& v);          // +0x20 0x488660
+    virtual void animate_pos(float t, const vec2& v);           // +0x24 0x4886c0
+    virtual void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x488720 per-child draw loop (ret 0x10; the derived widgets' update / show)
+    virtual void set15c(int v);                                 // +0x2c 0x488890
+    virtual int  get15c();                                      // +0x30 0x4888a0
+    virtual void set168(float v);                               // +0x34 0x4888b0
+    virtual float get168();                                     // +0x38 0x4888c0
+    virtual bool test_c8(int m);                                // +0x3c 0x4888d0
+    virtual void clear_c8();                                    // +0x40 0x4888e0
+    virtual bool clear_mask(int m);                             // +0x44 0x4888f0
+    virtual void set_key_flags(int m);                          // +0x48 0x488910 (0x48b200, 0x48b5a0)
+    virtual void set_d0(int v);                                 // +0x4c 0x488930
+    virtual void set_d4(int v);                                 // +0x50 0x488940
+    virtual void or_d4(int m);                                  // +0x54 0x488950
+    virtual void move_a(const vec2& p);                         // +0x58 0x488970: position/offset pair (0x487c40)
+    virtual void on_child_moved(MissionUi* src);       // +0x5c 0x408030 `ret 4`: the "child moved" notification, passed this (0x488970)
+    virtual void on_moved();                     // +0x60 `ret` (0x477b70)
+    virtual void set_xy(const vec2& p);                         // +0x64 0x4889b0 (0x488b50, 0x48b090)
+    virtual void move_f8(const vec2& p);                        // +0x68 0x4889e0
+    virtual void set_size(const vec2& p);                       // +0x6c 0x48b090 (0x48b3a0)
+    virtual void set_offset(const vec2& p);                     // +0x70 0x488a10 (0x48b3a0)
+    virtual void set148(const unsigned& flags);                 // +0x74 0x488a40
+    virtual void or148(const unsigned& flags);                  // +0x78 0x488a70
+    virtual void set_mesh(int slot, rgl::mesh* m);                           // +0x7c 0x488aa0
+    virtual void set_track(int i, rgl::mesh* p);                // +0x80 0x488ad0 (0x488aa0)
+    virtual void normalize_uv(rgl::mesh* src);   // +0x84 0x495fa0 (game/ui/widgets/hud_bar_widgets.cpp: rescales src's uv records into the rectangle screen[] holds; 0x488aa0)
+    virtual void on_track_set(rgl::mesh* m);         // +0x88 `ret 4` (0x408030) (0x488ad0)
+    virtual char key(unsigned mask);        // +0x8c 0x42cd60 (widget_virtual_slots.cpp; the derived widgets override it with their key handler)
+    virtual void refresh();                 // +0x90 0x42ce50 (widget_virtual_slots.cpp; 0x48b200)
+    virtual V2 get_xy();                    // +0x94 0x49b4f0 (game/ui/widgets/widget_manager.cpp: lays the text out, returns its rect; V2 has constructors, so through a hidden result pointer; 0x488b30, 0x488a40)
+    virtual void set_color(const unsigned& c);                  // +0x98 0x488b10 (0x487c40)
+    virtual void set_hilight_color(const unsigned& c);          // +0x9c 0x488b20 (0x487c40)
+    virtual void set_font(Font* f);                             // +0xa0 0x488b30
+    virtual V2 set_text(const tstring& s);                     // +0xa4 0x488b50 (MediumButton overrides it: 0x48b3a0)
+    virtual void get_text(tstring& out);                        // +0xa8 0x488c70
+    virtual void layout_text_to(const tstring& text, const vec2& pos);   // +0xac 0x49abc0 (game/ui/widgets/widget_manager.cpp; ret 8)
+    virtual void hide();                                        // +0xb0 0x488c90
+    virtual void show();                                        // +0xb4 0x488ca0
+    virtual void flag2_set();                                   // +0xb8 0x488cb0
+    virtual void flag2_clear();                                 // +0xbc 0x488cc0
+    virtual int kind();                     // +0xc0 widget type code: returns 0 (0x408020; the derived widgets return their kind)
+    // 49 slots: the original vtable 0x591c80 ends here. A 50th (+0xc4, `update_children`) exists only in the classes
+    // that add it, each with its own function: UiC 0x497d10, UiD 0x498390, progress_bar 0x4e3fb0, NodeA 0x48ef40.
+
+    // six (clock index, start stamp) track timers, each started on clock 0 by its inline constructor: 0x48ae20 expands
+    // the six before the name's tstring constructor (an array would be a vector-constructor call)
+    gui_timer tm0, tm1, tm2, tm3, tm4, tm5; // +0x08 + 0x10*i  0x488560..0x4886c0, 0x48ae20
+    float periodA, periodB, periodC, periodD, periodE, periodF;   // +0x68..+0x7c  0x488560..0x4886c0 (default -1.0: 0x48ae20)
+    vec2 anim_pos_to;                       // +0x80 animate_pos's target  0x4886c0
+    vec2 anim_size_to;                      // +0x88 animate_size's target  0x488660
+    Color4 valA, valB, valC, valD;          // +0x90..+0x9c  0x488560..0x488620
+    vec2 anim_pos_from;                     // +0xa0 the position animate_pos started from  0x4886c0
+    vec2 anim_size_from;                    // +0xa8 the size animate_size started from  0x488660
+    Color4 srcA, srcB, srcC, srcD;          // +0xb0..+0xbc  0x488560..0x488620
+    unsigned char c0, c1, c2, c3, c4, c5;   // +0xc0..+0xc5 track "restart" flags  0x488560..0x4886c0, 0x48ae20
+    unsigned fC8, fCC, fD0, fD4;            // +0xc8..+0xd4  0x4888d0..0x488950
+    vec2 cur_size;                          // +0xd8 the size the meshes are scaled to ((1, 1) from 0x48ae20; 0x488cd0)
+    vec2 position;                          // +0xe0 the widget's position on the screen (0x488970 sets it, 0x488720 draws there)
+    vec2 rel_position;                      // +0xe8 the position move_a was given: relative to the parent p154, which places
+                                            //       the child at its own position + rel_position (ContainerBase::on_child_moved 0x4905c0)
+    vec2 rect_max;                          // +0xf0 the far corner of the widget's rectangle, relative to position (set_xy 0x4889b0;
+                                            //       the hit tests; the text layout's xmax)
+    vec2 rect_min;                          // +0xf8 the near corner (move_f8 0x4889e0; the text layout's xmin)
+    int f100;                               // +0x100 (1)  0x48ae20
+    unsigned f104;                          // +0x104 flag word (bit 0 hidden, bit 1 tint)  0x488720, 0x488c90..0x488cc0
+    rgl::mesh* tracks[5];                   // +0x108 child meshes (vtable 0x54a6f4); [4] is the primary one  0x488720, 0x488ad0, 0x48b4f0
+    unsigned char b11c[5];                  // +0x11c..0x120 per-child "advance" flags  0x488720, 0x48ae20; [4] = 0x120 set by 0x488b50
+    unsigned char b121;                     // +0x121  0x488720, 0x48b180
+    unsigned char b122;                     // +0x122  0x48ae20
+    Font* font;                             // +0x124 the widget's own font, or 0 for g_font  0x488b30, 0x49abc0
+    tstring name;                           // +0x128  0x488b50, 0x488c70
+    vec2 text_offset;                       // +0x138 the text's offset in the widget  0x488a10, 0x488b50
+    vec2 text_scale;                        // +0x140 the glyph scale  0x48b090, 0x488b50
+    unsigned f148;                          // +0x148 option flags  0x488a40, 0x488b50
+    unsigned color14c, color150;            // +0x14c / +0x150  0x488720, 0x488b10, 0x488b20
+    MissionUi* p154;                        // +0x154 forwarding target  0x488970
+    MissionUi* f158;                               // +0x158  0x48ae20 (the window a drop-down list opened from: widget_manager.cpp, ContainerBase::refresh)
+    int v15c;                               // +0x15c  0x488890
+    int f160;                               // +0x160
+    int f164;                               // +0x164 (1)
+    float v168;                             // +0x168 value / current  0x4888b0
+    float f16c;                             // +0x16c range min
+    float f170;                             // +0x170 range max (1.0)  0x48ae20
+    int f174;                               // +0x174
+
+    MissionUi();                                        // 0x48ae20
+    unsigned flag1() const;                             // 0x50cc60 (game/ui/widgets/text_box.cpp: the hidden bit)
+    // views of the track records for the animate overrides (hud_bar_widgets.cpp)
+    // Seconds since track i was (re)started. Both pairs of parentheses are the original's: each parenthesised float
+    // subexpression is an OPPAREN tuple, and with them the first fild's fmul is scheduled after the next timer's int64
+    // stores (XyzButton::animate 0x4966e9..0x496717).
+    float elapsed(int i) const { return (((float)(g_ticks[(&tm0)[i].clock] - (&tm0)[i].start)) * 1e-5f); }
+    float& dur(int i) { return (&periodA)[i]; }                 // +0x68 + 4i
+    Color4& ca() { return valA; }                    // +0x90
+    Color4& aa() { return valB; }                    // +0x94
+    Color4& ca2() { return valC; }                   // +0x98
+    Color4& aa2() { return valD; }                   // +0x9c
+    Color4& cb() { return srcA; }                    // +0xb0
+    Color4& ab() { return srcB; }                    // +0xb4
+    Color4& cb2() { return srcC; }                   // +0xb8
+    Color4& ab2() { return srcD; }                   // +0xbc
+};
+
+// 0x488e20 / 0x488e40 are FxDef::elem_add_psys / elem_set_data (engine/fx/fx.h): the element's virtuals 0 and 1.
+// Declaration only, never used: cl 13.10 keeps video_page.cpp's Recf0::frame_update (0x4d63b0) byte-exact only with a
+// polymorphic class declared at this point (the former ElemVt view of FxElem; a forward declaration or fx.h here does not do it).
+struct ElemVt { virtual void s0(int a); virtual void s1(int a); };
+
+// The goto/branch stack of the script emitter (local_410 of emit): up to 0x80 (a, b) int pairs at +0, the depth count at +0x400
+// (0x488e60, 0x49d7f0, 0x49f7c0; the emitter only tests it against 0) and one more dword; both trailing dwords are cleared in
+// the emitter's prologue.
+struct PairStack {
+    int pairs[0x100];                       // +0
+    int count;                              // +0x400
+    int pad;                                // +0x404
+    void push(int a, int b);                // 0x488e60
+};
+
+#include "game/data/trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
+
+// free functions of the item-pair sort and the speed table
+int __fastcall sort_value(ItemRef* e);                              // 0x488f80
+void __fastcall clear_slots(ItemRef* e);                            // 0x489060 (sets the first 0x60 items to -1)
+
+#endif // GAME_UI_MISSION_UI_H

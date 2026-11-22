@@ -1,0 +1,14 @@
+../src/game/data/record_destructors.cpp  ??_GIfaceB@@UAEPAXI@Z  00431420  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ??_Etrigger_entry@@QAEPAXI@Z  00431540  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ??_EAnimDef@@QAEPAXI@Z  004315d0  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ??1NameHolder@@QAE@XZ  004316b0  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ??_EMissile@@UAEPAXI@Z  00431750  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ??1SimpleTriggerVec@@QAE@XZ  004317b0  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ??_Erec34@@QAEPAXI@Z  004318c0  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ??_EAnimBox@@QAEPAXI@Z  00431960  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ?_Destroy@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@IAEXPAUPlacedObj@@0@Z  00431a30  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ?_Tidy@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@IAEXXZ  00431a60  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ??1QuestRec@@QAE@XZ  00431b10  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ??1Troop@@QAE@XZ  00431c40  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ??1FactionRec@@QAE@XZ  00432010  /O2 /MT /Gy /TP
+../src/game/data/record_destructors.cpp  ?reset_path@Agent@@QAEXXZ  00432080  /O2 /MT /Gy /TP

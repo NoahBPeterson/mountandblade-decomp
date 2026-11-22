@@ -83,6 +83,15 @@ def plan():
     for o, n in KEEP_WHOLE.items():     # the TSV has only split rows for these: the whole file and its sidecars
         for ext in (".cpp", ".manifest.txt", ".nonmatching.txt"):
             moves[o[:-4] + ext] = n[:-4] + ext
+    # symbols/slices/<module stem>.txt (address -> name hints kept per module) follows a renamed module
+    for o, n in list(moves.items()):
+        if load_state().get("a_symbols"):
+            break                      # done: a new name may equal an old one (resmgr.txt -> resource_manager.txt)
+        if o.endswith(".cpp") and os.path.basename(o) != os.path.basename(n):
+            so = "symbols/slices/%s.txt" % os.path.basename(o)[:-4]
+            sn = "symbols/slices/%s.txt" % os.path.basename(n)[:-4]
+            if os.path.exists(os.path.join(ROOT, so)):
+                moves[so] = sn
     return moves, splits, side_splits
 
 
@@ -107,6 +116,8 @@ class Tree:
         for o in moves:
             parts = o.split("/")
             for i in range(0, len(parts) - 1):
+                if i > 0 and not o.startswith("src/"):
+                    break
                 self.suffix.setdefault("/".join(parts[i:]), set()).add(o)
 
     def old_of(self, path):  # the path a file had in the old tree
@@ -143,12 +154,13 @@ def rewrite_include_line(T, line, includer_new, is_src):
     if not m:
         return None
     pre, lq, inc, rq, post = m.groups()
+    post = rewrite_tokens(T, post)          # the trailing comment names files too
     includer_old = T.old_of(includer_new)
     res, dir_rel = resolve_old(T, inc, includer_old, lq == "<")
     if res is None or not res.startswith("src/") or res not in T.moves:
-        return line
+        return pre + lq + inc + rq + post
     if not is_src and dir_rel:
-        return line     # a relative path to src: the token pass handles it, keeping the relative shape
+        return pre + lq + inc + rq + post     # a relative path to src: the token pass handles it, keeping the relative shape
     new = T.moves[res]
     return pre + lq + new[len("src/"):] + rq + post
 
@@ -174,7 +186,7 @@ def rewrite_tokens(T, text):
         new = T.moves[old]
         if old == new:
             return tok
-        full = c.startswith("src/")
+        full = c.startswith("src/") or not old.startswith("src/")
         tail = new if full else new[len("src/"):]
         return lead + tail + tok[len(core):]
     return TOKEN.sub(rep, text)
@@ -195,11 +207,53 @@ def rewrite_joins(T, text):
     return JOIN_RE.sub(rep, text)
 
 
+# ---- the stem pass: module names (a module is a .cpp stem: manifests, equiv rows, link order) ------------------------
+STATE = os.path.join(ROOT, "tools", "migrate", "restructure_state.json")
+
+
+def load_state():
+    try:
+        return json.load(open(STATE))
+    except (OSError, ValueError):
+        return {}
+
+
+class Stems:
+    def __init__(self, moves):
+        base = lambda p: os.path.basename(p)
+        cnt = {}
+        for o in moves:
+            cnt[base(o)] = cnt.get(base(o), 0) + 1
+        newb = {base(n) for n in moves.values()}
+        # bare file names: unique old names that change; a name that is also somebody's new name is ambiguous after the move
+        self.names = {base(o): base(n) for o, n in moves.items()
+                      if cnt[base(o)] == 1 and base(o) != base(n) and base(o) not in newb}
+        self.stems = {base(o)[:-4]: base(n)[:-4] for o, n in moves.items()
+                      if o.endswith(".cpp") and base(o) != base(n)}
+        alt = lambda ks: "|".join(sorted(map(re.escape, ks), key=len, reverse=True))
+        self.r_name = re.compile(r"(?<![\w/.\-])(" + alt(self.names) + r")(?![\w\-/])")
+        hexv = r"(?:0x[0-9a-fA-F]{5,}|[\"'][0-9a-fA-F]{6,8}[\"'])"
+        self.r_row = re.compile(r"([\"'])(" + alt(self.stems) + r")\1(?=\s*[,:]\s*" + hexv + ")")
+        self.r_key = re.compile(r"([\"'])(" + alt(self.stems) + r")( [0-9a-fA-F]{6,8}\b[^\"'\n]*)\1")
+        self.r_exact = re.compile(r"([\"'])(" + alt(self.stems) + r")\1")
+
+    def rewrite(self, text, rel):
+        # bare names: never on an #include line (a quoted bare name there may be a local file that merely shares a name)
+        text = "\n".join(ln if INC_RE.match(ln.rstrip("\r")) else self.r_name.sub(lambda m: self.names[m.group(1)], ln)
+                         for ln in text.split("\n"))
+        if rel.endswith((".py", ".cpp", ".h", ".json", ".txt", ".cmake", ".sh")) and not rel.startswith("src/"):
+            text = self.r_row.sub(lambda m: m.group(1) + self.stems[m.group(2)] + m.group(1), text)
+            text = self.r_key.sub(lambda m: m.group(1) + self.stems[m.group(2)] + m.group(3) + m.group(1), text)
+        if rel in ("docs/equiv_verdicts.json", "symbols/link_inputs.json"):
+            text = self.r_exact.sub(lambda m: m.group(1) + self.stems[m.group(2)] + m.group(1), text)
+        return text
+
+
 def is_text(b):
     return b"\0" not in b[:8192]
 
 
-def rewrite_files(T, dry=False):
+def rewrite_files(T, dry=False, stems=None):
     changed = 0
     for rel in tracked():
         if rel in EXCLUDE_TEXT or rel.startswith("work/"):
@@ -211,6 +265,8 @@ def rewrite_files(T, dry=False):
         if not is_text(b):
             continue
         t = b.decode("latin-1")
+        if stems is not None:
+            t = stems.rewrite(t, rel)       # first: bare names never touch the path tokens the next pass rewrites
         is_src = rel.startswith("src/")
         is_code = rel.endswith(SRC_EXT)
         lines = t.split("\n")
@@ -219,17 +275,14 @@ def rewrite_files(T, dry=False):
             if is_code and "include" in ln:
                 r = rewrite_include_line(T, ln.rstrip("\r"), rel, is_src)
                 if r is not None:
-                    if r != ln.rstrip("\r"):
-                        out.append(r + ("\r" if ln.endswith("\r") else ""))
-                        continue
-                    if is_src:
-                        out.append(ln); continue    # an unchanged src include line (rooted already or outside src): leave
+                    out.append(r + ("\r" if ln.endswith("\r") else ""))
+                    continue
             out.append(ln)
         t2 = "\n".join(out)
         t2 = rewrite_tokens(T, t2) if not is_src else rewrite_tokens_skip_includes(T, t2)
         if rel.endswith(".py"):
             t2 = rewrite_joins(T, t2)
-        if t2 != t:
+        if t2 != b.decode("latin-1"):
             changed += 1
             if not dry:
                 open(p, "wb").write(t2.encode("latin-1"))
@@ -285,10 +338,38 @@ def batch_a(check=False):
     T = Tree(moves, pending)
     n = do_moves(moves, dry=check)
     print("moves %s: %d" % ("pending" if check else "done", n))
-    c = rewrite_files(T, dry=check)
+    state = load_state()
+    stems = Stems(moves) if not state.get("a_stems") else None
+    c = rewrite_files(T, dry=check, stems=stems)
     print("files %s: %d" % ("to rewrite" if check else "rewritten", c))
     if not check:
+        if not os.path.exists(ANNOT):
+            write_annotation_headers(moves)
         prune_empty_dirs()
+        state["a_symbols"] = True
+        if stems is not None:
+            state["a_stems"] = True
+            json.dump(state, open(STATE, "w"), indent=1)
+
+
+ANNOT = os.path.join(ROOT, "tools", "difftest", "annotation_headers.json")
+
+
+def write_annotation_headers(moves):
+    """The resolution tools read the `// 0x...` annotations of a TU's source, of every header in the TU's own directory and
+    of the headers it includes by relative path. The directories are new, so each TU keeps the headers of ITS OLD directory:
+    {new cpp: [new header paths]} (tools/difftest/annotation_headers.json; slice.annotation_sources reads it)."""
+    out, olds = {}, sorted(moves)
+    base = subprocess.run(["git", "ls-tree", "-r", "--name-only", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.split("\n")
+    for o in olds:
+        if not o.endswith(".cpp"):
+            continue
+        d = os.path.dirname(o)
+        hs = sorted(moves[f] for f in olds if f.endswith(".h") and os.path.dirname(f) == d)
+        out[moves[o]] = hs
+    for o in SPLIT_FILES:                         # the split files: their old directory's headers (parts are added in batch B)
+        out[o] = sorted(moves[f] for f in olds if f.endswith(".h") and os.path.dirname(f) == os.path.dirname(o))
+    json.dump(out, open(ANNOT, "w"), indent=0, sort_keys=True)
 
 
 def verify():
@@ -320,12 +401,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["a", "b", "verify"])
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--dump", metavar="DIR", help="b: write the generated parts to DIR and change nothing else")
     a = ap.parse_args()
     if a.cmd == "a":
         batch_a(a.check)
     elif a.cmd == "b":
         import restructure_split  # noqa: F401  (batch B lives in tools/migrate/restructure_split.py)
-        restructure_split.run(sys.modules[__name__], a.check)
+        restructure_split.run(sys.modules[__name__], a.check, a.dump)
     else:
         sys.exit(1 if verify() else 0)
 

@@ -9,13 +9,13 @@ and a clean place to add game hooks or an embedded scripting language.
 
 ## Evidence
 
-- `Operation::execute(__int64* locals, int* context, int* error)` 0x49fa10 (src/game/script/script_interpreter.cpp, 4,585 lines; NOTES.md): `switch (opcode - 30)` over a 2,356-entry jump table (0x4ae458), **591 real cases**; unknown ids hit
+- `Operation::execute(__int64* locals, int* context, int* error)` 0x49fa10 (src/game/script/script_interpreter.cpp, 4,585 lines; game_script_NOTES.md): `switch (opcode - 30)` over a 2,356-entry jump table (0x4ae458), **591 real cases**; unknown ids hit
   `sprintf("Unrecognized opcode %d.")` (line 4571). Control opcodes < 30 are handled by the block runner 0x4b09e0. Flags: `op::neg` 0x80000000, `op::this_or_next` 0x40000000. Names for every opcode are in
   `src/game/script/script_opcodes.h` (622 lines, `namespace op`).
 - Operands are 64-bit values with a type word (`__int64 params[16]`, `int types[16]`); results via `set_lvalue` 0x49d500 (register, global variable or local). **16 operand slots** per operation.
 - State: `reg[128]` 64-bit registers and `str[128]` string registers (dialog_manager.h:47-49), 128 position registers of 0x40 bytes (script_interpreter.h:289), dialog lines `list[0x400]`/`sel[0x400]` (dialog_manager.h:75).
-- Validators (`check_troop`, `check_faction`, ... 0x49cc60-0x49d4b0) print "script errors" but several are intentionally weak (NOTES.md lists "original behaviour reproduced": e.g. `party_template_set_slot` bounds by the template count).
-- Module data are text tables compiled by the Python Module System (`Modules/Native/*.txt`: scripts.txt, triggers.txt, simple_triggers.txt, mission_templates.txt, presentations.txt, menus.txt, ...; 42 files in Native). The engine parses them in `parse_module_info`/`load_module_files` (module_files.cpp, trigger_vec.cpp:793).
+- Validators (`check_troop`, `check_faction`, ... 0x49cc60-0x49d4b0) print "script errors" but several are intentionally weak (game_script_NOTES.md lists "original behaviour reproduced": e.g. `party_template_set_slot` bounds by the template count).
+- Module data are text tables compiled by the Python Module System (`Modules/Native/*.txt`: scripts.txt, triggers.txt, simple_triggers.txt, mission_templates.txt, presentations.txt, menus.txt, ...; 42 files in Native). The engine parses them in `parse_module_info`/`load_module_files` (module_files_loader.cpp, options_dialog_and_module_tables.cpp:793).
 - Shader/material technique names and `skeleton_bodies.xml` bone definitions are also data (ticket 009/011) - extension points mods already use.
 
 ## Detailed plan

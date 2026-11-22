@@ -10,7 +10,7 @@
 //               D3DCAPS9.MaxTextureWidth / Height; when the targets cannot be made, 1.5 and then (with FSR) 1 are tried,
 //               and then the scene is not redirected.
 //
-// Where the split is. The frame is a list of rgl::scene passes (render_batch::render 0x47e520, mesh_pass.cpp), each set
+// Where the split is. The frame is a list of rgl::scene passes (render_batch::render 0x47e520, render_passes.cpp), each set
 // up by RenderScene::apply_state (0x46ca50): its viewport, clear and camera. gfx_scene_state.cpp's apply_state asks
 // gfx_scale_scene_begin first. A pass is redirected into our scaled target when
 //   - render target 0 is the backbuffer (shadow maps and other texture targets are left alone),
@@ -25,7 +25,7 @@
 // So the 2D GUI and text are drawn after the resolve, at native resolution.
 //
 // The passes save and restore all of the game's device state with a D3DSBT_ALL state block: the game caches its render
-// states (src/game/renderer.cpp) and must find them as it left them. Resolution targets are D3DPOOL_DEFAULT: released
+// states (src/engine/render/renderer.cpp) and must find them as it left them. Resolution targets are D3DPOOL_DEFAULT: released
 // before every Reset (gfx_device.cpp) and recreated, at the new backbuffer size, on the next qualifying pass. A
 // multisampled backbuffer gets a multisampled scene target (and depth-stencil) of the same type, resolved with
 // StretchRect before the upscale. Without ps_3_0, or when a target cannot be created, the scene is not redirected.

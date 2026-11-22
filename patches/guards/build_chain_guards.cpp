@@ -9,7 +9,7 @@
 // Open question: whether the original can reach those reads at all, or whether -1 only arrived because of a bug of ours
 // that has since been fixed. Running a --faithful build through a world map answers it; if it never faults, this patch
 // can go.
-#include "../../src/game/mission5/game_2.h"
+#include "../../src/game/campaign/map_builder_and_data_load.h"
 
 // @ replaces 0x5234e0
 void NavData::build_chain(int target, int start, int* out, int* count)

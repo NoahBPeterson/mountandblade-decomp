@@ -1,0 +1,13 @@
+../src/game/mission/scene_container_grid.cpp  ?init@world@rgl@@QAEXPBM0HH@Z  00478830  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ??0world@rgl@@QAE@PBM0PBH11@Z  00478ad0  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?spawn_wind@world@rgl@@QAEPAULight@@XZ  00478f30  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?add_group@FxDef@@QAEXPAUlod_mesh@rgl@@@Z  00478fb0  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?load@SceneFile@@QAEXPAUstream_base@@H@Z  00479000  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?reset@Mission@@QAEXXZ  00479160  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?erase@?$vector@UPhysRec@@V?$allocator@UPhysRec@@@std@@@std@@QAE?AViterator@12@V312@0@Z  00479930  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?spawn@EmitTable@@QAEPAUpsys@rgl@@PAHPBUvector4@3@PBH@Z  00479d20  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?spawn_bodies@Terrain@@QAEXPAUparticle_list@@@Z  00479da0  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?clone@lod_mesh@rgl@@QAEPAU12@XZ  0047a370  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?resize@?$vector@UPhysRec@@V?$allocator@UPhysRec@@@std@@@std@@QAEXIUPhysRec@@@Z  0047a980  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?insert@world@rgl@@QAEXHPBM0@Z  00478a10  /O2 /MT /Gy /TP
+../src/game/mission/scene_container_grid.cpp  ?build@world@rgl@@QAEXPAUPolyMesh@@@Z  00478c50  /O2 /MT /Gy /TP

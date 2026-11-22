@@ -76,7 +76,7 @@ extern "C" int mb_stat(const char* path, struct _stat* st);
 // File names in src/ are Windows names ("Data\\item_kinds1.txt", "data\\ground_specs.txt": backslashes, any case). The stdio
 // entry points that take a path go through the platform layer's path resolution (port/platform/fs.cpp: '\\' -> '/',
 // case-insensitive component lookup against a cached directory index, CRLF -> LF for text-mode reads, rename that does not
-// replace). Object-like macros: every use, including src/include/crt.h's own declarations of these names, is renamed alike.
+// replace). Object-like macros: every use, including src/engine/core/crt.h's own declarations of these names, is renamed alike.
 #include "../platform/mb_paths.h"
 #define fopen  mb_fopen
 #define remove mb_remove

@@ -208,18 +208,47 @@ def source_path(sid):
 
 
 def sibling_headers(src):
-    """Headers the slice source includes from another slice's directory by relative path
-    ('#include "../s00908c00/s00908c00.h"'): their declarations and annotations count too."""
+    """Headers the source includes directly, besides its own directory's: by relative path ('#include
+    "../s00908c00/s00908c00.h"') or src/-rooted ('#include "game/data/troop.h"'): their declarations and annotations
+    count too (the resolution audit reads the annotations of the headers a source lists)."""
     out = []
     try:
         text = open(src, encoding="utf-8", errors="replace").read()
     except OSError:
         return out
-    for m in re.finditer(r'^\s*#\s*include\s+"(\.\.?/[^"]+)"', text, re.M):
-        p = os.path.normpath(os.path.join(os.path.dirname(src), m.group(1)))
+    for m in re.finditer(r'^\s*#\s*include\s+"([^"]+)"', text, re.M):
+        name = m.group(1)
+        if name.startswith((".", "/")):
+            p = os.path.normpath(os.path.join(os.path.dirname(src), name))
+        else:
+            p = os.path.normpath(os.path.join(ROOT, "src", name))      # the src/ include root
         if os.path.exists(p) and p not in out:
             out.append(p)
     return out
+
+
+_ANNOT = None
+
+
+def annotation_sources(src):
+    """The files whose `// 0x...` annotations the resolver reads for a src/ TU: the source, the headers its directory had
+    before the 2026-11 restructure (tools/difftest/annotation_headers.json, frozen by tools/migrate/restructure.py; a TU
+    that is not listed gets the headers of its own directory) and the headers it includes directly."""
+    global _ANNOT
+    if _ANNOT is None:
+        try:
+            import json
+            _ANNOT = json.load(open(os.path.join(ROOT, "tools", "difftest", "annotation_headers.json")))
+        except (OSError, ValueError):
+            _ANNOT = {}
+    rel = os.path.relpath(os.path.abspath(src), ROOT).replace(os.sep, "/")
+    hs = _ANNOT.get(rel)
+    if hs is None:
+        hs = glob.glob(os.path.join(os.path.dirname(src), "*.h"))
+    else:
+        hs = [os.path.join(ROOT, h) for h in hs]
+    out = [src] + hs
+    return out + [h for h in sibling_headers(src) if h not in out]
 
 
 def resolve_include_flags(flags):
@@ -242,7 +271,7 @@ _INC = re.compile(r'^\s*#\s*include\s*"([^"]+)"', re.M)
 
 def _quoted_includes(src):
     """src plus every file it reaches through #include "..." (resolved next to the including file, then in
-    match/include), so an edit to any header a TU uses (src/include, ../../rgl/..., ...) invalidates its object."""
+    the src/ include root and match/include), so an edit to any header a TU uses (engine/..., game/..., ...) invalidates its object."""
     seen, todo = [], [os.path.abspath(src)]
     while todo:
         f = todo.pop()
@@ -254,7 +283,7 @@ def _quoted_includes(src):
         except OSError:
             continue
         for name in _INC.findall(text):
-            for d in (os.path.dirname(f), os.path.join(ROOT, "match", "include")):
+            for d in (os.path.dirname(f), os.path.join(ROOT, "src"), os.path.join(ROOT, "match", "include")):
                 c = os.path.normpath(os.path.join(d, name))
                 if os.path.isfile(c):
                     todo.append(c)

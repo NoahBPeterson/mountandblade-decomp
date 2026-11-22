@@ -1,9 +1,9 @@
 // port/runtime/main.cpp: the portable build's entry point (ticket 004 milestone 2). It hands the process to the game's own
-// WinMain (src/game/cls_map/cls_map.cpp, 0x4d9450) the way the Windows loader's CRT startup does: the command line
+// WinMain (src/game/app/winmain_and_menu_screens.cpp, 0x4d9450) the way the Windows loader's CRT startup does: the command line
 // without the program name, SW_SHOWDEFAULT, a non-null instance handle. Ticket 007's platform layer will put SDL's
 // initialisation in front of it; until then every Win32 call WinMain makes lands in port/stubs/platform_stubs.cpp.
 #include <windows.h>
-#include "../src/game/tstring.h"
+#include "../src/engine/core/tstring.h"
 static_assert(sizeof(tstring) == MB_TSTRING_SIZE, "MB_TSTRING_SIZE (port_prelude.h) must be sizeof(tstring)");
 #include <string.h>
 #include <stdlib.h>

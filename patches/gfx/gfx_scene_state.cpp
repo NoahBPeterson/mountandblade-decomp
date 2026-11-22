@@ -3,15 +3,15 @@
 // CHANGES BEHAVIOUR on purpose when gfx_render_scale != 1 or gfx_fsr = 1 (rgl_config.txt): before the pass sets
 // its viewport it asks gfx_scale_scene_begin (gfx_scale.cpp) whether it draws the 3D view; if so render target 0 is the
 // scaled scene target and the viewports below are the pass's own, rescaled to it. Otherwise (and always with the defaults) this is the
-// faithful function of src/game/terrain_a/terrain_render.cpp, copied as it is with the viewports read from locals.
-#include "../../src/game/terrain_a/common.h"
-#include "../../src/rgl/options.h"   // g_options
-#include "../../src/game/terrain_a/terrain.h"
-#include "../../src/game/terrain_a/game_state.h"
-#include "../../src/game/terrain_a/misc.h"
-#include "../../src/game/render_batch.h"
-#include "../../src/include/frustum.h"
-#include "../../src/include/mat4.h"
+// faithful function of src/game/terrain/terrain_render.cpp, copied as it is with the viewports read from locals.
+#include "../../src/game/terrain/common.h"
+#include "../../src/game/config/options.h"   // g_options
+#include "../../src/game/terrain/terrain.h"
+#include "../../src/game/terrain/scene_paths_and_wind_noise.h"
+#include "../../src/game/terrain/misc.h"
+#include "../../src/engine/render/render_batch.h"
+#include "../../src/engine/scene/frustum.h"
+#include "../../src/engine/math/mat4_include.h"
 #include "./gfx.h"
 
 // @ replaces 0x46ca50

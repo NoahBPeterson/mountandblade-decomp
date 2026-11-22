@@ -1,0 +1,68 @@
+#ifndef TERRAIN_PAGE_INPUT_H
+#define TERRAIN_PAGE_INPUT_H
+// Slice s004f3570: the terrain "edit" page's field reading, camera simulation, two small rotation helpers and
+// the clipboard "paste".
+//   0x4f3570  read_fields: decode the terrain bit words back into the page fields (enables, positions, layer
+//             bits, water level/height, terrain type/size)
+//   0x4f37f0  simulate(dt): keyboard camera steering (pitch, zoom, strafe, pan), clamping
+//   0x4f3b40  rotate a 2x2 rotation matrix (m[0..3]) by an angle
+//   0x4f3be0  write a 2x2 identity into four floats
+//   0x4f3c30  paste_clipboard: read CF_TEXT from the clipboard, parse the terrain words from it, set the hex
+//             field's text, then read the fields back and refresh the page
+//   0x4f3cf0  path(dt): build the map camera's frame and hand it to the terrain renderer
+// All names provisional. The page layout is the one recovered in slice s004f2d70 (TerrainPage); the terrain bit
+// words live in the global object at 0xa76630 (slice s004f25a0 / s00464a60).
+#include <windows.h>
+#include <stdio.h>
+#include <math.h>
+#pragma intrinsic(sqrt, fabs, sin, cos, tan, fsin, fcos)
+// the x87 inline sin/cos used by rotate_2x2 (inline FP is off in this build, so the intrinsics need the asm form)
+
+#include "engine/math/rgl_math.h"
+#include "game/ui/screens/character_sheet/cs_common.h"
+#include "game/ui/screens/character_sheet/cs_mat.h"
+#include "engine/scene/frustum.h"                    // rgl::frustum::build_planes (0x41e4f0)
+
+using rgl::vector4;
+
+#include "engine/math/vec.h"                      // vector2 (= Vec2)
+
+// ---- tstring / rgl::string ---------------------------------------------------------------------------
+#include "engine/core/tstring.h"
+
+// ---- controls ----------------------------------------------------------------------------------------------
+#include "game/ui/widgets/ui_widget.h"                 // MissionUi (the UI widget interface)
+
+// ---- terrain bit words (the object at 0xa76630) -------------------------------------------------------
+#include "game/terrain/terrain.h"                   // Terrain (g_terrain 0xa76630)
+#include "game/input/key_names.h"
+extern unsigned __int64 g_bit[];                            // 0x5a8e68 (game_globals.h): g_bit[4] is the terrain type mask (4 bits wide), g_bit[2] the size mask (2 bits)
+extern int g_use_shaders;                                   // 0x5e28fc (shaders on: the water checkbox stores the inverse)
+
+// ---- the world / scene --------------------------------------------------------------------------------
+#include "engine/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
+
+// 0x40cd00 has a hidden return pointer and returns it; the two rotation helpers are thiscall on the matrix and
+// take a pointer to the angle (thiscall, ret 4).
+struct mat_self : rgl::matrix {};                            // (rotate_about_s 0x40e570 / rotate_about_f 0x40e670 are rgl::matrix's; identity_pos 0x40cd00: cs_mat.h)
+
+// 0x4f3b40 is thiscall on the four floats of a 2x2 matrix (ret 4: the angle); poly_mesh_pick.h's two matrix views and
+// mission_context.h's mat2 call the same function
+#include "engine/math/rot2.h"                            // rot2 (rotate_2x2 0x4f3b40, defined in terrain_page_input.cpp)
+__declspec(noinline) void identity_2x2(rot2* m);          // 0x4f3be0 (the original calls it: simulate 0x4f37f0)
+
+// ---- the page: src/game/editor/terrain_page/terrain_page_game.h ------------------------------------------------------------------
+#include "game/editor/terrain_page/terrain_page_game.h"
+#include "engine/render/render_flags.h"
+#include "game/ui/ui_globals.h"      // UI / core globals
+
+// the input flags the camera reads (0xa17xxx block; names provisional)
+
+
+
+
+
+
+
+
+#endif

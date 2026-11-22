@@ -1,0 +1,8 @@
+../src/game/editor/poly_mesh_poly_ray_edit.cpp  ?toggle_flag@PolyMesh@@QAEXHH@Z  0052e510  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_poly_ray_edit.cpp  ?vertex_index@PolyMesh@@QAEHHABUmatrix@rgl@@@Z  0052ebc0  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_poly_ray_edit.cpp  ?remove_selected@PolyMesh@@QAEXXZ  0052e870  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_poly_ray_edit.cpp  ?make_copy@PolyMesh@@QAEXABUmatrix@rgl@@@Z  0052e960  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_poly_ray_edit.cpp  ?scale_selected@PolyMesh@@QAEXHPBUvector4@rgl@@@Z  0052e590  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_poly_ray_edit.cpp  ?transform_selected@PolyMesh@@QAEXHPBUmat3@rgl@@@Z  0052e6d0  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_poly_ray_edit.cpp  ?edge_index@PolyMesh@@QAEHHABUmatrix@rgl@@@Z  0052eca0  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_poly_ray_edit.cpp  ?apply_copy@PolyMesh@@QAEXABUmatrix@rgl@@@Z  0052edb0  /O2 /MT /Gy /TP

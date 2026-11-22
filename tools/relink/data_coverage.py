@@ -183,7 +183,7 @@ def data_items(img, rmap, starts, game, first_user=None, syms=None, users=None, 
             v = int(va, 16)
             if in_data(v):
                 # defined: a row of the defining module references it (the resolver), or the link map shows one of our
-                # objects defining it (a definition no row of its own module names: g_strtable in mesh_2.cpp)
+                # objects defining it (a definition no row of its own module names: g_strtable in poly_mesh_edge_face_ops.cpp)
                 named[v][0] |= e["defined"] or bool(syms and n in syms and syms[n][1] not in GLUE_MODULES)
                 named[v][1].append(n)
 

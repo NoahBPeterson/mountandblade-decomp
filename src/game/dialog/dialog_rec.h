@@ -1,0 +1,56 @@
+// dialog_rec.h: the dialog record read from the module file (DialogRec, 0x64 bytes, Module System `dialogs`) and the
+// script blocks it carries (DialogBlock / Elem: condition and consequence operation lists). ONE definition for
+// src/game/dialog/dialog_manager.cpp (reads and runs them) and src/rgl/mesh2 (editor_selection_and_translation.cpp: the language export; module_option_records.cpp:
+// the vector deleting destructor 0x4609d0 of the table g_dialogs 0x8ed50cc).
+#ifndef MB_DIALOG_REC_H
+#define MB_DIALOG_REC_H
+#include <new>
+#include "engine/core/tstring.h"
+struct stream_base;
+
+struct Elem {                                              // 0x98 bytes: one operation of a block
+    unsigned id;                                           // +0 opcode
+    int pad4;
+    int n;                                                 // +8 operand count
+    int padc;
+    __int64 vals[16];                                      // +0x10 operands
+    int f90;                                               // +0x90 (-1)
+    int pad94;
+    Elem() : f90(-1) {}                                    // 0x4607d0
+    __int64 get_operand(__int64* locals, int* i, int* type);       // 0x49d650 (thiscall, ret 0xc; src/game/party2)
+    void set_lvalue(__int64* locals, const __int64& value);        // 0x49d500 (thiscall, ret 8; src/game/party2)
+};
+struct DialogBlock {                                             // 0x1c bytes
+    Elem* items;                                           // +0
+    int count;                                             // +4
+    char done;                                             // +8
+    tstring text;                                          // +0xc (debug text)
+    DialogBlock() { count = 0; items = 0; done = 0; }
+    DialogBlock(const DialogBlock& o);                     // 0x4bd7a0 (src/game/config/config.cpp)
+    ~DialogBlock() { if (items) delete[] items; }
+    void read(stream_base* s);                             // 0x4607e0
+    __declspec(noinline) void init(int op, int idx);       // 0x524360 (game/campaign/map_builder_and_data_load.cpp, ret 8): the block becomes the one statement op(idx)
+    char play(int mode);                                   // 0x4875e0 (thiscall, ret 4)
+    // ---- src/game/party2 (camera.cpp: the script block runner of the mission script interpreter; method declarations only) ----
+    char run_line(__int64* locals, int* idx, int* script);       // 0x4b0940 (ret 0xc: runs one statement through the interpreter)
+    char emit(int script, int depth, int* limit, __int64* vals, unsigned tag);   // 0x4b09e0 (ret 0x14: the block runner)
+    bool step_less(__int64* locals, int* stack);           // 0x49d7f0 (ret 8: the loop test of try_for_range / for_parties ...)
+    tstring renumber(__int64* locals, int index, int use_var, int* pvar, int* pend);   // 0x49d930 (ret 0x18: statement text with the operand values)
+    void link();                                           // 0x49dd30 (links else_try / try_end to their branch targets)
+    void pop_try(__int64* locals, int* stack, int* out);   // 0x49f7c0 (ret 0xc: pops / advances the loop entry on top of the try stack)
+};
+
+struct DialogRec {                                         // 0x64 bytes
+    tstring text;                                          // +0x00 (spoken text, underscores -> spaces; editor_selection_and_translation.cpp called it `name`)
+    tstring id;                                            // +0x10 (dlga_ id = the translation key)
+    int flags;                                             // +0x20 speaker / repeat / auto flags
+    int f24;                                               // +0x24 input state
+    DialogBlock cond;                                            // +0x28
+    DialogBlock conseq;                                          // +0x44
+    int f60;                                               // +0x60 output state
+    void read(stream_base* s);                             // 0x4608d0
+    tstring translated();                                  // 0x4c6080
+    // implicit destructor: inlined into the vector deleting destructor 0x4609d0
+};
+
+#endif // MB_DIALOG_REC_H

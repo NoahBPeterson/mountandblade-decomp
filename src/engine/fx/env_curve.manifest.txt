@@ -1,0 +1,6 @@
+../src/engine/fx/env_curve.cpp  ?unshape@EnvRec@@QAEMM@Z  004338e0  /O2 /MT /Gy /TP
+../src/engine/fx/env_curve.cpp  ?set_phase@EnvRec@@QAEXM@Z  00433930  /O2 /MT /Gy /TP
+../src/engine/fx/env_curve.cpp  ?reset_rec@FxDef@@QAEXH@Z  004339d0  /O2 /MT /Gy /TP
+../src/engine/fx/env_curve.cpp  ?rec_shaped_phase@FxDef@@QAEMH@Z  00433ac0  /O2 /MT /Gy /TP
+../src/engine/fx/env_curve.cpp  ?set_rec_phase@FxDef@@QAEXHM@Z  00433b20  /O2 /MT /Gy /TP
+../src/engine/fx/env_curve.cpp  ?hash_string@@YGIPBUtstring@@@Z  00433bb0  /O2 /MT /Gy /TP

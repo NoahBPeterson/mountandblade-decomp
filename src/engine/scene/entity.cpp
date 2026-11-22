@@ -1,0 +1,118 @@
+// entity.cpp (0x41fba0..0x41fee0): rgl::entity's constructor and the small virtual accessors and setters of the base
+// class: the end of the object that holds the effect element, the scene's teardown and the pools (src/engine/scene/fx_element_pool.cpp).
+// The class is scene_entity.h's: the same rgl::entity the derived entity classes (mesh, collision, strategic, static, skeleton,
+// dynamic) are built on, so one vtable (0x54b460) and one set of virtual names. (entity.cpp used to declare its own view of
+// the class with other names for the same slots: commit / get_fbc / awake() void / load(), which left the derived classes'
+// overrides unbound.)
+// Boundary: start 0x41fba0 (entity.cpp's functions before it are the effect element, the pools and the vector instances);
+// end 0x41fee0 (smat::scale_rows, entity_recalc.cpp, is called forward by set_local_scaled).
+#include <vector>
+#include "engine/core/rgl_string.h"
+#include "engine/math/rgl_math.h"
+#include "engine/math/scene_math.h"
+#include "engine/scene/frustum_rgl_scene.h"
+#include "engine/scene/scene.h"
+#include "engine/scene/emitter.h"
+#include "engine/scene/scene_entity.h"
+#include "engine/scene/world.h"
+#include "engine/fx/fx_rgl_scene.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "engine/scene/frustum.h"
+#include "engine/fx/keyframes.h"
+#include "engine/math/mat4_include.h"
+#include "engine/render/mesh_prims.h"
+#include "engine/math/vec.h"
+#include "engine/render/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/render/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+
+using namespace rgl;
+
+namespace rgl {
+
+// @ 0x41fba0
+entity::entity()
+{
+    refs = 0;
+    shape = 0;
+    mode = 0;
+    owner = 0;
+    bound_radius = 0;
+    center = vector4(0.0f, 0.0f, 0.0f);
+    game_kind = 0;
+    shadow_a = 0;
+    shadow_b = 0;
+    dirty = 0;
+    was_dirty = 0;
+    scale = vector4(1.0f, 1.0f, 1.0f);
+    visible = 1;
+    shadow_radius = 0.01f;
+    game_id = -1;
+    lod_dist = 1.0f;
+}
+
+// @ 0x41fcb0
+string entity::type_name() { return string("entity"); }
+
+// @ 0x41fcd0
+void entity::sync()
+{
+    prev = local;
+    const vector4* src;
+    vector4 t;                  // function scope: src points into it after the branch
+    if (shape) {
+        shape->transform(&local);
+        bmin = *shape->get_min(&t);
+        src = shape->get_max(&t);
+    } else {
+        bmin = local.o;
+        src = &local.o;
+    }
+    bmax = *src;
+}
+
+// @ 0x41fd80
+float entity::get_radius() { return bound_radius; }
+// @ 0x41fd90
+void entity::set_fbc(const float* p) { bound_radius = *p; }
+// @ 0x41fda0
+void entity::update(float)
+{
+    prev = local;
+    was_dirty = dirty;
+    dirty = 0;
+}
+// @ 0x41fdd0
+void entity::set_f144(const float* p) { lod_dist = *p; }
+// @ 0x41fde0
+const vector4* entity::local_origin() { return &local.o; }
+// @ 0x41fdf0
+const vector4* entity::get_vac() { return &bmax; }
+// @ 0x41fe00
+const vector4* entity::get_v9c() { return &bmin; }
+// @ 0x41fe10
+int entity::is_dirty()
+{
+    if (dirty || was_dirty)
+        return 1;
+    return 0;
+}
+// @ 0x41fe30
+void entity::set_mode(unsigned m) { mode = (mode & 0xfffffffc) | m; }
+// @ 0x41fe50
+void entity::set_local(const matrix* m) { local = *(const smat*)m; }
+// @ 0x41fe70
+void entity::set_local_dirty(const mat4* m)
+{
+    local = *(const smat*)m;
+    dirty = 1;
+}
+// @ 0x41fe90
+void entity::set_local_scaled(const matrix* m, const vector4* k)
+{
+    local = *(const smat*)m;
+    scale = *k;
+    local.scale_rows(k);
+    recalc();
+}
+
+} // namespace rgl

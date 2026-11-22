@@ -18,7 +18,7 @@
 //
 // Writing. Every writer of the file (the launcher dialog, Video Options, the shadow-map fallback in
 // resource_manager.cpp) goes through rgl_config::save, so replacing it is the one place to keep the keys: the body below
-// is the faithful one (src/rgl/core/resource_io.cpp) plus the gfx lines. They carry g_gfx_saved: the values read at
+// is the faithful one (src/engine/resource/resource_io.cpp) plus the gfx lines. They carry g_gfx_saved: the values read at
 // start-up, as the launcher dialog (gfx_launcher.cpp) or the Video Options page (gfx_video_page.cpp) last set them.
 #include <windows.h>
 #include <stdio.h>
@@ -27,7 +27,7 @@
 #include <stdarg.h>
 #include "./gfx.h"
 
-FILE* mb_open_user_file(const char* name, const char* mode);          // 0x415160 (src/rgl/text_stream.cpp)
+FILE* mb_open_user_file(const char* name, const char* mode);          // 0x415160 (src/engine/io/text_stream.cpp)
 
 gfx_settings g_gfx = { 0, 1.0f, 0, 0.2f, 0 };
 gfx_settings g_gfx_saved = { 0, 1.0f, 0, 0.2f, 0 };

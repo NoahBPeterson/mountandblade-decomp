@@ -13,7 +13,7 @@ Start-up phases from `load_timing.txt` in the game folder (CrossOver, Apple Sili
 
 | phase | time | cause |
 |---|---:|---|
-| step 2 `parse_module_info` | **11.0 s** (11,002-11,012 ms, very stable; 13.1 s in the earlier 2026-10-26 runs) | `load_resource` lines -> `resmgr::load_pack` 0x41e150 for **148 `.brf` files, 76 MB** in `CommonRes/` (+ module resources); parsed token by token through the stream virtuals (`s->r_int`, `r_float`, `r_tstr`), `new body_part[n]`, `blocks.push_back`; src/rgl/core/resmgr.cpp:1100-1190 |
+| step 2 `parse_module_info` | **11.0 s** (11,002-11,012 ms, very stable; 13.1 s in the earlier 2026-10-26 runs) | `load_resource` lines -> `resmgr::load_pack` 0x41e150 for **148 `.brf` files, 76 MB** in `CommonRes/` (+ module resources); parsed token by token through the stream virtuals (`s->r_int`, `r_float`, `r_tstr`), `new body_part[n]`, `blocks.push_back`; src/engine/resource/resource_manager.cpp:1100-1190 |
 | step 6 `Loading Textures` | 1.84 s | 374 files, 156 MB DDS/TGA through `D3DXCreateTextureFromFileExA` (resource_io.cpp:350) |
 | `Finished` | 0.7 s | |
 | sounds (`mod_timing.txt` `sounds.txt`) | **57.8-58.2 s** with the real FMOD; 0 s with patches/devfast | ~360 `FSOUND_Sample_Load` (ticket 010) |
@@ -29,7 +29,7 @@ Memory: `.data` VirtualSize 143.9 MB static (ticket 003/016); texture 156 MB on 
 
 1. **Profiling harness** (portable): `perf_scope` macros + Tracy (or a small chrome-trace writer) around the frame phases; sampling via `perf`/Instruments externally. Port `patches/profile/sampler.cpp` idea to SIGPROF-based sampling for Linux/macOS. Redo the per-phase breakdown with *correct* symbol maps (the 2026-10-31 samples were symbolised against a different build and are unreliable below the module level).
 2. **BRF/TRF loading**:
-   a. read whole file into memory (`mem_stream` path exists: `bin_reader_b : mem_stream_inl`, resmgr.h:127);
+   a. read whole file into memory (`mem_stream` path exists: `bin_reader_b : mem_stream_inl`, resource_manager.h:127);
    b. add bulk accessors `r_floats(float*, n)`, `r_ints(int*, n)` to `stream_base`, used by `read_mesh/read_body/read_skel_anim` for vertex/keyframe arrays (the data is little-endian packed; one `memcpy` per array on LE hosts);
    c. parse each `.brf` on a worker (012) into a private `blocks` list, then merge in file order (`add(&b[i])` order must be kept: names resolve in order);
    d. optional on-disk cache of parsed resource tables (mmap-able), invalidated by file mtime like the `.trf`-vs-`.brf` check in `load_pack`.

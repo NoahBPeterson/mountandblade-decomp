@@ -11,29 +11,29 @@
 // labels, drop-downs, sliders, toggles and value texts of the original, at y = 0.70 - 0.04 k) are moved closer together
 // and down, and the four new rows go on top, where their lists have room to open below them: see GFX_Y.
 //
-// This file replaces init_screen (0x4e05c0): the faithful body of src/game/cls_map/cls_map.cpp with the rows added
+// This file replaces init_screen (0x4e05c0): the faithful body of src/game/app/winmain_and_menu_screens.cpp with the rows added
 // before the window goes to the GUI manager, and each y through GFX_Y. gfx_video_apply.cpp replaces the page's
 // frame_update (0x4d63b0), which reads the rows into g_gfx_saved and, on Done, after rgl_config::save has written
 // them, applies them (gfx_apply_saved: at the next Present, live, no restart needed).
-#include "../../src/include/image_addrs.h"
-#include "../../src/game/env_row.h"
-#include "../../src/game/music_player.h"
-#include "../../src/include/wl_marker.h"
-#include "../../src/game/cls_map/cls_map.h"
-#include "../../src/include/tableau_table.h"
-#include "../../src/include/prsnt_table.h"
-#include "../../src/game/cls_map/progress_bar.h"
+#include "../../src/platform/image_addrs.h"
+#include "../../src/game/data/env_row.h"
+#include "../../src/engine/audio/music_player.h"
+#include "../../src/platform/wl_marker.h"
+#include "../../src/game/app/winmain_and_menu_screens.h"
+#include "../../src/game/data/tableau_table.h"
+#include "../../src/game/data/prsnt_table.h"
+#include "../../src/game/ui/screens/progress_bar_and_load_screens.h"
 #include "../../src/game/config/config.h"
-#include "../../src/game/config/widget_mgr.h"
-#include "../../src/game/config/ui_widgets_c.h"
-#include "../../src/game/strat/gui_manager.h"
-#include "../../src/game/font.h"
-#include "../../src/game/ui/ui_frame.h"
-#include "../../src/game/shared_vars.h"
-#include "../../src/rgl/options.h"
-#include "../../src/include/render_flags.h"
-#include "../../src/include/skinmagic.h"
-#include "../../src/game/screen_records.h"
+#include "../../src/game/ui/widgets/widget_manager.h"
+#include "../../src/game/ui/widgets/text_editor_widget.h"
+#include "../../src/game/ui/gui_manager.h"
+#include "../../src/engine/render/font.h"
+#include "../../src/game/ui/widgets/ui_frame.h"
+#include "../../src/game/common/shared_vars.h"
+#include "../../src/game/config/options.h"
+#include "../../src/engine/render/render_flags.h"
+#include "../../src/engine/render/skinmagic.h"
+#include "../../src/game/ui/screens/screen_records.h"
 #include "./gfx.h"
 
 #define set_enabled_text(o) ((KeysPage*)this)->set_enabled_text((MissionUi*)(o))   // 0x4d6dd0
@@ -58,9 +58,9 @@ static __forceinline UiA* new_medium_button_i(MissionUi* parent, const tstring& 
     set_enabled_text(m);
 #define DD_ITEM(dd, key) { tstring k_(key); vt(dd)->d50(g_strtable_c.lookup(k_)); }
 #define DD_TEXT(dd, text) { tstring t_(text); vt(dd)->d50(&t_); }
-struct uv_pair { float u, v; uv_pair(float a, float b) { u = a; v = b; } };   // (cls_map.cpp's)
+struct uv_pair { float u, v; uv_pair(float a, float b) { u = a; v = b; } };   // (winmain_and_menu_screens.cpp's)
 
-#include "../../src/game/options_panel/list_modes.h"
+#include "../../src/game/data/list_modes.h"
 
 // The page's rows sit at y = 0.70 - 0.04 k (k = 0 .. 17, the two-line rows' parts a few hundredths off); the window is
 // 0.752 high. The four new rows take the top, 0.032 apart from GFX_TOP; GFX_Y maps every y of the original to

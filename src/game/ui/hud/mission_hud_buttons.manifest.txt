@@ -1,0 +1,2 @@
+../src/game/ui/hud/mission_hud_buttons.cpp  ??1Mission@@QAE@XZ  004d51d0  /O2 /MT /Gy /TP
+../src/game/ui/hud/mission_hud_buttons.cpp  ?frame_update@ItemRec@@UAEXM@Z  004d5290  /O2 /MT /Gy /TP

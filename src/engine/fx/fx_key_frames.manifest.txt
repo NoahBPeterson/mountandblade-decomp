@@ -1,0 +1,17 @@
+../src/engine/fx/fx_key_frames.cpp  ?set@quaternion@@QAEAAU1@ABM000@Z  00422db0  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?add@quaternion@@QAEXABU1@@Z  00422de0  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ??Hquaternion@@QBE?AU0@ABU0@@Z  00422e10  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?normalize@quaternion@@QAEXXZ  00422e40  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?dot@quaternion@@QBEMABU1@@Z  00423010  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?dot_negative@quaternion@@QBE_NABU1@@Z  00423040  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?quat_to_matrix@@YAXPAUmatrix@rgl@@PBUquaternion@@@Z  00423080  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?quat_to_axis_angle@@YAXPAUvector4@rgl@@PAMPBUquaternion@@@Z  00423160  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?phase@EnvRec@@QAEMXZ  004231f0  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?shape@EnvRec@@QAEMM@Z  004232b0  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?key_value@FxDef@@QAE?AUvector4@rgl@@H@Z  00423300  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?slerp@@YAXPAUquaternion@@PBU1@1PBM@Z  004238c0  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?nlerp@@YAXPAUquaternion@@PBU1@1PBM@Z  004239c0  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?lerp_value@FxDef@@QAE?AUvector4@rgl@@H@Z  00423390  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?mul@quaternion@@QBE?AU1@ABU1@@Z  00422eb0  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?mul_conj@quaternion@@QBE?AU1@ABU1@@Z  00422f60  /O2 /MT /Gy /TP
+../src/engine/fx/fx_key_frames.cpp  ?find@key_array@@QAEXPAHPAM1@Z  00423a50  /O2 /MT /Gy /TP

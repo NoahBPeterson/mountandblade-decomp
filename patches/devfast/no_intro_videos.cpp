@@ -1,6 +1,6 @@
 // patches/devfast/no_intro_videos.cpp: skip the two binkplay intro videos (patch set "devfast").
 //
-// CHANGES BEHAVIOUR: WinMain (cls_map.cpp) starts binkplay.exe for paradox.bik and taleworlds_intro.bik and waits up
+// CHANGES BEHAVIOUR: WinMain (winmain_and_menu_screens.cpp) starts binkplay.exe for paradox.bik and taleworlds_intro.bik and waits up
 // to ~30 s for them, which every test run under Wine pays. This makes the binkplay launches fail, as if binkplay.exe
 // were missing (which the original handles: g_video_played stays 0); any other process starts normally.
 #include "iat_hook.h"

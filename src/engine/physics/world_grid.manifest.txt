@@ -1,0 +1,9 @@
+../src/engine/physics/world_grid.cpp  ?insert@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@std@@QAE?AViterator@12@V312@ABQAUshape_base@@@Z  00424010  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ?add_shape@strategic_entity@rgl@@UAEXPAUshape_base@@@Z  00424100  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ??0NavCell@@QAE@XZ  004246f0  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ??Hiterator@?$vector@UNavCell@@V?$allocator@UNavCell@@@std@@@std@@QBE?AV012@H@Z  00424720  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ?resize@?$vector@UNavVert@@V?$allocator@UNavVert@@@std@@@std@@QAEXIUNavVert@@@Z  00424740  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ?erase@?$vector@UNavVert@@V?$allocator@UNavVert@@@std@@@std@@QAE?AViterator@12@V312@0@Z  004247e0  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ?add_tree@world@rgl@@QAEXPAUshape_base@@@Z  00425240  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ?reg_shape@world@rgl@@QAEXPAUshape_base@@@Z  00424170  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ?add_shape@world@rgl@@QAEXPAUshape_base@@@Z  004252c0  /O2 /MT /Gy /TP

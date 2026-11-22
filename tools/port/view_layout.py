@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """view_layout.py: compare two class definitions of one object (a "view" and the real class) at 32 and 64 bits.
 
-The original's objects are often declared by several classes (party/game.h Game, include/game_data.h GameData,
-mission5/game_2.h GameMapView, ...). At 32 bits they agree by construction (MB_LAYOUT32_ASSERT); at 64 bits every pointer,
+The original's objects are often declared by several classes (game/campaign/game_state_load.h Game, game/data/game_data.h GameData,
+game/campaign/map_builder_and_data_load.h GameMapView, ...). At 32 bits they agree by construction (MB_LAYOUT32_ASSERT); at 64 bits every pointer,
 tstring and vector widens, so a member at the same 32-bit offset can land at different 64-bit offsets in the two classes:
 a reader through one class misses what the other wrote. This tool lays both classes out with clang
 (-fdump-record-layouts, -fsyntax-only, fast) for the 32-bit target (build/port/linux-i686) and the 64-bit one

@@ -78,7 +78,7 @@ struct mat4 {
 };
 struct pos : rgl::matrix { mat3 rot3(const rgl::matrix& m) const; };   // 0x40a920
 
-// ---- the mesh / particle-system object (0x260 bytes, vtable 0x54a6f4; mesh.h of s00413320, psys.h of s00411a90) --
+// ---- the mesh / particle-system object (0x260 bytes, vtable 0x54a6f4; mesh.h of s00413320, particle_system.h of s00411a90) --
 struct elem30 { char b[0x30]; };                        // vector at mesh+0x60: skin vertices
 struct SkinVert {                                       // the same 0x30 bytes seen as a skinning record
     float w[4];                                         // 0x00

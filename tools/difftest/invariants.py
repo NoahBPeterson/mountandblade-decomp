@@ -53,8 +53,8 @@ NSLOTS = POOL_SIZE // SLOT
 # header so that a reviewer can check it against the source. A missing/changed declaration falls back to the
 # explicit constant and, failing that, disables that invariant (a wrong bound must never excuse a mismatch).
 
-_HEADERS = ("src/include/shape.h", "src/game/strat/strat_entity.h", "src/rgl/scene/scene_entity.h", "src/game/terrain_a/terrain.h",
-            "src/include/dialog_rec.h")
+_HEADERS = ("src/engine/physics/shape.h", "src/engine/scene/strategic_entity.h", "src/engine/scene/scene_entity.h", "src/game/terrain/terrain.h",
+            "src/game/dialog/dialog_rec.h")
 _decl_cache = {}
 
 
@@ -239,7 +239,7 @@ def _ground_face_counts(gen, inp):
 
 GFACE_INV = Invariant("GFace::n",
                       "the GFace::idx[4] / vtx[3][4] walk of the ground faces named by strategic_entity::ids[64] "
-                      "(strat_entity.h: GFace{int n; int idx[4]}, ids +0x174, nids +0x274)",
+                      "(strategic_entity.h: GFace{int n; int idx[4]}, ids +0x174, nids +0x274)",
                       _ground_face_counts, [(3, GFACE_CAP)]) if GFACE_CAP and 3 <= GFACE_CAP else None
 
 
@@ -306,7 +306,7 @@ ELEM_N_INV = Invariant("Elem::n", "the operand count of an operation (dialog_rec
 
 # (module, va) -> the invariants its inputs must satisfy. Keyed by the row's own module+VA, not by symbol:
 # a module rename or a second instantiation of the same source cannot silently pick up someone else's bound.
-# -- Mesh::poly_ray 0x52dfd0 (mission5/mesh_3.h: Mesh_s2dfd0, polys +0x28, verts +0x18, vec first/last +4/+8;
+# -- Mesh::poly_ray 0x52dfd0 (game/editor/poly_mesh_pick.h: Mesh_s2dfd0, polys +0x28, verts +0x18, vec first/last +4/+8;
 #    mpoly 0x64 bytes, idx[4] +0x28, count +0x48; mface 0x18). The function builds the polygon's points from
 #    verts[poly.idx[i]] for i < count into a local pts[4]: count 2 leaves pts[2] as the 0xCCCCCCCC stack fill and
 #    makes a degenerate segment whose edge tests are decided by x87 rounding, and an index past either vector
@@ -338,12 +338,12 @@ POLY_RAY_INV = Invariant("mpoly", "the polygon Mesh::poly_ray walks (index < pol
                          _poly_ray, [(3, 4)])
 
 SPECS = {
-    ("shapes", 0x40A000): [FACE_INV],
-    ("shapes", 0x40B0F0): [FACE_INV],
-    ("strat_entity", 0x42B080): [NIDS_INV, GFACE_INV],
-    ("terrain_a", 0x465AF0): [TERRAIN_INV],
+    ("collision_shapes", 0x40A000): [FACE_INV],
+    ("collision_shapes", 0x40B0F0): [FACE_INV],
+    ("strategic_entity", 0x42B080): [NIDS_INV, GFACE_INV],
+    ("terrain_cells", 0x465AF0): [TERRAIN_INV],
     ("script_interpreter", 0x49FA10): [ELEM_N_INV],
-    ("mesh_poly_ray", 0x52DFD0): [POLY_RAY_INV],
+    ("poly_mesh_poly_ray_edit", 0x52DFD0): [POLY_RAY_INV],
 }
 
 

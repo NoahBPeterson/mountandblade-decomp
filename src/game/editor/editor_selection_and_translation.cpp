@@ -1,0 +1,1750 @@
+// editor_selection_and_translation.cpp: 0x4c48d0..0x4ca600 (TU map 102 "gui_manager_2" + 103 "item_page", merged: nothing in the range calls
+// forward out of it and every class change inside it recurs on both sides, see MIGRATION.md; the end is proven by
+// 0x4ca550 -> 0x4ca600). The editor's record loaders and head objects, the item records, the map editor dialogs,
+// the mesh block reader, the layout/tableau group and the language-file exporter.
+// Migrated from slices s004c46d0, s004c5080, s004c5a20, s004c6330, s004c6ca0, s004c7290, s004c7bf0, s004c84f0,
+// s004c8ca0 and s004ca550 (0x4ca550).
+#include "platform/image_addrs.h"
+#include "game/agent/animator.h"      // Animator g_anim (0x8ed4f60)
+#include "game/mission/trial_mode.h"   // g_trial_mode (canonical)
+#include "platform/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "game/editor/editor_selection_and_translation.h"
+#include "engine/core/pool.h"                // Pool<T>::~Pool (0x4c6e30)
+#include "game/campaign/event.h"                  // Event: the record of the instance defined here
+#include "game/data/mission_item_recs.h"   // ItemA::reset_screen (0x4c6e10)
+#include "game/terrain/terrain.h"   // Terrain::conv_build_scene (0x4c8630)
+#include "engine/scene/world.h"                  // rgl::world (hf, ground): conv_build_scene
+#include "engine/scene/scene_entity.h"           // rgl::entity::local (GameApp::refresh_editor_dialog)
+#include "game/mission/placed_obj.h"         // PlacedObj: the mission's props (GameApp::refresh_editor_dialog / refresh_editor_objects)
+#include "game/terrain/nav_data.h"  // NavData, NavCell (the ground's polygons)
+#include "engine/physics/shape.h"            // face (NavCell::obj)
+#include "engine/physics/height_field.h"     // HeightField, HCell
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "engine/scene/frustum.h"
+#include "game/ui/screens/character_sheet/char_sheet_panel.h"   // CharSheet (0x4c4cc0)
+#include "game/campaign/campaign_screen.h"   // CampaignScreen (0x4c49f0, write_stream 0x4c4b70, read_stream 0x4c4c00)
+#include "engine/math/mat4_include.h"
+#include "engine/math/vec.h"
+#include "engine/core/vec_elems.h"   // FaceTexture: the 0xb0-byte element (std::allocator<FaceTexture>::destroy 0x4c8ab0 is defined here)
+#include "engine/core/ptr_tag.h"
+#include "engine/physics/phys_set.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/item_kind_include.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/party/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/dialog/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/skill_rec.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/render/skin.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "game/data/string_table.h"   // (listed directly: StringTable::Str::translated's address annotation)
+#include "engine/audio/sound_mgr.h"      // SoundMgr g_sound_mgr (0x5aa128): defined here, with the destructor 0x4c6aa0
+// canonical declarations of the callees this module reaches through its layout views (definitions in other modules)
+#include "game/config/config.h"     // Config (init_defaults, load_file), rec34_table (load_used 0x4be560)
+#include "game/data/trigger_vecs.h"        // SimpleTriggerVec (resize 0x4c1e10)
+#include "game/ui/widgets/widget_base.h"      // MissionUi (ResultWindow's buttons)
+#include "game/ui/widgets/text_editor_widget.h"  // UiE: ResultWindow::box38, the party-name box
+#include "game/ui/widgets/container.h"       // NodeA: the UI root's windows (wheel_step, pop_window)
+#include "game/data/module_option_records.h"
+#include "game/data/menu_rec.h"   // g_menus 0x5e29b0
+#include "engine/scene/scene_entity.h"   // rgl::entity (Mission::edit_obj, refresh 0x4c77c0 copies its frame)
+#include "game/data/presentation.h"                       // widget_mgr, g_presentation (0x5e299c)
+extern int g_propkind_count;                                // 0x5e29e0
+#include "game/common/shared_vars.h"
+#include "game/data/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in game/app/options_dialog_and_module_tables.cpp)
+#include "game/agent/animator.h"
+#include "game/dialog/dialog_mgr.h"
+#include "game/data/tableau_table.h"   // TableauTbl: conv_map_codes fills game_tableaus
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+char g_loading = 1;                                // 0x5a9c38 (loader thread runs while set)
+const char* g_conv_names[3] = {"tab_game_character_sheet", "tab_game_inventory_window", "tab_game_party_window"};  // 0x5a9c98
+HANDLE g_mt_event;                                 // 0x5e28d8 (.bss)
+CRITICAL_SECTION g_mt_cs;                          // 0x5e28dc (.bss)
+extern const float g_54ab2c = 0.0625f;             // 0x54ab2c (rdata: the sample volume scale of music_set::load; a literal here is reassociated by cl)
+
+#include "game/data/prsnt_rec.h"   // PresentationRec::read 0x4c23f0 (game/app/options_dialog_and_module_tables.cpp)
+
+#pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
+#pragma warning(disable:4700)     // 0x4c77c0: the matrix is left unread when no record is selected
+
+// @ 0x4c48d0
+// Loader (ret 4): reads two tstrings and an int into locals, then the count at +4, rebuilds the 0x34-byte
+// records and counts the ones whose 0x4be470 load succeeded; finishes the list.
+rec34_table g_scripts;                                 // 0xa75eb0 (.bss; constructed by the compiler: rec_table::rec_table 0x4be520, destructor below)
+
+// the atexit destructor of g_scripts (the original's stub 0x5483c0)
+rec34_table::~rec34_table()
+{
+    rec34* r = records;
+    if (r) {
+        delete[] r;
+        records = 0;
+    }
+}
+
+void rec34_table::load(stream_base& s)
+{
+    tstring a;
+    tstring b;
+    int dummy;
+    s.r_tstr(&a);
+    s.r_tstr(&b);
+    s.r_int(&dummy);
+    s.r_int(&count);
+    if (records != 0) {
+        delete[] records;                               // rec34's vector deleting destructor 0x4318c0
+        records = 0;
+    }
+    success = 0;
+    records = new rec34[count];     // the compiler's vector-ctor-iterator expansion: cookie, then name/body per record
+    for (int i = 0; i < count; i++) {
+        if ((char)(*this)[i].read(&s))      // rec34::read returns a char (config.cpp declares int for the same code)
+            success++;
+    }
+    load_used();   // 0x4be560
+}                                       // a and b are destroyed by the epilogue, b first
+
+// @ 0x4c49f0
+CampaignScreen::CampaignScreen()
+{
+    rgl::frustum* f = &cam;
+    WL_MARKER(12)
+    f->perspective = 1;
+    f->nearz = 0.2f;
+    f->farz = 300.0f;
+    f->left = -0.1f;
+    f->right = 0.1f;
+    f->bottom = -0.07f;
+    f->top = 0.07f;
+    f->build_planes();
+    cam.m.o = vector4(0, 0, 10);
+    target = vector4(0, 0, 0);
+    velocity = vector4(0, 0, 0);
+    f2b0 = 0;
+    f64 = 0;
+    f2b4 = 1.0f;
+    f2b8 = 5.0f;
+    WL_MARKER(13)
+}
+
+// @ 0x4c4b70
+// (ret 4, this in ecx) Writes the vector4s part by part, each through the stream the previous call returns
+// (stream_base::w_float, slot 3) (the target and velocity triples, then the int at +0x2b0, the two floats).
+void CampaignScreen::write_stream(stream_base* w)
+{
+    vector4* p = &target;
+    w->w_float(&p->x).w_float(&p->y).w_float(&p->z);
+    p = &velocity;
+    w->w_float(&p->x).w_float(&p->y).w_float(&p->z);
+    w->w_float(&f2b0);
+    w->w_float(&f2b4);
+    w->w_float(&f2b8);
+}
+
+// @ 0x4c4c00
+// Reader counterpart of 0x4c4b70 (ret 4, this in ecx): the same chained calls through stream_base::r_float (slot 14).
+void CampaignScreen::read_stream(stream_base* w)
+{
+    vector4* p = &target;
+    w->r_float(&p->x).r_float(&p->y).r_float(&p->z);
+    p = &velocity;
+    w->r_float(&p->x).r_float(&p->y).r_float(&p->z);
+    w->r_float(&f2b0);
+    w->r_float(&f2b4);
+    w->r_float(&f2b8);
+}
+
+// @ 0x4c4cc0
+CharSheet::CharSheet()
+{
+    f_2dc = -1;
+    scene = 0;
+}
+
+// @ 0x4c4d10
+// std::deque<int>::_Tidy: what ~deque tail-calls (pops every element, frees the blocks and the map). The window manager's id stack
+// (g_windows.dq, 0xa739f8: the atexit stub is `mov ecx, 0xa739f8; jmp 0x4c4d10`) and the agent view's tail (Tail2) run it out of line.
+template void std::deque<int>::_Tidy();
+
+// @ 0x4c4d80
+template void std::list<std::pair<const int, Glyph> >::clear();
+
+// @ 0x4c4dc0
+// std::list::_Buynode() of the glyph table's list (0x20-byte values: a 0x28-byte node linked to itself on both sides)
+template GlyphList::_Nodeptr GlyphList::_Buynode();
+
+// @ 0x4c4e50
+// std::list::_Buynode(next, prev, value) of the same list (ret 0xc): the node's constructor is 0x4be9c0.
+template GlyphList::_Nodeptr GlyphList::_Buynode(GlyphList::_Nodeptr, GlyphList::_Nodeptr, const std::pair<const int, Glyph>&);
+
+// @ 0x4c4ee0
+// The destructor of the world-map Terrain: the std::vector member frees its block and clears first/last/end, then the member
+// destructors destroy the string at +0x845e784 and the layer array's destructor the fifteen 0x28-byte layer-name strings.
+Terrain::~Terrain()
+{
+}
+
+// 0x4c4f40 is MenuRec's vector deleting destructor (game/data/menu_rec.h ~MenuRec): the compiler emits it where the table is
+// deleted (game/app/winmain_and_menu_screens.cpp FinalCleanup, where its row is).
+
+// @ 0x4c5010 (std::vector<CapDef>'s uninitialised fill: the copy through its allocator 0x4c1b20, in the STL's EH frame)
+template void std::_Uninit_fill_n(CapDef*, unsigned, const CapDef&, std::allocator<CapDef>&, std::_Nonscalar_ptr_iterator_tag);
+
+// @ 0x4c5080 (std::vector<ArrSet>'s copy constructor's uninitialised copy, from const_iterators; catch funclet 0x4c50ea)
+template ArrSet* std::_Uninit_copy(std::vector<ArrSet>::const_iterator, std::vector<ArrSet>::const_iterator, ArrSet*, std::allocator<ArrSet>&, std::_Nonscalar_ptr_iterator_tag);
+
+// @ 0x4c5190
+void gui_manager::set_view(const float* v)
+{
+    vector4 lo;
+    vector4 hi;
+    vx = v[0];
+    vy = v[1];
+    vs = 1.0f;
+    if (vx > 0.95f)
+        vx = 0.95f;
+    if (vx < 0.05f)
+        vx = 0.05f;
+    if (!overlay)
+        return;
+    overlay->calc_bounds(&lo, &hi);   // 0x438d80
+    if (lo.x + vx < 0.011f) {
+        vx = 0.011f - lo.x;
+    } else if (hi.x + vx > 0.989f) {
+        vx = 0.989f - hi.x;
+    }
+    if (lo.y + vy < 0.011f) {
+        vy = 0.011f - lo.y;
+    } else if (hi.y + vy > 0.739f) {
+        vy = 0.739f - hi.y;
+    }
+    if (hi.y - lo.y > 0.728f) {
+        float s = 0.728f / (hi.y - lo.y);
+        vs = s;
+        vy = 0.011f - s * lo.y;
+    }
+}
+
+// Wheel step: forward the mask to the active child (+0x10), else to the last element of the child vector.
+// @ 0x4c52f0
+void gui_manager::wheel_step(int mask)
+{
+    if (ui_active) {
+        ui_active->key(mask);
+    } else if (!objs.empty()) {
+        objs[objs.size() - 1]->key(mask);
+    }
+}
+
+// @ 0x4c5330
+void gui_manager::clear_selection()
+{
+    char r = 0;
+    dirty = 1;
+    if (ui_active) {
+        ui_active->key(0x20000);
+    } else if (!objs.empty()) {
+        objs[objs.size() - 1]->key(0x20000);
+    }
+    if (objs[objs.size() - 1] != 0) {
+        delete objs[objs.size() - 1];
+        objs[objs.size() - 1] = 0;
+    }
+    if (!objs.empty())
+        objs.pop_back();
+    close_pending = r;
+}
+
+// @ 0x4c53f0
+void PolyMesh::select_mode(int mode, char on)
+{
+    if (on)
+        cur = verts.size() - 1;
+    else
+        cur = -1;
+    if (mode == 0) {
+        for (unsigned i = 0; i < verts.size(); i++)
+            verts[i].flag = on;
+    } else if (mode == 1) {
+        for (unsigned i = 0; i < edges.size(); i++)
+            edges[i].flag = on;
+    } else if (mode == 2) {
+        for (unsigned i = 0; i < faces.size(); i++)
+            faces[i].flag = on;
+    }
+}
+
+// @ 0x4c54f0
+inline __declspec(noinline) void PolyMesh::calc_vertex_mode(int mode)
+{
+    for (unsigned i = 0; i < verts.size(); i++)
+        verts[i].mark = 0;
+    if (mode == 0) {
+        for (unsigned i = 0; i < verts.size(); i++)
+            if (verts[i].flag)
+                verts[i].mark = 1;
+    } else if (mode == 1) {
+        for (unsigned i = 0; i < edges.size(); i++)
+            if (edges[i].flag) {
+                verts[edges[i].v0].mark = 1;
+                verts[edges[i].v1].mark = 1;
+            }
+    } else {
+        for (unsigned i = 0; i < faces.size(); i++)
+            if (faces[i].flag)
+                for (int k = 0; k < faces[i].n; k++)
+                    verts[faces[i].vid[k]].mark = 1;
+    }
+}
+
+// @ 0x4c5670
+inline __declspec(noinline) void PolyMesh::calc_edge_mode(int mode)
+{
+    for (unsigned i = 0; i < edges.size(); i++)
+        edges[i].mark = 0;
+    if (mode == 0) {
+        for (unsigned i = 0; i < edges.size(); i++)
+            if (verts[edges[i].v0].flag || verts[edges[i].v1].flag)
+                edges[i].mark = 1;
+    } else if (mode == 1) {
+        for (unsigned i = 0; i < edges.size(); i++)
+            if (edges[i].flag)
+                edges[i].mark = 1;
+    } else {
+        for (unsigned i = 0; i < faces.size(); i++)
+            if (faces[i].flag)
+                for (int k = 0; k < faces[i].n; k++)
+                    edges[faces[i].eid[k]].mark = 1;
+    }
+}
+
+// @ 0x4c57d0
+inline __declspec(noinline) void PolyMesh::swap_face_vertices(int a, int b)
+{
+    for (unsigned i = 0; i < edges.size(); i++) {
+        if (edges[i].v0 == a)
+            edges[i].v0 = b;
+        else if (edges[i].v0 == b)
+            edges[i].v0 = a;
+        if (edges[i].v1 == a)
+            edges[i].v1 = b;
+        else if (edges[i].v1 == b)
+            edges[i].v1 = a;
+    }
+}
+
+// @ 0x4c5840
+void PolyMesh::swap_poly_normals(int a, int b)
+{
+    for (unsigned i = 0; i < faces.size(); i++) {
+        for (int j = 0; j < faces[i].n; j++) {
+            if (faces[i].eid[j] == a)
+                faces[i].eid[j] = b;
+            else if (faces[i].eid[j] == b)
+                faces[i].eid[j] = a;
+        }
+    }
+}
+
+// @ 0x4c58c0
+void PolyMesh::swap_poly_colors(int a, int b)
+{
+    for (unsigned i = 0; i < faces.size(); i++) {
+        for (int j = 0; j < faces[i].n; j++) {
+            if (faces[i].vid[j] == a)
+                faces[i].vid[j] = b;
+            else if (faces[i].vid[j] == b)
+                faces[i].vid[j] = a;
+        }
+    }
+}
+
+// @ 0x4c5940
+void PolyMesh::remove_vertex_from_polys(int v)
+{
+    for (unsigned i = 0; i < faces.size(); i++) {
+        for (int k = 0; k < faces[i].n; k++) {
+            if (faces[i].eid[k] == v) {
+                remove_face(i);
+                i--;
+                break;
+            }
+        }
+    }
+}
+
+
+// @ 0x4c59c0
+void PolyMesh::remove_vertex_from_edges(int v)
+{
+    for (unsigned i = 0; i < edges.size(); i++) {
+        if (edges[i].v0 == v || edges[i].v1 == v) {
+            remove_edge(i);
+            i--;
+        }
+    }
+}
+
+// @ 0x4c5a20
+void PolyMesh::update_vertex_mode()
+{
+    cur = -1;
+    for (unsigned i = 0; i < verts.size(); i++)
+        verts[i].flag = 0;
+    if (mode == 1) {
+        for (unsigned i = 0; i < edges.size(); i++) {
+            if (edges[i].flag) {
+                verts[edges[i].v0].flag = 1;
+                verts[edges[i].v1].flag = 1;
+                cur = edges[i].v1;
+            }
+        }
+    } else {
+        for (unsigned i = 0; i < faces.size(); i++) {
+            if (faces[i].flag) {
+                for (int k = 0; k < faces[i].n; k++) {
+                    verts[faces[i].vid[k]].flag = 1;
+                    cur = faces[i].vid[k];
+                }
+            }
+        }
+    }
+}
+
+// @ 0x4c5b60
+void PolyMesh::update_edge_mode()
+{
+    cur = -1;
+    for (unsigned i = 0; i < edges.size(); i++)
+        edges[i].flag = 0;
+    if (mode == 0) {
+        for (unsigned i = 0; i < edges.size(); i++) {
+            if (verts[edges[i].v0].flag || verts[edges[i].v1].flag)
+                edges[i].flag = 1;
+        }
+    } else {
+        for (unsigned i = 0; i < faces.size(); i++) {
+            if (faces[i].flag) {
+                for (int k = 0; k < faces[i].n; k++)
+                    edges[faces[i].eid[k]].flag = 1;
+            }
+        }
+    }
+}
+
+// @ 0x4c5c80
+void PolyMesh::update_poly_mode()
+{
+    cur = -1;
+    for (unsigned i = 0; i < faces.size(); i++)
+        faces[i].flag = 0;
+    if (mode == 0) {
+        for (unsigned i = 0; i < faces.size(); i++) {
+            for (int k = 0; k < faces[i].n; k++)
+                if (verts[faces[i].vid[k]].flag)
+                    faces[i].flag = 1;
+        }
+    } else {
+        for (unsigned i = 0; i < faces.size(); i++) {
+            for (int k = 0; k < faces[i].n; k++)
+                if (edges[faces[i].eid[k]].flag)
+                    faces[i].flag = 1;
+        }
+    }
+}
+
+// @ 0x4c5dc0
+void PolyMesh::refresh_selection()
+{
+    if (mode == 0) {
+        calc_vertex_mode(mode);
+        for (unsigned i = 0; i < edges.size(); i++) {
+            if (verts[edges[i].v0].mark) {
+                verts[edges[i].v1].flag = 1;
+                cur = edges[i].v1;
+            }
+            if (verts[edges[i].v1].mark) {
+                verts[edges[i].v0].flag = 1;
+                cur = edges[i].v0;
+            }
+        }
+    } else if (mode == 1) {
+        calc_vertex_mode(mode);
+        for (unsigned i = 0; i < edges.size(); i++) {
+            if (verts[edges[i].v0].mark || verts[edges[i].v1].mark)
+                edges[i].flag = 1;
+        }
+    } else {
+        calc_edge_mode(mode);
+        for (unsigned i = 0; i < faces.size(); i++) {
+            for (int k = 0; k < faces[i].n; k++)
+                if (edges[faces[i].eid[k]].mark)
+                    faces[i].flag = 1;
+        }
+    }
+}
+
+// @ 0x4c5f60
+// For the edge *e: the ring position of the edge in its first face, and the face's node there (*a) and at the next
+// ring position (*b).
+void PolyMesh::find_triangle(const int* e, int* a, int* b)
+{
+    int ei = *e;
+    int idx = -1;
+    for (int k = 0; k < faces[edges[ei].face[0]].n; k++) {
+        if (ei == faces[edges[ei].face[0]].eid[k]) {
+            idx = k;
+            break;
+        }
+    }
+    *a = faces[edges[ei].face[0]].vid[idx];
+    *b = faces[edges[*e].face[0]].vid[(idx + 1) % faces[edges[*e].face[0]].n];
+}
+
+// @ 0x4c6010
+// Looks `key` up in the hash bucket of its hash (0x433bb0): the keys of the bucket are one 0x10-stride vector (+4),
+// the translations the vector of the same bucket in the second table (+0xdf34).
+tstring* StrTable::find(const tstring* key)
+{
+    unsigned h = hash_string(key);
+    std::vector<tstring>& b = keys[h];
+    int n = (int)b.size();
+    for (int i = 0; i < n; i++) {
+        if (b[i].equals(*key))
+            return &vals[h][i];
+    }
+    return 0;
+}
+
+// @ 0x4c6080
+// Translated name: the table's text for `key`, else the name with the "{***}" placeholder appended.
+tstring PartyTemplate::translated()
+{
+    tstring* r = g_strtable.find(&key);
+    if (r)
+        return *r;
+    tstring s = name;
+    {
+        tstring door("{***}");
+        s.append(door);
+    }
+    return s;
+}
+
+// @ 0x4c6100
+tstring SkillRec::translated()
+{
+    tstring* r = g_strtable.find(&key);
+    if (r)
+        return *r;
+    tstring s = name;
+    {
+        tstring door("{***}");
+        s.append(door);
+    }
+    return s;
+}
+
+// @ 0x4c6190
+tstring* SkillRec::desc_name()
+{
+    tstring* r;
+    {
+        tstring prefix("_desc");
+        r = g_strtable.find(&(key + prefix));
+    }
+    return r ? r : &desc;
+}
+
+// @ 0x4c61f0
+tstring SkillRec::translated_desc()
+{
+    tstring* r;
+    {
+        tstring prefix("_desc");
+        r = g_strtable.find(&(key + prefix));
+    }
+    if (r)
+        return *r;
+    {
+        tstring s = desc;
+        {
+            tstring door("{***}");
+            s.append(door);
+        }
+        return s;
+    }
+}
+
+// @ 0x4c62b0
+tstring Troop::translated()
+{
+    tstring* r = g_strtable.find(&key);
+    if (r)
+        return *r;
+    tstring s = name;
+    {
+        tstring door("{***}");
+        s.append(door);
+    }
+    return s;
+}
+
+// @ 0x4c6330
+tstring Troop::translated_plural()
+{
+    tstring* r;
+    {
+        tstring suffix("_pl");
+        r = g_strtable.find(&(key + suffix));
+    }
+    if (r)
+        return *r;
+    {
+        tstring s = plural;
+        {
+            tstring door("{***}");
+            s.append(door);
+        }
+        return s;
+    }
+}
+
+// @ 0x4c63f0
+tstring QuestRec::translated()
+{
+    tstring* r = g_strtable.find(&key);
+    if (r)
+        return *r;
+    tstring s = name;
+    {
+        tstring door("{***}");
+        s.append(door);
+    }
+    return s;
+}
+
+// @ 0x4c6470
+tstring QuestRec::translated_text()
+{
+    tstring* r;
+    {
+        tstring suffix("_text");
+        r = g_strtable.find(&(key + suffix));
+    }
+    if (r)
+        return *r;
+    {
+        tstring s = desc;
+        {
+            tstring door("{***}");
+            s.append(door);
+        }
+        return s;
+    }
+}
+
+// @ 0x4c6530
+tstring Party::translated()
+{
+    if (flag)
+        return name;
+    tstring* r = g_strtable.find(&key);
+    if (r)
+        return *r;
+    tstring s = name;
+    {
+        tstring door("{***}");
+        s.append(door);
+    }
+    return s;
+}
+
+static inline const char* cs(char** pbuf) { return *pbuf ? *pbuf : (const char*)pbuf; }
+
+// @ 0x4c6620
+void PlacedObj::format(char* out)
+{
+    if (kind == 1) {
+        tstring key("ui_entry_point_entrypointname");
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), value);
+    } else if (kind == 5) {
+        tstring key("ui_passage_menu_item_passagename");
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), m1a4);
+    } else if (kind == 4) {
+        if (id >= 0 && id < g_ptype_count) {
+            tstring key("ui_plant_plantname");
+            const char* name = g_ptypes[id].name.c_str();
+            _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), name);
+        } else {
+            _snprintf(out, 0x80, "INVALID PLANT");
+        }
+    } else if (kind == 2 || kind == 6) {
+        if (id >= 0 && id < g_item_kind_count) {
+            tstring key("ui_item_itemname");
+            _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), g_items[id].display_name()->c_str());
+        } else {
+            _snprintf(out, 0x80, "INVALID ITEM");
+        }
+    } else if (kind == 0) {
+        tstring key("ui_prop_propname");
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), cs(&name.buf));
+    } else {
+        tstring key("ui_unknown_unknownname");
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), name.c_str());
+    }
+}
+
+// @ 0x4c6860
+tstring FactionRec::translated()
+{
+    if (flag)
+        return name;
+    tstring* r = g_strtable.find(&key);
+    if (r)
+        return *r;
+    tstring s = name;
+    {
+        tstring door("{***}");
+        s.append(door);
+    }
+    return s;
+}
+
+// @ 0x4c6900
+// the atexit destructor of g_presentations (the original's stub 0x548400 calls this)
+PresentationTable g_presentations;                      // 0xa75f2c (.bss; constructed by the compiler: rec_table::rec_table 0x4be520)
+
+PresentationTable::~PresentationTable()
+{
+    if (records) {
+        delete[] records;
+        records = 0;
+    }
+}
+
+// @ 0x4c6950
+void PresentationTable::fill_records(stream_base* s)
+{
+    tstring a, b;
+    s->r_tstr(&a);
+    s->r_tstr(&b);
+    int version;
+    s->r_int(&version);                                  // the file's version word (unused)
+    s->r_int(&count);                                     // the record count, +4
+    if (records) {                                      // retire(), open-coded as in the original 0x4c69a5..0x4c69e2
+        delete[] records;
+        records = 0;
+    }
+    records = new PresentationRec[count];               // 0x4c69e9: the array-new expansion builds each entry
+    for (int i = 0; i < count; i++)
+        records[i].read(*s);                             // 0x4c23f0
+    load_used();                                        // 0x4bdec0: the presentation codes
+    // void: the original sets no eax, so its "return value" is whatever the last local destructor (tstring
+    // 0x42bc40) leaves in eax, and no caller reads it (game/data/module_files_loader.cpp discards it).
+}
+
+// @ 0x4c6aa0
+// The sound player's destructor (the original's atexit function 0x548410 for g_sound_mgr jumps here; its sound-definition and
+// group arrays are freed here, the channel vector by the member destructor).
+SoundMgr::SoundMgr()
+{
+    slot[125] = 32;                 // the original image's dword at 0x5aa36c (g_sound_mgr + 0x244); the rest is zero
+}
+SoundMgr::~SoundMgr()
+{
+    if (defs) {
+        delete[] defs;
+        defs = 0;
+    }
+    if (groups) {
+        delete[] groups;
+        groups = 0;
+    }
+}
+SoundMgr g_sound_mgr;                                       // 0x5aa128 (.bss; the compiler registers ~SoundMgr with atexit)
+
+// @ 0x4c6b30
+// Morph-target pose: clears the target's per-point offsets, finds the key frame nearest to the record's key time and
+// stores (frame vertex - rest vertex) for every point.
+void Skin::place(int e)
+{
+    rgl::mesh* m = head->lists[0][0];
+    for (unsigned i = 0; i < m->points.size(); i++) {
+        vector4 z(0.0f, 0.0f, 0.0f);
+        face_keys[e].delta[i] = z;
+    }
+    int lo, hi;
+    float frac;
+    {
+        float t = (float)face_keys[e].f20;
+        m->kf.find(&lo, &hi, &frac, &t);
+    }
+    int k = frac < 0.5f ? lo : hi;
+    if (k >= 0 && k < m->kf.count) {
+        for (unsigned i = 0; i < m->points.size(); i++) {
+            const vector4& r = m->points[i].a;
+            const vector4& f = m->kf.frames[k].verts[i];
+            vector4 d(f.x - r.x, f.y - r.y, f.z - r.z);
+            face_keys[e].delta[i] = d;
+        }
+    }
+}
+
+// @ 0x4c6ca0
+tstring* menu_item::door_text()
+{
+    tstring* r;
+    {
+        tstring door("_door");
+        r = g_strtable.find(&(key + door));
+    }
+    return r ? r : &text;
+}
+
+// @ 0x4c6d00
+// Translated "_door" text of a menu door: the table's text for key + "_door", else the door's text with the
+// "{***}" placeholder appended.
+tstring menu_item::translated_door()
+{
+    tstring* r;
+    {
+        tstring suffix("_door");
+        r = g_strtable.find(&(key + suffix));
+    }
+    if (r)
+        return *r;
+    {
+        tstring s = text;
+        {
+            tstring door("{***}");
+            s.append(door);
+        }
+        return s;
+    }
+}
+
+// @ 0x4c6dc0
+void Mission::set_object_target(int n)
+{
+    if (props[n].ent) {
+        PlacedObj* o = &props[n];
+        o->ent->set_local_scaled_dirty(&o->frame, &o->scale);   // slot 23
+    }
+}
+
+// @ 0x4c6e00
+void reset_gui()
+{
+    g_gui.reset();
+}
+
+// @ 0x4c6e10 (slot 1 of the game menu record ItemA: drop the window)
+void ItemA::reset_screen()
+{
+    g_gui.reset();
+    win = 0;
+}
+
+// @ 0x4c6e30 (the event pool's destructor, engine/core/pool.h: the copy the linker kept for every Pool<T>)
+template Pool<Event>::~Pool();
+
+// the _Ufill / _Ucopy members of game/editor/poly_mesh_edge_face_ops.cpp's vector instantiations: frameless, so /OPT:ICF keeps one copy of
+// each shape for the image (_Insert_n 0x4cbf90 / 0x4cc430, the copy constructors 0x4cc350 / 0x4cc680 / 0x4cc830, operator=
+// 0x4ccc00 / 0x4ccd80 call these)
+// @ 0x4c6eb0
+template Constraint* std::vector<Constraint>::_Ufill(Constraint*, size_t, const Constraint&);
+// @ 0x4c6ee0
+template GlyphIt* std::vector<GlyphIt>::_Ufill(GlyphIt*, size_t, const GlyphIt&);
+// @ 0x4c6f10
+template CapDef* std::vector<CapDef>::_Ucopy(CapDef*, CapDef*, CapDef*);
+// @ 0x4c6f30
+template GlyphIt* std::vector<GlyphIt>::_Ucopy(GlyphIt*, GlyphIt*, GlyphIt*);
+// @ 0x4c6f50 (the copy constructor's: from const_iterators, onto map_builder_and_data_load.cpp's _Uninit_copy 0x524cd0)
+template tstring* std::vector<tstring>::_Ucopy(std::vector<tstring>::const_iterator, std::vector<tstring>::const_iterator, tstring*);
+// @ 0x4c6f70
+template Constraint* std::vector<Constraint>::_Ucopy(Constraint*, Constraint*, Constraint*);
+
+// @ 0x4c6f90
+void GameApp::refresh_multisample_list(char use_sel)
+{
+    HWND hWnd = GetDlgItem(options_hwnd, 0x465);
+    if (!hWnd)
+        return;
+    SendMessageA(hWnd, 0x14b, 0, 0);                    // 0x184
+    unsigned count = m_pD3D->GetAdapterCount();
+    for (unsigned i = 0; i < count; ++i) {
+        int kind;
+        if (use_sel) {
+            kind = g_launcher_cfg.display_bits;
+            if (kind == 0) {
+                int m = mode.Format;
+                if (m == 0x17 || m == 0x19 || m == 0x1a || m == 0x18 || m == 0x1e)
+                    kind = 0x10;
+                else
+                    kind = 0x20;
+            }
+        } else {
+            int sel = SendMessageA(GetDlgItem(options_hwnd, 0x45f), 0x147, 0, 0);   // 0x147
+            if (sel == 0) {
+                int m = mode.Format;
+                if (m == 0x17 || m == 0x19 || m == 0x1a || m == 0x18 || m == 0x1e)
+                    kind = 0x10;
+                else
+                    kind = 0x20;
+            } else {
+                char buf[0x80];
+                SendMessageA(GetDlgItem(options_hwnd, 0x45f), 0x148, sel, (LPARAM)buf);   // CB_GETLBTEXT
+                tstring tmp(buf);
+                char c = ' ';
+                int p = tmp.find(c, 0);
+                kind = atoi(tmp.substr(p + 1, p + 3).c_str());
+            }
+        }
+        int data = 0x16 + (kind == 0x10);
+        bool missing;
+        {
+            tstring off("ui_off");
+            missing = SendMessageA(hWnd, 0x14c, 0, (LPARAM)((StrTable&)g_strtable).lookup(off)->c_str()) < 0;   // LB_GETTEXT
+        }
+        if (missing) {
+            int idx;
+            {
+                tstring off("ui_off");
+                idx = SendMessageA(hWnd, 0x14a, 0, (LPARAM)((StrTable&)g_strtable).lookup(off)->c_str());  // 0x180
+            }
+            SendMessageA(hWnd, 0x151, idx, 1);                                          // 0x19a
+        }
+        DWORD flag;
+        if (m_pD3D->CheckDeviceMultiSampleType(i, D3DDEVTYPE_HAL, (D3DFORMAT)data, FALSE, D3DMULTISAMPLE_2_SAMPLES, &flag) >= 0) {
+            if (flag > 0) {
+                if (SendMessageA(hWnd, 0x14c, 0, (LPARAM)"2x") < 0) {
+                    int idx = SendMessageA(hWnd, 0x14a, 1, (LPARAM)"2x");
+                    SendMessageA(hWnd, 0x151, idx, 2);
+                }
+            }
+        }
+        if (m_pD3D->CheckDeviceMultiSampleType(i, D3DDEVTYPE_HAL, (D3DFORMAT)data, FALSE, D3DMULTISAMPLE_4_SAMPLES, &flag) >= 0) {
+            if (flag > 0) {
+                if (SendMessageA(hWnd, 0x14c, 0, (LPARAM)"4x") < 0) {
+                    int idx = SendMessageA(hWnd, 0x14a, 2, (LPARAM)"4x");
+                    SendMessageA(hWnd, 0x151, idx, 4);
+                }
+            }
+        }
+    }
+    if (!use_sel) {
+        SendMessageA(hWnd, 0x14e, 0, 0);
+    } else {
+        switch (g_launcher_cfg.antialiasing) {
+        case 1: SendMessageA(hWnd, 0x14e, 0, 0); break;
+        case 2: SendMessageA(hWnd, 0x14e, 1, 0); break;
+        case 4: SendMessageA(hWnd, 0x14e, 2, 0); break;
+        default: SendMessageA(hWnd, 0x14e, 0, 0); break;
+        }
+    }
+}
+
+// @ 0x4c7290
+// (the original brackets the two SetDlgItemTextA groups with 18-byte WinLicense markers: jmp +0x10; "WL  ", 12 / 13, 0, "WL  ")
+void GameApp::init_main_page()
+{
+    Config cfg;
+    cfg.init_defaults();
+    FILE* f = mb_open_user_file("rgl_config.txt", "r");
+    if (f) {
+        cfg.load_file(f);
+        fclose(f);
+    }
+    if (cfg.first_time) {
+        cfg.first_time = 0;
+        choose_dx_settings(&cfg, true);
+        f = mb_open_user_file("rgl_config.txt", "w");
+        cfg.save(f);
+        fclose(f);
+    }
+    WL_MARKER(12)
+    SetWindowPos(hwnd, 0, 0, 0, 0x280, 0x1e0, 0x16);
+    SetWindowPos(GetDlgItem(hwnd, 0x410), 0, 0x14, 0x46, 0xe6, 0x28, 0x14);
+    SetWindowPos(GetDlgItem(hwnd, 0x405), 0, 0x14, 0x6e, 0xe6, 0x28, 0x14);
+    SetWindowPos(GetDlgItem(hwnd, 0x41f), 0, 0x14, 0x96, 0xe6, 0x28, 0x14);
+    SetWindowPos(GetDlgItem(hwnd, 0x46b), 0, 0x14, 0xbe, 0xe6, 0x28, 0x14);
+    SetWindowPos(GetDlgItem(hwnd, 0x406), 0, 0x14, 0xe6, 0xe6, 0x28, 0x14);
+    SetWindowPos(GetDlgItem(hwnd, 0x469), 0, 0x14, 0x10e, 0xe6, 0x28, 0x14);
+    SetWindowPos(GetDlgItem(hwnd, 0x425), 0, 0x14, 0, 0x96, 0x46, 0x14);
+    SetWindowPos(GetDlgItem(hwnd, 0x420), 0, 0xb4, 0x1c, 0x19a, 0xa, 0x14);
+
+    char skin[128];
+    sprintf(skin, ".\\Skins\\mb_skin_%s.smf", g_strtable.language.c_str());
+    WIN32_FIND_DATAA fd;
+    HANDLE h = FindFirstFileA(skin, &fd);
+    if (h != INVALID_HANDLE_VALUE) {
+        FindClose(h);
+        SetDlgItemTextA(hwnd, 0x410, "");
+        SetDlgItemTextA(hwnd, 0x41f, "");
+        SetDlgItemTextA(hwnd, 0x46b, "");
+        SetDlgItemTextA(hwnd, 0x405, "");
+        SetDlgItemTextA(hwnd, 0x406, "");
+        SetDlgItemTextA(hwnd, 0x469, "");
+        SetDlgItemTextA(hwnd, 0x425, "");
+    } else {
+        {
+            tstring key("ui_play");
+            SetDlgItemTextA(hwnd, 0x410, ((StrTable&)g_strtable).lookup(key)->c_str());
+        }
+        {
+            tstring key("ui_configure");
+            SetDlgItemTextA(hwnd, 0x405, ((StrTable&)g_strtable).lookup(key)->c_str());
+        }
+        {
+            tstring key("ui_check_for_new_version");
+            SetDlgItemTextA(hwnd, 0x41f, ((StrTable&)g_strtable).lookup(key)->c_str());
+        }
+        {
+            tstring key("ui_download_new_settings");
+            SetDlgItemTextA(hwnd, 0x46b, ((StrTable&)g_strtable).lookup(key)->c_str());
+        }
+        {
+            tstring key("ui_website");
+            SetDlgItemTextA(hwnd, 0x406, ((StrTable&)g_strtable).lookup(key)->c_str());
+        }
+        {
+            tstring key("ui_cancel2");
+            SetDlgItemTextA(hwnd, 0x469, ((StrTable&)g_strtable).lookup(key)->c_str());
+        }
+        {
+            tstring key("ui_current_setting");
+            SetDlgItemTextA(hwnd, 0x425, ((StrTable&)g_strtable).lookup(key)->c_str());
+        }
+    }
+
+    tstring file(g_module_path);
+    {
+        tstring name("main.bmp");
+        file.append(name);
+    }
+    HBITMAP logo = (HBITMAP)LoadImageA(0, file.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    hbmp = logo;
+    if (!logo)
+        hbmp = (HBITMAP)LoadImageA(0, "main.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    if (g_trial_mode)
+        ShowWindow(GetDlgItem(hwnd, 0x419), 5);
+    WL_MARKER(13)
+}
+
+// @ 0x4c77c0
+void GameApp::refresh_editor_dialog()
+{
+    PlacedObj* r = 0;
+    int var_no;
+    vector4 pos;
+    char buf[0x80];
+    float matrix[0x10];
+    char name[0x80];
+    int entry_no;
+    int mode;
+
+    if (g_game->editor.object_index) {
+        memcpy(matrix, &g_mission->edit_obj->local, sizeof(matrix));   // the object being placed
+        matrix[14] += g_game->editor.keep;
+        pos = g_game->editor.rt;
+        mode = g_game->editor.list_mode;
+        entry_no = 0;
+        var_no = 0;
+        sprintf(name, "New Object");
+    } else if (g_game->editor.sel_index >= 0) {
+        r = &g_mission->props[g_game->editor.sel_index];
+        entry_no = r->value;
+        memcpy(matrix, &r->frame, sizeof(matrix));
+        pos = r->scale;
+        mode = r->kind;
+        var_no = r->m1a4;
+        r->format(name);
+    }
+
+    if (!(g_game->editor.sel_index < 0 && g_game->editor.object_index == 0)) {
+        SetDlgItemTextA(m_hMapEditorDlg, 0x439, name);
+        _snprintf(buf, 0x80, "%3f", matrix[12]);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x435, buf);
+        _snprintf(buf, 0x80, "%3f", matrix[13]);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x436, buf);
+        _snprintf(buf, 0x80, "%3f", matrix[14]);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x437, buf);
+        _snprintf(buf, 0x80, "%3f", pos.x);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x48b, buf);
+        _snprintf(buf, 0x80, "%3f", pos.y);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x48c, buf);
+        _snprintf(buf, 0x80, "%3f", pos.z);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x48d, buf);
+        SetDlgItemInt(m_hMapEditorDlg, 0x43a, entry_no, 0);
+        SetDlgItemInt(m_hMapEditorDlg, 0x43b, var_no, 0);
+
+        if (mode == 1) {
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44e), "Entry No:");
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44f), "");
+        } else if (mode == 5) {
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44e), "Entry No:");
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44f), "Menu Item No:");
+        } else {
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44e), "Var No:");
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44f), "Var2 No:");
+        }
+        return;
+    }
+    sprintf(buf, "");
+    SetDlgItemTextA(m_hMapEditorDlg, 0x439, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x435, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x436, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x437, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x48b, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x48c, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x48d, buf);
+}
+
+// The record's name through the translation table, or the record's own name (the first member): each record class's
+// inline accessor, written once.
+template <class R>
+inline const tstring* rec_name(R* r)
+{
+    const tstring* p = g_strtable.find(&r->key);
+    return p ? p : &r->name;
+}
+
+// @ 0x4c7bf0
+void GameApp::refresh_editor_kinds()
+{
+    if (!m_hMapEditorDlg)
+        return;
+    HWND type = GetDlgItem(m_hMapEditorDlg, 0x431);
+    HWND list = GetDlgItem(m_hMapEditorDlg, 0x433);
+    int list_type = SendMessageA(type, WM_USER_LIST, SendMessageA(type, 0x147, 0, 0), 0);
+    SendMessageA(list, 0x184, 0, 0);
+    if (!list_type) {
+        for (int i = 0; i < g_propkind_count; i++) {
+            // the substring is a temporary of the add-string call (destroyed once, right after it: 0x4c7caa)
+            int n = g_propkinds[i].name.len;
+            int item = SendMessageA(list, 0x180, 0, (LPARAM)g_propkinds[i].name.substr(4, n).c_str());
+            SendMessageA(list, 0x19a, item, i);
+        }
+    } else if (list_type == 2) {
+        for (int i = 0; i < g_item_kind_count; i++) {
+            int item = SendMessageA(list, 0x180, 0, (LPARAM)rec_name(&g_items[i])->c_str());
+            SendMessageA(list, 0x19a, item, i);
+        }
+    } else if (list_type == 4) {
+        for (int i = 0; i < g_ptype_count; i++) {
+            int item = SendMessageA(list, 0x180, 0, (LPARAM)cs(&g_ptypes[i].name.buf));
+            SendMessageA(list, 0x19a, item, i);
+        }
+    } else if (list_type == 1) {
+        SendMessageA(list, 0x180, 0, (LPARAM)"Entry Point");
+        SendMessageA(list, 0x19a, 0, 0);
+    } else if (list_type == 5) {
+        SendMessageA(list, 0x180, 0, (LPARAM)"Passage");
+        SendMessageA(list, 0x19a, 0, 0);
+    }
+    SendMessageA(list, 0x186, 0, 0);
+    // the selection's item data (LB_GETITEMDATA of LB_GETCURSEL, 0x4c7de2..0x4c7df7): the object index stored
+    g_game->editor.list_sel = SendMessageA(list, 0x199, SendMessageA(list, 0x188, 0, 0), 0);
+    g_game->editor.list_mode = list_type;
+}
+
+// @ 0x4c7e20
+void GameApp::refresh_editor_objects()
+{
+    if (!m_hMapEditorDlg)
+        return;
+    HWND list = GetDlgItem(m_hMapEditorDlg, 0x438);
+    SendMessageA(list, 0x184, 0, 0);
+    for (unsigned i = 0; i < g_mission->props.size(); i++) {
+        char name[128];
+        g_mission->props[i].format(name);
+        int item = SendMessageA(list, 0x180, 0, (LPARAM)name);
+        SendMessageA(list, 0x19a, item, i);
+    }
+}
+
+// 0x4c7ee0 is MissionObj's vector deleting destructor and 0x4c65d0 its inline destructor's out-of-line copy
+// (game/mission/mission_obj.h): the compiler's, emitted by `delete[] g_propkinds` (game/app/winmain_and_menu_screens.cpp).
+
+// the apron: after rebuilding the terrain, every vertex not pinned by a flag follows the drag
+// @ 0x4c7f90
+void PolyMesh::update_terrain(int idx, const vector4& d)
+{
+    calc_vertex_mode(idx);
+    for (unsigned i = 0; i < verts.size(); i++) {
+        if (verts[i].mark) {
+            MVert& n = verts[i];
+            n.pos.x += d.x;
+            n.pos.y += d.y;
+            n.pos.z += d.z;
+        }
+    }
+}
+
+// @ 0x4c8000
+// Plane normal of the face that owns edge *e, scaled by the triangle's first edge (node b -> node a).
+rgl::vector4 PolyMesh::normal(const int* e)
+{
+    int a, b;
+    find_triangle(e, &a, &b);
+    MVert* w = &verts[a];
+    MVert* v = &verts[b];
+    float dx = v->pos.x - w->pos.x;
+    float dy = v->pos.y - w->pos.y;
+    float dz = v->pos.z - w->pos.z;
+    const vector4& m = faces[edges[*e].face[0]].normal;   // the face through vector::operator[] (its reference is materialised)
+    rgl::vector4 res;
+    res.x = dy * m.z - dz * m.y;
+    res.y = dz * m.x - dx * m.z;
+    res.z = dx * m.y - dy * m.x;
+    res.normalize();
+    return res;
+}
+
+
+
+// @ 0x4c8110
+// The item_kinds.txt record reader (game/data/item_kind_include.h's ItemKind; module_files_loader.cpp's loader calls it). The read order
+// is the file's: id, name, plural, the mesh variants, the item flags, capabilities, value, modifier bits, weight (float +0x208), abundance (+0x220), head / body / leg armour (+0x1fc..+0x204), difficulty
+// (+0x1ec), hit points (+0x1e8), speed (+0x1f0), missile speed (+0x1f4), weapon length (+0x20c), max ammo (+0x210),
+// thrust / swing damage (+0x214 / +0x218).
+void ItemKind::read(stream_base* stream, int version)
+{
+    ItemKind& k = *this;
+    k.slots.tidy();
+    stream->r_tstr((rgl::string*)&k.key);                           // the original reads +0x20 first, then +0, +0x10
+    stream->r_tstr((rgl::string*)&k.name);
+    stream->r_tstr((rgl::string*)&k.plural);
+    k.name.underscores_to_spaces();
+    k.plural.underscores_to_spaces();
+    stream->r_int(&k.mesh_count);
+    if (k.mesh_count > 0x10)
+        mb_error("Error too many variation on mesh %s", k.name.c_str());
+    for (int i = 0; i < k.mesh_count; i++) {
+        stream->r_tstr((rgl::string*)&k.meshes[i].name);
+        stream->r_i64(&k.meshes[i].flags);
+    }
+    stream->r_uint(&k.type_flags);
+    stream->r_u64(&k.flags);
+    stream->r_int(&k.value);
+    stream->r_u64(&k.modifiers);                                    // the modifier bits
+    stream->r_float(&k.weight);
+    stream->r_int(&k.abundance);
+    stream->r_int(&k.head_armor);
+    stream->r_int(&k.body_armor);
+    stream->r_int(&k.leg_armor);
+    stream->r_int(&k.difficulty);
+    stream->r_int(&k.hit_points);
+    stream->r_int(&k.spd_rtng);
+    stream->r_int(&k.shoot_speed);
+    stream->r_int(&k.weapon_length);
+    stream->r_int(&k.max_ammo);
+    stream->r_int(&k.thrust_damage);
+    stream->r_int(&k.swing_damage);
+    if (version > 1) {                                              // itemsfile version 2: each item has triggers
+        char buf[0x200];
+        // the original passes the tstring itself through the varargs (a 16-byte bitwise copy at 0x4c82c4), so %s
+        // reads its first dword (the read cursor), not the text: reproduced as is
+        _snprintf(buf, 0x200, "Item %s", k.key);
+        k.sound.resize(*stream, buf, 0);              // 0x4c1e10: the trigger list at +0x228
+    }
+    k.f40 = 1.0f;
+    k.price_rate = 1.0f;
+}
+
+
+
+// @ 0x4c8330
+void E68::free_materials()
+{
+    for (unsigned i = 0; i < v.size(); i++) {
+        v[i]->refcount = 0;                             // the block no longer holds the material
+        g_resmgr.release(v[i]);
+    }
+    v.clear();
+    t = 0;
+}
+
+// @ 0x4c83a0
+void E68::read_terrain(stream_base* stream)
+{
+    tstring name;
+    free_materials();
+    stream->r_tstr(&s);
+    stream->r_int(&b1);
+    stream->r_tstr(&name);
+    stream->r_int(&b2);
+    stream->r_int(&b3);
+    stream->r_float(&b6);
+    stream->r_float(&b7);
+    stream->r_float(&b8);
+    stream->r_float(&b9);
+    b6 *= 0.001;
+    b7 *= 0.001;
+    b8 *= 0.001;
+    b9 *= 0.001;
+    m.read(stream);   // 0x4607e0
+    char buf[0x200];
+    _snprintf(buf, 0x200, "Tableau material %s", s.c_str());
+    {
+        tstring mat(buf);
+        m.text.operator=(mat);
+    }
+    if (name.len > 1) {
+        if (name.differs("none"))
+            t = g_resmgr.get_material(name);
+    }
+}
+
+
+
+// @ 0x4c84f0
+void __fastcall conv_map_codes(TableauTbl* self)
+{
+    WL_MARKER(12)
+    for (int k = 0; k < 3; k++) {
+        int found = -1;
+        unsigned i = 0;
+        do {
+            if (i >= self->recs.size()) {
+                log_cstr("WARNING: UNABLE TO MAP GAME TABLEAU CODE: ").w_cstr(g_conv_names[k]).w_cstr("\n");
+                break;
+            }
+            if (self->recs[i].s.equals(g_conv_names[k]))
+                found = i;
+            i++;
+        } while (found == -1);
+        self->game_tableaus[k] = found;
+    }
+    WL_MARKER(13)
+}
+
+// @ 0x4c85e0
+void __fastcall conv_free_one(PartyTemplate* p)
+{
+    p->~PartyTemplate();                             // the element's destructor: the slots, the key, the name
+}
+
+// @ 0x4c8630
+// The scene's ground (rgl::world::ground, NavData) takes the terrain's vertex positions, its height field the cells' z, and every ground
+// polygon (NavCell::obj, a face) its corners again, then an identity frame.
+void Terrain::conv_build_scene()
+{
+    rgl::matrix m;
+    for (int gy = 0; gy <= h; gy++) {
+        for (int x = 0; x <= w; x++) {
+            world->hf->cols[x][gy].h = cell[x][gy].pos.z;
+            int vi = cell[x][gy].f14;                               // the ground vertex the cell's position was stored to (-1: none)
+            if (vi >= 0)
+                world->ground->verts[vi].p = cell[x][gy].pos;
+        }
+    }
+    NavData* ground = world->ground;
+    for (unsigned k = 0; k < ground->cells.size(); k++) {
+        face* r = ground->cells[k].obj;
+        if (r) {
+            for (int j = 0; j < ground->cells[k].npts; j++)
+                r->v[j] = ground->verts[ground->cells[k].vidx[j]].p;
+            vector4 z0(0.0f, 0.0f, 0.0f);
+            rgl::mat3 t;
+            rgl::mat3* ip = identity3(&t);
+            static_cast<rgl::mat3&>(m) = *ip;
+            m.o = z0;
+            r->transform(&m);
+        }
+    }
+}
+
+// @ 0x4c8810
+template CapDef* std::vector<CapDef>::_Ufill(CapDef*, size_t, const CapDef&);
+
+// @ 0x4c8840
+// std::vector<tstring>::erase itself: the row is this instantiation (poly_mesh_edge_face_ops.cpp's calls go to it too).
+template std::vector<tstring>::iterator std::vector<tstring>::erase(std::vector<tstring>::iterator, std::vector<tstring>::iterator);
+
+// @ 0x4c88a0 (the pointer vectors' erase(first, last): the linker kept this copy of the shared body)
+template std::vector<GlyphIt>::iterator std::vector<GlyphIt>::erase(std::vector<GlyphIt>::iterator, std::vector<GlyphIt>::iterator);
+
+// @ 0x4c88e0 (the copy constructor's _Ucopy: poly_mesh_edge_face_ops.cpp 0x4cc750)
+template ArrSet* std::vector<ArrSet>::_Ucopy(std::vector<ArrSet>::const_iterator, std::vector<ArrSet>::const_iterator, ArrSet*);
+
+// @ 0x4c8900
+void __stdcall loader_thread_body()
+{
+    while (g_loading) {
+        WaitForSingleObject(g_mt_event, INFINITE);
+        EnterCriticalSection(&g_mt_cs);
+        if (g_paused_time > 0.0f) {
+            g_phys.update(g_paused_time);
+            g_paused_time = 0.0f;
+        }
+        LeaveCriticalSection(&g_mt_cs);
+    }
+}
+
+// 0x4c8980 is PartyTemplate's vector deleting destructor (game/data/game_recs.h): the compiler emits it where the table is deleted
+// (game/app/winmain_and_menu_screens.cpp FinalCleanup, where its row is).
+
+// @ 0x4c8a40
+ItemKind::~ItemKind()
+{
+}
+
+// @ 0x4c8ab0
+// std::allocator<FaceTexture>::destroy, out of line (game/app/world_app.cpp's fills reach it on their unwind path):
+// FaceTexture's implicit destructor (the hair material vector, then the name)
+template class std::allocator<FaceTexture>;
+
+// @ 0x4c8af0
+// Moves the last node over node `idx`, renames the last node's references and drops it.
+void PolyMesh::remove_node(int idx)
+{
+    int last = (int)verts.size() - 1;
+    if (idx != last) {
+        verts[idx] = verts[last];
+        swap_face_vertices(last, idx);
+        swap_poly_colors(last, idx);
+    }
+    verts.pop_back();
+    remove_vertex_from_edges(last);
+}
+
+// (0x4c8ba0 is E68::~E68, game/data/e68.h's inline destructor emitted out of line: module_record_loaders.cpp's row)
+
+// @ 0x4c8bf0
+widget_mgr::~widget_mgr()
+{
+    g_presentation = 0;
+}
+
+// @ 0x4c8c20
+// The window manager's constructor: the id stack's empty state (the deque's own constructor), then the 30 screen slots cleared.
+WindowMgrW::WindowMgrW()
+{
+    for (int i = 0; i < 30; i++)
+        arr[i] = 0;
+}
+WindowMgrW g_windows;                                       // 0xa73980 (compiler-constructed; the compiler registers ~deque for the id stack)
+
+
+// Every record class has its own translated() (include/*.h); the linker folded the identical bodies, so one VA stands for
+// several classes (docs/codegen.md 14.1): 0x4c6080 PartyTemplate's = DialogRec / GameString / item_mod / QuickString /
+// FaceKey, 0x4c62b0 Troop's = ItemKind / menu_item, 0x4c6330 Troop::translated_plural = ItemKind's. The definitions
+// above are the classes the manifest names; the others are declared with the same address.
+// the same for the records with an id and a text (dialogs, menus)
+template <class R>
+inline const tstring* id_text(R* r)
+{
+    const tstring* p = g_strtable.find(&r->id);
+    return p ? p : &r->text;
+}
+
+inline Skin& skin_at(SkinVec& v, unsigned i) { return v[i]; }
+
+// the door text of a menu item: key + "_door" through the translation table, or the item's own text
+inline const tstring* door_text(menu_item* d)
+{
+    const tstring* r;
+    {
+        tstring suffix("_door");
+        r = g_strtable.find(&(d->key + suffix));
+    }
+    return r ? r : &d->text;
+}
+
+inline const tstring* faction_name(FactionRec* r)
+{
+    if (r->flag)
+        return &r->name;
+    const tstring* q = g_strtable.find(&r->key);
+    return q ? q : &r->name;
+}
+
+inline const tstring* party_name(Party* r)
+{
+    if (g_module_settings.show_party_ids_instead_of_names)
+        return &r->key;
+    if (r->flag)
+        return &r->name;
+    const tstring* p = g_strtable.find(&r->key);
+    return p ? p : &r->name;
+}
+
+// The party accessors, visible here as header inlines in the original (the same definitions as game/ui/widgets/widget_base.cpp and
+// dialog_manager.cpp; the row owners win the link). The id stays in a register across lookup only if cl sees it can't change.
+inline int Map10007::lookup(unsigned id)
+{
+    if (id < 0x2717)
+        return tab[id].value;
+    int h = id % 0x2717;
+    int n = 0;
+    if (tab[h].key != id) {
+        do {
+            if (n >= 1000)
+                return -1;
+            h = (h + 0x4f) % 0x2717;
+            n++;
+        } while (tab[h].key != id);
+    }
+    if (n < 1000)
+        return tab[h].value;
+    return -1;
+}
+__declspec(noinline) void PartyMgr::next_party_id(int* id)
+{
+    unsigned i = lookup(*id) + 1;
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        *id = serial;
+    else
+        *id = (&*pages.begin())[i >> 4][i & 0xf].id;
+}
+__declspec(noinline) int PartyMgr::first_party_id()
+{
+    unsigned i = 0;
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
+        i++;
+    if ((int)i >= count)
+        return serial;
+    return (&*pages.begin())[i >> 4][i & 0xf].id;
+}
+
+// @ 0x4c8ca0
+void GameData::save_language_files(bool translated)
+{
+    CreateDirectoryA("new_language", 0);                                // 0x59606c
+
+    if (n_chars > 0) {
+        FILE* f = fopen("new_language\\troops.csv", "wt+");             // 0x596050 / 0x596068
+        for (int i = 0; i < n_chars; i++) {
+            if (i == player_troop)
+                continue;
+            if (translated) {
+                ((ini_file&)g_strtable).write(f, chars[i].key, chars[i].translated());
+                tstring suffix("_pl");                                  // 0x5923b0
+                ((ini_file&)g_strtable).write(f, chars[i].key + suffix, chars[i].translated_plural());
+            } else {
+                ((ini_file&)g_strtable).write(f, chars[i].key, *rec_name(&chars[i]));
+                tstring suffix("_pl");                                  // built before plural_name() runs, as in the original
+                ((ini_file&)g_strtable).write(f, chars[i].key + suffix, *chars[i].plural_name());
+            }
+        }
+        fclose(f);
+    }
+
+    if (parties.serial > 0) {
+        FILE* f = fopen("new_language\\parties.csv", "wt+");            // 0x596034
+        unsigned i = parties.first_party_id();
+        while (i < parties.serial) {
+            if (parties.get_w(i)->owner <= 0 && i != (unsigned)party_id_78) {
+                if (translated) {
+                    write_row(f, parties.get_w(i)->key, parties.get_w(i)->translated());
+                } else {
+                    write_row(f, parties.get_w(i)->key, *party_name(parties.get_w(i)));
+                }
+            }
+            parties.next_party_id((int*)&i);
+        }
+        fclose(f);
+    }
+
+    if (n_factions > 0) {
+        FILE* f = fopen("new_language\\factions.csv", "wt+");           // 0x596018
+        for (int i = 0; i < n_factions; i++) {
+            if (translated) {
+                write_row(f, factions[i].key, factions[i].translated());
+            } else {
+                write_row(f, factions[i].key, *faction_name(&factions[i]));
+            }
+        }
+        fclose(f);
+    }
+
+    if (g_item_kind_count > 0) {
+        FILE* f = fopen("new_language\\item_kinds.csv", "wt+");         // 0x595ffc
+        for (int i = 0; i < g_item_kind_count; i++) {
+            if (translated) {
+                {
+                    write_row(f, g_items[i].key, g_items[i].translated());
+                }
+                tstring suffix("_pl");
+                write_row(f, g_items[i].key + suffix, g_items[i].translated_plural());
+            } else {
+                const tstring* v = rec_name(&g_items[i]);
+                write_row(f, g_items[i].key, *v);
+                tstring suffix("_pl");                                  // built before plural_name() runs, as in the original
+                write_row(f, g_items[i].key + suffix, *g_items[i].plural_name());
+            }
+        }
+        fclose(f);
+    }
+
+    {
+        FILE* f = fopen("new_language\\item_modifiers.csv", "wt+");     // 0x595fdc
+        for (int i = 0; i < 43; i++) {
+            if (translated) {
+                write_row(f, g_item_mods[i].key, g_item_mods[i].translated());
+            } else {
+                write_row(f, g_item_mods[i].key, *rec_name(&g_item_mods[i]));
+            }
+        }
+        fclose(f);
+    }
+
+    if (g_party_template_count > 0) {
+        FILE* f = fopen("new_language\\party_templates.csv", "wt+");    // 0x595fb8
+        for (int i = 0; i < g_party_template_count; i++) {
+            if (translated) {
+                write_row(f, g_party_templates[i].key, g_party_templates[i].translated());
+            } else {
+                write_row(f, g_party_templates[i].key,
+                          *rec_name(&g_party_templates[i]));
+            }
+        }
+        fclose(f);
+    }
+
+    if (g_strings.count > 0) {
+        FILE* f = fopen("new_language\\game_strings.csv", "wt+");       // 0x595f98
+        for (int i = 0; i < g_strings.count; i++) {
+            if (translated) {
+                write_row(f, g_strings.strings[i].key, g_strings.strings[i].translated());
+            } else {
+                write_row(f, g_strings.strings[i].key,
+                          *rec_name(&g_strings.strings[i]));
+            }
+        }
+        fclose(f);
+    }
+
+    if (g_strings.quick_count > 0) {
+        FILE* f = fopen("new_language\\quick_strings.csv", "wt+");      // 0x595f78
+        for (int i = 0; i < g_strings.quick_count; i++) {
+            if (translated) {
+                write_row(f, g_strings.quick[i].key, g_strings.quick[i].translated());
+            } else {
+                write_row(f, g_strings.quick[i].key,
+                          *rec_name(&g_strings.quick[i]));
+            }
+        }
+        fclose(f);
+    }
+
+    if (n_quests > 0) {
+        FILE* f = fopen("new_language\\quests.csv", "wt+");             // 0x595f60
+        for (int i = 0; i < n_quests; i++) {
+            if (translated) {
+                {
+                    write_row(f, quests[i].key, quests[i].translated());
+                }
+                tstring suffix("_text");                                // 0x5923b4
+                write_row(f, quests[i].key + suffix, quests[i].translated_text());
+            } else {
+                write_row(f, quests[i].key, *rec_name(&quests[i]));
+                tstring suffix("_text");                                // built before text_name() runs, as in the original
+                write_row(f, quests[i].key + suffix, *quests[i].text_name());
+            }
+        }
+        fclose(f);
+    }
+
+    if (g_dialogs.count > 0) {
+        FILE* f = fopen("new_language\\dialogs.csv", "wt+");            // 0x595f44
+        for (int i = 0; i < g_dialogs.count; i++) {
+            for (int j = 0; j < i; j++) {
+                if (g_dialogs.recs[i].id.equals(g_dialogs.recs[j].id))
+                    goto next_dialog;
+            }
+            if (translated) {
+                write_row(f, g_dialogs.recs[i].id, g_dialogs.recs[i].translated());
+            } else {
+                write_row(f, g_dialogs.recs[i].id, *id_text(&g_dialogs.recs[i]));
+            }
+        next_dialog:
+            ;
+        }
+        fclose(f);
+    }
+
+    {
+        FILE* f = fopen("new_language\\skins.csv", "wt+");              // 0x595f2c
+        for (unsigned i = 0; i < g_anim.skin_vec.size(); i++) {
+            for (int j = 0; j < g_anim.skin_vec[i].n_face_keys; j++) {
+                if (translated) {
+                    Skin& s = skin_at(g_anim.skin_vec, i);
+                    write_row(f, skin_at(g_anim.skin_vec, i).face_keys[j].key, s.face_keys[j].translated());
+                } else {
+                    write_row(f, g_anim.skin_vec[i].face_keys[j].key,
+                              *rec_name(&g_anim.skin_vec[i].face_keys[j]));
+                }
+            }
+        }
+        fclose(f);
+    }
+
+    {
+        FILE* f = fopen("new_language\\skills.csv", "wt+");             // 0x595f14
+        for (int i = 0; i < 42; i++) {
+            if (translated) {
+                {
+                    write_row(f, g_skill_tbl[i].key, g_skill_tbl[i].translated());
+                }
+                tstring suffix("_desc");                                // 0x595ca4
+                write_row(f, g_skill_tbl[i].key + suffix, g_skill_tbl[i].translated_desc());
+            } else {
+                write_row(f, g_skill_tbl[i].key, *rec_name(&g_skill_tbl[i]));
+                tstring suffix("_desc");                                // built before desc_name() runs, as in the original
+                write_row(f, g_skill_tbl[i].key + suffix, *g_skill_tbl[i].desc_name());
+            }
+        }
+        fclose(f);
+    }
+
+    {
+        FILE* f = fopen("new_language\\game_menus.csv", "wt+");         // 0x595ef8
+        for (int i = 0; i < g_menu_count; i++) {
+            write_row(f, g_menus[i].id, *id_text(&g_menus[i]));
+            for (int j = 0; j < g_menus[i].count; j++) {
+                if (translated) {
+                    write_row(f, g_menus[i].items[j].key, g_menus[i].items[j].translated());
+                    if (door_text(&g_menus[i].items[j])->len > 2) {
+                        tstring suffix("_door");                        // 0x595d64
+                        write_row(f, g_menus[i].items[j].key + suffix, g_menus[i].items[j].translated_door());
+                    }
+                } else {
+                    write_row(f, g_menus[i].items[j].key, *rec_name(&g_menus[i].items[j]));
+                    if (door_text(&g_menus[i].items[j])->len > 2) {
+                        tstring suffix("_door");
+                        write_row(f, g_menus[i].items[j].key + suffix, *door_text(&g_menus[i].items[j]));
+                    }
+                }
+            }
+        }
+        fclose(f);
+    }
+}
+
+// @ 0x4ca550
+void ResultWindow::frame_update(float)
+{
+    // the Enter key counts as "off" only while there is no second button (0x4ca573/0x4ca57d)
+    if (b3c->clear_mask(0x10000) || (!b40 && g_keyboard.down[0x1c] && !g_keyboard.prev[0x1c]))
+        goto off;
+    if (!b40 || !b40->clear_mask(0x10000))
+        return;
+    if (flag)
+        *flag = 1;
+    if (text && box38)
+        text->assign("");
+    g_windows.apply();
+    return;
+off:
+    if (flag)
+        *flag = 0;
+    if (text && box38)
+        *text = box38->name;                    // UiE's inherited text at +0x128 (MissionUi::name)
+    g_windows.apply();
+}
+

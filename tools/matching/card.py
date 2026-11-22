@@ -39,7 +39,7 @@ def load_funcs():
                 except ValueError:
                     continue  # malformed symbol line (non-hex address): skip
     starts = sorted(set(starts))
-    # A function that opens with a WL_MARKER (src/include/wl_marker.h) is split by the census into a 2-byte
+    # A function that opens with a WL_MARKER (src/platform/wl_marker.h) is split by the census into a 2-byte
     # `jmp +0x10` "thunk" at A and a bogus function at A+18; drop the bogus start so A spans the whole function.
     p = pe(); base = p.OPTIONAL_HEADER.ImageBase
     sset = set(starts)

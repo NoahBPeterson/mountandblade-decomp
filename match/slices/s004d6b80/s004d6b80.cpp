@@ -17,8 +17,8 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <stdio.h>
-#include "../../../src/rgl/rgl_math.h"
-#include "../../../src/rgl/stream.h"
+#include "../../../src/engine/math/rgl_math.h"
+#include "../../../src/engine/io/stream.h"
 
 using rgl::vector4;
 typedef rgl::string tstring;           // 0x42bbd0 / 0x42bbe0 ctors, 0x42bc40 dtor, 0x42bcb0 assign(const char*)
@@ -29,7 +29,7 @@ struct StringTable {
 extern StringTable g_string_table;                                          // 0x5e2a18
 
 // ---- controls ----------------------------------------------------------------------------------------
-#include "../../../src/include/vec.h"     // vector2 (Vec2): the same record this slice once declared itself
+#include "../../../src/engine/math/vec.h"     // vector2 (Vec2): the same record this slice once declared itself
 // The +0x94 and +0xa4 slots return an 8-byte non-POD object through a hidden pointer that the callers
 // discard (same slot shape as s004d7d10 / s004dc630).
 struct WRet { int a, b; WRet(); };

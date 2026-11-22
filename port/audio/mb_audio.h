@@ -1,4 +1,4 @@
-// port/audio/mb_audio.h: extras beside the FMOD 3.75 C API (which is declared by src/ itself, src/include/fmod_api.h
+// port/audio/mb_audio.h: extras beside the FMOD 3.75 C API (which is declared by src/ itself, src/engine/audio/fmod_api.h
 // and per-TU externs). Test / tooling hooks only; the game never calls these.
 #pragma once
 #ifdef __cplusplus

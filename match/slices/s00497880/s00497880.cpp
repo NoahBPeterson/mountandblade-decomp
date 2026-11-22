@@ -1,7 +1,7 @@
 // Slice s00497880: the per-frame update of a mission HUD bar widget (0x497880: it lerps two bar meshes'
 // scale from the elapsed timers, one colour group's alpha, and the widget position, then invalidates
 // itself) and the refresh of its animated frame mesh (0x497d10: it rebuilds the frame mesh's colour and
-// scale from the current frame). Layout: hud.h. Names are provisional.
+// scale from the current frame). Layout: mission_hud_buttons.h. Names are provisional.
 #include <windows.h>
 #include <math.h>
 #include "rgl.h"

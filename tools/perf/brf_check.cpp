@@ -12,7 +12,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-// ---- tstring model (src/game/strat/tstring.cpp semantics) ----
+// ---- tstring model (src/engine/core/tstring.cpp semantics) ----
 struct TS {
     int pos = 0; char* buf = 0; int cap = 0; int len = 0;
     ~TS() { delete[] buf; }

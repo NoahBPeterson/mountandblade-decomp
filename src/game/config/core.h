@@ -1,8 +1,8 @@
 // core.h: the application object (global g_app_obj at 0x8ee3c48): the SDK framework's CD3DApplication
-// (../../dxframework/d3dapp.h) plus the members Mount & Blade added in its own objects, one class, GameApp, with its
-// vtable 0x5948e0 the compiler's. The constructor is 0x4d3ec0 (options_panel/world_app.cpp, where the object is
-// defined), the destructor 0x4bed90 (triggers/trigger_vec.cpp), the member functions 0x4bace0 / 0x4bad70 / 0x4badf0
-// (config.cpp) and the options dialog's start-up probe (options_dlg.cpp, 0x4b99c0) are methods of it by their field
+// (../../platform/dxframework/d3dapp.h) plus the members Mount & Blade added in its own objects, one class, GameApp, with its
+// vtable 0x5948e0 the compiler's. The constructor is 0x4d3ec0 (game/app/world_app.cpp, where the object is
+// defined), the destructor 0x4bed90 (game/app/options_dialog_and_module_tables.cpp), the member functions 0x4bace0 / 0x4bad70 / 0x4badf0
+// (config.cpp) and the options dialog's start-up probe (launcher_options_dialog.cpp, 0x4b99c0) are methods of it by their field
 // accesses (the slices called it `Core` / `Application`).
 #ifndef GAME_CONFIG_CORE_H
 #define GAME_CONFIG_CORE_H
@@ -10,20 +10,20 @@
 #define _MBCS
 #endif
 #include <stddef.h>
-#include "../../include/layout32.h"
-#include "../../dxframework/d3dapp.h"
-#include "../../dxframework/d3dfont.h"
-#include "../tstring.h"
+#include "engine/core/layout32.h"
+#include "platform/dxframework/d3dapp.h"
+#include "platform/dxframework/d3dfont.h"
+#include "engine/core/tstring.h"
 
 struct IDxDiagContainer;
 struct Config;
 struct GameApp : CD3DApplication {
-    void refresh_dialog();                              // 0x4f6390 (char_sheet/editor_ui.cpp: the map editor's pick refresh, then the focus back to the window)
+    void refresh_dialog();                              // 0x4f6390 (game/editor/editor_widgets.cpp: the map editor's pick refresh, then the focus back to the window)
     // the framework's protected members that code outside the class uses
     using CD3DApplication::ChooseInitialD3DSettings;    // 0x402100
     using CD3DApplication::ToggleFullscreen;            // 0x402be0 (the slice called it HandleSizeChange)
     using CD3DApplication::DisplayErrorMsg;             // 0x4014f0
-    using CD3DApplication::m_bStartFullscreen;          // +0x346 WinMain sets it from the config (cls_map.cpp)
+    using CD3DApplication::m_bStartFullscreen;          // +0x346 WinMain sets it from the config (winmain_and_menu_screens.cpp)
     using CD3DApplication::m_fMinFrameTime;             // +0x008 WinMain sets it to 1 / max_framerate
     using CD3DApplication::m_hWnd;                      // +0xe8 the main window
     using CD3DApplication::m_pD3D;                      // +0xf4 = 0x8ee3d3c: the IDirect3D9 the options page lists the display modes from
@@ -55,19 +55,19 @@ struct GameApp : CD3DApplication {
 
     // the overrides, in vtable 0x5948e0 order
     virtual bool FindBestFullscreenMode(bool bRequireHAL, bool bRequireREF);   // 0x4badf0 (slot 0, config.cpp)
-    virtual HRESULT OneTimeSceneInit();                 // 0x4f63c0 (slot 4, char_sheet/editor_ui.cpp: the engine start-up)
-    virtual HRESULT InitDeviceObjects();                // 0x4c3510 (slot 5, rgl/mesh2/rec_tables.cpp)
+    virtual HRESULT OneTimeSceneInit();                 // 0x4f63c0 (slot 4, game/editor/editor_widgets.cpp: the engine start-up)
+    virtual HRESULT InitDeviceObjects();                // 0x4c3510 (slot 5, game/data/module_option_records.cpp)
     virtual HRESULT RestoreDeviceObjects();             // 0x4c1940 (slot 6)
-    virtual HRESULT FrameMove();                        // 0x50ec40 (slot 7, inventory_panel/game_app.cpp: the per-frame update)
-    virtual HRESULT Render();                           // 0x4eb8e0 (slot 8, char_sheet/facegen_misc.cpp: the loading / save-load screen)
+    virtual HRESULT FrameMove();                        // 0x50ec40 (slot 7, game/app/game_app.cpp: the per-frame update)
+    virtual HRESULT Render();                           // 0x4eb8e0 (slot 8, game/ui/screens/face_generator/face_generator_refresh.cpp: the loading / save-load screen)
     virtual HRESULT InvalidateDeviceObjects();          // 0x4c1a60 (slot 9)
     virtual HRESULT DeleteDeviceObjects();              // 0x4c1ad0 (slot 10)
-    virtual HRESULT FinalCleanup();                     // 0x4da5b0 (slot 11, cls_map/cls_map.cpp: the end-of-game shutdown)
+    virtual HRESULT FinalCleanup();                     // 0x4da5b0 (slot 11, game/app/winmain_and_menu_screens.cpp: the end-of-game shutdown)
     virtual LRESULT MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x50f130 (slot 15)
 
-    int  msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp);   // 0x4d4140 the launcher dialog's procedure (cls_map.cpp's thunk 0x4d9440 calls it with this = g_app_obj)
-    LRESULT terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4fe860 the map editor's terrain dialog (agent5/editor_dialog.cpp; the dialog thunk 0x50d250 calls it on g_app_obj)
-    void fill_video_tab();                              // 0x4cf7b0 (options_panel/config_dialog.cpp: the launcher configuration dialog)
+    int  msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp);   // 0x4d4140 the launcher dialog's procedure (winmain_and_menu_screens.cpp's thunk 0x4d9440 calls it with this = g_app_obj)
+    LRESULT terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4fe860 the map editor's terrain dialog (game/editor/terrain_brush_dialog.cpp; the dialog thunk 0x50d250 calls it on g_app_obj)
+    void fill_video_tab();                              // 0x4cf7b0 (game/config/launcher_config_dialog.cpp: the launcher configuration dialog)
     LRESULT config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4d0240 its procedure (world_app.cpp's thunk 0x4d4130 calls it with this = g_app_obj)
     void read_options();                                // 0x4bf170 reads the options dialog's controls into the g_opt_* globals
     void show_options();                                // 0x4bee10 the inverse: writes them into the dialog
@@ -77,7 +77,7 @@ struct GameApp : CD3DApplication {
     void update_view_rect();                            // 0x4bace0 (config.cpp)
     int  init_d3d();                                    // 0x4bad70
     // the launcher's options dialog (its window is options_hwnd) and its main page (hwnd, the hbmp picture):
-    // config/options_dlg.cpp and rgl/mesh2/gui_edit.cpp (the slices called this object OptionsDlg / ConfigDialog / MapDialog)
+    // game/config/launcher_options_dialog.cpp and game/editor/editor_selection_and_translation.cpp (the slices called this object OptionsDlg / ConfigDialog / MapDialog)
     void set_active_tab(int tab);                       // 0x4b9790 shows the controls of one tab
     long prop_string(IDxDiagContainer* obj, WCHAR* name, char* buf, unsigned cap);   // 0x4b9a30 (does not read this)
     void paint();                                       // 0x4b9af0 hbmp onto the main page
@@ -85,13 +85,13 @@ struct GameApp : CD3DApplication {
     void refresh_multisample_list(char use_cfg);        // 0x4c6f90 the antialiasing list from m_pD3D's multisample types
     void init_main_page();                              // 0x4c7290 lays out the launcher page, loads main.bmp
     // the map editor dialog (its window is m_hMapEditorDlg): members defined under the dialog's own names so far
-    void update_editor_checks();                        // 0x4bf640 its radio / check buttons from g_game->editor (triggers/trigger_vec.cpp)
+    void update_editor_checks();                        // 0x4bf640 its radio / check buttons from g_game->editor (game/app/options_dialog_and_module_tables.cpp)
     void refresh_editor_controls();                     // 0x4b9e70 shows / hides its controls for the game mode (config/config.cpp)
-    void refresh_editor_dialog();                       // 0x4c77c0 its fields from the selected object (rgl/mesh2/gui_edit.cpp)
-    void refresh_editor_kinds();                        // 0x4c7bf0 its object list from the type box (gui_edit.cpp)
-    void refresh_editor_objects();                      // 0x4c7e20 its list of the mission's placed objects (gui_edit.cpp)
+    void refresh_editor_dialog();                       // 0x4c77c0 its fields from the selected object (game/editor/editor_selection_and_translation.cpp)
+    void refresh_editor_kinds();                        // 0x4c7bf0 its object list from the type box (editor_selection_and_translation.cpp)
+    void refresh_editor_objects();                      // 0x4c7e20 its list of the mission's placed objects (editor_selection_and_translation.cpp)
 };
 MB_LAYOUT32_ASSERT(gameapp_layout_check, (sizeof(GameApp) == 0x5a0 && offsetof(GameApp, mode) == 0x590 && offsetof(GameApp, module_names) == 0x390 && offsetof(GameApp, dlg_options) == 0x37c));
-extern GameApp g_app_obj;                               // 0x8ee3c48 (defined in options_panel/world_app.cpp: the compiler constructs it and registers the destructor)
+extern GameApp g_app_obj;                               // 0x8ee3c48 (defined in game/app/world_app.cpp: the compiler constructs it and registers the destructor)
 
 #endif

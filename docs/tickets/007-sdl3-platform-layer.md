@@ -9,15 +9,15 @@ game needs except the launcher dialog / registry / DxDiag (handled below).
 
 ## Evidence
 
-- Main loop: `CD3DApplication::Run` 0x402ee0 (src/dxframework/d3dapp.cpp:1287): `PeekMessageW` if active, `GetMessageW` if not, then
+- Main loop: `CD3DApplication::Run` 0x402ee0 (src/platform/dxframework/d3dapp.cpp:1287): `PeekMessageW` if active, `GetMessageW` if not, then
   `Render3DEnvironment` 0x402430 -> `FrameMove` + `Render` + `Present`. `MsgProc` has 14 cases (`WM_CLOSE, COMMAND, ENTERMENULOOP, ENTERSIZEMOVE, EXITMENULOOP,
   EXITSIZEMOVE, GETMINMAXINFO, MOUSEMOVE, NCHITTEST, PAINT, POWERBROADCAST, SETCURSOR, SIZE, SYSCOMMAND`); text input arrives via `WM_CHAR` in game_app.cpp.
 - Input: DirectInput8 keyboard (`c_dfDIKeyboard`) + mouse `c_dfDIMouse2` (20 bytes, 11 objects; config.cpp:867-891). The keyboard state is a 256-entry array indexed by
   **DIK scancodes** (`g_keyboard + 0xc)[29]` = DIK_LCONTROL 0x1d, `[157]` = DIK_RCONTROL, `[67]` = F9...). Mapping SDL scancodes -> DIK is a 100-entry table.
 - Other Win32 sites: ShowCursor 9, GetCursorPos 6, ClipCursor 5, SetCursorPos 1, OpenClipboard 3, SetWindowPos 19 (framework), MessageBoxA 26 (framework error paths),
-  CreateDirectoryA 13, SHGetFolderPathA 12, FindFirstFileA 9, timeGetTime 6, QueryPerformanceCounter (dxutil.cpp:64), Sleep 4, `GetProcessAffinityMask` (cls_map.cpp, decides threading).
-- Windows-only extras: `Software\MountAndBladeKeys` registry value (options_dlg.cpp:228, world_app.cpp:531), `WSAStartup/socket/connect` version check to taleworlds.com
-  (options_dlg.cpp:112), `ShellExecuteA` x2, `CoCreateInstance(CLSID_DxDiagProvider)` (options_dlg.cpp:404), `binkplay.exe` x2 (cls_map.cpp:154,174), `SkinMagic_*` skinning of the launcher dialog.
+  CreateDirectoryA 13, SHGetFolderPathA 12, FindFirstFileA 9, timeGetTime 6, QueryPerformanceCounter (dxutil.cpp:64), Sleep 4, `GetProcessAffinityMask` (winmain_and_menu_screens.cpp, decides threading).
+- Windows-only extras: `Software\MountAndBladeKeys` registry value (launcher_options_dialog.cpp:228, world_app.cpp:531), `WSAStartup/socket/connect` version check to taleworlds.com
+  (launcher_options_dialog.cpp:112), `ShellExecuteA` x2, `CoCreateInstance(CLSID_DxDiagProvider)` (launcher_options_dialog.cpp:404), `binkplay.exe` x2 (winmain_and_menu_screens.cpp:154,174), `SkinMagic_*` skinning of the launcher dialog.
 - Paths: 92 backslash literals in 25 files ("Data\\item_modifiers.txt", "data\\ground_specs.txt" - mixed case). Windows and default macOS are case-insensitive; Linux is not.
 
 ## Detailed plan

@@ -1,0 +1,2 @@
+../src/game/editor/poly_mesh_vert_ray.cpp  ?vert_ray@PolyMesh@@QAEXABUvector4@rgl@@0AAIPAM2@Z  0052dae0  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_vert_ray.cpp  ?pick_edge@PolyMesh@@QAEIABUvector4@rgl@@0@Z  0052dc00  /O2 /MT /Gy /TP

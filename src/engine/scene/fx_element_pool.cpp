@@ -1,0 +1,155 @@
+//-----------------------------------------------------------------------------
+// File: entity.cpp  (0x41f1d0..0x41fee0)
+//
+// Desc: the scene entity (rgl::entity: constructor and the small virtual accessors / setters), the effect
+//       element's (FxElem) destructor and psys-list helpers, the scene teardown, the chunked free-list pool, and
+//       the VC7.1 <list>/<vector> instantiations the linker kept from this object. Engine (rgl) code, placed under
+//       src/game for now. Names provisional. Functions in ascending address order (cl's bottom-up emission).
+//       Flags: /O2 /MT /Gy /TP (no /EH: the STL try/catch blocks compile as in the original without it, and with
+//       /EHa or /EHsc the entity constructor gets an EH frame the original lacks).
+//-----------------------------------------------------------------------------
+#include <vector>
+#include <list>
+#include <memory>
+#include <string.h>
+#include <new>
+#include "engine/math/rgl_math.h"
+#include "engine/math/mat4_include.h"
+#include "engine/render/mesh_prims.h"
+#include "engine/render/mesh_parts.h"             // rgl::render_info (and the other mesh records)
+#include "engine/scene/world.h"                // rgl::world / pool / cellnode / cellref, scene, mesh: the real classes
+#include "engine/core/pod_elems.h"              // E8 / E12 / E100 / rec36 / rec136 (shared)
+struct named_object;
+#include "engine/resource/resource.h"              // resmgr g_resmgr (0x5d6fa0), release 0x4175f0 (mem_stream.cpp)
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "engine/math/mat4_include.h"
+#include "engine/fx/fx.h"
+#include "engine/render/mesh_prims.h"
+#include "engine/physics/poly.h"
+#include "engine/physics/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "engine/render/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+
+using rgl::vector4;
+
+// std::remove is called, not compiled here: in the original, erase_entity (0x41f450) reaches the instance in the
+// previous object (0x41f080) as an opaque function. With the <algorithm> body visible cl keeps end() in a register
+// across the call, which the original does not.
+namespace std {
+template<class _FI, class _Ty> _FI remove(_FI _First, _FI _Last, const _Ty& _Val);     // 0x41f080
+}
+
+// @ 0x41f1d0
+FxElem::~FxElem()
+{
+    if (nchild)
+        operator delete(children);
+}
+
+// @ 0x41f250
+void FxElem::set_data(Light* p)
+{
+    if (psys.size() != 0) {
+        rgl::mesh* s = psys[0];
+        if (s->p_c0 != 0)
+            operator delete(s->p_c0);
+        s->p_c0 = p;
+    } else {
+        operator delete(p);
+    }
+}
+
+// @ 0x41f2a0
+int FxElem::find_kid(int id)
+{
+    int r = -1;
+    if (psys.size() != 0) {
+        for (unsigned i = 0; i < psys[0]->kids.size(); i++) {
+            if (psys[0]->kids[i]->tag == id)
+                r = i;
+        }
+    }
+    return r;
+}
+
+// ---- std::list<int> (VC7.1 <list>), instantiated by list<int>::resize (0x41fa90): erase (0x41f310), _Insert
+// (0x41f640), _Insert_n (0x41f680) and its catch(...) funclet (0x41f6e6). The linker folded them (ICF) with every list of
+// 4-byte elements. Template rows are labelled `// 0x<va> <name>` (no `@`): a marker binds the next definition.
+
+// 0x41f310 list::erase
+template std::list<int>::iterator std::list<int>::erase(std::list<int>::iterator);
+
+// ---- chunked free-list pool ----
+template<class T> void rgl::pool<T>::link_chunks()
+{
+    typedef typename std::list<T*>::iterator It;
+    for (It it = chunks.begin(); it != chunks.end(); ++it) {
+        for (int i = 0; i < count - 1; i++) {
+            (*it)[i].next = &(*it)[i + 1];
+        }
+        It nx = it;
+        ++nx;
+        if (nx != chunks.end())
+            (*it)[count - 1].next = *nx;
+        else
+            (*it)[count - 1].next = 0;
+    }
+    if (chunks.begin() != chunks.end())
+        freelist = *chunks.begin();
+}
+// 0x41f350 pool::link_chunks (the scene's cell-node pool)
+template void rgl::pool<rgl::cellnode>::link_chunks();
+// 0x41f3d0 pool::link_chunks (the scene's cell-reference pool)
+template void rgl::pool<rgl::cellref>::link_chunks();
+
+// @ 0x41f450
+void rgl::world::erase_entity(rgl::entity* e)
+{
+    std::vector<rgl::entity*>::iterator it = std::remove(ents.begin(), ents.end(), e);
+    ents.erase(it, ents.end());
+}
+
+// @ 0x41f4b0 std::vector<T>::_Tidy of a trivially destructible element: the linker folded every such vector's copy into this one
+template void std::vector<rgl::entity*>::_Tidy();
+
+// @ 0x41f4e0
+rgl::scene::~scene()
+{
+    if (rt != 0) {
+        g_resmgr.release(rt);   // 0x4175f0
+        rt = 0;
+    }
+    scene* c = refl;
+    if (c != 0)
+        delete c;
+    for (unsigned i = 0; i < cache.size(); i++) {
+        mesh* o = cache[i];
+        if (o != 0)
+            delete o;
+    }
+}
+
+// @ 0x41f5d0
+NavData::~NavData()
+{
+}
+
+// 0x41f640 list::_Insert
+template void std::list<int>::_Insert(std::list<int>::iterator, const int&);
+// 0x41f680 list::_Insert_n
+template void std::list<int>::_Insert_n(std::list<int>::iterator, std::list<int>::size_type, const int&);
+
+// ---- std::vector instantiations. 0x41f880 is the catch(...) funclet + cold branches of the _Insert_n at
+// 0x41f720 (same COMDAT).
+// 0x41f720 vector::_Insert_n (vector<Obj*>)
+template void std::vector<rgl::Obj*>::_Insert_n(std::vector<rgl::Obj*>::iterator, size_t, rgl::Obj* const&);
+// 0x41f970 vector::resize (vector<mesh*>)
+template void std::vector<rgl::mesh*>::resize(size_t, rgl::mesh*);
+// 0x41fa00 vector::resize (vector<Obj*>)
+template void std::vector<rgl::Obj*>::resize(size_t, rgl::Obj*);
+// 0x41fa90 list::resize
+template void std::list<int>::resize(size_t, int);
+// 0x41fb00 vector::resize (vector<E100>)
+template void std::vector<E100>::resize(size_t, E100);
+
+// rgl::entity (the constructor 0x41fba0 and its virtual accessors, 0x41fcb0..0x41fe90) is src/engine/scene/entity.cpp: the one class of
+// scene_entity.h.

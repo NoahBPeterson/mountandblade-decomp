@@ -1,0 +1,4 @@
+../src/game/ui/screens/scroll_list_screen.cpp  ??Hiterator@?$vector@UNotePage@@V?$allocator@UNotePage@@@std@@@std@@QBE?AV012@H@Z  00534160  /O2 /MT /Gy /TP
+../src/game/ui/screens/scroll_list_screen.cpp  ?frame_update@ItemB@@UAEXM@Z  00534180  /O2 /MT /Gy /TP
+../src/game/ui/screens/scroll_list_screen.cpp  ?frame_update@ItemC@@UAEXM@Z  00534230  /O2 /MT /Gy /TP
+../src/game/ui/screens/scroll_list_screen.cpp  ?get3@MWidget@@QAEXPAH00@Z  00533a60  /O2 /MT /Gy /TP

@@ -1,4 +1,4 @@
-// hud.h: the mission HUD bar widget the two functions of slice s00497880 run on: its per-frame update
+// mission_hud_buttons.h: the mission HUD bar widget the two functions of slice s00497880 run on: its per-frame update
 // (0x497880: two bar meshes, one colour group, the widget position) and the refresh of the widget's
 // animated frame mesh (0x497d10). It is the two-bar sibling of the widget in slice s00496d30 (same
 // layout up to the mesh pointers, which sit 4 bytes lower here). Names are provisional; the offsets are

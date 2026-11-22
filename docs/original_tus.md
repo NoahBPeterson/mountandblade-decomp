@@ -7,7 +7,7 @@ data references, register-argument scan), the shared analysis image (`resolve.R.
 nonmatching rows; `work/near_miss.json` has no byte count for 130 of its rows, so I used the row files). The tree is
 being edited while I read it (for example `map_panel.cpp` already holds the former map_update/map_picker/map_info, with map_tooltip kept separate because `update` needs its bodies opaque), so
 counts are a snapshot. Prior work that this builds on and does not repeat: `docs/tu_map.md` (121-TU map, signals
-measured on the six DX9 and three TinyXML objects) and the per-directory MIGRATION.md / script NOTES.md files.
+measured on the six DX9 and three TinyXML objects) and the per-directory MIGRATION.md / script game_script_NOTES.md files.
 
 ## 1. What each kind of evidence is worth (what I checked, not what I assumed)
 
@@ -18,7 +18,7 @@ measured on the six DX9 and three TinyXML objects) and the per-directory MIGRATI
 | File statics / data ownership | Of 1011 distinct data VAs referenced from code, 490 are used by one of our modules, 163 by two, 81 by three, 142 by four or more, 135 also by non-module code. The game is mostly extern singletons (g_game 0x5e2930 and so on), so "shared by only A and B" is what any extern looks like. Only a handful of VAs are informative (below). `g_script_error` is the one proven file static (all of 0x5e2590..0x5e25a4 lies inside 0x49cc60..0x4b10d7). | tie, medium at most; listed per candidate. |
 | `.CRT$XCU` initialisers | 46 entries. The constructed global's referrers are mostly many modules (g_resmgr 0x5d6fa0: about 60 modules). Informative ones: 0x5a9f20/0x5a9f28 (initialiser 0x547a60) are referenced only by cls_map and mission_window; 0x5e2580/0x5e2584 (initialisers 0x547a20/0x547a30) only by terrain_a and terrain_render; 0x5a9be0/0x5a9be8 only by cls_map. | tie, medium: a dynamically initialised global is defined in the TU that holds its `$E` function. Which TU it is cannot be read from the address alone (the `$E` functions are all in the post-CRT area), so this says "same TU or extern". |
 | `.rdata` literal pools | Not used. With `/GF` string pooling, `/Gy` COMDAT floats and `/OPT:ICF`, a literal shared by two objects sits with the first user, so a shared literal does not distinguish one TU from two, and docs/tu_map.md measured 96.6% in-order for single-TU items without any merge signal. I did not run a per-module first-literal check. | none. |
-| COMDAT placement | `??_G`/`??_E` deleting destructors and std template instances sit in the address range of the object that first defined them, whichever module of ours uses them. 241 function rows lie in runs away from their module's main run (section 4 lists the notable ones; some are an artefact of how our modules were cut, not only COMDAT placement). The vector deleting destructors are only emitted in an object that runs `new T[n]` (src/rgl/core/MIGRATION.md), which is a usable per-object marker I applied by hand only to resmgr. | explains "stray" rows; evidence of membership only for the vector-deleting-destructor marker. |
+| COMDAT placement | `??_G`/`??_E` deleting destructors and std template instances sit in the address range of the object that first defined them, whichever module of ours uses them. 241 function rows lie in runs away from their module's main run (section 4 lists the notable ones; some are an artefact of how our modules were cut, not only COMDAT placement). The vector deleting destructors are only emitted in an object that runs `new T[n]` (docs/migration/rgl_core.md), which is a usable per-object marker I applied by hand only to resmgr. | explains "stray" rows; evidence of membership only for the vector-deleting-destructor marker. |
 | Single-caller helper counts | `Operation::execute` (0x49fa10) alone has 182 callees that nothing else calls. The count is high for any hub, and a counter-example exists: `fx_keys` has 12 single-caller helpers of `fx_anim` yet the visibility-twin test shows `update_poses2` saw them as external. | not used as evidence; reported for context only. |
 | Visibility twins | A caller that is byte-exact only when its callee is declaration-only proves two objects (docs/tu_map.md lists seven: key_groups, agent_pick, troop_adjust, terrain_render, fx_keys, poly_mesh, the three mesh rays). The converse, "exact only with the real body", proves a merge, as camera+script_interpreter did. | the only codegen-based evidence; I cannot compile, so I only cite rows where someone already measured it. |
 
@@ -30,9 +30,9 @@ Boundaries that I can support from address plus call or register evidence (confi
 |---|---|---|
 | 0x4035d0, 0x407250, 0x42f720 | forward calls inside B regime on the DX9 / TinyXML ground truth | high (known objects) |
 | 0x4b14b0 (end of the interpreter TU, start of party_2) | `Operation::execute` 0x49fa10 calls 0x4b14b0, 0x4b14f0, 0x4b1700, 0x4b1d80 forward, B regime, non-COMDAT callees | medium-high (window 0x4b1160..0x4b14b0) |
-| 0x437770 (agent.cpp / troop_adjust), 0x4320b0, 0x433040, 0x4681b0, 0x470a00, 0x52dae0/0x52dcc0/0x52dfd0, 0x422db0 | visibility twins (callee body hidden from the caller in the original) | medium-high; the twin test is a byte-diff observation |
+| 0x437770 (agent_queries.cpp / troop_adjust), 0x4320b0, 0x433040, 0x4681b0, 0x470a00, 0x52dae0/0x52dcc0/0x52dfd0, 0x422db0 | visibility twins (callee body hidden from the caller in the original) | medium-high; the twin test is a byte-diff observation |
 | 0x460160 (end of agent_logic) | `PlacedObj::update_1c0` 0x461200 is called forward from 0x44c210; `ScriptState::expand_token` starts at the next 16-aligned address | medium |
-| 0x4ca600 (gui_edit / mesh_2) | forward call 0x4ca550 -> 0x4ca600 (src/rgl/mesh2/MIGRATION.md) | medium |
+| 0x4ca600 (gui_edit / mesh_2) | forward call 0x4ca550 -> 0x4ca600 (docs/migration/rgl_mesh2.md) | medium |
 | 0x466cd0 (terrain_a / terrain_emit; was cell_of.cpp 0x464b40..0x464bf0 as its own unit) | visibility twin, measured 2026-11-12 (scratchpad tsplit): `Terrain::cell_of` 0x464b40 has two callers, `Terrain::sample` 0x465af0 (byte-exact only with the body visible: c no longer escapes, frame 0x60) and `Terrain::emit_particle` 0x466cd0 (byte-exact only with it opaque: three loads after the call reorder). So cell_of shares sample's object and emit_particle is in a later one. Cut points tested on 0x465e70..0x466cd0: `pick_diagonals` 0x4666b0, `pick_triangle_types` 0x466930 and `accumulate_kinds` 0x466aa0 each lose their match when cut off from `terrain_cell::kind` 0x4646b0's body, so the boundary is 0x466c10 or 0x466cd0. `erode` 0x466c10 matches either way; it goes with the earlier object because it is one of the pass sequence 0x481d10 calls (smooth_heights, compute_weights, pick_diagonals, pick_triangle_types, erode, accumulate_kinds). | medium-high (window 0x466c10..0x466cd0) |
 | every other module boundary of ours in the T regime (about 95 of 216) | no usable evidence: class names only (about 50% precision on the ground truth). These are the least reliable of our cuts. | none |
 
@@ -43,25 +43,25 @@ The full per-boundary table (all 216 consecutive module runs, with forward and b
 "Unmatched" is the sum of the diff bytes of the modules' nonmatching rows. "Unblocks" names rows where the notes or
 the codegen rules point at same-TU information; I have not compiled any of this.
 
-### A1. Agent logic: agent_ai + agent_combat + phys_set + agent_fx_sound + agent_logic, and the tail of agent_stats (about 0x43a280..0x460160). Unmatched about 95,000 B (agent_logic 77,679). Confidence: medium-high that these are one TU; low that it reaches back to agent.cpp.
-- Evidence: `ui_weapon_class_name` 0x43a280 takes its type in EAX and a buffer in ESI. Its only caller is `process_blow` 0x457b40 (agent_logic). A register-convention function with one calling TU is internal to it, so 0x43a280..0x457b40 is one object. It contains the end of agent_stats, agent_ai, agent_combat, phys_set, agent_fx_sound and the first 0x13000 bytes of agent_logic. None of the five internal boundaries has a forward call (B regime), 142 calls cross between the modules, 43 functions are called only from another member module, and `PlacedObj::update_1c0` is the only forward target and sits after the range. src/game/agent4/MIGRATION.md reached the same conclusion; agent_logic.cpp still holds only 0x444c50..0x460160 and the other four are separate files.
+### A1. Agent logic: agent_ai + agent_combat + phys_set + agent_fx_sound + agent_logic, and the tail of agent_stats (about 0x43a280..0x460160). Unmatched about 95,000 B (agent_logic 77,679). Confidence: medium-high that these are one TU; low that it reaches back to agent_queries.cpp.
+- Evidence: `ui_weapon_class_name` 0x43a280 takes its type in EAX and a buffer in ESI. Its only caller is `process_blow` 0x457b40 (agent_logic). A register-convention function with one calling TU is internal to it, so 0x43a280..0x457b40 is one object. It contains the end of agent_stats, agent_ai, agent_combat, phys_set, agent_fx_sound and the first 0x13000 bytes of agent_logic. None of the five internal boundaries has a forward call (B regime), 142 calls cross between the modules, 43 functions are called only from another member module, and `PlacedObj::update_1c0` is the only forward target and sits after the range. docs/migration/game_agent4.md reached the same conclusion; agent_logic.cpp still holds only 0x444c50..0x460160 and the other four are separate files.
 - Not supported: `slot_class_impl` 0x4350c0 (EAX; callers 0x4385e0 in agent_stats and four in agent_logic) would push the start back to 0x4350c0, across the visibility-twin boundary at 0x437770 (`Troop::adjust` exact only when `falloff` is opaque). One of the two is wrong, and a header-inline function folded by ICF reconciles them (the 0x487b00 pattern). So the lower end is 0x43a280, not 0x4350c0.
-- Unblocks: not `process_blow` itself (agent_logic.cpp already defines `ui_weapon_class_name` as a `static noinline` at line 5934, and agent_stats.cpp carries a stand-in caller, so the convention is already reproduced there); the gain is for the rows in agent_ai, agent_combat and agent_fx_sound that call agent_stats or agent_logic helpers through a declaration only (cl keeps register and side-effect knowledge of callees defined earlier in the TU, docs/codegen.md 6.3). Whole-TU context "did not move any row" in the one test src/game/agent3/MIGRATION.md recorded, so expect part of this to be neutral.
+- Unblocks: not `process_blow` itself (agent_logic.cpp already defines `ui_weapon_class_name` as a `static noinline` at line 5934, and agent_stats.cpp carries a stand-in caller, so the convention is already reproduced there); the gain is for the rows in agent_ai, agent_combat and agent_fx_sound that call agent_stats or agent_logic helpers through a declaration only (cl keeps register and side-effect knowledge of callees defined earlier in the TU, docs/codegen.md 6.3). Whole-TU context "did not move any row" in the one test docs/migration/game_agent3.md recorded, so expect part of this to be neutral.
 
 - 2026-11-12 check (scratchpad n_tu): visible-callee signs across the file give no consistent boundary; making 22 earlier functions opaque to the tail costs Agent::update 0x45f660 its match (Agent::ai_idle_tick 0x44df30 alone: 0 -> 157), so 0x43a280..0x45f660 is one object. 0x45ff30 has no evidence either way. Visible bodies that hurt rows here (Troop::nibble, ItemRef::stat_1f4/stat_214/mesh_name, Skeleton::all_shapes, Map10007::lookup, rotate_about_*) belong to other units and stay opaque.
 ### A2. Front of the script interpreter: world_data (0x4904a0..0x4958f0) + mesh_hud + obj_tbl + widget_mgr + widget_node + script_interpreter (0x4904a0..0x4b1160). Unmatched about 15,000 B beyond the interpreter's own 57,403 (mesh_hud 10,898; widget_mgr 2,027; widget_node 741; obj_tbl 316; the world_data part). Confidence: medium for 0x4904a0..0x49ad20, medium-low across 0x49ad20.
-- Measured 2026-11-06, not merged (src/game/script/NOTES.md, Merge test): world_data loses exact rows 0x490a30, 0x490fa0 and 0x491e50, which need `lookup` opaque where execute needs it visible; the case gain comes only from obj_tbl's `spawn_scaled`/`spawn_scaled2` being visible, available without a merge; mesh_hud, widget_mgr and widget_node showed no gain.
-- Evidence: `agent_of` / `trigger_item_mesh` 0x4904a0 takes EAX; its only callers are in `Operation::execute` 0x49fa10 (script NOTES.md open problem 3: "takes EAX in the original; a plain call here"). By the same premise as A1 the object spans 0x4904a0..0x49fa10 at least. Inside that span 46 functions in world_data, obj_tbl and widget_mgr (and 0x495970 in mesh_hud) are called only from 0x49fa10, and mesh_hud's 0x495b20 is called only from inside the interpreter range (0x49bbb0, 0x49bea0), so the range is interpreter glue and not a class implementation file. Script NOTES.md already puts the TU's start at or below 0x49a0b0. The file static `g_script_error` is confirmed only inside 0x49cc60..0x4b10d7.
+- Measured 2026-11-06, not merged (docs/migration/game_script_NOTES.md, Merge test): world_data loses exact rows 0x490a30, 0x490fa0 and 0x491e50, which need `lookup` opaque where execute needs it visible; the case gain comes only from obj_tbl's `spawn_scaled`/`spawn_scaled2` being visible, available without a merge; mesh_hud, widget_mgr and widget_node showed no gain.
+- Evidence: `agent_of` / `trigger_item_mesh` 0x4904a0 takes EAX; its only callers are in `Operation::execute` 0x49fa10 (script game_script_NOTES.md open problem 3: "takes EAX in the original; a plain call here"). By the same premise as A1 the object spans 0x4904a0..0x49fa10 at least. Inside that span 46 functions in world_data, obj_tbl and widget_mgr (and 0x495970 in mesh_hud) are called only from 0x49fa10, and mesh_hud's 0x495b20 is called only from inside the interpreter range (0x49bbb0, 0x49bea0), so the range is interpreter glue and not a class implementation file. Script game_script_NOTES.md already puts the TU's start at or below 0x49a0b0. The file static `g_script_error` is confirmed only inside 0x49cc60..0x4b10d7.
 - Against: `DropDown::key` 0x49aca0 calls `DropDown` 0x49ad20 forward in B regime (the map's medium boundary), and mesh_hud holds large widget vtable methods (0x496100..0x4985f0) that nothing calls directly, which is not what script-op helpers look like. If 0x49ad20 is a real boundary, then 0x4904a0..0x49ad20 is one object and widget_node + interpreter another, and `agent_of`'s TU is not the interpreter's; the script NOTES' claim that the interpreter's TU holds `agent_of` would then be wrong. I could not decide this from the image.
 - Unblocks: row 0x4904a0 (53 B, blocked because "the callers live in the script interpreter TU"), plus any `Operation::execute` case that calls these helpers while their bodies are opaque (the notes list `GameCompanion::create_companion_party`, `Party::max_stacks` and the validators). Execute alone is 45,965 of the interpreter's 57,403 unmatched bytes, so this is the largest single lever once the frame (0x1ee8 vs 0x1ec0) is solved.
 
 ### A3. cls_map (both runs) + mission_window, probably + progress_bar (0x4d92c0..0x4e87d0). Unmatched 3,991 B (14,958 with progress_bar). Confidence: medium for cls_map+mission_window, low-medium for progress_bar.
 - **Measured 2026-11-06: not one file.** Merging cls_map + mission_window lost an exact row (0x4db1f0 or 0x4db810, depending on the UiA ctor's form) with no gains; adding progress_bar gained nothing; 0x5a9f20/24/28 are used only by 0x4db1f0 and its initialiser, so they don't tie cls_map in. 0x4db1f0 calls UiA's ctor out of line and 0x4db810 expands it, which points to a real boundary at 0x4db810. Kept separate.
-- Evidence: our cls_map.cpp has two runs (0x4d92c0..0x4dae40 and 0x4db810..0x4e3eb0) with mission_window (0x4dae40..0x4db810) wedged between them, so the current cut is wrong somewhere. Globals 0x5a9f20/0x5a9f28, constructed by initialiser 0x547a60, are referenced by cls_map and mission_window only. For progress_bar: its first function 0x4e3eb0 (ctor) is called only by `new_progress_bar` 0x4e3d50 at the end of cls_map (helper-after-caller, T regime), and 6 calls go back into cls_map.
+- Evidence: our winmain_and_menu_screens.cpp has two runs (0x4d92c0..0x4dae40 and 0x4db810..0x4e3eb0) with mission_window (0x4dae40..0x4db810) wedged between them, so the current cut is wrong somewhere. Globals 0x5a9f20/0x5a9f28, constructed by initialiser 0x547a60, are referenced by cls_map and mission_window only. For progress_bar: its first function 0x4e3eb0 (ctor) is called only by `new_progress_bar` 0x4e3d50 at the end of cls_map (helper-after-caller, T regime), and 6 calls go back into cls_map.
 - Against: only one call crosses the cls_map/mission_window pair (0x4db660 -> 0x4db810, `new_button`); T regime, so no forward-call test.
 
 ### A4. resource_manager + resmgr (0x417bb0..0x41e470). Unmatched 2,387 B (resmgr 2,228). Confidence: medium.
-- Evidence: src/rgl/core/MIGRATION.md already argues "very probably the same TU": the two are views of one object (g_resmgr 0x5d6fa0) with interleaved members; `??_E` vector deleting destructors for skin/material/mesh/body_part/texture/effect_set are only emitted where `new T[n]` runs, and those are in `resmgr::load_stream`, `get_render_target`, `get_small`; 19 calls from resmgr back into resource_manager, no forward call, 11 functions called only from the other member. The `??_E` marker would put the lower boundary at about 0x417600 inside mem_stream, not at 0x417010.
+- Evidence: docs/migration/rgl_core.md already argues "very probably the same TU": the two are views of one object (g_resmgr 0x5d6fa0) with interleaved members; `??_E` vector deleting destructors for skin/material/mesh/body_part/texture/effect_set are only emitted where `new T[n]` runs, and those are in `resmgr::load_stream`, `get_render_target`, `get_small`; 19 calls from resmgr back into resource_manager, no forward call, 11 functions called only from the other member. The `??_E` marker would put the lower boundary at about 0x417600 inside mem_stream, not at 0x417010.
 - Unblocks: resmgr rows near-miss on calls into resource_manager helpers (the nonmatching note for 0x41a510 etc. uses `--transparent` to test the equivalence only).
 
 ### A5. config + trigger_vec (0x4b9e70..0x4c2c50, with config's strays). Unmatched 6,186 B. Confidence: low-medium.
@@ -71,7 +71,7 @@ the codegen rules point at same-TU information; I have not compiled any of this.
 - Evidence: T regime helper-after-caller: game_tick's first function 0x516ac0 is called only from mission_ctx 0x514d40; one forward call. Nothing else (no shared data, no register convention). Listed because of the unmatched bytes; I would not merge on this alone.
 
 ### A7. Game + troop_rec + game_2 (0x51c5a0..0x525160). Unmatched 14,170 B. Confidence: low.
-- Evidence: class `Game` has methods in both game.cpp (0x51cc10..) and game_2.cpp (0x520b20, 0x5213a0); `Game::build_map`/`build_scene` are called forward from 0x51c720; data 0xa73090/0xa732b8 are shared only by these modules. The game_2 note ("a stub visible add_vertex drops the frame to 0x2ac260 but 0x413c50 is not in this TU") shows someone already has a same-TU lever pending in this file.
+- Evidence: class `Game` has methods in both game_state_load.cpp (0x51cc10..) and map_builder_and_data_load.cpp (0x520b20, 0x5213a0); `Game::build_map`/`build_scene` are called forward from 0x51c720; data 0xa73090/0xa732b8 are shared only by these modules. The game_2 note ("a stub visible add_vertex drops the frame to 0x2ac260 but 0x413c50 is not in this TU") shows someone already has a same-TU lever pending in this file.
 
 ### A8. cls_map-style T-regime chains with no usable evidence: char_sheet (28 modules, 0x4e87d0..0x4f7d70, 62 KB in the map as one TU), options_panel (16 modules), inventory_panel (17), mesh_slot (9; 0x47aa40..0x487c40, about 36,000 B unmatched). The map (docs/tu_map.md) has char_sheet, options_panel and inventory_panel as one TU each (119, 86 and 118 functions); our split follows class names. mesh_slot (9 modules, about 36,000 B unmatched): its eight internal boundaries are all B regime with no forward call, a weak hint (the DX9 objects had forward calls at 4 of 6 boundaries). Confidence: low. I list them so that nobody mistakes our cut points for evidence.
 
@@ -85,15 +85,15 @@ Ranking by (unmatched bytes x confidence): A1, A2, A3 (with progress_bar), A4, A
 
 | module | what | evidence | conf |
 |---|---|---|---|
-| cls_map.cpp | two runs around mission_window (see A3) | wedge | medium |
+| winmain_and_menu_screens.cpp | two runs around mission_window (see A3) | wedge | medium |
 | config.cpp | strays 0x4c5110, 0x4ca830, 0x4cd720, 0x4ebea0 (`dev_buffer`/`buffer_pair`/`render_batch` ctors and dtors), 0x49b4f0 in widget_mgr range | these COMDATs sit in the ranges of gui_edit, mesh_2, screen; the first-defining object is the one whose range contains them. No bytes depend on it, only link order. | medium |
-| world_data.cpp | main run 0x490030..0x4958f0 plus `??_G` stubs at 0x431400, 0x431b90, 0x431cb0 (they sit inside records.cpp) | deleting destructors follow the object that runs `new[]`; the main run is also split between the interpreter (A2) and whatever precedes 0x4904a0. | medium (for the strays), low (main run) |
-| mission_ui.cpp | row 0x502300 (`??_GMissionUi`) lies between party_window's two runs | emitted by party_window's object | medium |
-| party_window.cpp | two runs around that row; 0x501a20..0x502300 vs 0x502320..0x502cc0 | same | medium |
-| gui_manager.cpp / widget_slots.cpp | interleaved at 0x42cb70..0x42d820 (three alternations) | the module cut among 0x42cb70, 0x42cd60, 0x42cd80, 0x42ce50, 0x42d1b0 is not supported; one object, probably with tstring | low-medium |
-| rec_tables.cpp / trigger_records.cpp / ragdoll_models.cpp / gui_edit.cpp / mesh_2.cpp / config.cpp | interleaved rows between 0x4c2c50 and 0x4d3720 (e.g. trigger_records at 0x4c3120 and 0x4d0620) | same COMDAT-placement effect | low |
-| shapes.cpp / agent_combat.cpp | `std::logic_error` COMDATs of agent_combat at 0x40c2c0..0x40c670 inside shapes | first-defining object | low (no bytes) |
-| terrain_a.cpp | split at 0x466cd0 (2026-11-12): terrain_a.cpp 0x464200..0x466cd0 (cell_of folded back in), terrain_emit.cpp 0x466cd0..0x467f80 plus 0x467fb0..0x4681b0 | visibility twin on cell_of (section 2); the strays are the Terrain/Missile code that mesh_terrain calls | medium-high |
+| game_data_party_quest.cpp | main run 0x490030..0x4958f0 plus `??_G` stubs at 0x431400, 0x431b90, 0x431cb0 (they sit inside record_destructors.cpp) | deleting destructors follow the object that runs `new[]`; the main run is also split between the interpreter (A2) and whatever precedes 0x4904a0. | medium (for the strays), low (main run) |
+| widget_base.cpp | row 0x502300 (`??_GMissionUi`) lies between party_window's two runs | emitted by party_window's object | medium |
+| inventory_window.cpp | two runs around that row; 0x501a20..0x502300 vs 0x502320..0x502cc0 | same | medium |
+| gui_manager.cpp / widget_virtual_slots.cpp | interleaved at 0x42cb70..0x42d820 (three alternations) | the module cut among 0x42cb70, 0x42cd60, 0x42cd80, 0x42ce50, 0x42d1b0 is not supported; one object, probably with tstring | low-medium |
+| module_option_records.cpp / trigger_records.cpp / ragdoll_models.cpp / editor_selection_and_translation.cpp / poly_mesh_edge_face_ops.cpp / config.cpp | interleaved rows between 0x4c2c50 and 0x4d3720 (e.g. trigger_records at 0x4c3120 and 0x4d0620) | same COMDAT-placement effect | low |
+| collision_shapes.cpp / agent_combat.cpp | `std::logic_error` COMDATs of agent_combat at 0x40c2c0..0x40c670 inside shapes | first-defining object | low (no bytes) |
+| terrain_cells.cpp | split at 0x466cd0 (2026-11-12): terrain_cells.cpp 0x464200..0x466cd0 (cell_of folded back in), terrain_particles.cpp 0x466cd0..0x467f80 plus 0x467fb0..0x4681b0 | visibility twin on cell_of (section 2); the strays are the Terrain/Missile code that mesh_terrain calls | medium-high |
 
 I did not find a module that contains two obviously separate original files with evidence strong enough to state it
 (the twin-split work already removed those).
@@ -103,7 +103,7 @@ I did not find a module that contains two obviously separate original files with
 1. **0x487b00 `decode_utf8` (EDI/EDX)** has 8 caller modules spread over 0x4520d0..0x4fd700 (700 KB). A register convention does not imply one TU when the callers are many; it is a header-inline function folded by `/OPT:ICF`. The same logic may apply to `slot_class_impl` 0x4350c0.
 2. **A2 versus the forward call 0x49aca0 -> 0x49ad20** (and the "medium" boundary the map places there). Either the EAX argument of 0x4904a0 does not mean the interpreter's TU, or a forward call does not prove a boundary in this region.
 3. **fx_anim/fx_keys**: 12 of 20 fx_keys functions are single-caller helpers of `update_poses2`, yet the same function was found to see them as opaque, so single-caller counts are not membership evidence (I did not use them as such).
-4. **Forward calls into std COMDATs** (`insert` 0x49b170 -> `_Insert_n` 0x49b1c0) are the stated "high" evidence for the interpreter TU starting at 0x49b1c0; COMDAT order inside one object does not follow call order, so this boundary is weaker than the map says (and script NOTES.md already extends the TU below it).
+4. **Forward calls into std COMDATs** (`insert` 0x49b170 -> `_Insert_n` 0x49b1c0) are the stated "high" evidence for the interpreter TU starting at 0x49b1c0; COMDAT order inside one object does not follow call order, so this boundary is weaker than the map says (and script game_script_NOTES.md already extends the TU below it).
 5. **Class continuity** (our class names put `graph_obj` in both gui_edit and mesh_2, `TiXmlBase` in both tinyxml and tinyxmlparser) crosses boundaries that are proven by forward calls, so class continuity cannot override the call evidence. 0x4ca600 and 0x42f720 are the examples.
 6. **Initialiser table**: the 46 entries belong to the TU order in the original, but the owner of each constructed global is rarely knowable, so I did not use the order to place boundaries (the map's own check, docs/tu_map.md "Unresolved", is still open).
 
@@ -120,188 +120,188 @@ I did not find a module that contains two obviously separate original files with
 
 | module | main run | rows | unmatched B | runs | strays |
 |---|---|---|---|---|---|
-| dxframework/d3dapp.cpp | 401000-4035d0 | 27 | 0 | 1 |  |
-| dxframework/d3denumeration.cpp | 4035d0-404500 | 15 | 0 | 1 |  |
-| dxframework/d3dfont.cpp | 404500-4055e0 | 10 | 0 | 1 |  |
-| dxframework/d3dsettings.cpp | 4055e0-407250 | 22 | 0 | 1 |  |
-| dxframework/d3dutil.cpp | 407250-407660 | 1 | 0 | 1 |  |
-| dxframework/dxutil.cpp | 407660-407c10 | 7 | 0 | 1 |  |
-| rgl/shapes/shapes.cpp | 407c10-40c2c0 (+2) | 150 | 6275 | 3 | 40c360-40c580, 40c670-40e940 |
+| platform/dxframework/d3dapp.cpp | 401000-4035d0 | 27 | 0 | 1 |  |
+| platform/dxframework/d3denumeration.cpp | 4035d0-404500 | 15 | 0 | 1 |  |
+| platform/dxframework/d3dfont.cpp | 404500-4055e0 | 10 | 0 | 1 |  |
+| platform/dxframework/d3dsettings.cpp | 4055e0-407250 | 22 | 0 | 1 |  |
+| platform/dxframework/d3dutil.cpp | 407250-407660 | 1 | 0 | 1 |  |
+| platform/dxframework/dxutil.cpp | 407660-407c10 | 7 | 0 | 1 |  |
+| engine/physics/collision_shapes.cpp | 407c10-40c2c0 (+2) | 150 | 6275 | 3 | 40c360-40c580, 40c670-40e940 |
 | game/agent3/agent_combat.cpp | 43e190-441360 (+2) | 50 | 3485 | 3 | 40c2c0-40c360, 40c580-40c670 |
-| rgl/particles/mesh_obj.cpp | 40e940-413b60 | 137 | 793 | 1 |  |
-| rgl/psys.cpp | 413b60-414ae0 | 6 | 1592 | 1 |  |
-| rgl/noise.cpp | 414ae0-4150f0 | 2 | 787 | 1 |  |
-| rgl/text_stream.cpp | 4150f0-415900 | 24 | 0 | 1 |  |
-| rgl/core/resource_io.cpp | 415900-417010 | 32 | 1 | 1 |  |
-| rgl/mem_stream.cpp | 417010-417bb0 | 30 | 0 | 1 |  |
-| rgl/resource_manager.cpp | 417bb0-419190 | 39 | 159 | 1 |  |
-| rgl/core/resmgr.cpp | 419190-41e470 | 83 | 2228 | 1 |  |
-| rgl/core/frustum_grid.cpp | 41e470-41ef30 | 8 | 0 | 1 |  |
-| rgl/scene/world_items.cpp | 41ef30-41f1d0 | 5 | 0 | 1 |  |
-| game/entity.cpp | 41f1d0-41fba0 | 19 | 0 | 1 |  |
-| rgl/scene/entity_base.cpp | 41fba0-41fee0 | 15 | 0 | 1 |  |
-| rgl/scene/entity_recalc.cpp | 41fee0-4201b0 | 3 | 0 | 1 |  |
-| rgl/scene/entity_render.cpp | 4201b0-4205b0 | 2 | 8 | 1 |  |
-| rgl/scene/scene_objects.cpp | 4205b0-4218e0 | 27 | 86 | 1 |  |
-| rgl/scene/fxdef_set_color.cpp | 4218e0-421990 | 1 | 0 | 1 |  |
-| rgl/scene/mesh_list_color.cpp | 421990-4219c0 | 1 | 0 | 1 |  |
-| rgl/scene/strategic_emitters.cpp | 4219c0-421df0 | 5 | 107 | 1 |  |
-| rgl/dynamic/fx_anim.cpp | 421df0-422db0 | 4 | 1505 | 1 |  |
-| rgl/dynamic/fx_keys.cpp | 422db0-423c00 | 20 | 1442 | 1 |  |
-| rgl/dynamic/world_grid.cpp | 423c00-425370 | 34 | 1649 | 1 |  |
-| rgl/dynamic/dynamic_entity.cpp | 425370-427d80 | 42 | 3422 | 1 |  |
-| rgl/scene/entity_types.cpp | 427d80-4285e0 | 16 | 32 | 1 |  |
-| rgl/scene/shape_load.cpp | 4285e0-428820 | 3 | 0 | 1 |  |
-| rgl/scene/fxdef_init.cpp | 428820-428b10 | 2 | 0 | 1 |  |
-| rgl/scene/fx_support.cpp | 428b10-428ff0 | 6 | 0 | 1 |  |
-| rgl/scene/fxdef_render.cpp | 428ff0-4291c0 | 1 | 0 | 1 |  |
-| rgl/scene/fxdef_skin.cpp | 4291c0-429670 | 1 | 994 | 1 |  |
-| rgl/scene/render_scene.cpp | 429670-42a090 | 5 | 1870 | 1 |  |
-| game/strat/strat_entity.cpp | 42a090-42b6d0 | 8 | 2387 | 1 |  |
-| game/strat/strat_ctx.cpp | 42b6d0-42bac0 | 3 | 0 | 1 |  |
-| game/strat/tstring.cpp | 42bac0-42cb70 | 38 | 345 | 1 |  |
-| game/strat/gui_manager.cpp | 42cb70-42cd60 (+2) | 14 | 388 | 3 | 42cd80-42ce50, 42d1b0-42d820 |
-| game/ui/widget_slots.cpp | 42ce50-42d1b0 (+1) | 5 | 0 | 2 | 42cd60-42cd80 |
-| tinyxml/tinystr.cpp | 42d820-42d9a0 | 4 | 0 | 1 |  |
-| tinyxml/tinyxml.cpp | 42d9a0-42f720 | 66 | 0 | 1 |  |
-| tinyxml/tinyxmlparser.cpp | 42f720-431400 | 21 | 0 | 1 |  |
-| game/world_data/world_data.cpp | 490030-4958f0 (+3) | 91 | 6297 | 4 | 431400-431420, 431b90-431c40, 431cb0-431d30 |
-| rgl/xmlcfg/records.cpp | 431420-431b90 (+3) | 21 | 0 | 4 | 431c40-431cb0, 431d30-431e10, 432010-4320b0 |
-| game/mission5/game_2.cpp | 520b20-525160 (+1) | 28 | 7124 | 2 | 431e10-431f40 |
-| game/terrain_b/poly_mesh.cpp | 470a00-478830 (+2) | 107 | 9703 | 3 | 431f40-432010, 467f80-467fb0 |
-| rgl/xmlcfg/key_groups.cpp | 4320b0-432350 | 2 | 0 | 1 |  |
-| rgl/xmlcfg/game_util.cpp | 432350-433040 | 29 | 608 | 1 |  |
-| rgl/xmlcfg/agent_pick.cpp | 433040-4338e0 | 18 | 368 | 1 |  |
-| game/agent/curve.cpp | 4338e0-433bf0 | 6 | 0 | 1 |  |
-| game/agent/item_kind.cpp | 433bf0-434b20 | 7 | 188 | 1 |  |
-| game/agent/agent.cpp | 434b20-437770 | 71 | 1897 | 1 |  |
-| game/agent/troop_adjust.cpp | 437770-437830 | 3 | 0 | 1 |  |
-| game/agent2/agent_stats.cpp | 437830-43b100 | 73 | 3490 | 1 |  |
+| engine/render/mesh.cpp | 40e940-413b60 | 137 | 793 | 1 |  |
+| engine/render/particle_system.cpp | 413b60-414ae0 | 6 | 1592 | 1 |  |
+| engine/math/noise.cpp | 414ae0-4150f0 | 2 | 787 | 1 |  |
+| engine/io/text_stream.cpp | 4150f0-415900 | 24 | 0 | 1 |  |
+| engine/resource/resource_io.cpp | 415900-417010 | 32 | 1 | 1 |  |
+| engine/io/mem_stream.cpp | 417010-417bb0 | 30 | 0 | 1 |  |
+| engine/resource/resource_manager_init.cpp | 417bb0-419190 | 39 | 159 | 1 |  |
+| engine/resource/resource_manager.cpp | 419190-41e470 | 83 | 2228 | 1 |  |
+| engine/scene/frustum_grid.cpp | 41e470-41ef30 | 8 | 0 | 1 |  |
+| engine/scene/world_items.cpp | 41ef30-41f1d0 | 5 | 0 | 1 |  |
+| engine/scene/fx_element_pool.cpp | 41f1d0-41fba0 | 19 | 0 | 1 |  |
+| engine/scene/entity.cpp | 41fba0-41fee0 | 15 | 0 | 1 |  |
+| engine/scene/entity_recalc.cpp | 41fee0-4201b0 | 3 | 0 | 1 |  |
+| engine/scene/entity_render.cpp | 4201b0-4205b0 | 2 | 8 | 1 |  |
+| engine/scene/scene_objects.cpp | 4205b0-4218e0 | 27 | 86 | 1 |  |
+| engine/fx/fx_def_set_color.cpp | 4218e0-421990 | 1 | 0 | 1 |  |
+| engine/fx/mesh_list_color.cpp | 421990-4219c0 | 1 | 0 | 1 |  |
+| engine/fx/strategic_emitters.cpp | 4219c0-421df0 | 5 | 107 | 1 |  |
+| engine/fx/fx_animation.cpp | 421df0-422db0 | 4 | 1505 | 1 |  |
+| engine/fx/fx_key_frames.cpp | 422db0-423c00 | 20 | 1442 | 1 |  |
+| engine/physics/world_grid.cpp | 423c00-425370 | 34 | 1649 | 1 |  |
+| engine/physics/rigid_body.cpp | 425370-427d80 | 42 | 3422 | 1 |  |
+| engine/scene/entity_types.cpp | 427d80-4285e0 | 16 | 32 | 1 |  |
+| engine/scene/shape_load.cpp | 4285e0-428820 | 3 | 0 | 1 |  |
+| engine/fx/fx_def_init.cpp | 428820-428b10 | 2 | 0 | 1 |  |
+| engine/fx/fx_support.cpp | 428b10-428ff0 | 6 | 0 | 1 |  |
+| engine/fx/fx_def_render.cpp | 428ff0-4291c0 | 1 | 0 | 1 |  |
+| engine/fx/fx_def_skin.cpp | 4291c0-429670 | 1 | 994 | 1 |  |
+| engine/scene/render_scene.cpp | 429670-42a090 | 5 | 1870 | 1 |  |
+| engine/scene/strategic_entity.cpp | 42a090-42b6d0 | 8 | 2387 | 1 |  |
+| engine/scene/strategic_shadow.cpp | 42b6d0-42bac0 | 3 | 0 | 1 |  |
+| engine/core/tstring.cpp | 42bac0-42cb70 | 38 | 345 | 1 |  |
+| game/ui/gui_manager.cpp | 42cb70-42cd60 (+2) | 14 | 388 | 3 | 42cd80-42ce50, 42d1b0-42d820 |
+| game/ui/widgets/widget_virtual_slots.cpp | 42ce50-42d1b0 (+1) | 5 | 0 | 2 | 42cd60-42cd80 |
+| third_party/tinyxml/tinystr.cpp | 42d820-42d9a0 | 4 | 0 | 1 |  |
+| third_party/tinyxml/tinyxml.cpp | 42d9a0-42f720 | 66 | 0 | 1 |  |
+| third_party/tinyxml/tinyxmlparser.cpp | 42f720-431400 | 21 | 0 | 1 |  |
+| game/campaign/game_data_party_quest.cpp | 490030-4958f0 (+3) | 91 | 6297 | 4 | 431400-431420, 431b90-431c40, 431cb0-431d30 |
+| game/data/record_destructors.cpp | 431420-431b90 (+3) | 21 | 0 | 4 | 431c40-431cb0, 431d30-431e10, 432010-4320b0 |
+| game/campaign/map_builder_and_data_load.cpp | 520b20-525160 (+1) | 28 | 7124 | 2 | 431e10-431f40 |
+| game/terrain/poly_mesh.cpp | 470a00-478830 (+2) | 107 | 9703 | 3 | 431f40-432010, 467f80-467fb0 |
+| game/input/key_groups.cpp | 4320b0-432350 | 2 | 0 | 1 |  |
+| game/common/game_util.cpp | 432350-433040 | 29 | 608 | 1 |  |
+| game/agent/agent_item_pick.cpp | 433040-4338e0 | 18 | 368 | 1 |  |
+| engine/fx/env_curve.cpp | 4338e0-433bf0 | 6 | 0 | 1 |  |
+| game/data/item_kind.cpp | 433bf0-434b20 | 7 | 188 | 1 |  |
+| game/agent/agent_queries.cpp | 434b20-437770 | 71 | 1897 | 1 |  |
+| game/data/troop_proficiency.cpp | 437770-437830 | 3 | 0 | 1 |  |
+| game/agent/agent_stats.cpp | 437830-43b100 | 73 | 3490 | 1 |  |
 | game/agent2/agent_ai.cpp | 43b100-43e190 | 27 | 7168 | 1 |  |
 | game/agent/phys_set.cpp | 441360-441ff0 | 5 | 1811 | 1 |  |
 | game/agent3/agent_fx_sound.cpp | 441ff0-444c50 | 29 | 4834 | 1 |  |
 | game/agent4/agent_logic.cpp | 444c50-460160 | 65 | 77679 | 1 |  |
-| game/dialog_manager.cpp | 460160-461200 | 21 | 0 | 1 |  |
-| game/terrain_a/wind.cpp | 461200-461630 | 8 | 207 | 1 |  |
-| game/renderer.cpp | 461630-4625d0 | 21 | 0 | 1 |  |
-| game/ui/item_ref.cpp | 4625d0-462ac0 | 7 | 0 | 1 |  |
-| game/ui/troop_inv.cpp | 462ac0-4636d0 | 14 | 436 | 1 |  |
-| game/terrain_a/game_state.cpp | 4636d0-464200 | 17 | 891 | 1 |  |
-| game/terrain_a/terrain_a.cpp | 464200-466cd0 | 36 | 918 | 1 |  |
-| game/terrain_a/terrain_emit.cpp | 466cd0-467f80 (+1) | 28 | 570 | 2 | 467fb0-4681b0 |
-| game/terrain_a/terrain_render.cpp | 4681b0-46e590 | 68 | 7124 | 1 |  |
-| game/terrain_b/terrain_b.cpp | 46e590-470a00 | 5 | 7251 | 1 |  |
-| game/terrain_b/mission.cpp | 478830-47aa40 | 19 | 4653 | 1 |  |
-| game/mesh_slot/mesh_ops.cpp | 47aa40-47cae0 | 13 | 5324 | 1 |  |
-| game/mesh_slot/mesh_scene.cpp | 47cae0-47e520 | 12 | 4030 | 1 |  |
-| game/mesh_slot/mesh_pass.cpp | 47e520-47f650 | 2 | 3749 | 1 |  |
-| game/mesh_slot/mesh_char.cpp | 47f650-47ff60 | 6 | 834 | 1 |  |
-| game/mesh_slot/mesh_terrain.cpp | 47ff60-482240 | 7 | 2953 | 1 |  |
-| game/mesh_slot/mesh_appear.cpp | 482240-4832b0 | 1 | 3222 | 1 |  |
-| game/mesh_slot/mesh_game.cpp | 4832b0-484590 | 6 | 3292 | 1 |  |
-| game/mesh_slot/mesh_start.cpp | 484590-4875e0 | 2 | 9889 | 1 |  |
-| game/mesh_slot/slot.cpp | 4875e0-488560 | 9 | 2649 | 1 |  |
-| game/ui/mission_ui.cpp | 488560-48b2d0 (+1) | 120 | 2412 | 2 | 502300-502320 |
-| game/ui/ui_widgets_a.cpp | 48b2d0-48b550 | 7 | 195 | 1 |  |
-| game/ui/ui_slider.cpp | 48b550-48b5a0 | 2 | 0 | 1 |  |
-| game/ui/ui_slider_key.cpp | 48b5a0-48b6e0 | 1 | 0 | 1 |  |
-| game/ui/ui_widgets_b.cpp | 48b6e0-48b930 | 6 | 0 | 1 |  |
-| game/mission_ui2/ui_d_value.cpp | 48b930-48b960 | 1 | 0 | 1 |  |
-| game/mission_ui2/ui_d_key.cpp | 48b960-48baa0 | 1 | 0 | 1 |  |
-| game/config/ui_widgets_c.cpp | 48baa0-48be00 | 4 | 303 | 1 |  |
-| game/mission_ui2/stat_panel_x.cpp | 48be00-48c330 | 8 | 257 | 1 |  |
-| game/mission_ui2/mission_3.cpp | 48c330-48e5d0 | 41 | 3893 | 1 |  |
-| game/mission_ui2/slot_api.cpp | 48e5d0-48ef40 | 15 | 961 | 1 |  |
-| game/mission_ui2/mission_4.cpp | 48ef40-48f790 | 12 | 880 | 1 |  |
-| game/mission_ui2/party.cpp | 48f790-48fd60 | 5 | 45 | 1 |  |
-| game/mission_ui2/game_data.cpp | 48fd60-490030 | 3 | 0 | 1 |  |
-| game/world_data/mesh_hud.cpp | 4958f0-499050 | 15 | 10898 | 1 |  |
-| game/world_data/obj_tbl.cpp | 499050-499830 | 7 | 316 | 1 |  |
-| game/config/widget_mgr.cpp | 499830-49ad20 (+1) | 11 | 2027 | 2 | 49b4f0-49b630 |
-| game/config/widget_node.cpp | 49ad20-49b1c0 | 4 | 741 | 1 |  |
+| game/dialog/dialog_manager.cpp | 460160-461200 | 21 | 0 | 1 |  |
+| game/terrain/wind_helpers.cpp | 461200-461630 | 8 | 207 | 1 |  |
+| engine/render/renderer.cpp | 461630-4625d0 | 21 | 0 | 1 |  |
+| game/data/item_ref.cpp | 4625d0-462ac0 | 7 | 0 | 1 |  |
+| game/data/troop_inventory.cpp | 462ac0-4636d0 | 14 | 436 | 1 |  |
+| game/terrain/scene_paths_and_wind_noise.cpp | 4636d0-464200 | 17 | 891 | 1 |  |
+| game/terrain/terrain_cells.cpp | 464200-466cd0 | 36 | 918 | 1 |  |
+| game/terrain/terrain_particles.cpp | 466cd0-467f80 (+1) | 28 | 570 | 2 | 467fb0-4681b0 |
+| game/terrain/terrain_render.cpp | 4681b0-46e590 | 68 | 7124 | 1 |  |
+| game/terrain/terrain_scene_renderer.cpp | 46e590-470a00 | 5 | 7251 | 1 |  |
+| game/mission/scene_container_grid.cpp | 478830-47aa40 | 19 | 4653 | 1 |  |
+| game/mission/mesh_vertex_ops.cpp | 47aa40-47cae0 | 13 | 5324 | 1 |  |
+| game/mission/scene_entities.cpp | 47cae0-47e520 | 12 | 4030 | 1 |  |
+| game/mission/render_passes.cpp | 47e520-47f650 | 2 | 3749 | 1 |  |
+| game/mission/character_meshes.cpp | 47f650-47ff60 | 6 | 834 | 1 |  |
+| game/mission/terrain_water_regen.cpp | 47ff60-482240 | 7 | 2953 | 1 |  |
+| game/mission/agent_appearance.cpp | 482240-4832b0 | 1 | 3222 | 1 |  |
+| game/mission/agent_spawn_and_tick.cpp | 4832b0-484590 | 6 | 3292 | 1 |  |
+| game/mission/mission_start_setup.cpp | 484590-4875e0 | 2 | 9889 | 1 |  |
+| game/input/input_device.cpp | 4875e0-488560 | 9 | 2649 | 1 |  |
+| game/ui/widgets/widget_base.cpp | 488560-48b2d0 (+1) | 120 | 2412 | 2 | 502300-502320 |
+| game/ui/widgets/toggle_and_text_fit.cpp | 48b2d0-48b550 | 7 | 195 | 1 |  |
+| game/ui/widgets/slider_value.cpp | 48b550-48b5a0 | 2 | 0 | 1 |  |
+| game/ui/widgets/slider_input.cpp | 48b5a0-48b6e0 | 1 | 0 | 1 |  |
+| game/ui/widgets/label_and_progress_bar.cpp | 48b6e0-48b930 | 6 | 0 | 1 |  |
+| game/ui/widgets/progress_bar_value.cpp | 48b930-48b960 | 1 | 0 | 1 |  |
+| game/ui/widgets/progress_bar_input.cpp | 48b960-48baa0 | 1 | 0 | 1 |  |
+| game/ui/widgets/text_editor_widget.cpp | 48baa0-48be00 | 4 | 303 | 1 |  |
+| game/data/troop_inventory_stats.cpp | 48be00-48c330 | 8 | 257 | 1 |  |
+| game/party/stacks_and_loot.cpp | 48c330-48e5d0 | 41 | 3893 | 1 |  |
+| game/ui/widgets/widget_overlay_api.cpp | 48e5d0-48ef40 | 15 | 961 | 1 |  |
+| game/ui/widgets/container_and_tableau_misc.cpp | 48ef40-48f790 | 12 | 880 | 1 |  |
+| game/party/party_members.cpp | 48f790-48fd60 | 5 | 45 | 1 |  |
+| game/party/party_tree_ops.cpp | 48fd60-490030 | 3 | 0 | 1 |  |
+| game/ui/widgets/hud_bar_widgets.cpp | 4958f0-499050 | 15 | 10898 | 1 |  |
+| game/data/object_table_spawners.cpp | 499050-499830 | 7 | 316 | 1 |  |
+| game/ui/widgets/widget_manager.cpp | 499830-49ad20 (+1) | 11 | 2027 | 2 | 49b4f0-49b630 |
+| game/ui/widgets/drop_down_list.cpp | 49ad20-49b1c0 | 4 | 741 | 1 |  |
 | game/script/script_interpreter.cpp | 49b630-4b1160 (+1) | 61 | 57403 | 2 | 49b1c0-49b4f0 |
-| game/party2/party_2.cpp | 4b2180-4b8f40 (+1) | 81 | 14752 | 2 | 4b1160-4b2160 |
-| game/party2/party_2_copy.cpp | 4b2160-4b2180 | 1 | 0 | 1 |  |
-| game/config/options_dlg.cpp | 4b8f40-4b9e70 | 12 | 1194 | 1 |  |
+| game/party/party_map.cpp | 4b2180-4b8f40 (+1) | 81 | 14752 | 2 | 4b1160-4b2160 |
+| game/party/party_track_allocator.cpp | 4b2160-4b2180 | 1 | 0 | 1 |  |
+| game/config/launcher_options_dialog.cpp | 4b8f40-4b9e70 | 12 | 1194 | 1 |  |
 | game/config/config.cpp | 4b9e70-4be730 (+4) | 68 | 2192 | 5 | 4c5110-4c5190, 4ca830-4ca8c0, 4cd720-4cd7a0, 4ebea0-4ebfd0 |
-| game/triggers/trigger_vec.cpp | 4be730-4c2c50 | 56 | 3994 | 1 |  |
-| rgl/mesh2/rec_tables.cpp | 4c3160-4c48d0 (+1) | 42 | 899 | 2 | 4c2c50-4c3120 |
-| game/options_panel/trigger_records.cpp | 4c3120-4c3160 (+1) | 2 | 883 | 2 | 4d0620-4d0c20 |
-| rgl/mesh2/gui_edit.cpp | 4c5190-4c80c0 (+2) | 90 | 9978 | 3 | 4c48d0-4c50ea, 4c8110-4ca600 |
-| game/options_panel/ragdoll_models.cpp | 4d3580-4d3720 (+1) | 3 | 0 | 2 | 4c80c0-4c8110 |
-| rgl/mesh2/mesh_2.cpp | 4ca8c0-4cd720 (+2) | 73 | 3287 | 3 | 4ca600-4ca830, 4cd7a0-4ce870 |
-| game/triggers/item_rec.cpp | 4ce870-4ce960 | 3 | 0 | 1 |  |
-| game/options_panel/mission_items.cpp | 4ce960-4cf100 | 13 | 0 | 1 |  |
-| game/options_panel/config_dialog.cpp | 4cf100-4d0620 | 3 | 3587 | 1 |  |
-| game/options_panel/module_load.cpp | 4d0c20-4d1410 | 9 | 107 | 1 |  |
-| game/options_panel/mesh_edit.cpp | 4d1410-4d3330 | 6 | 0 | 1 |  |
-| game/options_panel/world_app.cpp | 4d3720-4d4b4b | 12 | 1977 | 1 |  |
-| game/options_panel/hud.cpp | 4d4b80-4d5410 | 3 | 1332 | 1 |  |
-| game/options_panel/hud_source.cpp | 4d5410-4d5ba0 | 5 | 1075 | 1 |  |
-| game/options_panel/quest_page.cpp | 4d5ba0-4d63b0 | 4 | 0 | 1 |  |
-| game/options_panel/video_page.cpp | 4d63b0-4d6b80 | 1 | 1636 | 1 |  |
-| game/options_panel/keys_page.cpp | 4d6b80-4d7370 | 8 | 58 | 1 |  |
-| game/options_panel/options_panel.cpp | 4d7370-4d92c0 | 11 | 1008 | 1 |  |
-| game/cls_map/cls_map.cpp | 4db810-4e3eb0 (+1) | 70 | 3385 | 2 | 4d92c0-4dae40 |
-| game/cls_map/mission_window.cpp | 4dae40-4db810 | 6 | 606 | 1 |  |
-| game/cls_map/progress_bar.cpp | 4e3eb0-4e87d0 | 41 | 10967 | 1 |  |
-| game/char_sheet/save_game.cpp | 4e87d0-4e8f10 | 5 | 257 | 1 |  |
-| game/char_sheet/save_state.cpp | 4e8f10-4e9850 | 17 | 0 | 1 |  |
-| game/char_sheet/save_records.cpp | 4e9850-4ea0c0 | 9 | 6 | 1 |  |
-| game/char_sheet/save_panel.cpp | 4ea0c0-4ea8e0 | 3 | 1550 | 1 |  |
-| game/char_sheet/cam_view.cpp | 4ea8e0-4eb270 | 2 | 1419 | 1 |  |
-| game/char_sheet/facegen_misc.cpp | 4eb270-4ebc10 | 10 | 1835 | 1 |  |
-| game/char_sheet/screen.cpp | 4ebc10-4ebea0 (+1) | 6 | 972 | 2 | 4ebfd0-4ec4d0 |
-| game/char_sheet/screen_init.cpp | 4ec4d0-4ece20 | 2 | 1764 | 1 |  |
-| game/char_sheet/screen_camera.cpp | 4ece20-4ed6f0 | 3 | 1617 | 1 |  |
-| game/char_sheet/render_shape.cpp | 4ed6f0-4ed8d0 | 1 | 0 | 1 |  |
-| game/char_sheet/pick_entity.cpp | 4ed8d0-4ee230 | 1 | 1972 | 1 |  |
-| game/char_sheet/quest_log.cpp | 4ee230-4eeb10 | 4 | 838 | 1 |  |
-| game/char_sheet/cs_update.cpp | 4eeb10-4ef420 | 1 | 1216 | 1 |  |
-| game/char_sheet/cs_troop.cpp | 4ef420-4ef9f0 | 4 | 414 | 1 |  |
-| game/char_sheet/cs_detail.cpp | 4ef9f0-4f04f0 | 1 | 2045 | 1 |  |
-| game/char_sheet/cs_weapons.cpp | 4f04f0-4f0820 | 2 | 0 | 1 |  |
-| game/char_sheet/cs_panels.cpp | 4f0820-4f1390 | 1 | 2170 | 1 |  |
-| game/char_sheet/msg_log_ui.cpp | 4f1390-4f1460 | 2 | 0 | 1 |  |
-| game/char_sheet/facegen_win.cpp | 4f1460-4f2730 | 3 | 0 | 1 |  |
-| game/char_sheet/terrain_page.cpp | 4f2730-4f2d70 | 7 | 0 | 1 |  |
-| game/char_sheet/terrain_page_update.cpp | 4f2d70-4f3570 | 2 | 1592 | 1 |  |
-| game/char_sheet/terrain_page_input.cpp | 4f3570-4f3e10 | 6 | 1122 | 1 |  |
-| game/char_sheet/dust.cpp | 4f3e10-4f46d0 | 2 | 1954 | 1 |  |
+| game/app/options_dialog_and_module_tables.cpp | 4be730-4c2c50 | 56 | 3994 | 1 |  |
+| game/data/module_option_records.cpp | 4c3160-4c48d0 (+1) | 42 | 899 | 2 | 4c2c50-4c3120 |
+| game/data/trigger_records.cpp | 4c3120-4c3160 (+1) | 2 | 883 | 2 | 4d0620-4d0c20 |
+| game/editor/editor_selection_and_translation.cpp | 4c5190-4c80c0 (+2) | 90 | 9978 | 3 | 4c48d0-4c50ea, 4c8110-4ca600 |
+| game/data/ragdoll_models.cpp | 4d3580-4d3720 (+1) | 3 | 0 | 2 | 4c80c0-4c8110 |
+| game/editor/poly_mesh_edge_face_ops.cpp | 4ca8c0-4cd720 (+2) | 73 | 3287 | 3 | 4ca600-4ca830, 4cd7a0-4ce870 |
+| game/data/item_head_records.cpp | 4ce870-4ce960 | 3 | 0 | 1 |  |
+| game/data/mission_item_records.cpp | 4ce960-4cf100 | 13 | 0 | 1 |  |
+| game/config/launcher_config_dialog.cpp | 4cf100-4d0620 | 3 | 3587 | 1 |  |
+| game/data/module_record_loaders.cpp | 4d0c20-4d1410 | 9 | 107 | 1 |  |
+| game/editor/poly_mesh_edit_ops.cpp | 4d1410-4d3330 | 6 | 0 | 1 |  |
+| game/app/world_app.cpp | 4d3720-4d4b4b | 12 | 1977 | 1 |  |
+| game/ui/hud/mission_hud_buttons.cpp | 4d4b80-4d5410 | 3 | 1332 | 1 |  |
+| game/ui/hud/mission_item_source.cpp | 4d5410-4d5ba0 | 5 | 1075 | 1 |  |
+| game/ui/screens/options/quest_page.cpp | 4d5ba0-4d63b0 | 4 | 0 | 1 |  |
+| game/ui/screens/options/video_page.cpp | 4d63b0-4d6b80 | 1 | 1636 | 1 |  |
+| game/ui/screens/options/keys_page.cpp | 4d6b80-4d7370 | 8 | 58 | 1 |  |
+| game/ui/screens/options/options_panel.cpp | 4d7370-4d92c0 | 11 | 1008 | 1 |  |
+| game/app/winmain_and_menu_screens.cpp | 4db810-4e3eb0 (+1) | 70 | 3385 | 2 | 4d92c0-4dae40 |
+| game/ui/screens/mission_window.cpp | 4dae40-4db810 | 6 | 606 | 1 |  |
+| game/ui/screens/progress_bar_and_load_screens.cpp | 4e3eb0-4e87d0 | 41 | 10967 | 1 |  |
+| game/save/save_game.cpp | 4e87d0-4e8f10 | 5 | 257 | 1 |  |
+| game/save/save_state.cpp | 4e8f10-4e9850 | 17 | 0 | 1 |  |
+| game/save/save_records.cpp | 4e9850-4ea0c0 | 9 | 6 | 1 |  |
+| game/ui/screens/save_panel.cpp | 4ea0c0-4ea8e0 | 3 | 1550 | 1 |  |
+| game/ui/screens/face_generator/face_generator_update.cpp | 4ea8e0-4eb270 | 2 | 1419 | 1 |  |
+| game/ui/screens/face_generator/face_generator_refresh.cpp | 4eb270-4ebc10 | 10 | 1835 | 1 |  |
+| game/ui/screens/screen_misc.cpp | 4ebc10-4ebea0 (+1) | 6 | 972 | 2 | 4ebfd0-4ec4d0 |
+| game/campaign/campaign_screen_init.cpp | 4ec4d0-4ece20 | 2 | 1764 | 1 |  |
+| game/campaign/campaign_screen_camera.cpp | 4ece20-4ed6f0 | 3 | 1617 | 1 |  |
+| game/campaign/map_widget_render.cpp | 4ed6f0-4ed8d0 | 1 | 0 | 1 |  |
+| game/mission/pick_entity.cpp | 4ed8d0-4ee230 | 1 | 1972 | 1 |  |
+| game/ui/screens/quest_log.cpp | 4ee230-4eeb10 | 4 | 838 | 1 |  |
+| game/ui/screens/character_sheet/character_sheet_update.cpp | 4eeb10-4ef420 | 1 | 1216 | 1 |  |
+| game/ui/screens/character_sheet/character_sheet_troop.cpp | 4ef420-4ef9f0 | 4 | 414 | 1 |  |
+| game/ui/screens/character_sheet/character_sheet_detail.cpp | 4ef9f0-4f04f0 | 1 | 2045 | 1 |  |
+| game/ui/screens/character_sheet/character_sheet_weapons.cpp | 4f04f0-4f0820 | 2 | 0 | 1 |  |
+| game/ui/screens/character_sheet/character_sheet_panels.cpp | 4f0820-4f1390 | 1 | 2170 | 1 |  |
+| game/ui/msg_log_ui.cpp | 4f1390-4f1460 | 2 | 0 | 1 |  |
+| game/editor/terrain_page/terrain_page_init.cpp | 4f1460-4f2730 | 3 | 0 | 1 |  |
+| game/editor/terrain_page/terrain_page.cpp | 4f2730-4f2d70 | 7 | 0 | 1 |  |
+| game/editor/terrain_page/terrain_page_update.cpp | 4f2d70-4f3570 | 2 | 1592 | 1 |  |
+| game/editor/terrain_page/terrain_page_input.cpp | 4f3570-4f3e10 | 6 | 1122 | 1 |  |
+| game/terrain/dust_particles.cpp | 4f3e10-4f46d0 | 2 | 1954 | 1 |  |
 | game/char_sheet/e96_vec.cpp | 4f46d0-4f49d0 | 6 | 0 | 1 |  |
-| game/char_sheet/facegen_init.cpp | 4f49d0-4f5d20 | 1 | 3825 | 1 |  |
-| game/char_sheet/editor_ui.cpp | 4f5d20-4f66e0 | 13 | 314 | 1 |  |
-| game/char_sheet/conv_open.cpp | 4f66e0-4f73c0 | 1 | 2759 | 1 |  |
-| game/char_sheet/conv_refresh.cpp | 4f73c0-4f7d70 | 1 | 2190 | 1 |  |
-| game/agent5/agent_hud.cpp | 4f7d70-4fe0b0 | 27 | 5315 | 1 |  |
-| game/agent5/agent_vec.cpp | 4fe0b0-4fe860 | 10 | 677 | 1 |  |
-| game/agent5/editor_dialog.cpp | 4fe860-500ad0 | 1 | 0 | 1 |  |
-| game/agent5/party_create.cpp | 500ad0-501a20 | 2 | 2826 | 1 |  |
-| game/party/party_window.cpp | 502320-502cc0 (+1) | 13 | 2357 | 2 | 501a20-502300 |
-| game/inventory_panel/party_screen.cpp | 502cc0-507400 | 11 | 9231 | 1 |  |
-| game/inventory_panel/char_sheet.cpp | 507400-5093d0 | 1 | 95 | 1 |  |
-| game/inventory_panel/char_window.cpp | 5093d0-509980 | 5 | 17 | 1 |  |
-| game/inventory_panel/view_open.cpp | 509980-50a1c0 | 2 | 1684 | 1 |  |
-| game/inventory_panel/note_window.cpp | 50a1c0-50cc60 | 1 | 2909 | 1 |  |
-| game/inventory_panel/widget_text.cpp | 50cc60-50d5e0 | 12 | 988 | 1 |  |
-| game/inventory_panel/module_files.cpp | 50d5e0-50ec40 | 1 | 0 | 1 |  |
-| game/inventory_panel/game_app.cpp | 50ec40-50f440 | 3 | 1263 | 1 |  |
-| game/inventory_panel/loading_screen.cpp | 50f440-50fc60 | 6 | 17 | 1 |  |
-| game/inventory_panel/skeleton_load.cpp | 50fc60-50fe20 | 1 | 448 | 1 |  |
-| game/inventory_panel/inventory_panel.cpp | 50fe20-513710 | 17 | 9052 | 1 |  |
-| game/inventory_panel/mission_ctx.cpp | 513710-516ac0 | 27 | 6422 | 1 |  |
-| game/inventory_panel/game_tick.cpp | 516ac0-5191e0 | 19 | 8221 | 1 |  |
-| game/inventory_panel/map_panel.cpp | 5191e0-51be20 | 9 | 7151 | 1 |  |
-| game/inventory_panel/map_tooltip.cpp | 51be20-51c5a0 | 3 | 2 | 1 |  |
-| game/party/game.cpp | 51c5a0-51eb90 | 39 | 2858 | 1 |  |
-| game/mission5/troop_rec.cpp | 51eb90-520b20 | 13 | 4188 | 1 |  |
+| game/ui/screens/face_generator/face_generator_init.cpp | 4f49d0-4f5d20 | 1 | 3825 | 1 |  |
+| game/editor/editor_widgets.cpp | 4f5d20-4f66e0 | 13 | 314 | 1 |  |
+| game/ui/screens/conversation/conversation_init.cpp | 4f66e0-4f73c0 | 1 | 2759 | 1 |  |
+| game/ui/screens/conversation/conversation_refresh.cpp | 4f73c0-4f7d70 | 1 | 2190 | 1 |  |
+| game/ui/hud/agent_hud.cpp | 4f7d70-4fe0b0 | 27 | 5315 | 1 |  |
+| game/agent/hud/hud_vector_instances.cpp | 4fe0b0-4fe860 | 10 | 677 | 1 |  |
+| game/editor/terrain_brush_dialog.cpp | 4fe860-500ad0 | 1 | 0 | 1 |  |
+| game/ui/screens/inventory/inventory_window_create.cpp | 500ad0-501a20 | 2 | 2826 | 1 |  |
+| game/ui/screens/inventory/inventory_window.cpp | 502320-502cc0 (+1) | 13 | 2357 | 2 | 501a20-502300 |
+| game/ui/screens/party_screen.cpp | 502cc0-507400 | 11 | 9231 | 1 |  |
+| game/ui/screens/character_sheet/character_sheet_init.cpp | 507400-5093d0 | 1 | 95 | 1 |  |
+| game/ui/screens/character_sheet/character_sheet_helpers.cpp | 5093d0-509980 | 5 | 17 | 1 |  |
+| game/ui/screens/character_sheet/character_sheet_view.cpp | 509980-50a1c0 | 2 | 1684 | 1 |  |
+| game/ui/screens/notes_window.cpp | 50a1c0-50cc60 | 1 | 2909 | 1 |  |
+| game/ui/widgets/text_box.cpp | 50cc60-50d5e0 | 12 | 988 | 1 |  |
+| game/data/module_files_loader.cpp | 50d5e0-50ec40 | 1 | 0 | 1 |  |
+| game/app/game_app.cpp | 50ec40-50f440 | 3 | 1263 | 1 |  |
+| game/app/loading_screen.cpp | 50f440-50fc60 | 6 | 17 | 1 |  |
+| engine/resource/skeleton_load.cpp | 50fc60-50fe20 | 1 | 448 | 1 |  |
+| game/ui/screens/inventory/inventory_panel.cpp | 50fe20-513710 | 17 | 9052 | 1 |  |
+| game/mission/mission_context.cpp | 513710-516ac0 | 27 | 6422 | 1 |  |
+| game/campaign/game_tick.cpp | 516ac0-5191e0 | 19 | 8221 | 1 |  |
+| game/campaign/map_panel.cpp | 5191e0-51be20 | 9 | 7151 | 1 |  |
+| game/campaign/map_tooltip.cpp | 51be20-51c5a0 | 3 | 2 | 1 |  |
+| game/campaign/game_state_load.cpp | 51c5a0-51eb90 | 39 | 2858 | 1 |  |
+| game/campaign/new_game_setup.cpp | 51eb90-520b20 | 13 | 4188 | 1 |  |
 | game/mission5/mission_5.cpp | 525160-52cf60 | 39 | 16283 | 1 |  |
-| game/mission5/mesh_3.cpp | 52cf60-52dae0 | 2 | 1401 | 1 |  |
-| game/mission5/mesh_vert_ray.cpp | 52dae0-52dcc0 | 2 | 0 | 1 |  |
-| game/mission5/mesh_edge_ray.cpp | 52dcc0-52dfd0 | 2 | 311 | 1 |  |
-| game/mission5/mesh_poly_ray.cpp | 52dfd0-5305b0 | 12 | 7154 | 1 |  |
-| game/map_editor/map_editor.cpp | 5305b0-531590 | 5 | 365 | 1 |  |
-| game/map_editor/exchange_screens.cpp | 531590-5342a6 | 21 | 7115 | 1 |  |
+| game/editor/poly_mesh_pick.cpp | 52cf60-52dae0 | 2 | 1401 | 1 |  |
+| game/editor/poly_mesh_vert_ray.cpp | 52dae0-52dcc0 | 2 | 0 | 1 |  |
+| game/editor/poly_mesh_edge_ray.cpp | 52dcc0-52dfd0 | 2 | 311 | 1 |  |
+| game/editor/poly_mesh_poly_ray_edit.cpp | 52dfd0-5305b0 | 12 | 7154 | 1 |  |
+| game/editor/map_editor_update.cpp | 5305b0-531590 | 5 | 365 | 1 |  |
+| game/ui/screens/mission_menu_and_exchange_screens.cpp | 531590-5342a6 | 21 | 7115 | 1 |  |
 
 ## Appendix 2: every boundary between consecutive module runs
 

@@ -1,0 +1,9 @@
+../src/game/mission/scene_entities.cpp  ?light_entities@Mission@@QAEXPAPAUmesh@rgl@@H@Z  0047ce00  /O2 /MT /Gy /TP
+../src/game/mission/scene_entities.cpp  ?light_props@Mission@@QAEXXZ  0047ced0  /O2 /MT /Gy /TP
+../src/game/mission/scene_entities.cpp  ?update_ranged_mesh@Missile@@QAEXXZ  0047d320  /O2 /MT /Gy /TP
+../src/game/mission/scene_entities.cpp  ?reset@PhysSet@@QAEXXZ  0047dc50  /O2 /MT /Gy /TP
+../src/game/mission/scene_entities.cpp  ?apply_anim_all@lod_mesh@rgl@@QAEXPBM@Z  0047dd90  /O2 /MT /Gy /TP
+../src/game/mission/scene_entities.cpp  ?apply_anim@mesh_anim_x@@QAEXPBM@Z  0047dcd0  /O2 /MT /Gy /TP
+../src/game/mission/scene_entities.cpp  ?use_carry@Skin@@QAEXPAUlod_mesh@rgl@@PBM@Z  0047de60  /O2 /MT /Gy /TP
+../src/game/mission/scene_entities.cpp  ?build_entity@Terrain@@QAEXXZ  0047cae0  /O2 /MT /Gy /TP
+../src/game/mission/scene_entities.cpp  ?blend_all@Skin@@QAEXPAUlod_mesh@rgl@@PAUArrSet@@PBM@Z  0047ddf0  /O2 /MT /Gy /TP

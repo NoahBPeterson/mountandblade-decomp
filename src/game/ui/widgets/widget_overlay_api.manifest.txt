@@ -1,0 +1,14 @@
+../src/game/ui/widgets/widget_overlay_api.cpp  ?animate_pos@widget_mgr@@QAEXHMABUvec2@@@Z  0048e5d0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?animate_color@widget_mgr@@QAEXHMH@Z  0048e650  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?animate_alpha@widget_mgr@@QAEXHMH@Z  0048e6d0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?animate_hilight_color@widget_mgr@@QAEXHMH@Z  0048e750  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?animate_hilight_alpha@widget_mgr@@QAEXHMH@Z  0048e7d0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?animate_size@widget_mgr@@QAEXHMABUvec2@@@Z  0048e850  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?resolve@Str@StringTable@@QAEPAUtstring@@XZ  0048e8d0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?get_string@StringTable@@QAE?AUtstring@@HH@Z  0048e8f0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?string_value@GameData@@QAE?AUtstring@@H@Z  0048e9e0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?get@?$Pool@UEvent@@@@QAEPAUEvent@@I@Z  0048ef20  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?count_props@Mission@@QAEHH@Z  0048ee20  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?find_prop@Mission@@QAEHHH@Z  0048ee90  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?retag_props@Mission@@QAEXHH@Z  0048ed60  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_overlay_api.cpp  ?find_at@GameData@@QAEPAUface@@PBM@Z  0048ea80  /O2 /MT /Gy /TP

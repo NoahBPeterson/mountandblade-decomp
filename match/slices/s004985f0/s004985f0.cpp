@@ -3,7 +3,7 @@
 // (0x6c/0x70), the four colour groups (0x98 and 0x9c twice each) and the widget position (0x58), and
 // finally commits the frame through 0x94 if anything changed. Each animation lerps from the widget's
 // current value to its target over an elapsed/total fraction; the per-frame 32-bit colour words are
-// re-packed from the two source colours with `round_float`. Layout: hud.h. Names are provisional.
+// re-packed from the two source colours with `round_float`. Layout: mission_hud_buttons.h. Names are provisional.
 #include <windows.h>
 #include <math.h>
 #include "rgl.h"

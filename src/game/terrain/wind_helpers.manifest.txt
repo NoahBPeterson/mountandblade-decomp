@@ -1,0 +1,8 @@
+../src/game/terrain/wind_helpers.cpp  ?init_hp@PlacedObj@@QAEXXZ  00461200  /O2 /MT /Gy /TP
+../src/game/terrain/wind_helpers.cpp  ??$_Copy_opt@PAUelem24@@PAU1@@std@@YAPAUelem24@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00461230  /O2 /MT /Gy /TP
+../src/game/terrain/wind_helpers.cpp  ??$_Copy_backward_opt@PAUelem24@@PAU1@@std@@YAPAUelem24@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00461280  /O2 /MT /Gy /TP
+../src/game/terrain/wind_helpers.cpp  ?tri_normal@@YA?AUvector4@rgl@@PBU12@@Z  004612d0  /O2 /MT /Gy /TP
+../src/game/terrain/wind_helpers.cpp  ?pack_signed_color@@YAIPBM@Z  00461370  /O2 /MT /Gy /TP
+../src/game/terrain/wind_helpers.cpp  ?set_clock_step@@YAXPAHM@Z  00461420  /O2 /MT /Gy /TP
+../src/game/terrain/wind_helpers.cpp  ?sample@Light@@QAE?AUvector4@rgl@@XZ  00461570  /O2 /MT /Gy /TP
+../src/game/terrain/wind_helpers.cpp  ??0Light@@QAE@XZ  00461480  /O2 /MT /Gy /TP

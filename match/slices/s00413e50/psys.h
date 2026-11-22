@@ -1,4 +1,4 @@
-// psys.h: the particle system whose per-particle geometry builder is 0x413e50 (slice s00413e50) and whose
+// particle_system.h: the particle system whose per-particle geometry builder is 0x413e50 (slice s00413e50) and whose
 // per-frame driver is 0x414960 (slice s00414960). Names are provisional; offsets are verified by the matches.
 #ifndef MB_PSYS_H
 #define MB_PSYS_H

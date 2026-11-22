@@ -103,7 +103,7 @@ def main():
                 if mm:
                     fh.write("%08x %s\n" % (int(mm.group(1), 16), re.sub(r"\s+;.*$", "", mm.group(2)).strip()))
     inc = ["/I" + os.path.join(ROOT, os.path.dirname(module)), "/I" + os.path.join(ROOT, "match", "include"),
-           "/I" + os.path.join(ROOT, "src", "include"), "/I" + os.path.join(ROOT, "work/ext/dxsdk_jun10/DXSDK/Include")]
+           "/I" + os.path.join(ROOT, "src"), "/I" + os.path.join(ROOT, "work/ext/dxsdk_jun10/DXSDK/Include")]
     cmd = [os.path.join(VS, ".venv", "bin", "python")] + TOOLS[tool] + [os.path.join(ROOT, src)]
     cmd += ["--func", func, "--c2", "13.10.3052" if tool == "tsweep" else "13.10"]
     if tool in ASM:

@@ -550,7 +550,7 @@ LONG WINAPI RegCloseKey(HKEY hKey);
 #define RegSetValueEx RegSetValueExA
 #define STARTUPINFO STARTUPINFOA
 
-// MSVC's windows.h reaches the common-control declarations in some configurations (src/game/options_panel/config_dialog.cpp
+// MSVC's windows.h reaches the common-control declarations in some configurations (src/game/config/launcher_config_dialog.cpp
 // uses TCITEMA with no <commctrl.h>): keep them visible.
 #include <commctrl.h>
 

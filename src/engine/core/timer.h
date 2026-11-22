@@ -1,0 +1,50 @@
+// timer.h: the engine's 16-byte tick timer: a clock index into the 64-bit clock table (global 0x5e2948, 100 kHz
+// units, 1e-5 s per tick) and the start tick. Global namespace (manifest rows of src/rgl/xmlcfg/game_util bind it).
+// Embedded as a 0x10-byte member: src/game/mission/scene_container_grid.h (Mission::tm +0x5de0, next field +0x5df0),
+// src/game/agent/ai/agent_types.h (Agent::timer +0x57f0, next pad at +0x5800), src/game/script/script_interpreter.h
+// (Party::ignore_player_timer +0x5ab0, set by party_ignore_player 0x4a7b0c).
+//   restart     0x432bf0: start = clock tick
+//   elapsed     0x432c10: (float)(ticks[clock] - start) * 1e-5f  (callers inline the arithmetic; the callable
+//                         copy is the out-of-line function of game_util.cpp)
+//   set_delay   0x42cd20 (ret 4), defined in src/game/ui/gui_manager.cpp
+// Not merged: game/terrain/agent_rec.h's Timer16 keeps the start tick as two dwords on purpose (the agent's view
+// sub-object is 0x5374 bytes long, so its timers are only 4-byte aligned; an __int64 member would pad them).
+#ifndef MB_TIMER_H
+#define MB_TIMER_H
+#include "engine/core/clock_table.h"                    // g_ticks
+
+struct Timer {
+    int clock;                              // +0 index into g_time (0x5e2948: 64-bit counters, 100 kHz units)
+    int pad4;
+    __int64 start;                          // +8
+    void restart();                         // 0x432bf0
+    float elapsed() const;                  // 0x432c10
+    void set_delay(float seconds);          // 0x42cd20 (ret 4)
+    void start_on(int i) { clock = i; start = g_ticks[i]; }   // inline: the constructors' `int clock; __int64 stamp` pairs (0x4c2d10, 0x4ceb30)
+    void restamp() { start = g_ticks[clock]; }                // inline form of restart (0x4897a0)
+};
+
+// A Timer started on clock 0 by its constructor (gui_manager ctor 0x42d5c0 initialises three; strategic_entity ctor 0x421720 two).
+struct gui_timer : Timer {
+    gui_timer() { clock = 0; start = g_ticks[0]; }
+    void rewind() { start = g_ticks[clock] - 100000; }   // inline: one second in the past
+};
+
+// A Timer started on clock 2 by its constructor: the mission's timers (Mission::Mission 0x4d3880) and the entry point's
+// (MarkRec 0x4c2d10).
+struct clock2_timer : Timer {
+    clock2_timer() { start_on(2); }
+};
+
+// a Timer followed by an armed flag (game_util.cpp: 0x432da0 arms it once, 0x432de0 disarms it when it has run out)
+struct ActiveTimer : Timer {
+    char active;                            // +0x10
+    void begin(float seconds);              // 0x432da0
+    bool expired();                         // 0x432de0
+};
+// an ActiveTimer started on clock 2 and disarmed by its constructor (Agent::mount_timer, the agent constructor 0x477a30)
+struct clock2_active_timer : ActiveTimer {
+    clock2_active_timer() { start_on(2); active = 0; }
+};
+
+#endif // MB_TIMER_H

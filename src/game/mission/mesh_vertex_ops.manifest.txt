@@ -1,0 +1,6 @@
+../src/game/mission/mesh_vertex_ops.cpp  ?set_bone_index@mesh@rgl@@QAEXH@Z  0047b360  /O2 /MT /Gy /TP
+../src/game/mission/mesh_vertex_ops.cpp  ?append@mesh_list@rgl@@QAEXPAU12@HPBUmatrix@2@PBI@Z  0047b480  /O2 /MT /Gy /TP
+../src/game/mission/mesh_vertex_ops.cpp  ?set_color@lod_mesh@rgl@@QAEXI@Z  0047b5b0  /O2 /MT /Gy /TP
+../src/game/mission/mesh_vertex_ops.cpp  ?transform@lod_mesh@rgl@@QAEXABUmatrix@2@@Z  0047b610  /O2 /MT /Gy /TP
+../src/game/mission/mesh_vertex_ops.cpp  ?append@lod_mesh@rgl@@QAEXPAU12@HPBUmatrix@2@PBI@Z  0047b690  /O2 /MT /Gy /TP
+../src/game/mission/mesh_vertex_ops.cpp  ?multiply_color@mesh@rgl@@QAEXPBUvector4@2@@Z  0047b3b0  /O2 /MT /Gy /TP

@@ -24,7 +24,7 @@ LOCAL, BUSY, DOWN = 76, 75, 77     # DOWN: the laptop is unreachable (plain comp
 INC = re.compile(rb'^[ \t]*#[ \t]*(?:include|import)[ \t]*([<"])([^>"\r\n]+)[>"]', re.M)
 ANON = re.compile(rb"namespace\s*\{")
 TOOLDIRS = tuple(os.path.join(ROOT, "work", d) + os.sep for d in ("toolchain", "ext"))
-SYSDIRS = [os.path.join(ROOT, "src", "include"), os.path.join(ROOT, "match", "include")]   # cl.sh's INCLUDE, repo part
+SYSDIRS = [os.path.join(ROOT, "src"), os.path.join(ROOT, "match", "include")]   # cl.sh's INCLUDE, repo part
 CONNECT_TIMEOUT = 1.0
 
 

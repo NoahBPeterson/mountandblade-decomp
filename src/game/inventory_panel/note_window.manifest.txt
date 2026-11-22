@@ -1,1 +1,0 @@
-# no byte-exact function in this module left (0050a1c0 moved to note_window.nonmatching.txt: L-D3)

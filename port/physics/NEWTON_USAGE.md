@@ -1,8 +1,8 @@
 # How src/ uses Newton 1.x, and the adapter seam
 
 Engine-independent. Sources: src/game/agent4/agent_logic.cpp (PhysSet, Agent::start_ragdoll, per-frame ragdoll
-read-back), src/rgl/xmlcfg/game_util.cpp (force callback), src/game/terrain_b/poly_mesh.cpp (PhysSet::update,
-clamp_rec), src/include/phys_set.h (PhysRec). Signatures: port/stubs/newton_stubs.cpp (Newton 1.53's, all cdecl).
+read-back), src/game/common/game_util.cpp (force callback), src/game/terrain/poly_mesh.cpp (PhysSet::update,
+clamp_rec), src/engine/physics/phys_set.h (PhysRec). Signatures: port/stubs/newton_stubs.cpp (Newton 1.53's, all cdecl).
 Every statement below was read from src/. Items marked (traced) were settled against the real DLL (`Newton.dll` of the
 install, `NewtonWorldGetVersion` = 153, built 2006-05-24): call traces of the original game recorded through a logging
 proxy and controlled scenes run on the laptop (`trace/RECORDING.md`, `trace/probe/newton_experiments.cpp`, results in

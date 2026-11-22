@@ -642,7 +642,7 @@ HWND WINAPI CreateWindowExA(DWORD ex, LPCSTR cls, LPCSTR title, DWORD style, int
 }
 HWND WINAPI CreateWindowExW(DWORD ex, LPCWSTR cls, LPCWSTR title, DWORD style, int X, int Y, int W, int H, HWND parent, HMENU menu, HINSTANCE inst, LPVOID param)
 {
-    // src/dxframework/d3dapp.cpp passes its 8-bit title ("Mount&Blade") through this wide entry point (a cast, as in the
+    // src/platform/dxframework/d3dapp.cpp passes its 8-bit title ("Mount&Blade") through this wide entry point (a cast, as in the
     // original, where Windows then shows it misread as UTF-16). A UTF-32 title never has a first unit above U+10FFFF, but
     // four ASCII bytes read as one always do, so that identifies the narrow string.
     std::string t;

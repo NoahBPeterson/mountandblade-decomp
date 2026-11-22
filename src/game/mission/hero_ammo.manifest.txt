@@ -1,0 +1,1 @@
+../src/game/mission/hero_ammo.cpp  ?clear_hero_ammo@GameData@@QAEXI@Z  00513eb0  /O2 /MT /Gy /TP

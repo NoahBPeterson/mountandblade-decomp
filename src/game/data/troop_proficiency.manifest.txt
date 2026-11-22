@@ -1,0 +1,3 @@
+../src/game/data/troop_proficiency.cpp  ?adjust@Troop@@QAEXHM@Z  00437770  /O2 /MT /Gy /TP
+../src/game/data/troop_proficiency.cpp  ??0Missile@@QAE@XZ  004377d0  /O2 /MT /Gy /TP
+../src/game/data/troop_proficiency.cpp  ?slot1@Missile@@UAEXXZ  00437810  /O2 /MT /Gy /TP

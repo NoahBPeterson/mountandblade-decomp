@@ -1,0 +1,27 @@
+// common.h: types and globals shared by the three modules of src/game/terrain_a (wind_helpers.cpp, scene_paths_and_wind_noise.cpp,
+// terrain_cells.cpp): the plain-old-data element types of the std::vector instantiations that sit in
+// the terrain object's translation unit, the engine globals they read, and the noise / random helpers.
+// Names provisional. Every VA comment cites the function (or table) the declaration was verified against.
+#ifndef TERRAIN_A_COMMON_H
+#define TERRAIN_A_COMMON_H
+#include <stddef.h>
+#include "engine/math/rgl_math.h"
+
+// ---- plain element types of the vector<T> instantiations (sizes verified by the stride of the helpers) ----------
+struct elem24 { int a[6]; };               // 0x18: copy 0x461230, copy_backward 0x461280, fill 0x467ba0, uninit_copy 0x4681b0
+#include "engine/core/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
+#include "engine/core/clock_table.h"
+struct elem52 { int a[13]; };              // 0x34: fill 0x467bf0, copy_backward 0x467c20, uninit_copy 0x468290
+struct particle100 { int a[25]; };         // 0x64: uninit_copy 0x468220 (not the 160-byte terrain particle)
+struct s516 { int a[129]; };               // 0x204: vec516::size 0x467b20
+namespace rgl { struct idx_weight; }
+typedef bool (*Pr8)(const rgl::idx_weight&, const rgl::idx_weight&);   // the scene queue's order (rec_less 0x4622a0)
+
+// ---- engine globals ---------------------------------------------------------------------------------------------
+
+// cdecl helpers of earlier objects
+void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, const float* p, float* out);   // 0x414fc0
+void mb_error(const char* fmt, ...);                                // 0x42cc80
+int __cdecl rand_below(const int* n);                               // 0x432580
+
+#endif // TERRAIN_A_COMMON_H

@@ -1,31 +1,31 @@
 // patches/gfx/gfx_video_apply.cpp: the Video Options page's frame_update with the gfx rows (patch set "gfx", opt-in).
 //
 // CHANGES BEHAVIOUR on purpose: replaces Recf0::frame_update (0x4d63b0), the page's "changed" handler: the faithful body
-// of src/game/options_panel/video_page.cpp (its helpers and includes copied as they are) with two additions, marked
+// of src/game/ui/screens/options/video_page.cpp (its helpers and includes copied as they are) with two additions, marked
 // "gfx": the four rows gfx_video_page.cpp adds are read into g_gfx_saved when they change, and after Done has written
 // rgl_config.txt (rgl_config::save, gfx_config.cpp, writes g_gfx_saved) gfx_apply_saved hands them to the device,
 // which takes them at the next Present: anisotropy re-set on every sampler, the scene targets remade at the new scale.
 // So the page applies them at once; it needs neither a restart nor its "new area" message.
-#include "../../src/include/image_addrs.h"
-#include "../../src/rgl/options.h"   // g_options
+#include "../../src/platform/image_addrs.h"
+#include "../../src/game/config/options.h"   // g_options
 #include "../../src/game/config/config_block.h"   // g_cfg
 #include <windows.h>
 #include <d3dx9.h>
 #include <stdio.h>
-#include "../../src/rgl/rgl_math.h"
-#include "../../src/game/tstring.h"
+#include "../../src/engine/math/rgl_math.h"
+#include "../../src/engine/core/tstring.h"
 
 using rgl::vector4;
 
-#include "../../src/game/str_table.h"                                                 // StrTable g_strtable (0x5e2a18)
-#include "../../src/game/shared_vars.h"
+#include "../../src/game/data/str_table.h"                                                 // StrTable g_strtable (0x5e2a18)
+#include "../../src/game/common/shared_vars.h"
 
 extern "C" int __cdecl sprintf(char*, const char*, ...);                    // 0x536f8f
 extern "C" char* __cdecl _itoa(int, char*, int);                            // 0x5371f7
-#include "../../src/include/crt.h"   // canonical: fclose (0x537168)
+#include "../../src/engine/core/crt.h"   // canonical: fclose (0x537168)
 
 // ---- controls ----------------------------------------------------------------------------------------
-#include "../../src/game/ui_widget.h"                 // MissionUi (the UI widget interface)
+#include "../../src/game/ui/widgets/ui_widget.h"                 // MissionUi (the UI widget interface)
 
 // sliders keep their value labels at +0x190: rows of 16 bytes, copied with the tstring copy ctor.
 static inline const tstring* value_label(MissionUi* w, int index)
@@ -43,10 +43,10 @@ static inline void w_set_default(MissionUi* w) { char r[8]; w->get_xy((float*)r)
 // ---- other pages / objects ---------------------------------------------------------------------------
 struct Game;                                                                // 0x5e2930
 
-// 0x5d6fa0: the graphics resource manager: rgl/resource.h's resmgr, g_resmgr.
-#include "../../src/rgl/resource.h"
-// 0x5a9f98: the render config (write-out helper 0x415fb0): rgl/resource_manager.h's rgl_config, repeated here (that header's
-// g_log clashes with this TU's). The member is the one the dialog's `save` of config_dialog.cpp calls too.
+// 0x5d6fa0: the graphics resource manager: engine/resource/resource.h's resmgr, g_resmgr.
+#include "../../src/engine/resource/resource.h"
+// 0x5a9f98: the render config (write-out helper 0x415fb0): engine/resource/resource_manager_init.h's rgl_config, repeated here (that header's
+// g_log clashes with this TU's). The member is the one the dialog's `save` of launcher_config_dialog.cpp calls too.
 struct rgl_config {
     void save(FILE* f);   // 0x415fb0
 };
@@ -54,17 +54,17 @@ struct rgl_config {
 extern ID3DXEffect* g_effect;                                                // 0x5e293c (renderer.h)
 
 // main menu: choose() 0x495700, reset() 0x494260, 0x48a3a0 sets an explanation record.
-#include "../../src/game/window_mgr.h"                         // the screen id stack (0xa739f8)
-#include "../../src/game/window_mgr.h"                         // g_windows (0xa73980)
+#include "../../src/game/ui/window_mgr.h"                         // the screen id stack (0xa739f8)
+#include "../../src/game/ui/window_mgr.h"                         // g_windows (0xa73980)
 
 // 0x415160: open a user file ("rgl_config.txt").
-#include "../../src/rgl/text_stream.h"             // mb_open_user_file (0x415160)
-#include "../../src/rgl/options.h"   // g_options 0x5aa008
-#include "../../src/game/float_consts.h"   // shared float constants kept in memory
+#include "../../src/engine/io/text_stream.h"             // mb_open_user_file (0x415160)
+#include "../../src/game/config/options.h"   // g_options 0x5aa008
+#include "../../src/engine/math/float_consts.h"   // shared float constants kept in memory
 #include "../../src/game/config/config_block.h"
-#include "../../src/rgl/options.h"
+#include "../../src/game/config/options.h"
 // 0x4b99c0: settings refresh.
-void run_settings_probe();                            // 0x4b99c0 (options_dlg.h; that header's winsock2.h cannot follow windows.h)
+void run_settings_probe();                            // 0x4b99c0 (launcher_options_dialog.h; that header's winsock2.h cannot follow windows.h)
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index (clamped to 5).
 
 // 0x4d6b80 and 0x4d6dd0 live in slice s004d6b80.
@@ -88,7 +88,7 @@ static inline void set_quality(int v, int which)
 }
 
 // ---- the page ----------------------------------------------------------------------------------------
-#include "../../src/game/screen_records.h"       // Recf0: the video options page record (slot 3 is update 0x4d63b0)
+#include "../../src/game/ui/screens/screen_records.h"       // Recf0: the video options page record (slot 3 is update 0x4d63b0)
 struct VideoPage {
     char    pad00[0x18];
     int     option;                                         // +0x18 (the option the menu returns to)

@@ -19,12 +19,12 @@ Counts over `src/` (2026-11-02; scripts in this ticket's appendix):
 | `char padNNN[..]` filler arrays | 2,404 in 239 files |
 | raw offset accesses `*(T*)((char*)p + 0xNN)` | 649 in 69 files, plus `F(this,0xNN,T)` 88 and `MAT(T,0xNN)` 14 in 2 files |
 | pointer <-> int casts `(int)this`, `(int)&x`, `int x = (int)ptr` | 192 + 168 in ~54 files |
-| layout asserts already in the tree | `typedef char mb_troop_size_chk[sizeof(Troop)==0x508...]` (src/include/troop.h:167), `mesh_size_check` (game/rgl_mesh.h:152), 14 TUs trip them on LP64 |
+| layout asserts already in the tree | `typedef char mb_troop_size_chk[sizeof(Troop)==0x508...]` (src/game/data/troop.h:167), `mesh_size_check` (game/rgl_mesh.h:152), 14 TUs trip them on LP64 |
 | `layout_check.py` | compiles one `offsetof(S,m)==0xNN` per commented member (tools/relink/layout_check.py) |
 | STL views | `std::vector` 958 uses in 165 files; `_Myfirst/_Mylast/_Myend` 287 refs in 66 files; `vector` objects cast out of byte offsets (`(std::vector<int>*)((char*)g_game_s261e0 + 0x1a1b8)`) |
 | hand-written vtable bases | `dev_rec`, 45 "placeholder virtual" vtables (ticket 003) |
 
-Good news: serialization is typed. `stream_base` (src/rgl/stream.h) exposes `w_int/w_float/w_u64/w_i64/w_bool/w_tstr...` as virtual slots; save games, BRF/TRF
+Good news: serialization is typed. `stream_base` (src/engine/io/stream.h) exposes `w_int/w_float/w_u64/w_i64/w_bool/w_tstr...` as virtual slots; save games, BRF/TRF
 and SCO go through them (`fread/fwrite` appear only 7 times, all at buffer level: resmgr, tinyxml, options). So **file formats are pointer-size independent
 today**. Verify with ticket 017's round-trip test (load a 32-bit-build save in the 64-bit build).
 
@@ -47,7 +47,7 @@ into dynamic containers (ticket 016).
 ## Code sketch
 
 ```cpp
-// before (src/include/renderer.h)
+// before (src/engine/render/renderer_include.h)
 IDirect3DDevice9* dev;          // 0x618
 char pad61c[0x688 - 0x61c];
 // after: member exists in both builds; asserts only where layout is real

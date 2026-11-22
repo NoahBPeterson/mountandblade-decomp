@@ -1,4 +1,4 @@
-0042da20 ??4TiXmlString@@QAEAAV0@PBD@Z  # src/tinyxml/tinyxml.cpp: inline TiXmlString::operator=(const char*) emitted out of line
+0042da20 ??4TiXmlString@@QAEAAV0@PBD@Z  # src/third_party/tinyxml/tinyxml.cpp: inline TiXmlString::operator=(const char*) emitted out of line
 0042da50 ??YTiXmlString@@QAEAAV0@PBD@Z  # inline TiXmlString::operator+=(const char*) emitted out of line
 0042da80 ??_GTiXmlBase@@UAEPAXI@Z  # compiler-generated, vtable 0x54b8f8 slot 0
 0042daa0 ?SetValue@TiXmlAttribute@@QAEXPBD@Z  # inline TiXmlAttribute::SetValue emitted out of line

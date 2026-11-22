@@ -1,0 +1,6 @@
+../src/game/ui/widgets/label_and_progress_bar.cpp  ?set_value@UiB@@QAEXM@Z  0048b6e0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/label_and_progress_bar.cpp  ?render@UiC@@UAEXPAUscene@rgl@@PAM11@Z  0048b7f0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/label_and_progress_bar.cpp  ?kind@UiC@@UAEHXZ  0048b880  /O2 /MT /Gy /TP
+../src/game/ui/widgets/label_and_progress_bar.cpp  ??0UiD@@QAE@XZ  0048b890  /O2 /MT /Gy /TP
+../src/game/ui/widgets/label_and_progress_bar.cpp  ?render@UiD@@UAEXPAUscene@rgl@@PAM11@Z  0048b8d0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/label_and_progress_bar.cpp  ??0UiC@@QAE@XZ  0048b760  /O2 /MT /Gy /TP

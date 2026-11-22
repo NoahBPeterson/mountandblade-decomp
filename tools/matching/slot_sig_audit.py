@@ -34,14 +34,14 @@ matches exactly are compared (``set_color98`` does not cluster with
 ``set_color``).
 
 Live examples found by hand (2026-10):
-  * ``set_color`` at ``+0x98`` -- ``inventory_panel/char_sheet.cpp`` declares
-    ``const unsigned*`` while ``ui/mission_ui.h``, ``ui_widget.h``,
-    ``mission_ui2/mission_3.h`` and ``mission_ui2/field_panel.h`` declare
-    ``unsigned*``.  (The ``char_sheet.cpp`` summary comment still spells the
+  * ``set_color`` at ``+0x98`` -- ``game/ui/screens/character_sheet/character_sheet_init.cpp`` declares
+    ``const unsigned*`` while ``game/ui/widgets/widget_base.h``, ``ui_widget.h``,
+    ``game/party/stacks_and_loot.h`` and ``mission_ui2/field_panel.h`` declare
+    ``unsigned*``.  (The ``character_sheet_init.cpp`` summary comment still spells the
     slot as ``set_color(int)``, which is the bug this audit is meant to catch.)
-  * ``decode_utf8`` -- ``ui/ui_widgets_a.cpp`` declares
+  * ``decode_utf8`` -- ``game/ui/widgets/toggle_and_text_fit.cpp`` declares
     ``(const tstring*, int*, int*, const int*)`` while
-    ``mesh_slot/slot.cpp`` declares ``(int*, const tstring*, int*, const int*)``.
+    ``game/input/input_device.cpp`` declares ``(int*, const tstring*, int*, const int*)``.
     The argument order (and therefore the register assignment) disagrees.
 
 RET MISMATCH
@@ -242,7 +242,7 @@ def parse_file(filepath):
     for i, raw_line in enumerate(lines):
         code, comment = split_code_comment(raw_line)
 
-        # A slot/ret annotation can sit on the previous line (e.g. slot.cpp's
+        # A slot/ret annotation can sit on the previous line (e.g. input_device.cpp's
         # "// @ 0x487b00" above the decode_utf8 definition).
         prev_comment = ''
         if not comment and i > 0:

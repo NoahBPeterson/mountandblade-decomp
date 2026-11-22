@@ -54,120 +54,120 @@ W / V finding and its suggestion.
 
 | # | class | W | V | L | C | I | first finding | suggestion |
 |---:|---|---:|---:|---:|---:|---:|---|---|
-| 1 | _D3DDISPLAYMODE | 0 | 0 | 3 | 0 | 0 | src/dxframework/d3denumeration.cpp:186 _D3DDISPLAYMODE from void (param arg1) | type the source as _D3DDISPLAYMODE (or the real class) |
-| 2 | D3DAdapterInfo | 0 | 0 | 2 | 0 | 0 | src/dxframework/d3dsettings.h:92 D3DAdapterInfo from void (return CD3DSettingsDialog::ComboBoxSelected) | type the source as D3DAdapterInfo (or the real class) |
-| 3 | D3DDeviceInfo | 0 | 0 | 2 | 0 | 0 | src/dxframework/d3dsettings.h:92 D3DDeviceInfo from void (return CD3DSettingsDialog::ComboBoxSelected) | type the source as D3DDeviceInfo (or the real class) |
-| 4 | D3DDSMSConflict | 0 | 0 | 1 | 0 | 0 | src/dxframework/dxutil.h:87 D3DDSMSConflict from void (return CArrayList::GetPtr) | type the source as D3DDSMSConflict (or the real class) |
-| 5 | D3DDeviceCombo | 0 | 0 | 1 | 0 | 0 | src/dxframework/dxutil.h:99 D3DDeviceCombo from void (return CArrayList::GetPtr) | type the source as D3DDeviceCombo (or the real class) |
+| 1 | _D3DDISPLAYMODE | 0 | 0 | 3 | 0 | 0 | src/platform/dxframework/d3denumeration.cpp:186 _D3DDISPLAYMODE from void (param arg1) | type the source as _D3DDISPLAYMODE (or the real class) |
+| 2 | D3DAdapterInfo | 0 | 0 | 2 | 0 | 0 | src/platform/dxframework/d3dsettings.h:92 D3DAdapterInfo from void (return CD3DSettingsDialog::ComboBoxSelected) | type the source as D3DAdapterInfo (or the real class) |
+| 3 | D3DDeviceInfo | 0 | 0 | 2 | 0 | 0 | src/platform/dxframework/d3dsettings.h:92 D3DDeviceInfo from void (return CD3DSettingsDialog::ComboBoxSelected) | type the source as D3DDeviceInfo (or the real class) |
+| 4 | D3DDSMSConflict | 0 | 0 | 1 | 0 | 0 | src/platform/dxframework/dxutil.h:87 D3DDSMSConflict from void (return CArrayList::GetPtr) | type the source as D3DDSMSConflict (or the real class) |
+| 5 | D3DDeviceCombo | 0 | 0 | 1 | 0 | 0 | src/platform/dxframework/dxutil.h:99 D3DDeviceCombo from void (return CArrayList::GetPtr) | type the source as D3DDeviceCombo (or the real class) |
 | 6 | IDirectInput8A | 0 | 0 | 1 | 0 | 0 | src/game/config/config.cpp:884 IDirectInput8A from void (local di) | type the source as IDirectInput8A (or the real class) |
-| 7 | TiXmlString::Rep | 0 | 0 | 1 | 0 | 0 | src/tinyxml/tinystr.h:245 TiXmlString::Rep from int | type the source as TiXmlString::Rep (or the real class) |
+| 7 | TiXmlString::Rep | 0 | 0 | 1 | 0 | 0 | src/third_party/tinyxml/tinystr.h:245 TiXmlString::Rep from int | type the source as TiXmlString::Rep (or the real class) |
 | 8 | rgl::vector4 | 0 | 0 | 0 | 0 | 31 | src/game/agent4/agent_logic.cpp:756 vec2 over rgl::vector4 (agrees at 64 bits) | use rgl::vector4's members (fold vec2 into rgl::vector4) |
-| 9 | file src/game/options_panel/mesh_edit.cpp | 0 | 0 | 0 | 0 | 21 | src/game/options_panel/mesh_edit.cpp:76 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 9 | file src/game/editor/poly_mesh_edit_ops.cpp | 0 | 0 | 0 | 0 | 21 | src/game/editor/poly_mesh_edit_ops.cpp:76 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
 | 10 | Troop | 0 | 0 | 0 | 0 | 15 | src/game/agent4/agent_logic.cpp:159 tstring over Troop (agrees at 64 bits) | use Troop's members (fold tstring into Troop) |
-| 11 | char | 0 | 0 | 0 | 0 | 15 | src/game/cls_map/progress_bar.cpp:469 -Wcast-align: cast from 'char *' to 'int *' increases required alignment from 1 to 4 |  |
-| 12 | rgl::matrix | 0 | 0 | 0 | 0 | 13 | src/game/char_sheet/screen_camera.cpp:160 memcpy(0x40) for rgl::matrix (fits at 64 bits) | sizeof(rgl::matrix) |
-| 13 | file src/rgl/mesh2/gui_edit.cpp | 0 | 0 | 0 | 0 | 11 | src/rgl/mesh2/gui_edit.cpp:262 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 14 | fn GameIo::export_character | 0 | 0 | 0 | 0 | 11 | src/game/options_panel/options_panel.cpp:421 cast int -> long (widening) | a fixed-width type |
+| 11 | char | 0 | 0 | 0 | 0 | 15 | src/game/ui/screens/progress_bar_and_load_screens.cpp:469 -Wcast-align: cast from 'char *' to 'int *' increases required alignment from 1 to 4 |  |
+| 12 | rgl::matrix | 0 | 0 | 0 | 0 | 13 | src/game/campaign/campaign_screen_camera.cpp:160 memcpy(0x40) for rgl::matrix (fits at 64 bits) | sizeof(rgl::matrix) |
+| 13 | file src/game/editor/editor_selection_and_translation.cpp | 0 | 0 | 0 | 0 | 11 | src/game/editor/editor_selection_and_translation.cpp:262 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 14 | fn GameIo::export_character | 0 | 0 | 0 | 0 | 11 | src/game/ui/screens/options/options_panel.cpp:421 cast int -> long (widening) | a fixed-width type |
 | 15 | Elem | 0 | 0 | 0 | 0 | 10 | src/game/script/script_interpreter.cpp:1615 Elem::vals (long long[16]) read as int | name / type the member Elem::vals |
-| 16 | file src/rgl/mesh2/mesh_2.cpp | 0 | 0 | 0 | 0 | 10 | src/rgl/mesh2/mesh_2.cpp:96 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 17 | file src/game/options_panel/world_app.cpp | 0 | 0 | 0 | 0 | 7 | src/game/options_panel/world_app.cpp:280 -Wshorten-64-to-32: implicit conversion loses integer precision: 'LRESULT' (aka 'long')... |  |
-| 18 | frame4 | 0 | 0 | 0 | 0 | 6 | src/game/terrain_b/terrain_b.cpp:283 rgl::matrix over frame4 (agrees at 64 bits) | use frame4's members (fold rgl::matrix into frame4) |
-| 19 | terrain_cell | 0 | 0 | 0 | 0 | 6 | src/game/mesh_slot/mesh_terrain.cpp:375 rgl::vector4 over terrain_cell (agrees at 64 bits) | use terrain_cell's members (fold rgl::vector4 into terrai... |
-| 20 | file src/game/options_panel/config_dialog.cpp | 0 | 0 | 0 | 0 | 5 | src/game/options_panel/config_dialog.cpp:138 -Wshorten-64-to-32: implicit conversion loses integer precision: 'LRESULT' (aka 'long')... |  |
-| 21 | file src/game/terrain_a/terrain_render.cpp | 0 | 0 | 0 | 0 | 5 | src/game/terrain_a/terrain_render.cpp:142 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 22 | file src/rgl/shapes/shapes.cpp | 0 | 0 | 0 | 0 | 5 | src/rgl/shapes/shapes.cpp:1082 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 23 | mat2 | 0 | 0 | 0 | 0 | 5 | src/game/inventory_panel/mission_ctx.cpp:895 Vec2f over mat2::m (+0x0) (agrees at 64 bits) | make mat2::m a Vec2f (or name its members) |
+| 16 | file src/game/editor/poly_mesh_edge_face_ops.cpp | 0 | 0 | 0 | 0 | 10 | src/game/editor/poly_mesh_edge_face_ops.cpp:96 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 17 | file src/game/app/world_app.cpp | 0 | 0 | 0 | 0 | 7 | src/game/app/world_app.cpp:280 -Wshorten-64-to-32: implicit conversion loses integer precision: 'LRESULT' (aka 'long')... |  |
+| 18 | frame4 | 0 | 0 | 0 | 0 | 6 | src/game/terrain/terrain_scene_renderer.cpp:283 rgl::matrix over frame4 (agrees at 64 bits) | use frame4's members (fold rgl::matrix into frame4) |
+| 19 | terrain_cell | 0 | 0 | 0 | 0 | 6 | src/game/mission/terrain_water_regen.cpp:375 rgl::vector4 over terrain_cell (agrees at 64 bits) | use terrain_cell's members (fold rgl::vector4 into terrai... |
+| 20 | file src/game/config/launcher_config_dialog.cpp | 0 | 0 | 0 | 0 | 5 | src/game/config/launcher_config_dialog.cpp:138 -Wshorten-64-to-32: implicit conversion loses integer precision: 'LRESULT' (aka 'long')... |  |
+| 21 | file src/game/terrain/terrain_render.cpp | 0 | 0 | 0 | 0 | 5 | src/game/terrain/terrain_render.cpp:142 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 22 | file src/engine/physics/collision_shapes.cpp | 0 | 0 | 0 | 0 | 5 | src/engine/physics/collision_shapes.cpp:1082 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 23 | mat2 | 0 | 0 | 0 | 0 | 5 | src/game/mission/mission_context.cpp:895 Vec2f over mat2::m (+0x0) (agrees at 64 bits) | make mat2::m a Vec2f (or name its members) |
 | 24 | rgl::Obj | 0 | 0 | 0 | 0 | 5 | src/game/agent4/agent_logic.cpp:11348 face over rgl::Obj (agrees at 64 bits) | use rgl::Obj's members (fold face into rgl::Obj) |
-| 25 | AgentTable | 0 | 0 | 0 | 0 | 4 | src/game/agent5/agent_hud.cpp:911 AgentTable+0x0 = Pool<Agent>::count (same at 64 bits) | AgentTable::Pool<Agent>::count |
-| 26 | Terrain | 0 | 0 | 0 | 0 | 4 | src/game/mesh_slot/mesh_terrain.cpp:501 Terrain+0x0 = (anon).bits[0] (same at 64 bits) | Terrain::(anon).bits[0] |
+| 25 | AgentTable | 0 | 0 | 0 | 0 | 4 | src/game/ui/hud/agent_hud.cpp:911 AgentTable+0x0 = Pool<Agent>::count (same at 64 bits) | AgentTable::Pool<Agent>::count |
+| 26 | Terrain | 0 | 0 | 0 | 0 | 4 | src/game/mission/terrain_water_regen.cpp:501 Terrain+0x0 = (anon).bits[0] (same at 64 bits) | Terrain::(anon).bits[0] |
 | 27 | file src/game/config/config.cpp | 0 | 0 | 0 | 0 | 4 | src/game/config/config.cpp:411 -Wshorten-64-to-32: implicit conversion loses integer precision: 'LRESULT' (aka 'long')... |  |
-| 28 | file src/game/mesh_slot/mesh_scene.cpp | 0 | 0 | 0 | 0 | 4 | src/game/mesh_slot/mesh_scene.cpp:522 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 29 | file src/game/mission5/mesh_poly_ray.cpp | 0 | 0 | 0 | 0 | 4 | src/game/mission5/mesh_poly_ray.cpp:254 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 30 | file src/game/triggers/trigger_vec.cpp | 0 | 0 | 0 | 0 | 4 | src/game/triggers/trigger_vec.cpp:341 -Wshorten-64-to-32: implicit conversion loses integer precision: 'LRESULT' (aka 'long')... |  |
-| 31 | file src/rgl/core/resmgr.cpp | 0 | 0 | 0 | 0 | 4 | src/rgl/core/resmgr.cpp:248 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 32 | file src/rgl/text_stream.cpp | 0 | 0 | 0 | 0 | 4 | src/rgl/text_stream.cpp:71 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
-| 33 | fn CD3DSettingsDialog::BackBufferFormatChanged | 0 | 0 | 0 | 0 | 4 | src/dxframework/d3dsettings.cpp:546 an enum value stored in a void * (fits) | keep (or intptr_t) |
-| 34 | rgl::frustum | 0 | 0 | 0 | 0 | 4 | src/game/char_sheet/conv_open.cpp:145 memcpy(0x120) for rgl::frustum (fits at 64 bits) | sizeof(rgl::frustum) |
-| 35 | std::vector<int, std::allocator<int>> | 0 | 0 | 0 | 0 | 4 | src/game/inventory_panel/note_window.cpp:346 sel_list over std::vector<int, std::allocator<int>> (agrees at 64 bits) | use std::vector<int, std::allocator<int>>'s members (fold... |
-| 36 | EnvRow | 0 | 0 | 0 | 0 | 3 | src/game/mesh_slot/mesh_start.cpp:741 rgl::vector4 over EnvRow::base (+0x30) (agrees at 64 bits) | make EnvRow::base a rgl::vector4 (or name its members) |
-| 37 | ItemRef | 0 | 0 | 0 | 0 | 3 | src/game/agent5/agent_hud.cpp:76 EquipSet over ItemRef (agrees at 64 bits) | use ItemRef's members (fold EquipSet into ItemRef) |
-| 38 | Viewport | 0 | 0 | 0 | 0 | 3 | src/game/char_sheet/facegen_misc.cpp:146 _D3DVIEWPORT9 over Viewport (agrees at 64 bits) | use Viewport's members (fold _D3DVIEWPORT9 into Viewport) |
-| 39 | file src/game/config/options_dlg.cpp | 0 | 0 | 0 | 0 | 3 | src/game/config/options_dlg.cpp:57 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
-| 40 | file src/rgl/particles/mesh_obj.cpp | 0 | 0 | 0 | 0 | 3 | src/rgl/particles/mesh_obj.cpp:371 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 41 | fn CD3DSettingsDialog::WindowedFullscreenChanged | 0 | 0 | 0 | 0 | 3 | src/dxframework/d3dsettings.cpp:317 an enum value stored in a void * (fits) | keep (or intptr_t) |
-| 42 | mxo | 0 | 0 | 0 | 0 | 3 | src/game/char_sheet/dust.cpp:133 rgl::matrix over mxo (agrees at 64 bits) | use mxo's members (fold rgl::matrix into mxo) |
-| 43 | rgl::smat | 0 | 0 | 0 | 0 | 3 | src/game/char_sheet/pick_entity.cpp:182 memcpy(0x40) for rgl::smat (fits at 64 bits) | sizeof(rgl::smat) |
-| 44 | ItemKind | 0 | 0 | 0 | 0 | 2 | src/game/inventory_panel/inventory_panel.cpp:700 tstring over ItemKind (agrees at 64 bits) | use ItemKind's members (fold tstring into ItemKind) |
+| 28 | file src/game/mission/scene_entities.cpp | 0 | 0 | 0 | 0 | 4 | src/game/mission/scene_entities.cpp:522 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 29 | file src/game/editor/poly_mesh_poly_ray_edit.cpp | 0 | 0 | 0 | 0 | 4 | src/game/editor/poly_mesh_poly_ray_edit.cpp:254 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 30 | file src/game/app/options_dialog_and_module_tables.cpp | 0 | 0 | 0 | 0 | 4 | src/game/app/options_dialog_and_module_tables.cpp:341 -Wshorten-64-to-32: implicit conversion loses integer precision: 'LRESULT' (aka 'long')... |  |
+| 31 | file src/engine/resource/resource_manager.cpp | 0 | 0 | 0 | 0 | 4 | src/engine/resource/resource_manager.cpp:248 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 32 | file src/engine/io/text_stream.cpp | 0 | 0 | 0 | 0 | 4 | src/engine/io/text_stream.cpp:71 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
+| 33 | fn CD3DSettingsDialog::BackBufferFormatChanged | 0 | 0 | 0 | 0 | 4 | src/platform/dxframework/d3dsettings.cpp:546 an enum value stored in a void * (fits) | keep (or intptr_t) |
+| 34 | rgl::frustum | 0 | 0 | 0 | 0 | 4 | src/game/ui/screens/conversation/conversation_init.cpp:145 memcpy(0x120) for rgl::frustum (fits at 64 bits) | sizeof(rgl::frustum) |
+| 35 | std::vector<int, std::allocator<int>> | 0 | 0 | 0 | 0 | 4 | src/game/ui/screens/notes_window.cpp:346 sel_list over std::vector<int, std::allocator<int>> (agrees at 64 bits) | use std::vector<int, std::allocator<int>>'s members (fold... |
+| 36 | EnvRow | 0 | 0 | 0 | 0 | 3 | src/game/mission/mission_start_setup.cpp:741 rgl::vector4 over EnvRow::base (+0x30) (agrees at 64 bits) | make EnvRow::base a rgl::vector4 (or name its members) |
+| 37 | ItemRef | 0 | 0 | 0 | 0 | 3 | src/game/ui/hud/agent_hud.cpp:76 EquipSet over ItemRef (agrees at 64 bits) | use ItemRef's members (fold EquipSet into ItemRef) |
+| 38 | Viewport | 0 | 0 | 0 | 0 | 3 | src/game/ui/screens/face_generator/face_generator_refresh.cpp:146 _D3DVIEWPORT9 over Viewport (agrees at 64 bits) | use Viewport's members (fold _D3DVIEWPORT9 into Viewport) |
+| 39 | file src/game/config/launcher_options_dialog.cpp | 0 | 0 | 0 | 0 | 3 | src/game/config/launcher_options_dialog.cpp:57 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
+| 40 | file src/engine/render/mesh.cpp | 0 | 0 | 0 | 0 | 3 | src/engine/render/mesh.cpp:371 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 41 | fn CD3DSettingsDialog::WindowedFullscreenChanged | 0 | 0 | 0 | 0 | 3 | src/platform/dxframework/d3dsettings.cpp:317 an enum value stored in a void * (fits) | keep (or intptr_t) |
+| 42 | mxo | 0 | 0 | 0 | 0 | 3 | src/game/terrain/dust_particles.cpp:133 rgl::matrix over mxo (agrees at 64 bits) | use mxo's members (fold rgl::matrix into mxo) |
+| 43 | rgl::smat | 0 | 0 | 0 | 0 | 3 | src/game/mission/pick_entity.cpp:182 memcpy(0x40) for rgl::smat (fits at 64 bits) | sizeof(rgl::smat) |
+| 44 | ItemKind | 0 | 0 | 0 | 0 | 2 | src/game/ui/screens/inventory/inventory_panel.cpp:700 tstring over ItemKind (agrees at 64 bits) | use ItemKind's members (fold tstring into ItemKind) |
 | 45 | M4 | 0 | 0 | 0 | 0 | 2 | src/game/agent4/agent_logic.cpp:6942 rgl::matrix over M4 (agrees at 64 bits) | use M4's members (fold rgl::matrix into M4) |
-| 46 | TrackRec | 0 | 0 | 0 | 0 | 2 | src/game/party2/party_2.cpp:2044 memcpy(0x10) for TrackRec (fits at 64 bits) | sizeof(TrackRec) |
-| 47 | _D3DLIGHT9 | 0 | 0 | 0 | 0 | 2 | src/game/terrain_a/terrain_render.cpp:1320 memset(0x68) for _D3DLIGHT9 (fits at 64 bits) | sizeof(_D3DLIGHT9) |
-| 48 | _PROCESS_INFORMATION | 0 | 0 | 0 | 0 | 2 | src/game/cls_map/cls_map.cpp:147 memset(0x18) for _PROCESS_INFORMATION (fits at 64 bits) | sizeof(_PROCESS_INFORMATION) |
-| 49 | _STARTUPINFOA | 0 | 0 | 0 | 0 | 2 | src/game/cls_map/cls_map.cpp:145 memset(0x68) for _STARTUPINFOA (fits at 64 bits) | sizeof(_STARTUPINFOA) |
-| 50 | anon@src/include/troop.h:49:5 | 0 | 0 | 0 | 0 | 2 | src/game/mission5/troop_rec.cpp:294 NibWord over anon@src/include/troop.h:49:5::nib (+0x0) (agrees at 64 bits) | make anon@src/include/troop.h:49:5::nib a NibWord (or nam... |
-| 51 | file src/game/char_sheet/dust.cpp | 0 | 0 | 0 | 0 | 2 | src/game/char_sheet/dust.cpp:128 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 52 | file src/game/inventory_panel/game_app.cpp | 0 | 0 | 0 | 0 | 2 | src/game/inventory_panel/game_app.cpp:285 -Wshorten-64-to-32: implicit conversion loses integer precision: 'WPARAM' (aka 'unsigne... |  |
-| 53 | file src/game/mesh_slot/mesh_terrain.cpp | 0 | 0 | 0 | 0 | 2 | src/game/mesh_slot/mesh_terrain.cpp:404 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 54 | file src/game/options_panel/video_page.cpp | 0 | 0 | 0 | 0 | 2 | src/game/options_panel/video_page.cpp:220 -Wshorten-64-to-32: implicit conversion loses integer precision: 'long' to 'int' |  |
+| 46 | TrackRec | 0 | 0 | 0 | 0 | 2 | src/game/party/party_map.cpp:2044 memcpy(0x10) for TrackRec (fits at 64 bits) | sizeof(TrackRec) |
+| 47 | _D3DLIGHT9 | 0 | 0 | 0 | 0 | 2 | src/game/terrain/terrain_render.cpp:1320 memset(0x68) for _D3DLIGHT9 (fits at 64 bits) | sizeof(_D3DLIGHT9) |
+| 48 | _PROCESS_INFORMATION | 0 | 0 | 0 | 0 | 2 | src/game/app/winmain_and_menu_screens.cpp:147 memset(0x18) for _PROCESS_INFORMATION (fits at 64 bits) | sizeof(_PROCESS_INFORMATION) |
+| 49 | _STARTUPINFOA | 0 | 0 | 0 | 0 | 2 | src/game/app/winmain_and_menu_screens.cpp:145 memset(0x68) for _STARTUPINFOA (fits at 64 bits) | sizeof(_STARTUPINFOA) |
+| 50 | anon@src/game/data/troop.h:49:5 | 0 | 0 | 0 | 0 | 2 | src/game/campaign/new_game_setup.cpp:294 NibWord over anon@src/game/data/troop.h:49:5::nib (+0x0) (agrees at 64 bits) | make anon@src/game/data/troop.h:49:5::nib a NibWord (or nam... |
+| 51 | file src/game/terrain/dust_particles.cpp | 0 | 0 | 0 | 0 | 2 | src/game/terrain/dust_particles.cpp:128 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 52 | file src/game/app/game_app.cpp | 0 | 0 | 0 | 0 | 2 | src/game/app/game_app.cpp:285 -Wshorten-64-to-32: implicit conversion loses integer precision: 'WPARAM' (aka 'unsigne... |  |
+| 53 | file src/game/mission/terrain_water_regen.cpp | 0 | 0 | 0 | 0 | 2 | src/game/mission/terrain_water_regen.cpp:404 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 54 | file src/game/ui/screens/options/video_page.cpp | 0 | 0 | 0 | 0 | 2 | src/game/ui/screens/options/video_page.cpp:220 -Wshorten-64-to-32: implicit conversion loses integer precision: 'long' to 'int' |  |
 | 55 | file src/game/script/script_interpreter.cpp | 0 | 0 | 0 | 0 | 2 | src/game/script/script_interpreter.cpp:4853 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
-| 56 | file src/game/terrain_b/poly_mesh.cpp | 0 | 0 | 0 | 0 | 2 | src/game/terrain_b/poly_mesh.cpp:135 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 57 | file src/game/world_data/world_data.cpp | 0 | 0 | 0 | 0 | 2 | src/game/world_data/world_data.cpp:1023 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 58 | file src/rgl/core/resource_io.cpp | 0 | 0 | 0 | 0 | 2 | src/rgl/core/resource_io.cpp:187 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
-| 59 | file src/rgl/dynamic/world_collide.cpp | 0 | 0 | 0 | 0 | 2 | src/rgl/dynamic/world_collide.cpp:163 -Wshorten-64-to-32: implicit conversion loses integer precision: 'difference_type' (aka... |  |
-| 60 | file src/rgl/dynamic/world_grid.cpp | 0 | 0 | 0 | 0 | 2 | src/rgl/dynamic/world_grid.cpp:68 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 61 | file src/rgl/mem_stream.cpp | 0 | 0 | 0 | 0 | 2 | src/rgl/mem_stream.cpp:232 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
-| 62 | file src/rgl/psys.cpp | 0 | 0 | 0 | 0 | 2 | src/rgl/psys.cpp:176 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 63 | file src/rgl/resource_manager.cpp | 0 | 0 | 0 | 0 | 2 | src/rgl/resource_manager.cpp:88 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
-| 64 | fn CD3DSettingsDialog::AdapterFormatChanged | 0 | 0 | 0 | 0 | 2 | src/dxframework/d3dsettings.cpp:446 an enum value stored in a void * (fits) | keep (or intptr_t) |
-| 65 | fn CD3DSettingsDialog::DepthStencilBufferFormatChanged | 0 | 0 | 0 | 0 | 2 | src/dxframework/d3dsettings.cpp:628 an enum value stored in a void * (fits) | keep (or intptr_t) |
-| 66 | renderer | 0 | 0 | 0 | 0 | 2 | src/game/renderer.cpp:243 D3DXVECTOR4 over renderer::spec (+0x604) (agrees at 64 bits) | make renderer::spec a D3DXVECTOR4 (or name its members) |
-| 67 | v4raw | 0 | 0 | 0 | 0 | 2 | src/game/char_sheet/facegen_win.cpp:194 rgl::vector4 over v4raw (agrees at 64 bits) | use v4raw's members (fold rgl::vector4 into v4raw) |
-| 68 | vec2 | 0 | 0 | 0 | 0 | 2 | src/game/mesh_slot/mesh_terrain.cpp:859 Vec2 over vec2 (agrees at 64 bits) | use vec2's members (fold Vec2 into vec2) |
-| 69 | BYTE | 0 | 0 | 0 | 0 | 1 | src/dxframework/d3dfont.cpp:406 -Wcast-align: cast from 'BYTE *' (aka 'unsigned char *') to 'WORD *' (aka 'unsigned sho... |  |
-| 70 | Constraint | 0 | 0 | 0 | 0 | 1 | src/game/cls_map/progress_bar.cpp:1353 memset(0x204) for Constraint (fits at 64 bits) | sizeof(Constraint) |
-| 71 | DXDIAG_INIT_PARAMS | 0 | 0 | 0 | 0 | 1 | src/game/config/options_dlg.cpp:398 memset(0x18) for DXDIAG_INIT_PARAMS (fits at 64 bits) | sizeof(DXDIAG_INIT_PARAMS) |
-| 72 | FaceGen | 0 | 0 | 0 | 0 | 1 | src/game/char_sheet/facegen_init.cpp:200 rgl::vector4 over FaceGen::v154 (+0x154) (agrees at 64 bits) | make FaceGen::v154 a rgl::vector4 (or name its members) |
+| 56 | file src/game/terrain/poly_mesh.cpp | 0 | 0 | 0 | 0 | 2 | src/game/terrain/poly_mesh.cpp:135 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 57 | file src/game/campaign/game_data_party_quest.cpp | 0 | 0 | 0 | 0 | 2 | src/game/campaign/game_data_party_quest.cpp:1023 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 58 | file src/engine/resource/resource_io.cpp | 0 | 0 | 0 | 0 | 2 | src/engine/resource/resource_io.cpp:187 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
+| 59 | file src/engine/physics/world_collide.cpp | 0 | 0 | 0 | 0 | 2 | src/engine/physics/world_collide.cpp:163 -Wshorten-64-to-32: implicit conversion loses integer precision: 'difference_type' (aka... |  |
+| 60 | file src/engine/physics/world_grid.cpp | 0 | 0 | 0 | 0 | 2 | src/engine/physics/world_grid.cpp:68 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 61 | file src/engine/io/mem_stream.cpp | 0 | 0 | 0 | 0 | 2 | src/engine/io/mem_stream.cpp:232 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
+| 62 | file src/engine/render/particle_system.cpp | 0 | 0 | 0 | 0 | 2 | src/engine/render/particle_system.cpp:176 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 63 | file src/engine/resource/resource_manager_init.cpp | 0 | 0 | 0 | 0 | 2 | src/engine/resource/resource_manager_init.cpp:88 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
+| 64 | fn CD3DSettingsDialog::AdapterFormatChanged | 0 | 0 | 0 | 0 | 2 | src/platform/dxframework/d3dsettings.cpp:446 an enum value stored in a void * (fits) | keep (or intptr_t) |
+| 65 | fn CD3DSettingsDialog::DepthStencilBufferFormatChanged | 0 | 0 | 0 | 0 | 2 | src/platform/dxframework/d3dsettings.cpp:628 an enum value stored in a void * (fits) | keep (or intptr_t) |
+| 66 | renderer | 0 | 0 | 0 | 0 | 2 | src/engine/render/renderer.cpp:243 D3DXVECTOR4 over renderer::spec (+0x604) (agrees at 64 bits) | make renderer::spec a D3DXVECTOR4 (or name its members) |
+| 67 | v4raw | 0 | 0 | 0 | 0 | 2 | src/game/editor/terrain_page/terrain_page_init.cpp:194 rgl::vector4 over v4raw (agrees at 64 bits) | use v4raw's members (fold rgl::vector4 into v4raw) |
+| 68 | vec2 | 0 | 0 | 0 | 0 | 2 | src/game/mission/terrain_water_regen.cpp:859 Vec2 over vec2 (agrees at 64 bits) | use vec2's members (fold Vec2 into vec2) |
+| 69 | BYTE | 0 | 0 | 0 | 0 | 1 | src/platform/dxframework/d3dfont.cpp:406 -Wcast-align: cast from 'BYTE *' (aka 'unsigned char *') to 'WORD *' (aka 'unsigned sho... |  |
+| 70 | Constraint | 0 | 0 | 0 | 0 | 1 | src/game/ui/screens/progress_bar_and_load_screens.cpp:1353 memset(0x204) for Constraint (fits at 64 bits) | sizeof(Constraint) |
+| 71 | DXDIAG_INIT_PARAMS | 0 | 0 | 0 | 0 | 1 | src/game/config/launcher_options_dialog.cpp:398 memset(0x18) for DXDIAG_INIT_PARAMS (fits at 64 bits) | sizeof(DXDIAG_INIT_PARAMS) |
+| 72 | FaceGen | 0 | 0 | 0 | 0 | 1 | src/game/ui/screens/face_generator/face_generator_init.cpp:200 rgl::vector4 over FaceGen::v154 (+0x154) (agrees at 64 bits) | make FaceGen::v154 a rgl::vector4 (or name its members) |
 | 73 | FactionRec | 0 | 0 | 0 | 0 | 1 | src/game/script/script_interpreter.cpp:3991 Named16 over FactionRec (agrees at 64 bits) | use FactionRec's members (fold Named16 into FactionRec) |
-| 74 | Frame3 | 0 | 0 | 0 | 0 | 1 | src/game/world_data/obj_tbl.cpp:55 rgl::matrix over Frame3 (agrees at 64 bits) | use Frame3's members (fold rgl::matrix into Frame3) |
-| 75 | MapIcon | 0 | 0 | 0 | 0 | 1 | src/game/triggers/trigger_vec.cpp:1293 tstring over MapIcon (agrees at 64 bits) | use MapIcon's members (fold tstring into MapIcon) |
-| 76 | Mission | 0 | 0 | 0 | 0 | 1 | src/game/inventory_panel/mission_ctx.cpp:398 Team over Mission::teams (+0x527c) (agrees at 64 bits) | make Mission::teams a Team (or name its members) |
-| 77 | MissionTemplate | 0 | 0 | 0 | 0 | 1 | src/game/triggers/trigger_vec.cpp:1356 tstring over MissionTemplate (agrees at 64 bits) | use MissionTemplate's members (fold tstring into MissionT... |
-| 78 | NavVert | 0 | 0 | 0 | 0 | 1 | src/game/mesh_slot/mesh_terrain.cpp:414 rgl::vector4 over NavVert (agrees at 64 bits) | use NavVert's members (fold rgl::vector4 into NavVert) |
-| 79 | Party | 0 | 0 | 0 | 0 | 1 | src/game/map_editor/exchange_screens.cpp:546 Party::stacks (Stack[64]) read as int | name / type the member Party::stacks |
-| 80 | PsRow | 0 | 0 | 0 | 0 | 1 | src/game/map_editor/exchange_screens.cpp:472 Stack over PsRow (agrees at 64 bits) | use PsRow's members (fold Stack into PsRow) |
-| 81 | Stack | 0 | 0 | 0 | 0 | 1 | src/game/inventory_panel/party_screen.cpp:293 PsRow over Stack (agrees at 64 bits) | use Stack's members (fold PsRow into Stack) |
-| 82 | TCHAR | 0 | 0 | 0 | 0 | 1 | src/dxframework/d3dapp.cpp:110 -Wcast-align: cast from 'TCHAR *' (aka 'char *') to 'LPCWSTR' (aka 'const wchar_t *') i... |  |
-| 83 | _D3DMATERIAL9 | 0 | 0 | 0 | 0 | 1 | src/game/renderer.cpp:223 memset(0x44) for _D3DMATERIAL9 (fits at 64 bits) | sizeof(_D3DMATERIAL9) |
-| 84 | _MEMORYSTATUS | 0 | 0 | 0 | 0 | 1 | src/game/config/options_dlg.cpp:380 memset(0x38) for _MEMORYSTATUS (fits at 64 bits) | sizeof(_MEMORYSTATUS) |
-| 85 | anon@src/game/agent5/agent_hud.cpp:435:5 | 0 | 0 | 0 | 0 | 1 | src/game/agent5/agent_hud.cpp:438 rgl::matrix over anon@src/game/agent5/agent_hud.cpp:435:5 (agrees at 64 bits) | use anon@src/game/agent5/agent_hud.cpp:435:5's members (f... |
-| 86 | file src/game/agent/agent.cpp | 0 | 0 | 0 | 0 | 1 | src/game/agent/agent.cpp:518 -Wshorten-64-to-32: implicit conversion loses integer precision: '__ptrdiff_t' (aka 'lo... |  |
-| 87 | file src/game/agent2/agent_stats.cpp | 0 | 0 | 0 | 0 | 1 | src/game/agent2/agent_stats.cpp:1072 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 88 | file src/game/agent2/agent_types.h | 0 | 0 | 0 | 0 | 1 | src/game/agent2/agent_types.h:64 -Wshorten-64-to-32: implicit conversion loses integer precision: '__ptrdiff_t' (aka 'lo... |  |
-| 89 | file src/game/char_sheet/cam_view.cpp | 0 | 0 | 0 | 0 | 1 | src/game/char_sheet/cam_view.cpp:94 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
-| 90 | file src/game/char_sheet/save_state.cpp | 0 | 0 | 0 | 0 | 1 | src/game/char_sheet/save_state.cpp:145 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 91 | file src/game/cls_map/cls_map.cpp | 0 | 0 | 0 | 0 | 1 | src/game/cls_map/cls_map.cpp:437 -Wshorten-64-to-32: implicit conversion loses integer precision: 'unsigned long' to 'un... |  |
-| 92 | file src/game/inventory_panel/party_tracks.cpp | 0 | 0 | 0 | 0 | 1 | src/game/inventory_panel/party_tracks.cpp:91 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 93 | file src/game/mesh_slot/mesh_pass.cpp | 0 | 0 | 0 | 0 | 1 | src/game/mesh_slot/mesh_pass.cpp:278 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 94 | file src/game/mission5/troop_rec.cpp | 0 | 0 | 0 | 0 | 1 | src/game/mission5/troop_rec.cpp:673 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 95 | file src/game/mission_ui2/mission_3.cpp | 0 | 0 | 0 | 0 | 1 | src/game/mission_ui2/mission_3.cpp:134 -Wshorten-64-to-32: implicit conversion loses integer precision: '__ptrdiff_t' (aka 'lo... |  |
-| 96 | file src/game/options_panel/hud.cpp | 0 | 0 | 0 | 0 | 1 | src/game/options_panel/hud.cpp:107 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 97 | file src/game/ui/mission_ui.cpp | 0 | 0 | 0 | 0 | 1 | src/game/ui/mission_ui.cpp:1486 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 98 | file src/rgl/dynamic/world_cells.cpp | 0 | 0 | 0 | 0 | 1 | src/rgl/dynamic/world_cells.cpp:150 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 99 | file src/rgl/scene/world_items.cpp | 0 | 0 | 0 | 0 | 1 | src/rgl/scene/world_items.cpp:56 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 100 | gui_manager | 0 | 0 | 0 | 0 | 1 | src/game/strat/gui_manager.cpp:209 vec2 over gui_manager::mouse (+0x14) (agrees at 64 bits) | make gui_manager::mouse a vec2 (or name its members) |
-| 101 | head_rec | 0 | 0 | 0 | 0 | 1 | src/game/window_mgr.h:28 Profile over head_rec (agrees at 64 bits) | use head_rec's members (fold Profile into head_rec) |
-| 102 | int | 0 | 0 | 0 | 0 | 1 | src/game/char_sheet/save_game.cpp:159 -Wcast-align: cast from 'struct (unnamed at /Users/noahpeterson/Documents/Projects/moun... |  |
-| 103 | item_mod | 0 | 0 | 0 | 0 | 1 | src/game/inventory_panel/inventory_panel.cpp:706 tstring over item_mod (agrees at 64 bits) | use item_mod's members (fold tstring into item_mod) |
-| 104 | key_array | 0 | 0 | 0 | 0 | 1 | src/game/agent/agent.cpp:895 rgl::keyframes over key_array (agrees at 64 bits) | use key_array's members (fold rgl::keyframes into key_array) |
-| 105 | mission_type | 0 | 0 | 0 | 0 | 1 | src/game/options_panel/module_load.cpp:123 Blk2dd0 over mission_type (agrees at 64 bits) | use mission_type's members (fold Blk2dd0 into mission_type) |
-| 106 | nav_node | 0 | 0 | 0 | 0 | 1 | src/game/party2/party_2.h:62 E12 over nav_node (agrees at 64 bits) | use nav_node's members (fold E12 into nav_node) |
-| 107 | rgl::mat3 | 0 | 0 | 0 | 0 | 1 | src/game/terrain_b/terrain_b.cpp:562 D3DXMATRIX over rgl::mat3 (agrees at 64 bits) | use rgl::mat3's members (fold D3DXMATRIX into rgl::mat3) |
-| 108 | shape_base | 0 | 0 | 0 | 0 | 1 | src/rgl/dynamic/world_grid.cpp:59 rgl::Obj over shape_base (agrees at 64 bits) | use shape_base's members (fold rgl::Obj into shape_base) |
-| 109 | sockaddr_in | 0 | 0 | 0 | 0 | 1 | src/game/config/options_dlg.cpp:125 sockaddr over sockaddr_in (agrees at 64 bits) | use sockaddr_in's members (fold sockaddr into sockaddr_in) |
-| 110 | stream_base | 0 | 0 | 0 | 0 | 1 | src/game/inventory_panel/widget_text.cpp:200 MsStream over stream_base (agrees at 64 bits) | use stream_base's members (fold MsStream into stream_base) |
-| 111 | tagBITMAPINFOHEADER | 0 | 0 | 0 | 0 | 1 | src/dxframework/d3dfont.cpp:371 memset(0x28) for tagBITMAPINFOHEADER (fits at 64 bits) | sizeof(tagBITMAPINFOHEADER) |
-| 112 | tagWNDCLASSEXW | 0 | 0 | 0 | 0 | 1 | src/dxframework/d3dapp.cpp:93 memset(0x50) for tagWNDCLASSEXW (fits at 64 bits) | sizeof(tagWNDCLASSEXW) |
-| 113 | tstring | 0 | 0 | 0 | 0 | 1 | src/game/inventory_panel/map_panel.cpp:780 FactionRec over tstring (agrees at 64 bits) | use tstring's members (fold FactionRec into tstring) |
-| 114 | xform | 0 | 0 | 0 | 0 | 1 | src/game/terrain_b/terrain_b.cpp:616 D3DXMATRIX over xform (agrees at 64 bits) | use xform's members (fold D3DXMATRIX into xform) |
+| 74 | Frame3 | 0 | 0 | 0 | 0 | 1 | src/game/data/object_table_spawners.cpp:55 rgl::matrix over Frame3 (agrees at 64 bits) | use Frame3's members (fold rgl::matrix into Frame3) |
+| 75 | MapIcon | 0 | 0 | 0 | 0 | 1 | src/game/app/options_dialog_and_module_tables.cpp:1293 tstring over MapIcon (agrees at 64 bits) | use MapIcon's members (fold tstring into MapIcon) |
+| 76 | Mission | 0 | 0 | 0 | 0 | 1 | src/game/mission/mission_context.cpp:398 Team over Mission::teams (+0x527c) (agrees at 64 bits) | make Mission::teams a Team (or name its members) |
+| 77 | MissionTemplate | 0 | 0 | 0 | 0 | 1 | src/game/app/options_dialog_and_module_tables.cpp:1356 tstring over MissionTemplate (agrees at 64 bits) | use MissionTemplate's members (fold tstring into MissionT... |
+| 78 | NavVert | 0 | 0 | 0 | 0 | 1 | src/game/mission/terrain_water_regen.cpp:414 rgl::vector4 over NavVert (agrees at 64 bits) | use NavVert's members (fold rgl::vector4 into NavVert) |
+| 79 | Party | 0 | 0 | 0 | 0 | 1 | src/game/ui/screens/mission_menu_and_exchange_screens.cpp:546 Party::stacks (Stack[64]) read as int | name / type the member Party::stacks |
+| 80 | PsRow | 0 | 0 | 0 | 0 | 1 | src/game/ui/screens/mission_menu_and_exchange_screens.cpp:472 Stack over PsRow (agrees at 64 bits) | use PsRow's members (fold Stack into PsRow) |
+| 81 | Stack | 0 | 0 | 0 | 0 | 1 | src/game/ui/screens/party_screen.cpp:293 PsRow over Stack (agrees at 64 bits) | use Stack's members (fold PsRow into Stack) |
+| 82 | TCHAR | 0 | 0 | 0 | 0 | 1 | src/platform/dxframework/d3dapp.cpp:110 -Wcast-align: cast from 'TCHAR *' (aka 'char *') to 'LPCWSTR' (aka 'const wchar_t *') i... |  |
+| 83 | _D3DMATERIAL9 | 0 | 0 | 0 | 0 | 1 | src/engine/render/renderer.cpp:223 memset(0x44) for _D3DMATERIAL9 (fits at 64 bits) | sizeof(_D3DMATERIAL9) |
+| 84 | _MEMORYSTATUS | 0 | 0 | 0 | 0 | 1 | src/game/config/launcher_options_dialog.cpp:380 memset(0x38) for _MEMORYSTATUS (fits at 64 bits) | sizeof(_MEMORYSTATUS) |
+| 85 | anon@src/game/ui/hud/agent_hud.cpp:435:5 | 0 | 0 | 0 | 0 | 1 | src/game/ui/hud/agent_hud.cpp:438 rgl::matrix over anon@src/game/ui/hud/agent_hud.cpp:435:5 (agrees at 64 bits) | use anon@src/game/ui/hud/agent_hud.cpp:435:5's members (f... |
+| 86 | file src/game/agent/agent_queries.cpp | 0 | 0 | 0 | 0 | 1 | src/game/agent/agent_queries.cpp:518 -Wshorten-64-to-32: implicit conversion loses integer precision: '__ptrdiff_t' (aka 'lo... |  |
+| 87 | file src/game/agent/agent_stats.cpp | 0 | 0 | 0 | 0 | 1 | src/game/agent/agent_stats.cpp:1072 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 88 | file src/game/agent/ai/agent_types.h | 0 | 0 | 0 | 0 | 1 | src/game/agent/ai/agent_types.h:64 -Wshorten-64-to-32: implicit conversion loses integer precision: '__ptrdiff_t' (aka 'lo... |  |
+| 89 | file src/game/ui/screens/face_generator/face_generator_update.cpp | 0 | 0 | 0 | 0 | 1 | src/game/ui/screens/face_generator/face_generator_update.cpp:94 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_t' (aka 'unsigne... |  |
+| 90 | file src/game/save/save_state.cpp | 0 | 0 | 0 | 0 | 1 | src/game/save/save_state.cpp:145 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 91 | file src/game/app/winmain_and_menu_screens.cpp | 0 | 0 | 0 | 0 | 1 | src/game/app/winmain_and_menu_screens.cpp:437 -Wshorten-64-to-32: implicit conversion loses integer precision: 'unsigned long' to 'un... |  |
+| 92 | file src/game/campaign/party_tracks.cpp | 0 | 0 | 0 | 0 | 1 | src/game/campaign/party_tracks.cpp:91 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 93 | file src/game/mission/render_passes.cpp | 0 | 0 | 0 | 0 | 1 | src/game/mission/render_passes.cpp:278 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 94 | file src/game/campaign/new_game_setup.cpp | 0 | 0 | 0 | 0 | 1 | src/game/campaign/new_game_setup.cpp:673 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 95 | file src/game/party/stacks_and_loot.cpp | 0 | 0 | 0 | 0 | 1 | src/game/party/stacks_and_loot.cpp:134 -Wshorten-64-to-32: implicit conversion loses integer precision: '__ptrdiff_t' (aka 'lo... |  |
+| 96 | file src/game/ui/hud/mission_hud_buttons.cpp | 0 | 0 | 0 | 0 | 1 | src/game/ui/hud/mission_hud_buttons.cpp:107 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 97 | file src/game/ui/widgets/widget_base.cpp | 0 | 0 | 0 | 0 | 1 | src/game/ui/widgets/widget_base.cpp:1486 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 98 | file src/engine/physics/world_cells.cpp | 0 | 0 | 0 | 0 | 1 | src/engine/physics/world_cells.cpp:150 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 99 | file src/engine/scene/world_items.cpp | 0 | 0 | 0 | 0 | 1 | src/engine/scene/world_items.cpp:56 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
+| 100 | gui_manager | 0 | 0 | 0 | 0 | 1 | src/game/ui/gui_manager.cpp:209 vec2 over gui_manager::mouse (+0x14) (agrees at 64 bits) | make gui_manager::mouse a vec2 (or name its members) |
+| 101 | head_rec | 0 | 0 | 0 | 0 | 1 | src/game/ui/window_mgr.h:28 Profile over head_rec (agrees at 64 bits) | use head_rec's members (fold Profile into head_rec) |
+| 102 | int | 0 | 0 | 0 | 0 | 1 | src/game/save/save_game.cpp:159 -Wcast-align: cast from 'struct (unnamed at /Users/noahpeterson/Documents/Projects/moun... |  |
+| 103 | item_mod | 0 | 0 | 0 | 0 | 1 | src/game/ui/screens/inventory/inventory_panel.cpp:706 tstring over item_mod (agrees at 64 bits) | use item_mod's members (fold tstring into item_mod) |
+| 104 | key_array | 0 | 0 | 0 | 0 | 1 | src/game/agent/agent_queries.cpp:895 rgl::keyframes over key_array (agrees at 64 bits) | use key_array's members (fold rgl::keyframes into key_array) |
+| 105 | mission_type | 0 | 0 | 0 | 0 | 1 | src/game/data/module_record_loaders.cpp:123 Blk2dd0 over mission_type (agrees at 64 bits) | use mission_type's members (fold Blk2dd0 into mission_type) |
+| 106 | nav_node | 0 | 0 | 0 | 0 | 1 | src/game/party/party_map.h:62 E12 over nav_node (agrees at 64 bits) | use nav_node's members (fold E12 into nav_node) |
+| 107 | rgl::mat3 | 0 | 0 | 0 | 0 | 1 | src/game/terrain/terrain_scene_renderer.cpp:562 D3DXMATRIX over rgl::mat3 (agrees at 64 bits) | use rgl::mat3's members (fold D3DXMATRIX into rgl::mat3) |
+| 108 | shape_base | 0 | 0 | 0 | 0 | 1 | src/engine/physics/world_grid.cpp:59 rgl::Obj over shape_base (agrees at 64 bits) | use shape_base's members (fold rgl::Obj into shape_base) |
+| 109 | sockaddr_in | 0 | 0 | 0 | 0 | 1 | src/game/config/launcher_options_dialog.cpp:125 sockaddr over sockaddr_in (agrees at 64 bits) | use sockaddr_in's members (fold sockaddr into sockaddr_in) |
+| 110 | stream_base | 0 | 0 | 0 | 0 | 1 | src/game/ui/widgets/text_box.cpp:200 MsStream over stream_base (agrees at 64 bits) | use stream_base's members (fold MsStream into stream_base) |
+| 111 | tagBITMAPINFOHEADER | 0 | 0 | 0 | 0 | 1 | src/platform/dxframework/d3dfont.cpp:371 memset(0x28) for tagBITMAPINFOHEADER (fits at 64 bits) | sizeof(tagBITMAPINFOHEADER) |
+| 112 | tagWNDCLASSEXW | 0 | 0 | 0 | 0 | 1 | src/platform/dxframework/d3dapp.cpp:93 memset(0x50) for tagWNDCLASSEXW (fits at 64 bits) | sizeof(tagWNDCLASSEXW) |
+| 113 | tstring | 0 | 0 | 0 | 0 | 1 | src/game/campaign/map_panel.cpp:780 FactionRec over tstring (agrees at 64 bits) | use tstring's members (fold FactionRec into tstring) |
+| 114 | xform | 0 | 0 | 0 | 0 | 1 | src/game/terrain/terrain_scene_renderer.cpp:616 D3DXMATRIX over xform (agrees at 64 bits) | use xform's members (fold D3DXMATRIX into xform) |
 
 ## Top 40 in detail (W findings)
 

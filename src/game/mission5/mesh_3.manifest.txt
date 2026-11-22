@@ -1,1 +1,0 @@
-../src/game/mission5/mesh_3.cpp  ?pick_vert@PolyMesh@@QAEIABUvector4@rgl@@0@Z  0052da20  /O2 /MT /Gy /TP

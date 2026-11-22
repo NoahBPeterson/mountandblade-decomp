@@ -1,0 +1,416 @@
+//-----------------------------------------------------------------------------
+// File: strategic_entity.cpp  (0x42a090..0x42b6d0)
+//
+// Desc: the strategic entity (StratEnt: the party/town icons on the campaign map): per-frame render, ground-shadow
+//       update (ground-face cache swept with a capsule, the shadow decal meshes, the shadow-map render target),
+//       and the scene-world (Ctx) helpers it uses: first directional light, lighting sampler, grid box query.
+//       Functions in ascending address order. The next object (strategic_shadow.cpp) starts at Ctx::ambient 0x42b6d0.
+//       Names provisional.
+//       Flags: /O2 /MT /Gy /TP.
+//-----------------------------------------------------------------------------
+#define GM_RGL_NS                 // gui_manager.h: the scene / mesh stand-ins in namespace rgl (the defined symbols)
+#include <math.h>
+#include "game/config/options.h"   // g_options
+#include <stdlib.h>
+#include "engine/scene/strat_ext.h"       // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/scene/strategic_entity.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "engine/scene/frustum.h"
+#include "engine/fx/keyframes.h"
+#include "engine/math/mat4_include.h"
+#include "engine/render/mesh_prims.h"
+#include "engine/math/vec.h"
+#include "engine/physics/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "engine/render/light.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/render/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/core/clock_table.h"
+
+// @ 0x42a090
+void rgl::strategic_entity::render(rgl::scene* sc, rgl::render_info* out)
+{
+    if (visible) {
+        if (fx)
+            fx->render(sc, &local, &lod_dist);
+        rgl::entity::render(sc, out);
+        if ((sc->mask & 1) && (mode & 3) && g_options.i28) {
+            Light* l = owner->first_dir_light();
+            if (l && !(l->flags & 2)) {
+                bool a = map_shadow_strength * shadow_fade > 0.05f;
+                bool b = blob_shadow_strength * shadow_fade > 0.05f;
+                if (a || b)
+                    update_shadows(sc, a, b);
+            }
+        }
+        for (std::vector<rgl::psys*>::iterator p = emitters.begin(); p != emitters.end(); ++p)
+            (*p)->update(sc);
+        render_count++;
+    }
+}
+
+// @ 0x42a1a0
+Light* rgl::world::first_dir_light()
+{
+    Light* found = 0;
+    unsigned i = 0;
+    while (i < lights.size()) {
+        if (lights[i]->type == 2 && !(lights[i]->flags & 1))
+            found = lights[i];
+        i++;
+        if (found)
+            break;
+    }
+    return found;
+}
+
+static inline void set_delay_inl(Timer& t, float seconds) { t.start = g_ticks[t.clock] - (int)(seconds * 100000.0f); }     // Timer::set_delay (0x42cd20) as update_shadows inlines it
+
+// @ 0x42a1f0
+void rgl::strategic_entity::update_shadows(scene* sc, bool a, bool b)
+{
+    float dx = local.o.x - shadow_pos.x;
+    float dy = local.o.y - shadow_pos.y;
+    float dz = local.o.z - shadow_pos.z;
+    float dist = (float)sqrt(dx * dx + (dz * dz + dy * dy));
+    if (dist > shadow_radius * 0.2f) {
+        update_ground_cache();
+        shadow_pos = local.o;
+    }
+    if ((float)(g_ticks[tm2a0.clock] - tm2a0.start) * 1e-05f >= -0.0001f) {
+        if (a)
+            create_shadow_mesh(&shadow_a, 1);
+        if (b) {
+            create_shadow_mesh(&shadow_b, 0);
+            tstring name("shadow_default");
+            shadow_b->res = g_resmgr.get_material(name);
+        }
+    }
+    if (a) {
+        if (mode & 2) {
+            if ((float)(g_ticks[tm2b0.clock] - tm2b0.start) * 1e-05f >= -0.0001f) {
+                // d is a named float (it stays on the x87 stack through the divide: fld -1; fdiv st(1); fstp st(0)) and the
+                // timer is set through the inlined set_delay (clock index loaded before the _ftol2 call)
+                float d = shadow_quality * 25.0f;
+                set_delay_inl(tm2b0, -1.0f / d - (float)(rand() % 0x3dc9) * 6.3223115e-07f);
+                shadow_tick();
+                if (shadow_skin != 0) {
+                    shadow_a->res = shadow_skin;
+                } else {
+                    tstring name("shadow_default");
+                    shadow_a->res = g_resmgr.get_material(name);
+                }
+            }
+        }
+        rgl::matrix id_a;
+        shadow_a->render(sc, *rgl::identity_pos(&id_a));
+        shadow_drawn = 1;
+    }
+    if (b) {
+        rgl::matrix id_b;
+        shadow_b->render(sc, *rgl::identity_pos(&id_b));
+    }
+}
+
+// @ 0x42a480
+void rgl::strategic_entity::update_ground_cache()
+{
+    matrix m;
+    vector4 amb;
+    build_shadow_frame(&m, &amb);
+    float reach = shadow_radius * 3.0f;
+    capsule cap((capsule::outline_init()));
+    cap.p0 = tp(local, center);
+    vector4 t(m.u.x * reach, m.u.y * reach, m.u.z * reach);
+    cap.p1 = vector4(cap.p0.x - t.x, cap.p0.y - t.y, cap.p0.z - t.z);
+    cap.radius = shadow_radius * 1.1f;
+    vector4 tmp;
+    const vector4* mn = cap.get_min(&tmp);
+    vector4 bmin(mn->x - 0.1f, mn->y - 0.1f, mn->z - 0.1f);
+    const vector4* mx = cap.get_max(&tmp);
+    vector4 bmax(mx->x + 0.1f, mx->y + 0.1f, mx->z + 0.1f);
+    shape_base* found[0x2000];
+    int nfound;
+    owner->query_box(&bmin, &bmax, 0x104, found, &nfound);
+    nids = 0;
+    for (int i = 0; i < nfound; i++) {
+        if (nids >= 0x40)
+            return;
+        if (found[i]->m4 < 0)
+            continue;
+        NavCell* face = &owner->ground->cells[found[i]->m4];
+        vector4 nu(-m.u.x, -m.u.y, -m.u.z);
+        const float* nn = &face->trans.x;
+        if (!(nu.x * nn[0] + (nu.y * nn[1] + nu.z * nn[2]) < 0.0f))   // 0x42a720: the z and y terms are summed first
+            continue;
+        if (shape_contact_count(&cap, found[i], 0, 0) == 0)
+            continue;
+        face = &owner->ground->cells[found[i]->m4];
+        vector4 c[4];
+        for (int k = 0; k < face->npts; k++) {
+            NavVert* gv = &owner->ground->verts[face->vidx[k]];
+            vector4 v = gv->p;
+            c[k] = m.transform_point_to_local(v);
+            float inv = 0.5f / shadow_radius;     // after the call: inv stays on the x87 stack for the three products
+            vector4& ck = c[k];
+            ck.x = inv * ck.x;
+            ck.y = inv * ck.y;
+            ck.z = inv * ck.z;
+        }
+        if ((c[0].z <= -0.5f || c[1].z <= -0.5f || c[2].z <= -0.5f || (face->npts == 4 && c[3].z <= -0.5f)) &&
+            (c[0].z - c[0].x <= -0.5f || c[1].z - c[1].x <= -0.5f || c[2].z - c[2].x <= -0.5f || (face->npts == 4 && c[3].z - c[3].x <= -0.5f)) &&
+            (c[0].x + c[0].z <= -0.5f || c[1].x + c[1].z <= -0.5f || c[2].x + c[2].z <= -0.5f || (face->npts == 4 && c[3].x + c[3].z <= -0.5f)) &&
+            (c[0].z - c[0].y <= -0.5f || c[1].z - c[1].y <= -0.5f || c[2].z - c[2].y <= -0.5f || (face->npts == 4 && c[3].z - c[3].y <= -0.5f)) &&
+            (c[0].y + c[0].z <= -0.5f || c[1].y + c[1].z <= -0.5f || c[2].y + c[2].z <= -0.5f || (face->npts == 4 && c[3].y + c[3].z <= -0.5f))) {
+            ids[nids] = found[i]->m4;
+            nids++;
+        }
+    }
+}
+
+// Body the original's object saw (row owner engine/scene/frustum_grid.cpp 0x41ed00): with it visible lo/hi do not escape,
+// so hi[1] stays in a register across the collect calls (docs/codegen.md section 16)
+inline __declspec(noinline) void rgl::world::to_cell(const float* p, int* out)
+{
+    for (int i = 0; i < 2; i++) {
+        float f = (p[i] - lo[i]) / cell_size[i];
+        if (f <= 0.0f)
+            out[i] = 0;
+        else if ((float)(n[i] - 1) <= f)
+            out[i] = n[i] - 1;
+        else
+            out[i] = (int)f + 1;
+    }
+}
+
+// @ 0x42aa50
+void rgl::world::query_box(const vector4* bmin, const vector4* bmax, unsigned mask, shape_base** out, int* count)
+{
+    int lo[2], hi[2];
+    to_cell(&bmin->x, lo);
+    to_cell(&bmax->x, hi);
+    *count = 0;
+    int2 p;
+    for (p.x = lo[0]; p.x <= hi[0]; p.x++) {
+        if (lo[1] <= hi[1]) {
+            int flat = 1;
+            for (p.y = lo[1]; p.y <= hi[1]; p.y++)
+                cells[p.x][p.y].collect(bmin, bmax, &flat, mask, out, count);
+        }
+    }
+}
+
+static inline vector4 crossv(const vector4& a, const vector4& b)
+{
+    return vector4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}
+
+// @ 0x42aaf0
+void rgl::strategic_entity::build_shadow_frame(matrix* m, vector4* amb)
+{
+    vector4* o = &m->o;
+    *o = local.o;
+    *o = local.transform_point_inl(center);
+    vector4 d;
+    owner->sample_lights(&local.o, &d, amb);
+    if (d.z > -0.1f) d.z = -0.1f;
+    vector4* u = &m->u;
+    vector4* f = &m->f;
+    *u = vector4(-d.x, -d.y, -d.z);
+    *f = vector4(0.0f, 0.0f, 1.0f);
+    m->s = crossv(*f, *u);
+    m->s.normalize();
+    *f = crossv(*u, m->s);
+    f->normalize();
+    vector4 t;
+    t.x = shadow_radius * u->x;
+    t.y = u->y * shadow_radius;
+    t.z = u->z * shadow_radius;
+    o->x = t.x + o->x;
+    o->y = t.y + o->y;
+    o->z = t.z + o->z;
+}
+
+static __forceinline vector4 vscl(const float& s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
+static inline float nrm(vector4& v)
+{
+    float len = v.length();
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        v.x = v.x * inv; v.y = v.y * inv; v.z = v.z * inv;
+    } else {
+        v.x = 0.0f; v.y = 1.0f; v.z = 0.0f;
+    }
+    return len;
+}
+
+// @ 0x42ad60
+void rgl::world::sample_lights(const vector4* p, vector4* dir, vector4* amb)
+{
+    *dir = vector4(0.0f, 0.0f, 0.0f);
+    *amb = vector4(0.0f, 0.0f, 0.0f);
+    for (unsigned i = 0; i < lights.size(); i++) {
+        Light* l = lights[i];
+        vector4 d, c;
+        if (l->type == 2 && !(l->flags & 1)) {
+            d = l->dir;
+            c = l->color;
+        } else {
+            d = vector4(p->x - l->pos.x, p->y - l->pos.y, p->z - l->pos.z);
+            float len = nrm(d);
+            float k = 1.0f / (len * len);
+            c = vector4(k * l->color.x, k * l->color.y, k * l->color.z);
+        }
+        float s = c.x + c.y + c.z;
+        vector4 w = vscl(s, vscl(0.33f, d));
+        dir->x = w.x + dir->x;
+        dir->y = w.y + dir->y;
+        dir->z = w.z + dir->z;
+        amb->x = c.x + amb->x;
+        amb->y = c.y + amb->y;
+        amb->z = c.z + amb->z;
+    }
+    float len = dir->length();
+    if (len > 1e-10f) {
+        float inv = 1.0f / len;
+        dir->x = inv * dir->x;
+        dir->y = inv * dir->y;
+        dir->z = inv * dir->z;
+    } else {
+        dir->x = 0.0f; dir->y = 1.0f; dir->z = 0.0f;
+    }
+    if (amb->x > 0.95f) amb->x = 0.95f;
+    if (amb->y > 0.95f) amb->y = 0.95f;
+    if (amb->z > 0.95f) amb->z = 0.95f;
+}
+
+// NOTE: create_shadow_mesh no longer calls this; the original calls the 5-argument mesh::add_vertex (engine/render/particle_system.cpp) once per sample.
+// @ 0x413c50 (the form create_shadow_mesh reached: one v50 growth, then the nt 0x18-byte uv/colour records of a
+// ground vertex are joined one after another; the vertex60 record itself is shared, only the merged chunk varies)
+int rgl::mesh::add_vertex_rec(int index, const vertex60& v)
+{
+    ensure_local();
+    if (!local_faces) {
+        faces = parent->faces;
+        local_faces = true;
+    }
+    int n = (int)vertices.size();
+    vertices.resize(n + 1);
+    (&*vertices.begin())[n] = v;
+    (&*vertices.begin())[n].index = index;
+    if (n > 0)
+        (&*vertices.begin())[0].uv2.x = (float)n;             // the 0x4106f0 record merge (the original's last element, [n-1], lands at [0])
+    return n;
+}
+
+// @ 0x42b080
+// Builds (or refills) the shadow decal mesh from the ground faces under the entity: one vertex per
+// ground vertex lifted along its normal, with texture coordinates projected on the shadow camera and an
+// alpha that falls off with the distance from the entity; 1..3 sample vertices per ground vertex.
+void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
+{
+    int vtx[3][4];
+    matrix fr;
+    vector4 amb;
+    float s0;
+    unsigned col;
+    int i, j, q, nt;
+    build_shadow_frame(&fr, &amb);
+    if (*slot == 0) {
+        *slot = (mesh*)new rgl::mesh;
+        {
+            tstring name("shadow_default");
+            (*slot)->res = g_resmgr.get_material(name);
+        }
+        (*slot)->slots[1].f4 = 1;
+        (*slot)->slots[0].f4 = 1;
+    }
+    ((rgl::mesh*)*slot)->clear_geometry();
+    vector4 a2 = owner->get_ambient();
+    s0 = ((a2.y + a2.z) + a2.x) * 0.35f;
+    nt = 1;
+    if (shadow_quality > 0.5f) {
+        nt = 2;
+        if (shadow_quality > 0.7f)
+            nt = 3;
+    }
+    {
+        vec2 off[3];
+        if (nt == 1) {
+            off[0] = vec2c(0.0f, 0.0f);
+        } else if (nt == 2) {
+            off[0] = vec2c(-0.004296875f, 0.0046875f);
+            off[1] = vec2c(0.00390625f, -0.004296875f);
+        } else {
+            off[0] = vec2c(0.00078125f, 0.00546875f);
+            off[1] = vec2c(-0.005078125f, -0.00546875f);
+            off[2] = vec2c(0.00546875f, -0.005078125f);
+        }
+        // 0x42b1dd: a two-way face split for the outward wrap (the switch is only ever exited forwards:
+        // the nt==1 arm jumps straight to the loop-bounds seed, the other two arms fall into it)
+        int pt[4];
+        for (i = 0; i < nids; i++) {
+            NavCell* face = &owner->ground->cells[ids[i]];
+            j = 0;
+            while (j < face->npts) {
+                float k = shadow_radius * 0.03f;
+                vector4 p = owner->ground->verts[face->vidx[j]].p;
+                const vector4* n = &owner->ground->verts[face->vidx[j]].n;
+                p += k * *n;
+                pt[j] = ((rgl::mesh*)*slot)->add_point(&p);
+                int pi = pt[j];
+                // 0x42b363: the offsets from the frame origin stay unrounded in x87 registers
+                vector4 r = p - fr.o;
+                float ur = fr.s.z * r.z + fr.s.y * r.y + fr.s.x * r.x;
+                float vr = fr.f.z * r.z + fr.f.x * r.x + fr.f.y * r.y;
+                float inv = 1.0f / shadow_radius;
+                float ik = inv * 0.5f;
+                float u = ur * ik;
+                float v = vr * ik;
+                if (!flag) {
+                    u = u * 1.5f;
+                    v = v * 1.5f;
+                }
+                u = u + 0.5f;
+                v = v + 0.5f;
+                float shade = owner->ground->verts[face->vidx[j]].level;
+                float c = shade / (s0 + shade);
+                if (c < 0.0f) c = 0.0f;
+                else if (c > 0.75f) c = 0.75f;
+                if (nt == 2) {
+                    c = 1.0f - (float)sqrt(1.0f - c);
+                } else if (nt == 3) {
+                    c = (3.0f - (float)sqrt(9.0f - (c - 0.01f) * 12.0f)) * 0.125f;
+                }
+                // 0x42b4bd: the original adds the squares as (z + x) + y (x87 stack order), not (z + y) + x
+                vector4 e = p - local.o;
+                float a = (float)sqrt((e.x * e.x + e.z * e.z) + e.y * e.y) * inv * 1.3333334f - 3.8f;
+                if (a < 0.2f) a = 0.2f;
+                else if (a >= 1.0f) a = 1.0f;
+                float t = c * (1.0f - a) * shadow_fade;
+                if (flag)
+                    t = t * map_shadow_strength;
+                else
+                    t = t * blob_shadow_strength * 0.9f;
+                int al = (int)(t * 256.0f);
+                if (al < 0) al = 0;
+                else if (al >= 0x100) al = 0xff;
+                col = (al << 24) | 0xffffff;
+                // 0x42b5a0: one mesh::add_vertex (0x413c50) per sample, each with its own uv (u + off[q].x, v + off[q].y),
+                // the shared colour, the vertex normal as position and f5c = 0
+                for (q = 0; q < nt; q++) {
+                    vec2 uv = vec2c(u + off[q].x, v + off[q].y);
+                    int f5c = 0;
+                    vtx[q][j] = ((rgl::mesh*)*slot)->add_vertex(pi, &uv, &col, n, &f5c);
+                }
+                j++;
+            }
+            for (q = 0; q < nt; q++) {
+                ((rgl::mesh*)*slot)->add_face(vtx[q][1], vtx[q][2], vtx[q][0]);
+                if (face->npts > 3)
+                    ((rgl::mesh*)*slot)->add_face(vtx[q][0], vtx[q][2], vtx[q][3]);
+            }
+        }
+    }
+    (*slot)->slots[0].f28 = 1;
+    (*slot)->slots[1].f28 = 1;
+    (*slot)->color = 0xff000915;
+}

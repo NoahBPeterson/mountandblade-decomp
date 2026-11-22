@@ -14,7 +14,7 @@ Attribution:
     note_window's `this->links =` cannot hide Agent::links.
   * Bare `field =` / `field[i] =` count only inside a member function of the owner whose field it is
     (MapPanel::update's local tstring label is not a write to CharSheet::label); bare `field[...]` reads
-    count the same way (cs_troop.cpp reads `label[i]` / `btn[i]` with no receiver to resolve).
+    count the same way (character_sheet_troop.cpp reads `label[i]` / `btn[i]` with no receiver to resolve).
   * Writes through the documented layout (`*(int*)((char*)this + 0xNN) =`) count for the enclosing owner.
   * A write whose receiver cannot be resolved falls back to the bare field name (conservative: it can only
     hide a row, never invent one).  An unresolved *read* is counted only when the field name belongs to a

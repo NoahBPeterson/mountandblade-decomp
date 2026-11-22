@@ -563,9 +563,9 @@ def _tree_rows():
                     rel = rel[:-len(suf)]
         if a in lib:
             group, fname = "3rd party", "lib_crt"
-        elif rel and rel.startswith("src/rgl/"):
+        elif rel and rel.startswith("src/engine/"):
             group, fname = "Engine (rgl)", rel[4:]
-        elif rel and (rel.startswith("src/tinyxml/") or rel.startswith("src/dxframework/")):
+        elif rel and (rel.startswith("src/third_party/") or rel.startswith("src/platform/")):
             group, fname = "3rd party", rel[4:]
         elif rel and rel.startswith("src/game/"):
             group, fname = "Game", rel[4:]

@@ -1,0 +1,255 @@
+// character_meshes.cpp: TU 63 "mesh", part 4 (0x47f650..0x47ff60): the character mesh collector and its animation-state wrapper,
+// the scene-object loader and the shadow-map passes. See MIGRATION.md.
+#include "platform/image_addrs.h"
+#include "game/mission/mesh_slot.h"
+#include "game/terrain/scene_paths_and_wind_noise.h"
+#include "game/terrain/scene_file.h"
+#include "engine/io/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
+#include "game/ui/gui_manager.h"
+#include "engine/render/render_batch.h"                // render_batch, g_batch (0x5fe898): render 0x47e520
+#include "game/agent/animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "engine/render/render_flags.h"
+
+using namespace rgl;
+// src/game/terrain/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
+#define vat rgl::vat
+
+
+
+// Skin::collect lives next to its caller (the original's tail call)
+
+// @ 0x47f650
+NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, const float* weights,
+                      int item, int set, int material, int variant, float scale, float time)
+{
+    int remap[65536];
+    int color;
+    int color2;
+    int v;
+
+    *out_a = 0;
+    *out_c = 0;
+    *out_b = 0;
+
+    if (n_beard == 0)
+        set = -1;
+    else if (set >= 0)
+        set %= n_beard;
+
+    material %= n_face_tex;
+
+    v = variant;
+    if (n_beard_tex == 0)
+        v = -1;
+    if (n_hair_tex == 0)
+        variant = -1;
+
+    *out_a = head->clone();      // the lod mesh is the +0x38 pointer itself (0x47f701: mov ecx,[edi+38h]), not its +0x38
+
+    if (set < 0 || set >= n_beard) {
+        set = -1;
+    } else {
+        *out_b = beard_meshes[set].mesh->clone();
+    }
+
+    mesh* m = (*out_a)->lists[0][0];
+
+    if (!m->local_faces) {
+        m->faces = m->parent->faces;
+        m->local_faces = 1;
+    }
+    m->ensure_local();
+
+    blend(m, 0, weights);
+
+    if (*out_b != 0) {
+        blend_all(*out_b, &beard_maps[set], weights);
+        build_mirror((*out_b)->lists[0][0], remap, &color2, 0);
+    }
+
+    m->compute_normals();
+    build_mirror(m, remap, &color2, 1);
+
+    unsigned alpha = ((unsigned)(int)(scale * scale * 255.0f)) << 24;   // 0x47f7f9: __ftol2 (signed), not the unsigned conversion
+
+    color2 = ((unsigned)(int)(scale * scale * 255.0f)) << 24;   // 0x47f7f9: __ftol2 (signed), not the unsigned conversion
+
+    for (unsigned i = 0; i < m->vertices.size(); i++) {
+        rgl::vertex60& vt = m->vertices[i];
+        vt.f58 = 0;
+        vt.color |= color2;
+    }
+
+    color = -1;
+    color2 |= 0xffffff;
+
+    FaceTexture* tex = &face_textures[0];
+    if (material >= 0) {
+        m->res = tex[material].material;
+        if ((*out_a)->count > 1) {
+            for (int i = 1; i < (*out_a)->count; i++)
+                (*out_a)->lists[i][0]->res = tex[material].material_lod;
+        }
+        color = tex[material].hair_color(&time);
+    }
+
+    if (item >= 0 && n_hair > 0 && n_hair_tex > 0 && item < n_hair && variant >= 0) {
+        *out_c = hair_meshes[item]->clone();
+        blend_all(*out_c, &hair_maps[item], weights);
+    }
+
+    if (*out_c != 0) {
+        if (variant < 0)
+            variant = 0;
+        else if (variant > n_hair_tex - 1)
+            variant = n_hair_tex - 1;
+
+        (*out_c)->lists[0][0]->res = g_resmgr.get_material(hair_textures[variant]);
+        (*out_c)->lists[0][0]->color = color;
+        (*out_c)->lists[0][0]->color2 = color2;
+        if ((*out_c)->count > 1) {
+            for (int i = 1; i < (*out_c)->count; i++) {
+                (*out_c)->lists[i][0]->res = (*out_c)->lists[0][0]->res;
+                (*out_c)->lists[i][0]->color = color;
+                (*out_c)->lists[i][0]->color2 = color2;
+            }
+        }
+    }
+
+    if (*out_b != 0 && set >= 0 && v >= 0) {
+        tstring name(beard_textures[v]);
+        (*out_b)->lists[0][0]->res = g_resmgr.get_material(name);
+        (*out_b)->lists[0][0]->color = color;
+        (*out_b)->lists[0][0]->color2 = color2;
+        if ((*out_b)->count > 1) {
+            for (int i = 1; i < (*out_b)->count; i++) {
+                (*out_b)->lists[i][0]->res = (*out_b)->lists[0][0]->res;
+                (*out_b)->lists[i][0]->color = color;
+                (*out_b)->lists[i][0]->color2 = color2;
+            }
+        }
+    }
+}
+
+// @ 0x47fb10
+void Animator::collect(char flag, lod_mesh** a, lod_mesh** b, lod_mesh** c)
+{
+    // the original source held skin_vec as a std::vector<Skin>; skin_vec is that vector:
+    // operator[] is what materialises the element address (0x47fb10: add eax,[ecx+1ch])
+    weights[skin_vec[cur].n_face_keys - 1] = 1.0f;
+
+    int v = variant;
+    if (flag != 0) {
+        FaceTexture* r = &skin_vec[cur].face_textures[material];
+        unsigned n = (unsigned)r->hair_materials.size();
+        v = skin_vec[cur].face_textures[material].hair_materials[(unsigned)variant % n];
+    }
+
+    skin_vec[cur].collect(a, b, c, weights, item, set, material, v, scale, time);
+}
+
+// The binary reader on the stack: its constructor and destructor are expanded inline in the original (stream_inline.h);
+// src/engine/io/stream.h's bin_reader::bin_reader is the out-of-line 0x417c50.
+#include "engine/io/stream_inline.h"
+
+// @ 0x47fbd0
+void GameData::load_scene(int idx)
+{
+    tstring path = scene_path(idx);
+    bin_reader s;
+    if (!s.open_read(module_path(path.c_str()))) {
+        g_gui.add("Unable to load scene objects!", 0xffff0000);
+        g_gui.add(scenes[idx].name10, 0xffff0000);
+    } else {
+        scenes[idx].load((stream_base*)&s, 0);
+        s.failed = 1;
+    }
+}
+
+// ---- the shadow-map passes -------------------------------------------------------------------------------------------
+// The ShadowMap (src/engine/render/shadow_map.h) embeds the render scene of its light pass at +0x18 (scene is 0x1d8 bytes: the
+// object's fields +0x18..+0x1f0 are that scene's; shadow_map.h names the fields of the same bytes its own modules read).
+#define SC (static_cast<scene_ms2&>(scn))
+
+// @ 0x47fce0
+NOINL void ShadowMap::build_hw()
+{
+    SC.reset();
+    if (g_options.i2c == 0)
+        return;
+    if (target2 == 0) {
+        if (g_render.use_hw_shadow) {
+            SC.clear_color = 0xffffff;
+            target2 = g_resmgr.get_render_target(w, h, 0x50, 1, 0);
+        } else {
+            target2 = g_resmgr.get_texture(w, h, 0x50);
+            SC.clear_color = 0xffffffff;
+        }
+    }
+    SC.cull_flip = 1;
+    create_target(&target);
+    if (target != 0 && target2 != 0 && target->tex[0]->loaded) {
+        SC.target = target->tex[0];
+        SC.depth_target = target2;
+        SC.active = 0;
+        for (int i = 0; i < 4; i++) {
+            SC.flags = i ? 1 : 0x301;
+            ((rgl::world*)cam)->render_part(&SC, i, 4);      // 0x421110
+            g_batch.render(&SC);
+        }
+    }
+}
+
+// @ 0x47fdd0
+NOINL void ShadowMap::build_sw()
+{
+    g_batch.render(0);
+    SC.reset();
+    if (g_use_shaders == 0 && g_options.i2c != 0 && target == 0) {
+        target = g_resmgr.get_shadow_skin(w, h, 0x1c, 0);
+        if (target != 0) {
+            target->shader_name.assign("shadow_shader");
+            skin* t = target;
+            t->shader = g_resmgr.resolve_shader(t->shader_name);      // 0x418e90
+            target->flags = 0x108;
+            target->tex[0]->flags = 0x300000;
+        }
+    }
+    if (target2 == 0)
+        target2 = g_resmgr.get_texture(w, h, 0x50);
+    SC.flags |= 0x301;
+    SC.clear_color = 0;
+    if (target != 0 && target->tex[0] != 0 && target->tex[0]->loaded) {
+        SC.target = target->tex[0];
+        SC.depth_target = target2;
+        SC.active = 0;
+        ((rgl::world*)cam)->render_scene(&SC, 0);        // 0x429890
+        g_batch.render(&SC);
+    }
+    if (target2 != 0) {
+        g_resmgr.release(target2);   // 0x4175f0
+        target2 = 0;
+    }
+}
+
+// @ 0x47fef0
+NOINL void ShadowMap::render()
+{
+    setup();
+    scn.mask = 0x10000;
+    if (g_use_shaders != 0)
+        build_hw();
+    else
+        build_sw();
+    bind_target();
+    if (g_use_shaders != 0) {
+        if (g_options.i7c != 1)
+            return;
+        if (!g_render.use_hw_shadow)
+            return sync_readback();
+    } else {
+        if (g_options.i7c != 1)
+            return;
+    }
+    g_options.i7c = 0;
+}

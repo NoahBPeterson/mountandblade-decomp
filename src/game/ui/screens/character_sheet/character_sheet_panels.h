@@ -1,0 +1,59 @@
+#ifndef CS_PANELS_H
+#define CS_PANELS_H
+// Slice s004f0820: the character-sheet text pass (0x4f0820).  Takes the player's character record
+// (g_game(0x5e2930)->chars(+0x13a00)[this+0x14], stride 0x508), formats its level / experience /
+// attributes / skill levels / weapon points / health into a 0x200-byte line and posts each line, with
+// its configured (x, y) position, on the matching text widget of the sheet.  Every position comes from
+// the settings table 0xa44240 (key -> entry index, entries of 0x2c bytes from 0xa4425c, text at +4,
+// atof 0x537352).  MissionUi slots (s004dfd50, s004f04f0): set_text +0xa4, set_position(text, &pos)
+// +0xac, show +0xb0, show_selected +0xb4.  The empty-string literal is the shared 0x54a480.
+#include <windows.h>
+#include <stdio.h>
+
+// rgl string (16 bytes: read cursor, buffer pointer, capacity, length); s00429890 / s004dfd50
+#include "engine/core/tstring.h"
+
+// translation table object at 0x5e2a18
+#include "game/data/str_table.h"
+
+// ---- the character record (0x508 bytes each, g_game->chars at +0x13a00; cf. s0049f060 / s004b1b20) is the troop record,
+// src/game/data/troop.h (the slice called it CharRec): +0x20 key, +0x30 flags32, +0x58 attrs / lvl58, +0x78 nib[3], +0x9c exp,
+// +0xa0 hp, +0xa4 skill_points, +0xa8 attr_points, +0xac prof_points, +0xb0 level.
+#include "game/data/troop.h"
+
+#include "game/data/game_data.h"
+
+// settings table at 0xa44240: find() returns an entry index or -1; entries are 0x2c bytes from 0xa4425c
+// with the string pointer at +4 (a null pointer there means the field itself holds the text).
+#include "game/config/ini_file.h"                      // ini_file, g_game_vars (0xa44240)
+extern "C" double atof(const char* s);              // 0x537352
+
+
+
+#include "engine/io/text_stream.h"           // mb_snprintf 0x415100 (size-limited formatter)
+
+// the inlined "read a configured key as float, 0 when the key is absent" sequence of the original
+static __forceinline float config_float(const tstring& key)
+{
+    float v = 0;
+    int i = g_game_vars.find(key);
+    if (i >= 0) {                                        // a missing key has no text pointer: read the inline bytes
+        ini_entry* e = &g_game_vars.entries[i];   // (same fallback as conversation_init.h / character_sheet_init.cpp config_text)
+        v = (float)atof(e->value.c_str());
+    }
+    return v;
+}
+
+// ---- widgets --------------------------------------------------------------------------------------------
+// One widget type (vtable slots verified at the call sites): +0xa4 post_text(out, text) (ret 8; `out` is an
+// uninitialised 16-byte result slot), +0xac set_position(text, &pos) (ret 8), +0xb0 show, +0xb4
+// show_selected.  
+struct PostSlot { int a, b, c, d; };
+#include "game/ui/widgets/ui_widget.h"                 // MissionUi (the UI widget interface)
+#include "game/ui/widgets/ui_widgets.h"             // UiA: the label flag is its byte at +0x181 (f181)
+
+// ---- the character-sheet panel (only the slots this function touches) -----------------------------------
+#include "game/ui/screens/character_sheet/char_sheet_panel.h"             // CharSheet (the character sheet panel)
+#include "game/ui/ui_globals.h"      // UI / core globals
+
+#endif

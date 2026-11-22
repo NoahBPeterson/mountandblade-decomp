@@ -113,7 +113,7 @@ def main():
         for c in sorted(callers):                       # the caller's own files first
             src = srcs.get(c)
             if src:
-                for f in [src] + glob.glob(os.path.join(os.path.dirname(src), "*.h")):
+                for f in S.annotation_sources(src):
                     va = per_file.get(f, {}).get(base)
                     if va:
                         break

@@ -24,7 +24,7 @@
 #include <vector>
 #include "rgl.h"
 
-struct ptr_tag {};   // empty class passed by value (one 4-byte slot); same as src/include/ptr_tag.h
+struct ptr_tag {};   // empty class passed by value (one 4-byte slot); same as src/engine/core/ptr_tag.h
 
 using rgl::vector4;
 

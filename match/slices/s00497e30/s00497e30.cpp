@@ -5,7 +5,7 @@
 //   0x498390  a one-lane scale animation: it scales m110 along idx by speed[idx]/f17c*arg and advances f17c.
 //   0x498420  the outer HUD's scrollbar reload: it drives the scroll target, retargets the bar, drops and
 //             rebuilds the "scrollbar"/"scrollbar_handle" meshes and installs them on the bar.
-// Layout: hud.h. Names are provisional.
+// Layout: mission_hud_buttons.h. Names are provisional.
 #include <windows.h>
 #include <math.h>
 #include "rgl.h"

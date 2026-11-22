@@ -36,7 +36,7 @@ README.md should be refreshed (not done here: out of scope for a research pass).
 | area | usage | count |
 |---|---|---|
 | Direct3D 9 | `IDirect3DDevice9` calls: SetRenderState 114, SetTextureStageState 37, SetSamplerState 17, SetTexture 15, SetTransform 11, ... ~50 methods | 314 sites |
-| draws | `DrawIndexedPrimitive` terrain_a.cpp:3345 and terrain_b.cpp:598 (the whole 3D scene), `DrawPrimitiveUP` shapes.cpp x3 (debug lines), `DrawPrimitive` d3dfont.cpp x2 | 7 sites |
+| draws | `DrawIndexedPrimitive` terrain_cells.cpp:3345 and terrain_scene_renderer.cpp:598 (the whole 3D scene), `DrawPrimitiveUP` collision_shapes.cpp x3 (debug lines), `DrawPrimitive` d3dfont.cpp x2 | 7 sites |
 | D3DX | 12 imports: CreateTextureFromFileEx, CreateTexture, SaveSurfaceToFile, AssembleShaderFromFile, CreateEffectFromFile, 6 matrix helpers | 12 |
 | shaders | `mb.fx` 3,084 lines (vs_2_0/ps_2_0), 3 tiny ps asm `.pp`, rest fixed-function; 5 vertex declarations (config.cpp:1086) | data |
 | input | DirectInput8 keyboard + mouse (config.cpp:867), state arrays indexed by DIK codes | 2 devices |

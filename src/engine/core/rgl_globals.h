@@ -1,0 +1,12 @@
+// rgl_globals.h: canonical declarations of the rgl-side globals that several modules declared under different names (sorted by address).
+#ifndef INCLUDE_RGL_GLOBALS_H
+#define INCLUDE_RGL_GLOBALS_H
+
+#include "engine/io/stream.h"
+#include "engine/scene/world.h"
+
+// The engine text log: all views (log_stream, Output, logger, g_debug_log, LogSink) call slot 10 (w_cstr) on it.
+// The current level/scene: world class (mission.h: typedef world Level;
+#include "game/common/level_global.h"      // g_level 0xa732b4
+
+#endif // INCLUDE_RGL_GLOBALS_H

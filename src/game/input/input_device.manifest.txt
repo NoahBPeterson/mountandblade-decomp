@@ -1,0 +1,7 @@
+../src/game/input/input_device.cpp  ?play@DialogBlock@@QAEDH@Z  004875e0  /O2 /MT /Gy /TP
+../src/game/input/input_device.cpp  ?calc@Light@@QAEXXZ  00487620  /O2 /MT /Gy /TP
+../src/game/input/input_device.cpp  ?read_keys@Slot@@QAEHXZ  00487640  /O2 /MT /Gy /TP
+../src/game/input/input_device.cpp  ?is_ready@Slot@@QAEHH@Z  00487900  /O2 /MT /Gy /TP
+../src/game/input/input_device.cpp  ??1MissionUi@@UAE@XZ  00487c00  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/input/input_device.cpp  _$E1  00547b50  /O2 /MT /Gy /TP

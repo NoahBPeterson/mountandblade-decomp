@@ -1,0 +1,5 @@
+../src/game/ui/widgets/text_box.cpp  ?flag1@MissionUi@@QBEIXZ  0050cc60  /O2 /MT /Gy /TP
+../src/game/ui/widgets/text_box.cpp  ?dialog_thunk@@YGJPAUHWND__@@IIJ@Z  0050d250  /O2 /MT /Gy /TP
+../src/game/ui/widgets/text_box.cpp  ??0text_box@@QAE@XZ  0050d0b0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/text_box.cpp  ?resize@?$vector@USkin@@V?$allocator@USkin@@@std@@@std@@QAEXIUSkin@@@Z  0050d170  /O2 /MT /Gy /TP
+../src/game/ui/widgets/text_box.cpp  ?read@Animator@@QAEXPAUstream_base@@@Z  0050d520  /O2 /MT /Gy /TP

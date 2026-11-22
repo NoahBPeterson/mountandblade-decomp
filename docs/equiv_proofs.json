@@ -4,7 +4,7 @@
  "commit": "bc8ed5f3",
  "rows": {
   "0041d6f0": {
-   "src": "src/rgl/core/resmgr.cpp",
+   "src": "src/engine/resource/resource_manager.cpp",
    "symbol": "?read_mesh@@YAPAUstream_base@@PAU1@PAUmesh@rgl@@@Z",
    "layer": "region",
    "level": "L1",
@@ -15,7 +15,7 @@
    "proved": "2026-11-14"
   },
   "00433e40": {
-   "src": "src/game/agent/item_kind.cpp",
+   "src": "src/game/data/item_kind.cpp",
    "symbol": "?get_carry_pos@ItemKind@@QAEXPAUpos2@@PAH1@Z",
    "layer": "angr",
    "level": "L1",
@@ -26,7 +26,7 @@
    "proved": "2026-11-14"
   },
   "00435520": {
-   "src": "src/game/agent/agent.cpp",
+   "src": "src/game/agent/agent_queries.cpp",
    "symbol": "?classify@Agent@@QAEXH@Z",
    "layer": "angr",
    "level": "L1",
@@ -37,7 +37,7 @@
    "proved": "2026-11-14"
   },
   "00435c10": {
-   "src": "src/game/agent/agent.cpp",
+   "src": "src/game/agent/agent_queries.cpp",
    "symbol": "?camera_params@Agent@@QAEXPAUCamParams@@@Z",
    "layer": "rename",
    "level": "L1",
@@ -158,7 +158,7 @@
    "proved": "2026-11-20"
   },
   "00465540": {
-   "src": "src/game/terrain_a/terrain_a.cpp",
+   "src": "src/game/terrain/terrain_cells.cpp",
    "symbol": "?scatter_all@Terrain@@QAEXXZ",
    "layer": "angr",
    "level": "L1",
@@ -169,7 +169,7 @@
    "proved": "2026-11-14"
   },
   "00465e70": {
-   "src": "src/game/terrain_a/terrain_a.cpp",
+   "src": "src/game/terrain/terrain_cells.cpp",
    "symbol": "?set_cells@Terrain@@QAEXHM@Z",
    "layer": "region",
    "level": "L1",
@@ -180,7 +180,7 @@
    "proved": "2026-11-13"
   },
   "0046b940": {
-   "src": "src/game/terrain_a/terrain_render.cpp",
+   "src": "src/game/terrain/terrain_render.cpp",
    "symbol": "??0ViewParams@@QAE@XZ",
    "layer": "region",
    "level": "L1",
@@ -191,7 +191,7 @@
    "proved": "2026-11-14"
   },
   "0046bc70": {
-   "src": "src/game/terrain_a/terrain_render.cpp",
+   "src": "src/game/terrain/terrain_render.cpp",
    "symbol": "?make_river@Terrain@@QAEXXZ",
    "layer": "region",
    "level": "L1",
@@ -202,7 +202,7 @@
    "proved": "2026-11-18"
   },
   "0046c4f0": {
-   "src": "src/game/terrain_a/terrain_render.cpp",
+   "src": "src/game/terrain/terrain_render.cpp",
    "symbol": "?fill_vertices@mesh@rgl@@QAEXPAHPBI@Z",
    "layer": "region",
    "level": "L1",
@@ -213,7 +213,7 @@
    "proved": "2026-11-14"
   },
   "0047af30": {
-   "src": "src/game/mesh_slot/mesh_ops.cpp",
+   "src": "src/game/mission/mesh_vertex_ops.cpp",
    "symbol": "?set_color@mesh@rgl@@QAEXUvector4@2@@Z",
    "layer": "region",
    "level": "L1",
@@ -224,7 +224,7 @@
    "proved": "2026-11-13"
   },
   "0047c6b0": {
-   "src": "src/game/mesh_slot/mesh_ops.cpp",
+   "src": "src/game/mission/mesh_vertex_ops.cpp",
    "symbol": "?blend@Skin@@QAEXPAUmesh@rgl@@HPBM@Z",
    "layer": "region",
    "level": "L1",
@@ -235,7 +235,7 @@
    "proved": "2026-11-14"
   },
   "00489090": {
-   "src": "src/game/ui/mission_ui.cpp",
+   "src": "src/game/ui/widgets/widget_base.cpp",
    "symbol": "?sort_sel@ItemRef@@QAEXH@Z",
    "layer": "region",
    "level": "L1",
@@ -246,7 +246,7 @@
    "proved": "2026-11-14"
   },
   "0048f9f0": {
-   "src": "src/game/mission_ui2/party.cpp",
+   "src": "src/game/party/party_members.cpp",
    "symbol": "?remove_troops@GameData@@QAEHHHHDH@Z",
    "layer": "region",
    "level": "L1",
@@ -257,7 +257,7 @@
    "proved": "2026-11-14"
   },
   "0049b4f0": {
-   "src": "src/game/config/widget_mgr.cpp",
+   "src": "src/game/ui/widgets/widget_manager.cpp",
    "symbol": "?get_xy@MissionUi@@UAE?AUV2@@XZ",
    "layer": "angr",
    "level": "L1",
@@ -290,7 +290,7 @@
    "proved": "2026-11-20"
   },
   "004b2880": {
-   "src": "src/game/party2/party_2.cpp",
+   "src": "src/game/party/party_map.cpp",
    "symbol": "?place_on_map@Party@@QAEXXZ",
    "layer": "angr",
    "level": "L1",
@@ -301,7 +301,7 @@
    "proved": "2026-11-12"
   },
   "004cda90": {
-   "src": "src/rgl/mesh2/mesh_2.cpp",
+   "src": "src/game/editor/poly_mesh_edge_face_ops.cpp",
    "symbol": "?load@StrTable@@QAEXPBUtstring@@@Z",
    "layer": "region",
    "level": "L1",
@@ -312,7 +312,7 @@
    "proved": "2026-11-20"
   },
   "004cf7b0": {
-   "src": "src/game/options_panel/config_dialog.cpp",
+   "src": "src/game/config/launcher_config_dialog.cpp",
    "symbol": "?fill_video_tab@GameApp@@QAEXXZ",
    "layer": "region",
    "level": "L1",
@@ -323,7 +323,7 @@
    "proved": "2026-11-20"
   },
   "004e7b30": {
-   "src": "src/game/cls_map/progress_bar.cpp",
+   "src": "src/game/ui/screens/progress_bar_and_load_screens.cpp",
    "symbol": "?read@Skin@@QAEXPAUMsStream@@@Z",
    "layer": "region",
    "level": "L1",
@@ -334,7 +334,7 @@
    "proved": "2026-11-20"
   },
   "004e8720": {
-   "src": "src/game/cls_map/progress_bar.cpp",
+   "src": "src/game/ui/screens/progress_bar_and_load_screens.cpp",
    "symbol": "?frame_step@Mission@@QAEXXZ",
    "layer": "region",
    "level": "L1",
@@ -345,7 +345,7 @@
    "proved": "2026-11-20"
   },
   "004ea290": {
-   "src": "src/game/char_sheet/save_panel.cpp",
+   "src": "src/game/ui/screens/save_panel.cpp",
    "symbol": "?frame_update@C4c31c0@@UAEXM@Z",
    "layer": "region",
    "level": "L1",
@@ -356,7 +356,7 @@
    "proved": "2026-11-14"
   },
   "005024e0": {
-   "src": "src/game/party/party_window.cpp",
+   "src": "src/game/ui/screens/inventory/inventory_window.cpp",
    "symbol": "?add_strip_icon@PartyWindow@@QAEXPAPAUStripIcon@@ABUtstring@@HH@Z",
    "layer": "angr",
    "level": "L1",
@@ -367,7 +367,7 @@
    "proved": "2026-11-20"
   },
   "005094a0": {
-   "src": "src/game/inventory_panel/char_window.cpp",
+   "src": "src/game/ui/screens/character_sheet/character_sheet_helpers.cpp",
    "symbol": "?load_troop@char_window@@QAEXXZ",
    "layer": "rename",
    "level": "L1",
@@ -378,7 +378,7 @@
    "proved": "2026-11-12"
   },
   "0051db70": {
-   "src": "src/game/party/game.cpp",
+   "src": "src/game/campaign/game_state_load.cpp",
    "symbol": "?trigger_score@NavGraph@@QAEMHHIII@Z",
    "layer": "angr",
    "level": "L1",
@@ -389,7 +389,7 @@
    "proved": "2026-11-12"
   },
   "00524420": {
-   "src": "src/game/mission5/game_2.cpp",
+   "src": "src/game/campaign/map_builder_and_data_load.cpp",
    "symbol": "?read_file@TroopFile@@QAEXAAUstream_base@@@Z",
    "layer": "region",
    "level": "L1",

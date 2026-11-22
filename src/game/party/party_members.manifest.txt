@@ -1,0 +1,4 @@
+../src/game/party/party_members.cpp  ?count_troops@GameData@@QAEHHHD@Z  0048f790  /O2 /MT /Gy /TP
+../src/game/party/party_members.cpp  ?add_members@GameData@@QAEHHHHD@Z  0048f8f0  /O2 /MT /Gy /TP
+../src/game/party/party_members.cpp  ?add_template@GameData@@QAEXHHH@Z  0048fbd0  /O2 /MT /Gy /TP
+../src/game/party/party_members.cpp  ?battle_root@GameData@@QAEHH@Z  0048fce0  /O2 /MT /Gy /TP

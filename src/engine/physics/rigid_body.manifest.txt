@@ -1,0 +1,13 @@
+../src/engine/physics/rigid_body.cpp  ??0dynamic_entity@rgl@@QAE@XZ  00425370  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ?type_name@dynamic_entity@rgl@@UAE?AUtstring@@XZ  00425490  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ?awake@dynamic_entity@rgl@@UAE_NXZ  004254b0  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ?point_velocity@dynamic_entity@rgl@@UAEPAUvector4@2@PAU32@PBU32@@Z  004254c0  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ?apply_impulse@dynamic_entity@rgl@@UAEXPBUvector4@2@0@Z  00425550  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ?impulse_response@dynamic_entity@rgl@@UAEMPBUvector4@2@0@Z  00425670  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ?update@dynamic_entity@rgl@@UAEXM@Z  00425730  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ?add_torque@dynamic_entity@rgl@@UAEXPBUvector4@2@@Z  004258e0  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ?add_torque_at@dynamic_entity@rgl@@UAEXPBUvector4@2@0@Z  00425920  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ?apply_forces@dynamic_entity@rgl@@UAEXM@Z  004257e0  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ?collide@dynamic_entity@rgl@@UAEXXZ  004263d0  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ??1collision_entity@rgl@@UAE@XZ  00427cd0  /O2 /MT /Gy /TP
+../src/engine/physics/rigid_body.cpp  ??_Gcollision_entity@rgl@@UAEPAXI@Z  00427d20  /O2 /MT /Gy /TP

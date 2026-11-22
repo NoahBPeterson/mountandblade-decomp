@@ -40,7 +40,7 @@ Columns: row, diff class (from `check.py`), c2scope tools used, what it predicte
 ### 0x489820 PlacedObj::set_position (33 aligned): MATCH, IfaceB::slot1 is a real out-of-line function
 - Class: inlining (original calls the empty 0x477b70; ours inlined the empty virtual).
 - c2scope not used (the diff is visible in the listing: `call 0x477b70`). Fix: `virtual void slot1();` in iface.h,
-  defined as `{}` in shapes.cpp next to shape_base::draw (the linker folds the two empty bodies, as in the original).
+  defined as `{}` in collision_shapes.cpp next to shape_base::draw (the linker folds the two empty bodies, as in the original).
   One compile, 6 min including reading why the previous lane used a call to 0x477b70.
 
 ### 0x4e9d10 Party::write, 0x4608d0, 0x4bdd50 (stream rows): byte-exact with the right field types

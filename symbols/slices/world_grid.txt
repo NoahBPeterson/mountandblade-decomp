@@ -1,10 +1,10 @@
-00423fc0 ?push_back@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAEXABQAUObj@rgl@@@Z  # std::vector<T*>::push_back, the instance shared by every pointer vector (src/game/entity.cpp)
-00424010 ?insert@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABQAUObj@rgl@@@Z  # std::vector<T*>::insert(iterator, const value&), the instance that is shared by every pointer vector (src/game/entity.cpp)
+00423fc0 ?push_back@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAEXABQAUObj@rgl@@@Z  # std::vector<T*>::push_back, the instance shared by every pointer vector (src/engine/scene/fx_element_pool.cpp)
+00424010 ?insert@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABQAUObj@rgl@@@Z  # std::vector<T*>::insert(iterator, const value&), the instance that is shared by every pointer vector (src/engine/scene/fx_element_pool.cpp)
 004240d0 ?find@shape_vec@@QBEHPAUgrid_shape@@@Z  # shape_vec::find (noinline: a callee the compiler sees would give remove() interprocedural register information)
-0041fa00 ?resize@shape_vec@@QAEXIPAUgrid_shape@@@Z  # std::vector<T*>::resize (src/game/entity.cpp)
-0041f640 ?_Insert@shape_list@@QAEXPAUnode@1@ABQAUgrid_shape@@@Z  # std::list<T*>::_Insert(where, value) (src/game/entity.cpp)
-0041f720 ?_Insert_n@?$vector@PAUitem_obj@rgl@@V?$allocator@PAUitem_obj@rgl@@@std@@@std@@IAEXViterator@12@IABQAUitem_obj@rgl@@@Z  # std::vector<T*>::_Insert_n (src/game/entity.cpp), called by the insert at 0x424010 and the push_back in entity_grid::add_shape
-00424220 ?add@NavData@@QAEHHPBUvector4@rgl@@@Z  # NavData::add (terrain_b/nav_data.h)
+0041fa00 ?resize@shape_vec@@QAEXIPAUgrid_shape@@@Z  # std::vector<T*>::resize (src/engine/scene/fx_element_pool.cpp)
+0041f640 ?_Insert@shape_list@@QAEXPAUnode@1@ABQAUgrid_shape@@@Z  # std::list<T*>::_Insert(where, value) (src/engine/scene/fx_element_pool.cpp)
+0041f720 ?_Insert_n@?$vector@PAUitem_obj@rgl@@V?$allocator@PAUitem_obj@rgl@@@std@@@std@@IAEXViterator@12@IABQAUitem_obj@rgl@@@Z  # std::vector<T*>::_Insert_n (src/engine/scene/fx_element_pool.cpp), called by the insert at 0x424010 and the push_back in entity_grid::add_shape
+00424220 ?add@NavData@@QAEHHPBUvector4@rgl@@@Z  # NavData::add (game/terrain/nav_data.h)
 00424830 ?_Insert_n@?$vector@UNavVert@@V?$allocator@UNavVert@@@std@@@std@@IAEXViterator@12@IABUNavVert@@@Z  # std::vector<NavVert>::_Insert_n (explicit instantiation)
 00424bc0 ??$_Uninit_copy@PAUNavVert@@PAU1@V?$allocator@UNavVert@@@std@@@std@@YAPAUNavVert@@PAU1@00AAV?$allocator@UNavVert@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_copy<NavVert*> (implicit, from _Insert_n)
 00424c40 ??$_Uninit_fill_n@PAUNavVert@@IU1@V?$allocator@UNavVert@@@std@@@std@@YAXPAUNavVert@@IABU1@AAV?$allocator@UNavVert@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_fill_n<NavVert*> (implicit, from _Insert_n)

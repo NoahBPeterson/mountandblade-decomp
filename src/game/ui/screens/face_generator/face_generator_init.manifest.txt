@@ -1,0 +1,1 @@
+../src/game/ui/screens/face_generator/face_generator_init.cpp  ?init_screen@FaceGen@@UAEXXZ  004f49d0  /O2 /MT /Gy /TP

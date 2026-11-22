@@ -1,0 +1,1 @@
+../src/game/campaign/campaign_screen_init.cpp  ?camera_mark_entities@CampaignScreen@@QAEXXZ  004ecce0  /O2 /MT /Gy /TP

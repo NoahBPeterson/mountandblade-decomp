@@ -1,0 +1,4 @@
+../src/game/mission/terrain_water_regen.cpp  ?destroy_water@Terrain@@QAEXPAX@Z  004814a0  /O2 /MT /Gy /TP
+../src/game/mission/terrain_water_regen.cpp  ?regenerate_water@Terrain@@QAEXPAPAUmesh@rgl@@_N@Z  00482170  /O2 /MT /Gy /TP
+../src/game/mission/terrain_water_regen.cpp  ?append_mesh@@YAPAUSkin@@HHPAPAUlod_mesh@rgl@@PBUPackedState@@1DPAH@Z  00481c40  /O2 /MT /Gy /TP
+../src/game/mission/terrain_water_regen.cpp  ?generate@Terrain@@QAEXPAUworld@rgl@@PAUTerrainDesc@@D@Z  00481d10  /O2 /MT /Gy /TP

@@ -36,7 +36,7 @@ unsigned __cdecl pack_color(float* c);                       // 0x40e440
 float __cdecl frand();                                       // 0x40e400
 void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, const float* p, float* out);   // 0x414fc0
 
-struct tstring {                                             // 16 bytes (src/game/tstring.h)
+struct tstring {                                             // 16 bytes (src/engine/core/tstring.h)
     int pos; char* buf; int cap; int len;
     tstring(const char* s);                                  // 0x42bbe0
     ~tstring();                                              // 0x42bc40

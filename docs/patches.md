@@ -102,7 +102,7 @@ pipeline, the progress counts or the gates' view of our source.
   - `gfx_scale.cpp`: a pass is redirected into a scaled colour target and depth-stencil (multisampled like the
     backbuffer when it is) when render target 0 is the backbuffer, its camera is perspective and its viewport covers
     at least 3/4 of the backbuffer's width and height; consecutive such passes share it. The campaign map needs that:
-    its 3D view is a MapWidget (src/game/char_sheet/render_shape.cpp) at 0.04 .. 0.75 of the GUI's height, above the
+    its 3D view is a MapWidget (src/game/campaign/map_widget_render.cpp) at 0.04 .. 0.75 of the GUI's height, above the
     map bar, so its viewport is 1280x682 of 1280x720, and the first version (whole backbuffer only) left the map native.
     The target keeps the backbuffer's coordinates, and the resolve writes back only the union of the redirected
     viewports (scissor), so the bar's pixels are left as they are; under a partial viewport the target's colour starts
@@ -130,8 +130,8 @@ pipeline, the progress counts or the gates' view of our source.
     `OptionsDlg::set_active_tab` 0x4b9790 does for the others). OK stores them in `g_gfx_saved` before the game's
     handler saves the file. A value that is not a preset gets its own entry.
   - `gfx_video_page.cpp` / `gfx_video_apply.cpp`: the in-game Video Options page. `Recf0::init_screen` (0x4e05c0) and
-    `Recf0::frame_update` (0x4d63b0) are replaced by copies of their faithful bodies (src/game/cls_map/cls_map.cpp,
-    src/game/options_panel/video_page.cpp) with four drop-down rows of the game's own kind (`make_dropdown` + a
+    `Recf0::frame_update` (0x4d63b0) are replaced by copies of their faithful bodies (src/game/app/winmain_and_menu_screens.cpp,
+    src/game/ui/screens/options/video_page.cpp) with four drop-down rows of the game's own kind (`make_dropdown` + a
     `make_hint` label): Anisotropy Level, Render Scale, AMD FSR 1 (Off / On) and FSR Sharpness. The page had no free
     row, so the four new rows take the top and every y of the original 18 goes through `GFX_Y` (0.032 apart instead
     of 0.04, under the new ones, ending where they did); at the bottom the new lists could not open (a drop-down opens
@@ -140,7 +140,7 @@ pipeline, the progress counts or the gates' view of our source.
     Present, live (no restart and no "new area" message for them).
   - `gfx_teardown.cpp` replaces `GameApp::DeleteDeviceObjects` (0x4c1ad0): the faithful body, then our shaders, vertex
     declaration and targets are released. Each held a device reference, so the framework's last `Release` in
-    `Cleanup3DEnvironment` (src/dxframework/d3dapp.cpp) did not reach 0 and every exit showed "A D3D object has a
+    `Cleanup3DEnvironment` (src/platform/dxframework/d3dapp.cpp) did not reach 0 and every exit showed "A D3D object has a
     non-zero reference count" (seen with the earlier gfx build even from the main menu; `--faithful` exits cleanly). A
     later device makes them again.
   - Tested (2026-11-15, Mac/CrossOver, 1280x800 windowed): the menu smoke passes with the defaults, anisotropy 16,

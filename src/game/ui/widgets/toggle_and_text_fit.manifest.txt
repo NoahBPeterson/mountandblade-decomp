@@ -1,0 +1,7 @@
+../src/game/ui/widgets/toggle_and_text_fit.cpp  ?set_text@MediumButton@@UAE?AUV2@@ABUtstring@@@Z  0048b3a0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/toggle_and_text_fit.cpp  ?play_sound@gui_manager@@QAEXXZ  0048b2d0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/toggle_and_text_fit.cpp  ?render@UiA@@UAEXPAUscene@rgl@@PAM11@Z  0048b320  /O2 /MT /Gy /TP
+../src/game/ui/widgets/toggle_and_text_fit.cpp  ??0UiB@@QAE@XZ  0048b4b0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/toggle_and_text_fit.cpp  ?render@UiB@@UAEXPAUscene@rgl@@PAM11@Z  0048b4f0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/toggle_and_text_fit.cpp  ?kind@MediumButton@@UAEHXZ  0048b390  /O2 /MT /Gy /TP
+../src/game/ui/widgets/toggle_and_text_fit.cpp  ?kind@XyzButton@@UAEHXZ  0048b4a0  /O2 /MT /Gy /TP

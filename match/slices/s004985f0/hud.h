@@ -1,4 +1,4 @@
-// hud.h: the mission HUD bar widget that slice s004985f0 decompiles: its full per-frame update
+// mission_hud_buttons.h: the mission HUD bar widget that slice s004985f0 decompiles: its full per-frame update
 // (0x4985f0), which advances both bar meshes, all four colour groups and the widget position in one
 // pass. It is the same class as slice s00497880 (the layout matches up to the mesh pointers); the
 // declared method set here is the union needed by the slices so far.

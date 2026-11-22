@@ -1,7 +1,7 @@
 // port/stl/hash_map: stdext::hash_map over stdext::_Hash, the VC7.1 linear-hashing table: a list of all elements, a
 // vector of list iterators (bucket i is [_Vec[i], _Vec[i+1])), the key mask and the current maximum bucket index; 40 bytes
-// on i686 for hash_map<int, T>. src/game/glyph_hash.h names _Hash/_Hmap_traits/hash_compare directly and the font's glyph
-// table (src/game/font.h) is laid out as one, so the layout and the bucket scheme are VC7.1's. Port standard library,
+// on i686 for hash_map<int, T>. src/engine/core/glyph_hash.h names _Hash/_Hmap_traits/hash_compare directly and the font's glyph
+// table (src/engine/render/font.h) is laid out as one, so the layout and the bucket scheme are VC7.1's. Port standard library,
 // see port/stl/xutility.
 #ifndef MB_PORT_STL_HASH_MAP
 #define MB_PORT_STL_HASH_MAP

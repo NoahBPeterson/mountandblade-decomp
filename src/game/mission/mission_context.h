@@ -1,0 +1,63 @@
+// mission_context.h: the mission start-up object (global at 0xa73300; the slices called it MissionCtx, Unit, Screen's
+// "MissionUi", InventoryPanel and g_panel; options_dialog_and_module_tables.h MetaMission, game_data_party_quest.h BattleW), the map screen (CampaignScreen) and
+// the small records of the mission start (code 0x513710..0x516ac0). Layout: every offset cites the function that
+// proves it. Names provisional. The game data is read through g_game / GD_I (inv_common.h), the mission object
+// through MissionV (a view of src/game/mission/mission.h's Mission with the two methods of 0x5143f0 / 0x5144d0).
+#ifndef GAME_INVENTORY_PANEL_MISSION_CTX_H
+#define GAME_INVENTORY_PANEL_MISSION_CTX_H
+#include "game/mission/inv_common.h"
+#include "game/mission/mission.h"
+#include "game/ui/window_mgr.h"
+#include "game/data/head_rec.h"       // the screens read through slot_as<head_rec>
+
+// the Mission object with the members of 0x5143f0 / 0x5144d0 (src/game/mission/mission.h lacks them) and the offsets the start-up reads
+struct MissionV : Mission {
+    void init(int tmpl, int a2, int a3, int a4, struct MissionCtx* ctx, int a6, int a7);   // 0x5143f0 (ret 0x18)
+    __declspec(noinline) void init_scene();             // 0x5144d0
+};
+
+
+// the 0x6c-byte per-class record of a team (ClassInfo in mission.h: its constructor-style reset is 0x5146f0)
+struct Lane4 {
+    float x, y, z, w;
+    Lane4(float a, float b, float c) { x = a; y = b; z = c; }
+};
+struct Sub3 {                                           // ClassInfo of mission.h (0x6c bytes): the names are its
+    int kind, k4, a, b;                                 // +0x00
+    Lane4 pos;                                          // +0x10 (20, 20, 20, -)
+    Lane4 target;                                       // +0x20 (0, 0, 0, -)
+    int nav;                                            // +0x30 (-1)
+    Lane4 dir;                                          // +0x34 (0, 0.001, 0, -)
+    int use;                                            // +0x44 (1)
+    int saved_use;                                      // +0x48 (1)
+    float half;                                         // +0x4c (10)
+    float count, total;                                 // +0x50
+    int mode;                                           // +0x58 (2)
+    Lane4 sum;                                          // +0x5c (20, 20, 20, -)
+    void init();                                        // 0x5146f0
+};
+struct Team {                                           // TeamRec of mission.h (0x16c bytes at mission +0x527c): the names are its
+    int f0;                                             // +0x00
+    int leader;                                         // +0x04 agent id, -1 = none
+    Sub3 cls[3];                                        // +0x08 (0x6c each)
+    int relation[8];                                    // +0x14c relation to team b: -1 hostile, 1 friend
+    void init(int idx);                                 // 0x514670
+};
+
+// the map screen (`this` of 0x514d40 / 0x515d80)
+#include "game/campaign/campaign_screen.h"            // CampaignScreen (the campaign map screen; its Cam is rgl::frustum)
+#include "game/ui/window_mgr.h"      // g_windows (0xa73980), slot_as<T>(i)
+
+// the mission start-up object (global g_mission_ctx, 0xa73300): the one definition is mission_ctx_rec.h (no includes), so that
+// modules whose local views clash with inv_common.h can use the same class
+#include "game/mission/mission_ctx_rec.h"
+
+#include "engine/math/rot2.h"   // rot2: rotate_2x2 0x4f3b40 (game/char_sheet/terrain_page_input: thiscall, ret 4)
+// a 2x2 matrix (0x516220)
+struct mat2 {
+    float m[4];
+    mat2(const float* a, const float* b);               // 0x516220
+    __forceinline void rotate_2x2(float angle) { ((rot2*)m)->rotate_2x2(angle); }   // 0x4f3b40
+};
+
+#endif // GAME_INVENTORY_PANEL_MISSION_CTX_H

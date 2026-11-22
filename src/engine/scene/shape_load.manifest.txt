@@ -1,0 +1,2 @@
+../src/engine/scene/shape_load.cpp  ?load@strategic_entity@rgl@@UAEXPAUstream_base@@@Z  004286d0  /O2 /MT /Gy /TP
+../src/engine/scene/shape_load.cpp  ?clone_shape@body_part@@QAEPAUshape_base@@XZ  004285e0  /O2 /MT /Gy /TP

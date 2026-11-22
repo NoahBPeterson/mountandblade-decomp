@@ -1,6 +1,6 @@
 // physics_ragdoll_drop: builds a ragdoll with the call sequence of src/game/agent4/agent_logic.cpp (create_world,
 // Agent::start_ragdoll, PhysSet::add_bone, build_static_collision, add_capsule_body) and apply_force_and_torque
-// (src/rgl/xmlcfg/game_util.cpp), drops it on tree-collision ground next to a capsule body, steps it with
+// (src/game/common/game_util.cpp), drops it on tree-collision ground next to a capsule body, steps it with
 // PhysSet::update's substeps, and prints body positions over time. Exit 0 only if it fell, collided, settled and its
 // joints stayed within their limits.
 #include <cmath>

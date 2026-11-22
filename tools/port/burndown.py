@@ -7,7 +7,7 @@ compile command itself, in parallel, so one failing TU never stops the count.
 
     tools/port/burndown.py                       # configure + compile all + append a history entry
     tools/port/burndown.py --no-record           # print only
-    tools/port/burndown.py --only src/rgl/psys.cpp --show 40     # one TU, print its first 40 diagnostics
+    tools/port/burndown.py --only src/engine/render/particle_system.cpp --show 40     # one TU, print its first 40 diagnostics
     tools/port/burndown.py --note "windows.h shim"
     tools/port/burndown.py --target linux-x86_64    # the 64-bit count (ticket 006's baseline)
 

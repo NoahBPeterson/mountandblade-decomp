@@ -833,7 +833,7 @@ def prepare(sid, va, flags_override=None, log=print, src=None):
     t.sym, t.sym_how = sym, how
     fsym = coff.by_name[sym]
     t.fsym = fsym
-    annots = R.source_annotations([src] + glob.glob(os.path.join(S.slice_dir(sid), "*.h")) + S.sibling_headers(src))
+    annots = R.source_annotations(S.annotation_sources(src))
     res = ctx["res"].resolve(coff, fsym, va, annots)
     t.res = res
     t.unresolved, t.eh_unresolved, t.conflicts = res.unresolved, res.eh_unresolved, res.conflicts
@@ -853,7 +853,7 @@ def prepare(sid, va, flags_override=None, log=print, src=None):
         # extern "C": the symbol carries no types; read the C declaration from our source
         cname = sym[1:] if sym[:1] in "_@" else sym
         cname = cname.split("@")[0]
-        hdrs = [src] + glob.glob(os.path.join(os.path.dirname(src), "*.h"))
+        hdrs = S.annotation_sources(src)
         try:
             cs = SIG.parse_c_decl(cname, [open(h, encoding="utf-8", errors="replace").read() for h in hdrs],
                                   [open(h, encoding="utf-8", errors="replace").read() for h in include_headers()])
@@ -2163,7 +2163,7 @@ class TypedInputs:
 
 
 # ---- --party-table: a consistent party id -> index -> page -> Party chain (opt-in environment model) ------------------
-G_GAME_VA = 0x5e2930            # GameData* g_game (include/game_data.h)
+G_GAME_VA = 0x5e2930            # GameData* g_game (game/data/game_data.h)
 PT_GAME_CLASSES = ("GameData", "GameW", "GameX", "GameDataX", "GameDataV")      # `this` is the game object: PartyMgr at +0xf8
 PT_MGR_CLASSES = ("PartyMgr", "PartyMgrW", "PartyMgrX", "Map10007")             # `this` is the party manager itself
 PT_MGR_OFF = 0xf8               # PartyMgr inside GameData
@@ -2299,7 +2299,7 @@ class PartyTable:
                 inp.overrides[a] = v
 
 # ---- --item-table: g_items points at a table of ItemKind records covering every item type (opt-in environment model) ----
-G_ITEMS_VA = 0x5e29d0           # ItemKind* g_items (include/item_kind.h)
+G_ITEMS_VA = 0x5e29d0           # ItemKind* g_items (game/data/item_kind_include.h)
 G_ITEM_COUNT_VA = 0x5e29d4      # int g_item_kind_count
 IT_SZ = 0x238                   # sizeof(ItemKind)
 IT_TYPES = tuple(range(1, 21))  # itp_type_horse .. itp_type_book
@@ -2310,7 +2310,7 @@ class ItemTable:
 
     What the original reads (0x448bd0..0x448bf6: eax = item * 0x238, edx = [0x5e29d0], `mov cl,[eax+edx+0x1c8]`; is_ranged
     0x433d90 and the other type tests read the same dword and mask 0xff): record + 0x1c8 low byte = itp_type_* (1..20, see
-    include/item_kind.h). The model fills N = 100 records (a record is 0x238 bytes, a pool slot 64 KB: one cold slot holds 115):
+    game/data/item_kind_include.h). The model fills N = 100 records (a record is 0x238 bytes, a pool slot 64 KB: one cold slot holds 115):
     record i < 20 gets type i + 1 (every enum value appears), the rest a random type from the enum, so a small item id (0..N-1)
     finds a typed record. It also fills the fields the type branches read next, with plausible values: +0x1d0 capability
     flags (a few bits), +0x1d8 value, +0x1e8..+0x1f4 stat bases (0..120: the damage/speed/armour numbers), +0x1fc/+0x200/+0x204
@@ -5815,7 +5815,7 @@ class Comparer:
                 continue
             if yt == M.TRAP_BASE or (self.r.res_name(yt) is None and self.r.slot_is_undefined(yt)):
                 # An unresolved slot: our object references a symbol no TU in a single-row compile defines (the
-                # virtual's body lives in another module's TU, e.g. MainMenuScreen::create in cls_map.cpp). The
+                # virtual's body lives in another module's TU, e.g. MainMenuScreen::create in winmain_and_menu_screens.cpp). The
                 # resolver parks it on the trap page. That is "cannot tell", not "differs" - the linked build has
                 # the real body, the per-row compile cannot see it. Counted as unverifiable and said so.
                 unverifiable += 1

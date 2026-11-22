@@ -22,14 +22,14 @@ if (near_ >= 0 && g_mission->agents[near_].f14 == 1) {
     Agent* o = &g_mission->agents[last_attacker];   // re-read, not near_: the original reloads it here
 ```
 
-`AgentTable::operator[]` (src/game/agent_obj.h) now holds the pages-of-16 lookup; the compiler keeps the page-table pointer in a register on its own, so
+`AgentTable::operator[]` (src/game/agent/agent_obj.h) now holds the pages-of-16 lookup; the compiler keeps the page-table pointer in a register on its own, so
 the hand-cached iterator was never needed.
 
 ## Work
 
 1. **Paged-table accessors.** Raw `pages[x >> 4][x & 0xf]` indexing remains in about 100 places (2026-11-08 count): agent_logic.cpp 52 (including the
-   `AG()` macro at ~5952), party_2.cpp 11, poly_mesh.cpp 8, mission_5.cpp 8, mesh_game.cpp 6, save_records.cpp 6, script_interpreter.cpp 4,
-   world_data.cpp 3. Give each paged table (agents, parties, and any other `pages` vector) an inline `operator[]` and use it.
+   `AG()` macro at ~5952), party_map.cpp 11, poly_mesh.cpp 8, mission_5.cpp 8, agent_spawn_and_tick.cpp 6, save_records.cpp 6, script_interpreter.cpp 4,
+   game_data_party_quest.cpp 3. Give each paged table (agents, parties, and any other `pages` vector) an inline `operator[]` and use it.
 2. **Offset-named fields.** Fields named after their offset (`f55c0`, `f14`, `f2c8`, `v56b4`, ...) get real names from how their writers and readers use
    them. `f55c0` -> `last_attacker` is the model: `take_blow` sets it from the last blow, `reset` clears it.
 3. **`at<T>(0x...)` / `RAWAT` / cast views** (`*(T*)((char*)this + off)`) become members of the real struct once its layout is known.

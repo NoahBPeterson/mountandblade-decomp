@@ -95,7 +95,7 @@ def one_module(job):
     if not o:
         return {"src": src, "error": "compile failed"}
     coff = Coff(o)
-    annots = R.source_annotations([src] + glob.glob(os.path.join(os.path.dirname(src), "*.h")) + S.sibling_headers(src))
+    annots = R.source_annotations(S.annotation_sources(src))
     refs, defined, vtables, errors, statics = [], [], [], [], []
     for va in vas:
         try:
@@ -253,7 +253,7 @@ def module_key(env, src, vas, obj):
     import slice as S
     h = hashlib.md5(env.encode())
     h.update(os.path.relpath(src, ROOT).encode() + repr(vas).encode() + obj_digest(obj).encode())
-    _md5_files(h, [src] + glob.glob(os.path.join(os.path.dirname(src), "*.h")) + S.sibling_headers(src))
+    _md5_files(h, S.annotation_sources(src))
     return h.hexdigest()
 
 

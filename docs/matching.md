@@ -23,7 +23,7 @@ in this file, compiler mechanisms in codegen.md. Setup for new contributors: [`C
   `inlnoln`, `inlnold`, `inlcrmax`, `inlfcsa`, `isize` (4). Use them to MEASURE: the smallest `/d2inlT<N>` at
   which a call gets inlined is that callee's cost at that site. Example: ??_Eframe_set 0x41aee0 matches the
   original byte for byte with `/d2inlT88` and above (??_EBone's array-path cost is 87), but a global inlT88
-  drops resmgr.cpp from 62 to 54 matches, so the original was not built with another threshold: our source
+  drops resource_manager.cpp from 62 to 54 matches, so the original was not built with another threshold: our source
   presents ??_EBone (or the call site) as costlier than the original's did. Replacing Bone's std::vector with a
   minimal struct did not change the cost. The "INL:" inliner trace strings exist but print only in a PGO mode
   (global 0x108a87d0), not reachable from a normal compile; `-db#` prints nothing.
@@ -228,7 +228,7 @@ Each slice `sXXXXXXXX` is a contiguous run of functions (`work/batches/*.json`).
 
 **No assembly transcription.** `__declspec(naked)`, `_emit`, or long `__asm` blocks never count (run_all
 prints `ASM`). A block of at most 8 instructions is allowed where the original used an asm helper.
-One narrow exception: `WL_MARKER(id)` (`src/include/wl_marker.h`) emits the 18-byte WinLicense/Themida region marker
+One narrow exception: `WL_MARKER(id)` (`src/platform/wl_marker.h`) emits the 18-byte WinLicense/Themida region marker
 (`eb 10 "WL  " id 0 "WL  "`) that the original's source left inline in some functions. It is the only place `_emit` is
 allowed (asm_audit.py rejects `_emit` in any other file and a re-definition of the macro in a function body), and a
 use of it is not counted as asm: the jmp skips the bytes, so it has no runtime effect, and the markers are bytes the

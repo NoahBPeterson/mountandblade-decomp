@@ -4,14 +4,14 @@
 // GetDeviceState with `while (dev->Acquire() == DIERR_INPUTLOST) ;`, the original's own loop. Under CrossOver the device
 // is lost often, and a profiled session spent 55-83% of the main thread in that spin in its worst seconds (the 50 -> 5
 // FPS drops). Here a failed read calls Acquire() once and returns; the key state stays as it was for this frame, and the
-// next frame reads again. The rest of both bodies is src/game/mesh_slot/slot.cpp's, unchanged (read_keys is byte-exact
+// next frame reads again. The rest of both bodies is src/game/input/input_device.cpp's, unchanged (read_keys is byte-exact
 // there; read_state is equivalence WEAK, so its copied body is as verified as the faithful one, no more).
 //
 // @ replaces 0x487640
 // @ replaces 0x4876e0
 #include <string.h>
 
-struct SomeIface {                                          // DirectInput device (slot.cpp's view)
+struct SomeIface {                                          // DirectInput device (input_device.cpp's view)
     virtual void __stdcall dtor(char) = 0;                  // +0
     virtual void __stdcall s1() = 0;
     virtual void __stdcall s2() = 0;
@@ -26,7 +26,7 @@ struct SomeIface {                                          // DirectInput devic
 
 extern __int64 g_ticks[];                                   // 0x5e2948 clock table, 1e-5 s ticks
 
-struct Slot {                                               // the fields of slot.cpp's Slot these two read and write
+struct Slot {                                               // the fields of input_device.cpp's Slot these two read and write
     char pad0[4];
     SomeIface* kb;                                          // +4
     SomeIface* state;                                       // +8

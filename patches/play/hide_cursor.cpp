@@ -12,7 +12,7 @@ struct gui_manager;
 extern GameApp g_app_obj;          // 0x8ee3c48 (m_hWnd at +0xe8, m_bWindowed at +0xa4)
 extern gui_manager g_gui;       // 0x5d7080 (+0x560: the current screen wants the cursor)
 struct renderer;
-extern renderer g_render;       // 0xa17910 (src/include/renderer.h); its IDirect3DDevice9* dev is at +0x618 = 0xa17f28
+extern renderer g_render;       // 0xa17910 (src/engine/render/renderer_include.h); its IDirect3DDevice9* dev is at +0x618 = 0xa17f28
 #define g_a17f28 (*(void**)((char*)&g_render + 0x618))
 
 namespace {

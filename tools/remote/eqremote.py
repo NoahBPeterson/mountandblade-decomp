@@ -7,7 +7,7 @@ Library (used by tools/difftest/sweep_nonmatching.py):
                                                                  appended to work/locks/local_equiv.log)
 CLI (a row by hand; shards run in parallel on the laptop and are merged here with merge_shards.py):
     tools/remote/eqremote.py [--shards N] [--timeout S] ROW_ARGS... --json OUT.json
-    e.g. eqremote.py --shards 4 facegen_win 004f1460 --src src/game/char_sheet/facegen_win.cpp --fp-tol --json /tmp/x.json
+    e.g. eqremote.py --shards 4 facegen_win 004f1460 --src src/game/editor/terrain_page/terrain_page_init.cpp --fp-tol --json /tmp/x.json
     (exit 3 = declined, nothing ran: run equiv.py locally)
 
 How: the current tree (git ls-files -co --exclude-standard) is tarred, keyed by a content hash, and unpacked once into

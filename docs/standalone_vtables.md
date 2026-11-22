@@ -33,20 +33,20 @@ are its members:
 4. Rename the manifest / slice rows to the new mangled names.
 
 ```cpp
-// src/game/result_window.h: one class, vtable 0x595740 (was C4c2c50 + ResultWindow + screen_text)
+// src/game/ui/screens/result_window.h: one class, vtable 0x595740 (was C4c2c50 + ResultWindow + screen_text)
 struct ResultWindow : head_rec {
     ContainerBase* win;  /* +0x2c ... */  int* flag; /* +0x4c */  tstring* text; /* +0x50 */  tstring s54; /* ... */
     ResultWindow();                          // 0x4c2c50
     __declspec(noinline) ~ResultWindow();    // 0x4c2cd0, called (not inlined) by the deleting destructor 0x4c2cb0
     virtual void reset_screen();             // 0x4c30b0  g_gui.f1709 = 1
-    virtual void init_screen();             // 0x4dc630  (cls_map.cpp)
-    virtual void frame_update(const float*);      // 0x4ca550  (gui_edit.cpp)
+    virtual void init_screen();             // 0x4dc630  (winmain_and_menu_screens.cpp)
+    virtual void frame_update(const float*);      // 0x4ca550  (editor_selection_and_translation.cpp)
     virtual char pure_7() { return 0; }      // 0x4280e0
 };
-// rec_tables.cpp
+// module_option_records.cpp
 ResultWindow::ResultWindow() { flag = 0; text = 0; }            // base ctor + vptr store come from the compiler
 ResultWindow::~ResultWindow() {}                                // members destroyed in reverse, vptr stores: the compiler's
-// cls_map.cpp   // @ 0x4dc630
+// winmain_and_menu_screens.cpp   // @ 0x4dc630
 void ResultWindow::init_screen() { if (w04 == 0) { ... } ... }
 ```
 
@@ -71,9 +71,9 @@ void Rec34::reset_screen()     { g_gui.f1709 = 1; }
 
 ## Head records: what was done and what the rest needs (lane V1)
 
-`game/screen_records.h` holds the head_rec records, one class each, shared by every TU that holds one of their members
-(`MB_ZERO_TAIL`, the opaque `RecX` creation types and the C4c / Rec* classes). Rec1208 lives in `game/conv_screen.h`, ItemRec /
-ItemRec2 in `game/triggers/item_rec.h`, PartyScreen (ex C4c3160) in party_screen_class.h, the old views are `typedef`s of the record
+`game/ui/screens/screen_records.h` holds the head_rec records, one class each, shared by every TU that holds one of their members
+(`MB_ZERO_TAIL`, the opaque `RecX` creation types and the C4c / Rec* classes). Rec1208 lives in `game/ui/screens/conversation/conv_screen.h`, ItemRec /
+ItemRec2 in `game/data/item_head_records.h`, PartyScreen (ex C4c3160) in party_screen_class.h, the old views are `typedef`s of the record
 (`OptionsScreen`/`OptionsWin`/`MeetingWindow`/`XferWin`/`LogScreen`/`quest_window`/`ConvScreen`) where one view was the
 whole record. Their overrides are defined in the TU of the original function (`// @ 0xADDR`), their destructors are the
 compiler's (`~X()` for the part the original calls out of line, implicit `??_GX`; the plain records need none: the
@@ -100,24 +100,24 @@ Lessons that cost time:
 
 ## What is left in the V1 scope (and why)
 
-* TerrainPage (Rec23c, now one class with facegen_win) slot 2 `init_screen` 0x4f1460, slot 3 `frame_update` 0x4f2d70 (no longer stubs); FaceGen (Rec428, the face generator; game/face_gen.h) slots 2 / 3 `init_screen` 0x4f49d0 and `frame_update` 0x4ea8e0: one class now (no longer stubs).
-* Recacc (party / inventory window): done. `PartyWindow` (party/party_window_class.h) is the one class, a head_rec: slot 1
+* TerrainPage (Rec23c, now one class with facegen_win) slot 2 `init_screen` 0x4f1460, slot 3 `frame_update` 0x4f2d70 (no longer stubs); FaceGen (Rec428, the face generator; game/ui/screens/face_generator/face_gen.h) slots 2 / 3 `init_screen` 0x4f49d0 and `frame_update` 0x4ea8e0: one class now (no longer stubs).
+* Recacc (party / inventory window): done. `PartyWindow` (game/campaign/party_window_class.h) is the one class, a head_rec: slot 1
   `slot_empty_1`, slot 2 `slot_empty_2` (0x500ad0, the window maker), slot 3 `scale_3` (0x50fe20, the trade engine's per-frame
-  step) and slot 7 are its own virtuals; InventoryPanel's methods (inventory_panel/inventory_panel.cpp, built with the GameData
+  step) and slot 7 are its own virtuals; InventoryPanel's methods (game/ui/screens/inventory/inventory_panel.cpp, built with the GameData
   header) are its members, so there is no forwarding stub left for this record.
-* C4c3160 is PartyScreen now (game/party_screen_class.h; slot 2 `init_screen` 0x502cc0, slot 3 `frame_update` 0x531800): no stub left.
+* C4c3160 is PartyScreen now (game/ui/screens/party_screen_class.h; slot 2 `init_screen` 0x502cc0, slot 3 `frame_update` 0x531800): no stub left.
 * mission_items (2026-11-04): ItemA (0xf8), ItemB / ItemC (0x60) and ItemD (0xb4) are one head_rec class each in
-  options_panel/mission_item_recs.h with their slots 1 / 2 / 3 / 9 as their own virtuals, sizes checked by `ItemX_size_check`
-  typedefs: ItemA reset_screen = gui_edit.cpp 0x4c6e10, init_screen = agent_hud.cpp 0x4fbfa0 (the former GameScreen::build, the sixteen
-  rows / panel / lists are its members), frame_update = exchange_screens.cpp 0x533070, s_last = mission_items.cpp 0x4ceb90 (the former
+  game/data/mission_item_recs.h with their slots 1 / 2 / 3 / 9 as their own virtuals, sizes checked by `ItemX_size_check`
+  typedefs: ItemA reset_screen = editor_selection_and_translation.cpp 0x4c6e10, init_screen = agent_hud.cpp 0x4fbfa0 (the former GameScreen::build, the sixteen
+  rows / panel / lists are its members), frame_update = mission_menu_and_exchange_screens.cpp 0x533070, s_last = mission_item_records.cpp 0x4ceb90 (the former
   MissionUpdater::update); ItemB init_screen 0x4e5d80 (a `jmp` to its own `create` 0x4e5d90) / frame_update 0x534180, ItemC init_screen
-  0x4e5e50 (sets the music situation, then its own `create2` 0x4e5e60) / frame_update 0x534230 (progress_bar.cpp, exchange_screens.cpp);
-  ItemD init_screen = view_open.cpp 0x50a140 (the former view_obj::reset), frame_update = exchange_screens.cpp 0x533aa0 (the former
+  0x4e5e50 (sets the music situation, then its own `create2` 0x4e5e60) / frame_update 0x534230 (progress_bar_and_load_screens.cpp, mission_menu_and_exchange_screens.cpp);
+  ItemD init_screen = character_sheet_view.cpp 0x50a140 (the former view_obj::reset), frame_update = mission_menu_and_exchange_screens.cpp 0x533aa0 (the former
   InputScreen::on_input). The views GameScreen, EventScreen, MissionUpdater, MapDialog::reset_state, SaveWinCtl, SourceScreen, InputScreen
   and view_obj are gone. ItemA..C carry `owned_block` (so their destructors release it, as the original's shared 0x4ce930 does).
   The four constructors (0x4ceb30 / 0x4cef20 / 0x4cef80 / 0x4cee50) no longer use `_ReadWriteBarrier`: cl then orders the independent
   stores differently (the base's `[this+8]` and the record's vptr store after the zero stores), so those rows are parked in
-  mission_items.nonmatching.txt (same store set, order only).
+  mission_item_records.nonmatching.txt (same store set, order only).
 * MissionBlocker (the mission screen, 0x328 bytes, mission_item_recs.h) is one class too: slot 2 is `refresh` 0x4f7f00 (agent_hud.cpp, the former
   MissionHud), slot 3 `tick` 0x5261e0 (mission_5.cpp, the former Screen_s261e0), slot 4 the camera / parameter initialiser 0x4cea10 (the former
   MissionParams::init); update_camera / update_status / update_equipment / update_marks (0x529130, the former MissionHud_s29130) are its members,
@@ -125,24 +125,24 @@ Lessons that cost time:
   the top of the constructor: the 0x4ce960 row stays parked). The vtable gate reports 0 slots bound by forwarding stubs (12 -> 0); the "slots
   differ" count rose 2 -> 3 only because `fix_vtables` now reads one zero word of alignment padding after MissionBlocker's table (its 10th word,
   not a slot of the table).
-* head_cam and head_obj2 are now CampaignScreen and CharSheet, each one class with its screen (game/campaign_screen.h, game/char_sheet_panel.h).
+* head_cam and head_obj2 are now CampaignScreen and CharSheet, each one class with its screen (game/campaign/campaign_screen.h, game/ui/screens/character_sheet/char_sheet_panel.h).
 
 ## Still open (see the audit)
 
 Base classes whose placeholder virtuals (`s00()`, `d10()`) the derived classes override in the original; records whose tables
-are shorter than the original's. The stream families are done: `src/rgl/stream.h` has the real chain (`text_stream` ->
+are shorter than the original's. The stream families are done: `src/engine/io/stream.h` has the real chain (`text_stream` ->
 `outfile_b`/`outfile`; `text_stream2` -> `text_reader_base` -> `tstream3`; `mem_stream` -> `bin_reader_base` -> `bin_reader`;
 `bin_writer`), every class defines its own slot bodies (the `STREAM_FWD_*` macros and `stream_fwd.h` are gone), and the
-constructors/destructors the original inlines into its loaders are in `src/rgl/stream_inline.h`. An audit "long" on the log
+constructors/destructors the original inlines into its loaders are in `src/engine/io/stream_inline.h`. An audit "long" on the log
 file's 0x595618 is a tool artifact: the dtor calls slot 26 by absolute address, which `vtable_starts` reads as a table start.
 
-Widget family: hand-built widgets of these classes in other families' sources (`*(void**)w = vtbl_...`): agent5/agent_hud.h
-(`GroupWidget`, `TextGroupWidget`, `FrameWidget`, `FlagWidget`), inventory_panel/party_screen.h (`PsBar`,
-`PsListWidget`), note_window.cpp, char_sheet/quest_log.cpp, char_sheet/editor_ui.cpp, char_sheet/facegen_win.cpp,
-inventory_panel/char_sheet.cpp, party2/camera.cpp (`ContainerBase`, `UiB`, `UiA`, `UiE`, `NodeA`, `text_box`: use
-`new <class>` from ui/container.h / ui/ui_widgets.h / config/ui_widgets_c.h), party/party_window.h (`PartyPanel` 0x599bf8,
+Widget family: hand-built widgets of these classes in other families' sources (`*(void**)w = vtbl_...`): game/ui/hud/agent_hud.h
+(`GroupWidget`, `TextGroupWidget`, `FrameWidget`, `FlagWidget`), game/ui/screens/party_screen.h (`PsBar`,
+`PsListWidget`), notes_window.cpp, game/ui/screens/quest_log.cpp, game/editor/editor_widgets.cpp, game/editor/terrain_page/terrain_page_init.cpp,
+game/ui/screens/character_sheet/character_sheet_init.cpp, party2/camera.cpp (`ContainerBase`, `UiB`, `UiA`, `UiE`, `NodeA`, `text_box`: use
+`new <class>` from game/ui/widgets/container.h / game/ui/widgets/ui_widgets.h / game/ui/widgets/text_editor_widget.h), game/ui/screens/inventory/inventory_window.h (`PartyPanel` 0x599bf8,
 `PartySlot` 0x599d28) and the drop-down (ListPanelW / DropDownW / DropDown, 0x592570: a UiA with a row vector). The widget
-call sites still go through `WVt` (config/widget_mgr.h), a view of MissionUi's slots with the call sites' argument types.
+call sites still go through `WVt` (game/ui/widgets/widget_manager.h), a view of MissionUi's slots with the call sites' argument types.
 
 Re-run the audit after each family: the
 `stub` / `placeholder` / `dtor` counts per module are the remaining work.
@@ -152,34 +152,34 @@ Re-run the audit after each family: the
 The widget tables are one hierarchy, not one class per table:
 
 ```
-MissionUi (0x591c80, 49 virtuals; ui/mission_ui.h)
+MissionUi (0x591c80, 49 virtuals; game/ui/widgets/widget_base.h)
   UiA (0x591d58, the toggle button; inline ctor)   <- UiA (same table), MediumButton (0x591e20), XyzButton (0x591ee8), UiE (0x592208)
   UiB (0x591fb0, slider) <- UiC (0x592078, + update_children);   UiD (0x592140)
-  ContainerBase (0x5924a0, ui/container.h) <- NodeA (0x592848), text_box (0x597050)
+  ContainerBase (0x5924a0, game/ui/widgets/container.h) <- NodeA (0x592848), text_box (0x597050)
   progress_bar (0x597f20)
 ```
 
 * Every base slot has its real name and signature, and its body is defined in the TU of the original function
-  (`MissionUi::animate` in mesh_slot/slot.cpp, `update_bounds` in mission_ui2/mission_3.cpp, `normalize_uv` in
-  world_data/mesh_hud.cpp, `layout_text_to` / `get_xy` in config/widget_mgr.cpp ...). The slices' names (`Effect`, `FieldPanel`,
+  (`MissionUi::animate` in game/input/input_device.cpp, `update_bounds` in game/party/stacks_and_loot.cpp, `normalize_uv` in
+  game/ui/widgets/hud_bar_widgets.cpp, `layout_text_to` / `get_xy` in game/ui/widgets/widget_manager.cpp ...). The slices' names (`Effect`, `FieldPanel`,
   `MeshX`, `HudBar`, `PObj`, `ContainerW`, `FrameBox`, `UiFrame`, `gui_window`, `text_box_base`) were views of these classes.
 * A derived widget overrides a slot by declaring it `virtual` and defining it where the original function is
-  (`UiB::animate` is HudBar's 0x497880 in mesh_hud.cpp, `ContainerBase::update_children` is FrameBox::release 0x48ef40 in
-  mission_4.cpp). No `d10` / `d35` names, no `jmp` stubs, no `vtbl_*` stores for these classes: `new UiB`, `new NodeA`,
+  (`UiB::animate` is HudBar's 0x497880 in hud_bar_widgets.cpp, `ContainerBase::update_children` is FrameBox::release 0x48ef40 in
+  container_and_tableau_misc.cpp). No `d10` / `d35` names, no `jmp` stubs, no `vtbl_*` stores for these classes: `new UiB`, `new NodeA`,
   `new text_box`, `new UiA`.
 * Constructors the original inlines into its callers (UiA's, ContainerBase's) are in-class definitions; cl then inlines them
   at the sites the original did and keeps the out-of-line copy where it needs one. `typedef ContainerBase UiFrame` keeps the
   old name for the sources that still use it.
 * A deleting destructor is the compiler's. `NodeA` declares an inline `~NodeA() {}` so cl expands the base destructor call in
   its own `??_G` (0x49b0f0, byte-exact). `text_box` (0x597050) is the one table of the family still `dtor`: its slot 0 is 0x5021f0,
-  the container's `??_G` as party_window.cpp's object compiled it (the derived vptr store dead, the vector freed through the
+  the container's `??_G` as inventory_window.cpp's object compiled it (the derived vptr store dead, the vector freed through the
   shared out-of-line `vec<mface>::clear`); our `??_Gtext_box` is a different instance of the same source. `ContainerBase::destroy`
-  keeps 0x5021f0 as a function of its own for PartyPanel's table (0x599bf8, still hand-stored: party/party_window.h).
+  keeps 0x5021f0 as a function of its own for PartyPanel's table (0x599bf8, still hand-stored: game/ui/screens/inventory/inventory_window.h).
 * The `long` the audit printed for UiB / NodeA was `vtable_starts` taking a code immediate for the start of another table inside
   them; the audit now keeps the table whole when the pointer run is as long as ours.
 * The functions the slices called `gui_window::refresh_all / wheel_step / wheel_focus / mouse_event / handle_event` (0x42cd60, 0x42ce50,
   0x42cec0, 0x42cf50, 0x42d170) are the widget classes' own virtuals (`MissionUi::key / refresh`, `ContainerBase::refresh / key`,
-  `NodeA::key`), defined once in ui/widget_slots.cpp. `gui_window`, `widget` (widget.h) and `WidgetOps` no longer exist.
+  `NodeA::key`), defined once in game/ui/widgets/widget_virtual_slots.cpp. `gui_window`, `widget` (widget.h) and `WidgetOps` no longer exist.
 
 ## Entity tail and agent record (lane V4): what the compiler does with derived deleting destructors
 

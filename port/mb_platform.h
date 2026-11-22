@@ -41,9 +41,9 @@ struct Mutex;   struct Event;
 Mutex* mutex_create();  void mutex_lock(Mutex*);  void mutex_unlock(Mutex*);
 Event* event_create(bool auto_reset);  void event_set(Event*);  void event_wait(Event*);
 void   thread_start(void (*fn)(void*), void* arg, unsigned stack_bytes);
-unsigned cpu_count();                   // GetProcessAffinityMask popcount (decides g_mt_inited, cls_map.cpp)
+unsigned cpu_count();                   // GetProcessAffinityMask popcount (decides g_mt_inited, winmain_and_menu_screens.cpp)
 
-// ---- window / cursor / clipboard (used by src/dxframework/d3dapp.cpp and the GUI text widgets) ---------------------
+// ---- window / cursor / clipboard (used by src/platform/dxframework/d3dapp.cpp and the GUI text widgets) ---------------------
 void   show_cursor(bool);  void clip_cursor(bool);  void get_cursor_pos(int* x, int* y);  void set_cursor_pos(int x, int y);
 bool   clipboard_get(char* out, size_t cap);        void clipboard_set(const char* text);
 void   message_box(const char* title, const char* text);   // fatal-error path of the framework (26 call sites)

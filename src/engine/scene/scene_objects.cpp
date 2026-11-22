@@ -1,0 +1,461 @@
+// scene_objects.cpp (0x4205b0..0x4218e0): the scene-object bookkeeping around the world and its entities: LOD
+// selection, the cell/ref pools, the world's entity/mesh/emitter teardown and cell insertion, the entity base
+// destructor and clear(), the emitter defaults, the effect definition's destructor and the strategic entity's
+// small members. Migrated from slices s0041ffe0 (0x4205b0..0x4207e0), s00420960 (0x420960..0x420ec0),
+// s00421110 (0x421110..0x421a50 minus 0x4218e0, 0x421990, 0x4219c0) and s00421aa0's FxDef::clear_defs.
+// Boundary: start 0x4205b0 (entity::render 0x420310 calls lod_mesh::select forward: high); end 0x4218e0
+// (StrategicEntity::set_color 0x4218a0 tail-jumps to FxDef::set_color 0x4218e0 forward: high). Inside the range no
+// forward call crosses a function, so the TU map's single object is kept.
+#include <vector>
+#include <list>
+#include <new>
+#include <stddef.h>
+#include "engine/core/rgl_string.h"
+#include "engine/math/rgl_math.h"
+#include "engine/resource/resource.h"
+#include "engine/math/scene_math.h"
+#include "engine/scene/frustum_rgl_scene.h"
+#include "engine/render/render_batch.h"   // g_batch (0x5fe898): register_scene 0x412040
+#include "engine/scene/scene.h"
+#include "engine/scene/emitter.h"
+#include "engine/scene/scene_entity.h"
+#include "engine/scene/world.h"
+#include "engine/fx/fx_rgl_scene.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "engine/scene/frustum.h"
+#include "engine/fx/keyframes.h"
+#include "engine/math/mat4_include.h"
+#include "engine/render/mesh_prims.h"
+#include "engine/math/vec.h"
+#include "engine/render/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/render/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+
+using namespace rgl;
+
+#include "engine/fx/fx.h"
+
+namespace rgl {
+
+// @ 0x4205b0
+void lod_mesh::select(const float* d)
+{
+    cur = 0;
+    if (*d < 0.1f && count > 1) {
+        cur = 1;
+        if (*d < 0.05f && count > 2) {
+            cur = 2;
+            if (*d < 0.025f && count > 3) {
+                cur = 3;
+                if (*d < 0.0125f && count > 4)
+                    cur = 4;
+            }
+        }
+    }
+}
+
+} // namespace rgl
+
+// @ 0x420650
+template void std::vector<Obj*>::push_back(Obj* const&);
+
+namespace rgl {
+
+// List-backed object pools: a std::list of blocks plus a free list threaded through the cells of the newest block
+// (two instantiations: 12-byte nodes and 16-byte refs).
+// @ 0x4206a0
+template <> void pool<cellnode>::grow()
+{
+    cellnode* blk = new cellnode[count];
+    chunks.push_back(blk);
+    for (int i = 0; i < count - 1; i++)
+        blk[i].next = &blk[i + 1];
+    blk[count - 1].next = 0;
+    freelist = blk;
+}
+// @ 0x420720
+template <> void pool<cellref>::grow()
+{
+    cellref* blk = new cellref[count];
+    chunks.push_back(blk);
+    for (int i = 0; i < count - 1; i++)
+        blk[i].next = &blk[i + 1];
+    blk[count - 1].next = 0;
+    freelist = blk;
+}
+
+// @ 0x4207a0
+void world::add_pending(entity* o)
+{
+    if (o) {
+        o->id = next_id;
+        next_id++;
+        ents2.push_back(o);
+        o->owner = this;
+    }
+}
+
+// @ 0x4207e0
+void world::clear_ents()
+{
+    for (std::vector<entity*>::iterator it = ents.begin(); it < ents.end(); ++it)
+        delete *it;
+    ents.resize(0, 0);
+    for (std::vector<entity*>::iterator it = ents2.begin(); it < ents2.end(); ++it)
+        delete *it;
+    ents2.resize(0, 0);
+    for (unsigned i = 0; i < lights.size(); i++)
+        operator delete((void*)lights[i]);
+    lights.resize(0, 0);
+    for (unsigned i = 0; i < meshes.size(); i++) {
+        mesh* p = meshes[i];
+        if (p)
+            delete p;
+    }
+    meshes.resize(0, 0);
+    for (unsigned i = 0; i < emitters.size(); i++) {
+        psys* r = emitters[i];
+        if (r)
+            delete r;
+    }
+    emitters.resize(0, 0);
+    sky = 0;
+    live = 0;
+    next_id = 1;
+}
+
+// @ 0x420960
+void entity::clear()
+{
+    for (unsigned i = 0; i < meshes.size(); i++) {
+        delete meshes[i];
+    }
+    meshes.resize(0, 0);
+    for (unsigned i = 0; i < lods.size(); i++) {
+        delete lods[i];
+    }
+    lods.resize(0, 0);
+}
+
+typedef std::vector<int> int_vector;
+
+// @ 0x420a70
+void world::clear_cells()
+{
+    for (std::vector<Obj*>::iterator it = objs.begin(); it < objs.end(); ++it)
+        delete *it;
+    objs.resize(0, 0);
+    for (int i = 0; i < n[0]; i++) {
+        for (int j = 0; j < n[1]; j++) {
+            cell* c = &cells[i][j];
+            c->a.resize(0, 0);
+            c->objs.resize(0, 0);
+            cells[i][j].ids.~int_vector();
+        }
+    }
+    nodes.link_chunks();
+    refs.link_chunks();
+}
+
+// the emitter's defaults: every field re-initialised in turn, then the particle vector emptied
+// @ 0x420b40
+void psys::init()
+{
+    mat4 t1;
+    particle e;
+    cache = 0;
+    res = 0;
+    disabled = 0;
+    vel_base = vector4(0.0f, 0.0f, 1.0f);
+    vel_scale = 1.0f;
+    spawn_rate = 0.0f; spawn_left = 0; spawn_total = 0; spawn_accum = 0;
+    height = 0.0f;
+    local = *(mat4*)identity_pos(&t1);
+    world = *(mat4*)identity_pos(&t1);
+    box = vector4(0.0f, 0.0f, 0.0f);
+    axis_x = vector4(1.0f, 0.0f, 0.0f);
+    axis_z = vector4(0.0f, 0.0f, 1.0f);
+    flags = 1;
+    half.x = 0.5f; half.y = 0.5f;
+    curve[0].t0 = 0.0f; curve[0].v0 = 1.0f; curve[0].t1 = 1.0f; curve[0].v1 = 0.0f;
+    for (int c = 1; c < 5; c++) {
+        curve[c].t0 = 0.0f; curve[c].v0 = 1.0f; curve[c].t1 = 1.0f; curve[c].v1 = 1.0f;
+    }
+    accel = vector4(0.0f, 0.0f, -9.8f);
+    accel_scale = 1.0f;
+    quad[0].x = 1.0f; quad[0].y = 1.0f;
+    quad[1].x = 0.0f; quad[1].y = 1.0f;
+    quad[2].x = 0.0f; quad[2].y = 0.0f;
+    quad[3].x = 1.0f; quad[3].y = 0.0f;
+    noise_amount = 0.0f; noise_scale = 1.0f; drag = 0.5f;
+    src = 0;
+    tag = -1; radius = 0.0f; spin_scale = 0; spin_drag = 0;
+    tint.x = 1.0f; tint.y = 1.0f; tint.z = 1.0f;
+    particles.resize(0, e);
+}
+
+} // namespace rgl
+
+// @ 0x420e90
+void FxElem::add_to_first(rgl::psys* o)
+{
+    if (psys.size() != 0)
+        psys[0]->kids.push_back(o);
+}
+
+// The clear() of the element array: per element the particle meshes (+0x19c) and lod records (+0x1b0), then the
+// definition's own two lists (+0x20 and +0x30).
+// @ 0x420ec0
+void FxDef::clear_defs()
+{
+    // Each iterator is declared first and assigned in the for header (no copy-initialisation temporary): with three
+    // or four of them written that way the frame-symbol count puts the symbol-key blocks where the original has
+    // them, which is what orders base and index in [i*0x1dc + elems + 0x1b8] of the second element loop.
+    for (int i = 0; i < count; i++) {
+        std::vector<rgl::mesh*>::iterator it;
+        for (it = elems[i].psys.begin(); it != elems[i].psys.end(); ++it)
+            delete *it;
+        elems[i].psys.resize(0, 0);
+    }
+    std::vector<rgl::mesh*>::iterator pit;
+    for (pit = psys.begin(); pit < psys.end(); ++pit)
+        delete *pit;
+    psys.resize(0, 0);
+    for (int i = 0; i < count; i++) {
+        std::vector<rgl::lod_mesh*>::iterator it;
+        for (it = elems[i].groups.begin(); it < elems[i].groups.end(); ++it)
+            delete *it;
+        elems[i].groups.resize(0, 0);
+    }
+    std::vector<rgl::lod_mesh*>::iterator git;
+    for (git = groups.begin(); git < groups.end(); ++git)
+        delete *git;
+    groups.resize(0, 0);
+}
+
+namespace rgl {
+
+// An attached view / camera is brought up to date for the entities whose id falls in its share (id % div == rem):
+// each one inside the view frustum draws itself.
+// @ 0x421110
+void world::render_part(scene* view, int rem, int div)
+{
+    view->owner = this;
+    view->ambient = ambient;
+    view->fr.build_planes();
+    g_batch.register_scene(view);
+    render_info flag;
+    flag.valid = 0;
+    for (std::vector<entity*>::iterator it = ents.begin(); it < ents.end(); ++it) {
+        entity* e = *it;
+        if (e->id % div == rem) {
+            vector4 c;
+            const mat4& l = e->local;
+            const vector4& v = e->center;
+            float x = l.f.x * v.y;
+            x = x + l.u.x * v.z;
+            x = x + v.x * l.s.x;
+            c.x = x + l.o.x;
+            float y = l.s.y * v.x;
+            y = y + l.f.y * v.y;
+            y = y + l.u.y * v.z;
+            c.y = y + l.o.y;
+            float z = l.s.z * v.x;
+            z = z + l.f.z * v.y;
+            z = z + l.u.z * v.z;
+            c.z = z + l.o.z;
+            float r = e->get_radius();
+            int n = view->fr.nplanes;
+            int ok = 1;
+            for (int i = 0; i < n; ++i) {
+                if (!ok) break;
+                ok = view->fr.planes[i].in_front(&c, r);
+            }
+            if (!ok) continue;
+            (*it)->render(view, &flag);
+        }
+    }
+    for (std::vector<entity*>::iterator it = ents2.begin(); it < ents2.end(); ++it) {
+        entity* e = *it;
+        if (e->id % div == rem) {
+            vector4 c;
+            float x = e->local.f.x * e->center.y;
+            x = x + e->local.u.x * e->center.z;
+            x = x + e->local.s.x * e->center.x;
+            c.x = x + e->local.o.x;
+            float y = e->local.f.y * e->center.y;
+            y = y + e->local.u.y * e->center.z;
+            y = y + e->local.s.y * e->center.x;
+            c.y = y + e->local.o.y;
+            float z = e->local.f.z * e->center.y;
+            z = z + e->local.u.z * e->center.z;
+            z = z + e->local.s.z * e->center.x;
+            c.z = z + e->local.o.z;
+            float r = e->get_radius();
+            int n = view->fr.nplanes;
+            int ok = 1;
+            for (int i = 0; i < n; ++i) {
+                if (!ok) break;
+                ok = view->fr.planes[i].in_front(&c, r);
+            }
+            if (!ok) continue;
+            (*it)->render(view, &flag);
+        }
+    }
+}
+
+// @ 0x421390
+void world::reset()
+{
+    clear_ents();
+    clear_cells();
+    if (ground) {
+        delete ground;
+        ground = 0;
+    }
+    nav = 0;
+    if (hf) {
+        delete hf;
+        hf = 0;
+    }
+    view.sun_shadows = 0;
+}
+
+// @ 0x4213f0
+entity::~entity()
+{
+    if (shape) delete shape;
+    entity::clear();
+    if (shadow_a) { delete shadow_a; shadow_a = 0; }
+    if (shadow_b) { delete shadow_b; shadow_b = 0; }
+}
+// 0x4214e0 is the compiler-generated scalar deleting destructor ??_Gentity (calls ~entity above, then operator
+// delete if bit 0 of the flag is set); it has no source of its own.
+
+// The type ids and the no-op slot of the entity classes: one-instruction functions the original's linker folded with the identical ones
+// of other classes (0x408020 `return 0`, 0x48b1f0 `return 1`, 0x493300 `return 5`, 0x48b390 `return 9`, 0x408030 `ret 4`). Each class defines
+// its own copy, in a different object from the entity factory that compares them (0x428240 calls them out of line).
+int entity::type_id() { return 0; }
+int mesh_entity::type_id() { return 1; }
+int static_entity::type_id() { return 5; }
+int strategic_entity::type_id() { return 9; }
+void entity::slot17(int) {}
+
+// @ 0x4214c0
+string mesh_entity::type_name() { return string("mesh_entity"); }
+
+// @ 0x421500
+string collision_entity::type_name() { return string("collision_entity"); }
+
+// the default rigid-body virtuals of a collision entity (a non-dynamic entity has no velocity or impulse response)
+// @ 0x421520
+vector4* collision_entity::point_velocity(vector4* out, const vector4* p)
+{
+    out->x = 0.0f; out->y = 0.0f; out->z = 0.0f;
+    return out;
+}
+// @ 0x421540
+void collision_entity::apply_impulse(const vector4* p, const vector4* j) {}
+// @ 0x421550
+float collision_entity::impulse_response(const vector4* p, const vector4* n) { return 0.0f; }
+
+// @ 0x421560
+void world::insert(entity* o, int x, int y)
+{
+    cellnode* n = nodes.alloc();
+    n->obj = o;
+    n->prev = 0;
+    n->next = cells[x][y].head;
+    if (cells[x][y].head) cells[x][y].head->prev = n;
+    cells[x][y].head = n;
+    cellref* r = refs.alloc();
+    r->node = n;
+    r->x = x;
+    r->y = y;
+    r->next = o->refs;
+    o->refs = r;
+}
+
+// Body the original's object saw (row owner engine/scene/frustum_grid.cpp 0x41ed00): with it visible lo/hi do not escape,
+// so the bounds are not reloaded after each insert call and, with no callee-saved register left, stay in memory
+inline __declspec(noinline) void world::to_cell(const float* p, int* out)
+{
+    for (int i = 0; i < 2; i++) {
+        float f = (p[i] - lo[i]) / cell_size[i];
+        if (f <= 0.0f)
+            out[i] = 0;
+        else if ((float)(n[i] - 1) <= f)
+            out[i] = n[i] - 1;
+        else
+            out[i] = (int)f + 1;
+    }
+}
+
+// @ 0x421600
+void world::insert_obj(entity* o)
+{
+    int hi[2];
+    int lo[2];
+    to_cell((const float*)o->get_v9c(), lo);
+    to_cell((const float*)o->get_vac(), hi);
+    for (int x = lo[0]; x <= hi[0]; ++x)
+        for (int y = lo[1]; y <= hi[1]; ++y)
+            insert(o, x, y);
+}
+
+} // namespace rgl
+
+// @ 0x421680
+FxDef::~FxDef()
+{
+    clear_defs();
+    if (count && elems) delete[] elems;
+    if (env) {
+        delete[] env;
+        delete[] envidx;
+    }
+}
+
+namespace rgl {
+
+// @ 0x421720
+strategic_entity::strategic_entity()
+    : f2c0(0)
+{
+    map_kind = 0;
+    matrix tmp;
+    *(matrix*)&local = *identity_pos(&tmp);
+    map_shadow_strength = 0.5f;
+    blob_shadow_strength = 0.5f;
+    last_pos = vector4(-10000.0f, -10000.0f, -10000.0f);
+    f16c = 0;
+    fx = 0;
+    nids = 0;
+    shadow_skin = 0;
+    shadow_scene = 0;
+    f290 = 0;
+    shadow_quality = 0;
+    radius = 0.0f;
+    shadow_drawn = 0;
+    render_count = 0;
+    shadow_pos.x = -100000000.0f;
+    shadow_caster = -1;
+    shadow_fade = 1.0f;
+    f2ec = 1;
+    thresh = 2.0f;
+}
+
+// @ 0x421870
+string strategic_entity::type_name() { return string("strategic_entity"); }
+
+// @ 0x421890
+float strategic_entity::get_radius() { return radius; }
+
+// @ 0x4218a0
+void strategic_entity::set_color(int c)
+{
+    for (std::vector<mesh*>::iterator it = meshes.begin(); it < meshes.end(); ++it)
+        (*it)->color = c;
+    if (fx) fx->set_color(c);
+}
+
+} // namespace rgl

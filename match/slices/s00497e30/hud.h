@@ -1,4 +1,4 @@
-// hud.h: the mission HUD widget family that slice s00497e30 decompiles. The three functions run on two
+// mission_hud_buttons.h: the mission HUD widget family that slice s00497e30 decompiles. The three functions run on two
 // related objects:
 //   * 0x497e30 and 0x498390 are methods of the two-bar/one-colour widget (the same class as slice
 //     s00497880; the layout matches up to the mesh pointers) — 0x497e30 is the animating refresh of the

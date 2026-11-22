@@ -58,11 +58,11 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
 
 - Eighth session: **the map is alive** (work/port_shots/l8d_m0.png: the party icon on its horse with its count, towns,
   castles and villages with their labels, a looter party, the camera at its normal height). The map tick never ran:
-  GameG::tick (inventory_panel/game_tick.cpp) and the track code (party_tracks.cpp) read GameData through
+  GameG::tick (game/campaign/game_tick.cpp) and the track code (party_tracks.cpp) read GameData through
   `#define x FLD(T, 0x...)` raw 32-bit offsets, so `f94` (stop) read garbage and the tick returned every frame (no party
   ticks, no time). They are GameData's members now (f94, rest_period, f14058 the time speed, timer1a298, game_clock, the
   fog1/fog2/fog3 colours, wind, ents, map_obj, map_track, track_entity); the event pool cursor is EventPool::next / first
-  (game/event_pool.h). Party::model is the real rgl::strategic_entity (the PartyModel vtable/pad view put `visible` in a
+  (game/campaign/event_pool.h). Party::model is the real rgl::strategic_entity (the PartyModel vtable/pad view put `visible` in a
   pad and called slots off by one); the click's plane hit is face::intersect (PlaneTrace view: +0x20 / +0xa0 where face has
   w / normal at +0x28 / +0xa8 at 64 bits). With those, a terrain click picks the ground and issues the move order
   (MAPDBG trace: best face found, shares = 1, action 6), time runs (speed 8.6), and the path search ran.
@@ -70,16 +70,16 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
 - Ninth session: **save and load work.** Restore a Saved Game -> slot -> Restore loads the save onto the map
   (work/port_shots/l9b_a.png: the party at the Training Field, the date, the map bar); Esc -> Save & Exit writes the save
   (same size as before; reloading the re-saved file works, l9e_a.png). The note block is one `SoaBlock notes` member
-  (include/note_block.h: times[8], texts[8], tableau) in Troop, FactionRec, QuestRec, Party and mission5/data_files.h's
+  (game/ui/note_block.h: times[8], texts[8], tableau) in Troop, FactionRec, QuestRec, Party and game/campaign/data_files.h's
   file records; read_soa / write_soa take `&notes`. Game::scenes is a SceneFile* (load_parties read the slots at
-  32-bit offsets); scene_file.h no longer includes rgl/stream_inline.h (its includers do), so party/game.cpp can include it.
+  32-bit offsets); scene_file.h no longer includes engine/io/stream_inline.h (its includers do), so game/campaign/game_state_load.cpp can include it.
   Recipe (ASan, sandboxed saves): `MB_USER_DIR=<dir>` (port/platform/fs.cpp: Documents and AppData under <dir>; copy
   ~/Documents/Mount&Blade Savegames and ~/Library/Application Support/Mount&Blade there, the user's saves stay untouched),
   Restore `click 0.54 0.615` at 45, slot 1 `click 0.18 0.18` at 57, Restore `click 0.78 0.93` at 60, the map is up by
   ~90; Esc `key 53`, Save & Exit `click 0.30 0.575`.
 
 - Tenth session: **quitting exits cleanly** ("Exit to Windows" from the main menu: exit code 0 under ASan, FinalCleanup and
-  every static destructor run). Fixed on the way: RecD / RecI folded into TriggerRec (include/trigger_rec.h) / menu_item;
+  every static destructor run). Fixed on the way: RecD / RecI folded into TriggerRec (game/data/trigger_rec.h) / menu_item;
   ~MissionTemplate / ~MenuRec + `delete[]` (cl emits ??_E 0x4c3430 / 0x4c4f40, MATCH); trigger_entry's clock is a Timer
   (GameVec::stamp wrote it at 32-bit offsets into the block text); Terrain::reset and PanelMesh::build_panel on members
   (they wrote 1.0f into the layer names and 1 into the gui meshes' kids vectors); resmgr::~resmgr deletes each block
@@ -102,7 +102,7 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
   caller (port/platform/window.cpp: the RGL ERROR boxes).
 
 - Twelfth session (lane 12): **the agent record is one class.** Step 1: the AI block at +0x258 is `AgentAi Agent::ai`
-  (game/agent_ai.h: constructor 0x475e50, init 0x463370, both still byte-exact; was ViewState / ViewBody and Agent's flat
+  (game/agent/ai/agent_ai_game.h: constructor 0x475e50, init 0x463370, both still byte-exact; was ViewState / ViewBody and Agent's flat
   fields with 32-bit pads). Its timers are clock2_timer (the constructor's five timer starts are the members' own),
   `input_q` is a real `std::deque<InputRec>` (Tail2 is gone from the agent; deque<InputRec>::_Tidy is byte-identical to
   deque<int>'s 0x4c4d10, so ICF folds them), InputState is {bits, f4, move}. Agent code reads `ai.goal`, `ai.path_pos`...
@@ -126,11 +126,11 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
   `rgl::strategic_entity*` (AgentBody gone: body->m is `local`, body->skel is `fx`), the skeleton is FxDef (Skeleton /
   Region / BoneRec / skeleton.h's controller gone; Skeleton's methods are FxDef's: ensure_updated 0x43e740, rec 0x43f260
   (returns `&elems[i].m84`), set_visible 0x452f80 (`bool`), remove_group 0x439ec0, start_anim 0x439fc0, all_groups
-  0x43a130; curve.cpp's reset_rec / rec_shaped_phase / set_rec_phase), the channels are EnvRec (Channel / Curve / SkelX
+  0x43a130; env_curve.cpp's reset_rec / rec_shaped_phase / set_rec_phase), the channels are EnvRec (Channel / Curve / SkelX
   gone: channel.h deleted; EnvRec::busy 0x433840 / unshape / set_phase, `gui_timer tm` at +0x20 (was clock / t0; needed
   for reset_rec's byte match), `KeyPair wt` {w[2], offs[2]} at +0xc0 (Channel::rate is offs[1], an int), pose_src is an
   int flag). Raw `recs + i * 0x1dc + 0x84` reads are `elems[i].m84` (aim bone 9, head 9's origin, 3 / 6 / 19 / 12).
-  The skeleton resource is frame_set with core/bone.h's Bone (moved out of resource_io.h; cone / twist limits are floats,
+  The skeleton resource is frame_set with engine/physics/bone.h's Bone (moved out of resource_io.h; cone / twist limits are floats,
   `bodies` is `std::vector<CapDef>`): SkelData / ChanRec gone (capsule_hit, start_ragdoll, ragdoll_update).
   world_data's CarryBody / CarrySkel / CarryElem and agent_hud's Skeleton / SunBody views are gone too.
   MSVC: every touched manifest byte-exact under run_all (agent_logic 141/141, curve, agent_pick, agent_stats,
@@ -140,17 +140,17 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
   material half gone), Agent::camera_params (writes the body's capsule; AgentBodyV / CamParams gone),
   Terrain::compute_normals (a casted hidden-result-pointer call to tri_normal broke on arm64; row to nonmatching, 25,
   equiv PASS), Mission::prop_ents (`std::vector<rgl::entity*>`, was vector<int> v63c0 fed by EntVec), Terrain::ents
-  (rgl::entity*, TEntity gone), the animations (include/anim_set.h: AnimSet / AnimDef / SubAnim; DefList, RecH, AnimDefV /
+  (rgl::entity*, TEntity gone), the animations (engine/fx/anim_set.h: AnimSet / AnimDef / SubAnim; DefList, RecH, AnimDefV /
   W, PartV, SubV, Record / ActorItemRec, Group gone; psys_record::read is SubAnim::read), lod_group::set_material
   0x48cfc0 (ListHolder / Owned gone), Mission::copy_slot on MarkRec members (MarkRec is 0x138 bytes at 64 bits), the
   prop tween on PlacedObj (animate 0x467c50 / animate_to 0x4897a0 / set_position 0x489820; Prop, PropAnim,
   MissionView, ViewObj gone). Every touched manifest stays byte-exact under run_all.
   **Quick Battle now spawns every agent and runs the mission's first frame** (start_setup -> Mission::frame).
-  Lane 13's blocker (fixed in the fourteenth session): Mission::frame -> Agent::update -> update_attack -> FxAnim::update_poses2 faults: fx_anim.h's
+  Lane 13's blocker (fixed in the fourteenth session): Mission::frame -> Agent::update -> update_attack -> FxAnim::update_poses2 faults: fx_animation.h's
   AnimRec / FxBone / KeyObj are 32-bit views (AnimRec's pads put `table` / `ref` at the wrong 64-bit offsets; FxElem::c
   holds KeyObj pointers in `int c[2]`; KeyObj pads skel_anim's keys / tail). Fold: AnimRec -> EnvRec (f18 ->
   shaped_phase, cur -> cur_key, clock / start -> tm, wt -> wt.w, offs -> wt.offs + step_clock, v8c -> v7c[1], phase
-  0x4231f0 / shape 0x4232b0 become EnvRec's; curve.cpp's inline shape must stay inline under another name), EnvRec::ref
+  0x4231f0 / shape 0x4232b0 become EnvRec's; env_curve.cpp's inline shape must stay inline under another name), EnvRec::ref
   -> quaternion* (agent_logic 0x43d040 builds those quaternions as vector4 today), FxElem::c -> skel_anim* c[2],
   KeyObj -> skel_anim (KeyTable vs key_array / vec_array are one record), FxAnim's methods -> FxDef's.
   ASan Quick Battle recipe (machine busy with other lanes): main menu `click 0.45 0.695` at 90, Skirmish 1
@@ -162,17 +162,17 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
   0x477b70: IfaceB::slot1 is inline in iface.h, so a qualified call emits nothing; it needs an out-of-line definition).
 
 - Fourteenth session (lane 14): **the mission's first frame completes** (every agent's update and tick, the animation
-  pass, world::step). fx_anim.h's views are folded: AnimRec is EnvRec (phase 0x4231f0 / shape 0x4232b0 are EnvRec's;
-  curve.cpp's inline copy is EnvRec::eased), FxAnim's methods are FxDef's, FxBone is FxElem (quat4 gone: q / abs_q / qe4 /
+  pass, world::step). fx_animation.h's views are folded: AnimRec is EnvRec (phase 0x4231f0 / shape 0x4232b0 are EnvRec's;
+  env_curve.cpp's inline copy is EnvRec::eased), FxAnim's methods are FxDef's, FxBone is FxElem (quat4 gone: q / abs_q / qe4 /
   qa / qb are quaternion, `skel_anim* c[2]`, t[i][j] instead of the raw +0x104 slot), KeyObj is skel_anim, KeyTable /
-  KeyFrames / Elem12 are key_array (include/key_table.h: find 0x423a50, sample 0x436ae0; KeyHolder::sample is
+  KeyFrames / Elem12 are key_array (game/input/key_table.h: find 0x423a50, sample 0x436ae0; KeyHolder::sample is
   skel_anim::sample 0x436b90; Anim gone, SubAnim::anim is skel_anim*), EnvRec::table / keys_a / keys_b / ref are
   skel_anim* / quaternion*. value() and chain() return by value (the original ABI; aliases.ld's FxAnimQ::qvalue ->
   FxAnim::value alias bound a by-value call to the out-parameter function, cdecl/4 vs /5).
   Then, one ASan run each: Agent::draw_name (AgentFx was a pad view of the "agent_name" lod mesh: `node_groups*
   name_label` +0x190, build_appearance's ap[21]; its origin is a vector4: layout_text reads w), SceneEnt folded
-  (spawn_missile / spawn_prop / move_step / ai_update_control on rgl::entity, rgl::dynamic_entity (rgl/dynamic/rigid_body.h,
-  split out of dynamic_entity.h so agent_logic does not see that header's vector specializations) and
+  (spawn_missile / spawn_prop / move_step / ai_update_control on rgl::entity, rgl::dynamic_entity (engine/physics/rigid_body_rgl_dynamic.h,
+  split out of rigid_body.h so agent_logic does not see that header's vector specializations) and
   rgl::strategic_entity; world::collect_boxed fills a std::vector<rgl::entity*> (was vector<unsigned>: the pointers were
   truncated); Missile::ent is rgl::entity*), Agent::pick / fill_weights / AgentX 0x432470 / agent_hud's rebuild on
   members (raw +0xd8 / +0x130 / +0x100 / +0x240), Mission::water (+0x65a8 was `float f65a8` read as a SkyF* view: the
@@ -185,21 +185,21 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
   older measures), ai_update_control 0x448eb0 4675 -> 4716, move_step 0x45d820 5695 -> 5758 (WEAK).
   Second change set: snd_slot / snd_bank were a second class for TriggerRec / TriggerVec (the same 0x78-byte record:
   intervals, state, the two DialogBlocks, three gui_timers): update 0x4625d0 is TriggerRec's, update_all 0x462760 /
-  randomize 0x462790 TriggerVec's, and mesh_game.cpp / mesh_start.cpp walk the template's TriggerVec (the SndSlotS /
+  randomize 0x462790 TriggerVec's, and agent_spawn_and_tick.cpp / mission_start_setup.cpp walk the template's TriggerVec (the SndSlotS /
   SndSlot / SndBank / SndSetF pad views strode 0x78 bytes; snd_slot / snd_bank stay typedefs for mission_5.cpp, V4's).
   The rain emitter is `new rgl::psys(0)` (start_setup 5296 -> 5264; the operator new(0x1bc) stand-in left it short and
-  uninitialised), mesh_pool (psys.h's pad view of the render scene's owner) is rgl::world (get_mesh 0x413d30 is
+  uninitialised), mesh_pool (particle_system.h's pad view of the render scene's owner) is rgl::world (get_mesh 0x413d30 is
   world's, scene::owner without the union). ASan ignores ItemKind::is_ranged: choose_action reads g_items[-1] as the
   original does (cmp edi,-1; jl at 0x44d4d9).
   With both sets **Quick Battle runs start_setup to the end** (spawns, the setup frames with every agent's update and
   tick, the triggers, the shadow-map render) and reaches the battle screen's first frame.
-  **Current blocker**: MissionBlocker::frame_update -> update_status 0x4fb350 (agent5/agent_hud.cpp) dereferences
+  **Current blocker**: MissionBlocker::frame_update -> update_status 0x4fb350 (game/ui/hud/agent_hud.cpp) dereferences
   status_group (+0xc4, +0x138 at 64 bits) while it is still null: init_screen 0x4f7f00 (slot 2, which builds it) never
   ran. A trace of WindowMgrW::open shows screens 3 and 23 opened, never 14, before the mission screen's first
   frame_update; so screen 14 reaches the top of g_windows.dq, or gets ticked, some other way (custom_battle_go ->
   start_setup -> MapFlags::commit). Next: find that path (likely a raw-offset or view read of the screen id).
   Reproduce in 3 s: `run_native.py --start quick_battle:1 --user-dir <sandbox>` (Release; ASan ~8 s).
-  agent5/agent_hud.cpp still has raw offsets in init_screen's grow_health branch (troop +0x58 / +0x7a) and
+  game/ui/hud/agent_hud.cpp still has raw offsets in init_screen's grow_health branch (troop +0x58 / +0x7a) and
   agent_hud.h a raw `* 0x5928` agent lookup.
   TriggerTag (game +0x139e8) is the same {count, array, one} record as TriggerVec (game_tick / troop_rec cast it);
   the missile pool is still four views of one record (RecJ / Missile / MissileU / PropRecF, plus Wielder for its item
@@ -222,9 +222,9 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
   original's x87 on the frames run before the save), the header's 0x58..0x63 (camera / map position) and a few small
   counters (0xc5527 2 -> 5, 0xc60c7 0x173 -> 0): state, not a writer bug. Loading it back in the original is still untested.
 - (Lane 12's battle-start blocker, the AgentBody / Skeleton / Channel / Curve fold, is done: see the thirteenth session.)
-- Views met on the way, still open: ptype vs mesh_2.h's ObjectList / shape_entry (AnimBox now has the same members,
+- Views met on the way, still open: ptype vs poly_mesh_edge_face_ops.h's ObjectList / shape_entry (AnimBox now has the same members,
   but two classes remain; module_load reads through `(ObjectList*)&g_ptypes[i]`), TimerList vs GameVec (one class
-  {count, 0x30-byte trigger_entry/TimerChild, spare}; MissionObj::read and MapIcon::read cast), PolyGeom (mesh_pass.cpp)
+  {count, 0x30-byte trigger_entry/TimerChild, spare}; MissionObj::read and MapIcon::read cast), PolyGeom (render_passes.cpp)
   vs NavData (NavCell is an incomplete GeomFace), EntVec / Mission::v63c0 (the prop entity list is a vector<int> holding
   entity pointers; EntVec::insert_n goes through vector<int>::_Insert_n: truncates at 64 bits), rgl::world::
   collect_boxed's std::vector<unsigned> of entity pointers (agent_logic.cpp 0x442180), misc.h's Prop / prop_ent.h's
@@ -236,13 +236,13 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
   mission setup runs inside the Start click's frame, ~0.3 s).
 - **Towns and battles are missions**: the agent body is rgl::strategic_entity seen through AgentBody (agent_obj.h: id,
   frame +0x58, skel at fx +0x304), AgentBodyV / SkelBodyV / SunBody (vtable views with slot 0 a plain virtual), EntityG /
-  AgentS (mesh_game.cpp: the spawner's 32-bit views of the entity and the agent, with `operator new(0x7c)` / `0x64` raw
+  AgentS (agent_spawn_and_tick.cpp: the spawner's 32-bit views of the entity and the agent, with `operator new(0x7c)` / `0x64` raw
   sizes for FxDef / capsule), SceneEnt, TEntity, TableauEntity(V). One pass folding them into strategic_entity / Agent is
   the next big step (Mission::spawn 0x4832b0 is the first function a town or battle runs). The agent record itself is two
-  classes: the pool allocates MAgent (terrain_b/agent_rec.h, an IfaceB with a real vptr: 8 bytes at 64 bits) while
+  classes: the pool allocates MAgent (game/terrain/agent_rec.h, an IfaceB with a real vptr: 8 bytes at 64 bits) while
   agent_obj.h's Agent started with `char pad0[4]` for the vptr. Lane 10: Agent is an IfaceB now (used / id are in_use /
   pool_id), slot_vars a SlotVec, MAgent's Timed / ClockStamp Timers, AppearanceLods shared: `view_layout.py cmp
-  src/game/terrain_b/poly_mesh.cpp:MAgent src/game/agent/agent.cpp:Agent` agrees up to +0x250; 303 members still apart from
+  src/game/terrain/poly_mesh.cpp:MAgent src/game/agent/agent_queries.cpp:Agent` agrees up to +0x250; 303 members still apart from
   MAgent's ViewState view at +0x258 on (Agent's body / goal / path_face ...). Fold MAgent into Agent (one class, the
   constructor 0x477a30 and reset 0x472f90 as Agent members) before anything else on the mission path. Quick Battle (main menu
   0.45 0.695) reaches a mission without character creation: the fastest test.
@@ -250,7 +250,7 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
   non-trivial in another is passed by value differently on arm64) would crash the same way; search for them when a
   by-value struct argument arrives as garbage.
 - note_window (Reports): keys_scroll / data_scroll are TargetW, a pad view (`pad178[0x484 - 0x178]`, then src) and its
-  ValueSource (hud.h) is UiD seen through a numbered vtable; PartyScreen::frame_update 0x531800 indexes member_list by
+  ValueSource (mission_hud_buttons.h) is UiD seen through a numbered vtable; PartyScreen::frame_update 0x531800 indexes member_list by
   `((TargetW**)this)[slot]`. Fold to Camera::follow[1] / UiD members (Reports, Party, the exchange screens).
 
 - Save path (lane 7): GameData::save_state, write_missions, QuestRec::write (was Rec138), FactionRec::write300 (was Rec300),
@@ -260,34 +260,34 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, 
   Agent_s284a0 / _s29840 / _s29ec0 / _s2b5c0 index the agent pages with 32-bit strides and pads. Fold them like
   s29130 (update_marks): real Agent / Mission / GameData members. Battles will need it.
 - `rgl::ptr_list::operator=` / MeshVec::operator= are aliased to vector<int>::operator= (port/link/aliases.ld): the map
-  widget copies the world's light list through it every frame (render_shape.cpp); give them typed definitions.
+  widget copies the world's light list through it every frame (map_widget_render.cpp); give them typed definitions.
 - Vtable views whose slot 0 is a plain virtual (agent_hud.h ScreenOps was one: at 64 bits the virtual destructor takes two
   Itanium slots, so `begin()` (slot 9) called the wrong function and the menu stayed blank): call the real class's virtual.
 - **Find view mismatches with tools/port/view_layout.py** (new): `view_layout.py cmp A.cpp:RealClass B.cpp:View` lays both
   classes out with clang for linux-i686 and macos-arm64 and prints every member of the view whose 64-bit offset differs from
   the real class's member at the same 32-bit offset. Game vs GameData now agree completely (0 MOVED). Known open pairs:
   Event vs party2's BattleRec (pad0[4] instead of IfaceB's vptr: every field moves), SceneFile vs game_data.h's Level494,
-  the 12 game-object views in mission5/mission_5.h (GameData_s29130 / s29840 / ..., pads from +0: battles), Poser::lists
+  the 12 game-object views in game/mission/mission_frame_update.h (GameData_s29130 / s29840 / ..., pads from +0: battles), Poser::lists
   (+0x34) as the lod mesh, PropEnt.
 - Raw strides / offsets still to convert: `* 0x5ac8` became `* sizeof(Party)` everywhere (22 sites); search the same way for
   0x98 (Event), 0x508 (Troop), 0x5928 (Agent), 0x494 (scene), 0x68 (menu_item) strides; save_state.cpp:20 `(char*)this + 4`.
 - `rgl::cell::b` / grid_cell::objs is a `std::list<int>` holding shape pointers (world_cells.cpp, the folded 0x41f640).
 - **Raw allocation sizes**: `operator new(0x..)` with a 32-bit class size overruns at 64 bits (make_editor_list's Camera
-  did). Fixed for the widgets; still raw: mesh_game.cpp (0x7c, 0x64), mesh_start.cpp psys 0x1bc, mesh_appear.cpp lod2_a
-  0xe0, gui_edit.cpp list node 0x28 (`rg -n "operator new\(0x" src`).
+  did). Fixed for the widgets; still raw: agent_spawn_and_tick.cpp (0x7c, 0x64), mission_start_setup.cpp psys 0x1bc, agent_appearance.cpp lod2_a
+  0xe0, editor_selection_and_translation.cpp list node 0x28 (`rg -n "operator new\(0x" src`).
 - **Views whose slot 0 is a plain virtual** call the wrong slot at 64 bits (UiE's TextSizeView called set_font):
-  `rg -l "virtual void (s00|d00|v00|r0)\(\)" src` lists ~20 files; view_open.cpp's Entity (3D portrait branch only) is one.
+  `rg -l "virtual void (s00|d00|v00|r0)\(\)" src` lists ~20 files; character_sheet_view.cpp's Entity (3D portrait branch only) is one.
 - Header-count quirk (cl 13.10), resolved for idiom: Recd8::update_days and C4c3050::init are members now, message_window.h
   and config.h's music_res are gone. Cost: video_page.cpp's 0x4d63b0 moved to its .nonmatching.txt (two g_windows deque
   loads swapped, 581/584; eq WEAK). chk.py/check.py mask relocation addends and call it MATCH: keep it out of the manifest.
-- Troop serializers still walk the record raw (party/game.cpp 0x51e... `p + 0x3c0 + i * 8`, char_sheet/save_records.cpp
+- Troop serializers still walk the record raw (game/campaign/game_state_load.cpp 0x51e... `p + 0x3c0 + i * 8`, game/save/save_records.cpp
   `p + 0x3c0`, `p + 0xa4` ...): save / load will need them on Troop members.
 - check.py / chk.py mask relocated bytes, so a row whose only difference is a relocation addend (0x4d63b0: g_windows+0x84
   vs +0x88) reads as MATCH and check.py moves it back to the manifest; run_all.py reports it (DIFF n bytes, reloc addend).
-- mesh_appear.cpp, mesh_slot.h, terrain_b/tmesh.h: lod_group seen as lod2_a / tmesh / lod_mesh_x / Poser views; the
+- agent_appearance.cpp, mesh_slot.h, terrain_b/tmesh.h: lod_group seen as lod2_a / tmesh / lod_mesh_x / Poser views; the
   layouts agree at 64 bits today (view_layout.py) but they should become lod_group's members.
 - QuestPage (options_panel/quest_page.h) is still a view of Hud for fill() 0x4d5ba0 (w44/w48/sel): convert like Recd8.
-- ItemA::frame_update (map_editor/exchange_screens.cpp) keeps `int slot = (int)this` for src().pick / g_map_flags.commit.
+- ItemA::frame_update (game/ui/screens/mission_menu_and_exchange_screens.cpp) keeps `int slot = (int)this` for src().pick / g_map_flags.commit.
 - `GameMapView::scan_arrays` is now `Game::scan_arrays` (port/asan_ignore.txt updated): it stores one float past
   map_arrays::scan_a, as the original does.
 - The ASan build sat on "Launching Game..." for 100 s where the plain build reaches the menu in ~40 s: give it longer.
@@ -351,7 +351,7 @@ load (other lanes' builds): wait on states, never on times.
 ## Fixed in this lane (commits a9f7050a .. )
 
 Eighth session (37e960f3 ..): GameG::tick / track_parties / update_tracks on GameData members (the FLD offset macros
-removed), EventPool (game/event_pool.h), Party::model = rgl::strategic_entity (strategic_entity::set_fade 0x4b1800),
+removed), EventPool (game/campaign/event_pool.h), Party::model = rgl::strategic_entity (strategic_entity::set_fade 0x4b1800),
 face::intersect 0x51a2d0, battle_rec.h folded into Event (+ Event::read 0x51e970, SpriteTable::at an Event*),
 count_units on Party::stacks (0x490ce0 191 -> 327, eq PASS), the hnode / OpenItem by-value ABI mismatch (copy
 constructors only under cl), Troop / faction strides in the inventory / party screens, the compass via
@@ -377,9 +377,9 @@ report is often not written).
 
 Third session: Game has the real map members (map_track, track_entity, `ents` std::vector<rgl::mesh*>, map_obj, fog1..3,
 `wind` Light*, compass, ScriptDebugger debugger, the editor's `sel` vector, EventContext event_ctx; TriggerTag / SimpleTag shared
-in include/trigger_tags.h, ScriptDebugger / EventContext in include/game_parts.h; PartyMgr ends at +0x139dc), GameMapView is gone;
+in include/trigger_tags.h, ScriptDebugger / EventContext in game/data/game_parts.h; PartyMgr ends at +0x139dc), GameMapView is gone;
 add_order_arrow / spawn_battle_icon are GameData members (`new sphere`), entity::add_mesh (0x442110, was Poser::add_extra),
-build_legend_mesh(rgl::entity*), one MapIcon (game/map_icon.h), FactionRec's rank vector, SceneFile as the script's scene
+build_legend_mesh(rgl::entity*), one MapIcon (game/campaign/map_icon.h), FactionRec's rank vector, SceneFile as the script's scene
 (visitors, slots), PartyTemplate::load (0x4bdff0, was sound_def::save with raw offsets) and its stacks, spawn_around /
 add_sprite take a Vec2, the script block's locals are `__int64[128]` (step_less / pop_try take `__int64*`), the interpreter's
 c_str view is a tstring, MenuRec / menu_item for g_menus, HudOuter / FieldPanel's view widget on Camera / MissionUi,

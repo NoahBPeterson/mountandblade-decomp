@@ -1,0 +1,2 @@
+../src/game/campaign/campaign_screen_camera.cpp  ??0MapWidget@@QAE@XZ  004ed630  /O2 /MT /Gy /TP
+../src/game/campaign/campaign_screen_camera.cpp  ??_GMapWidget@@UAEPAXI@Z  004ed6b0  /O2 /MT /Gy /TP

@@ -1,0 +1,171 @@
+//-----------------------------------------------------------------------------
+// File: text_editor_widget.cpp  (0x48baa0..0x48be00)
+//
+// Desc: the progress bar's value setter, and the single-line text editor widget UiE (constructor, key handler,
+//       update). Names provisional. Functions in ascending address order (cl's bottom-up emission).
+//       Flags: /O2 /MT /Gy /TP.
+//
+// Boundary: UiD::key (0x48b960, previous object) calls set_value (0x48baa0) forward, so 0x48baa0 starts an object.
+//-----------------------------------------------------------------------------
+#include "platform/image_addrs.h"
+#include "engine/core/tstring.h"
+#include "game/ui/widgets/text_editor_widget.h"
+#include "game/ui/gui_manager.h"             // gui_manager g_gui (0x5d7080): f1718 = last keyboard character, ui_active, mouse
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "engine/fx/keyframes.h"
+#include "engine/math/mat4_include.h"
+#include "engine/render/mesh_prims.h"
+#include "engine/math/vec.h"
+#include "engine/render/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/render/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+
+// 0x487b00: UTF-8 decoder (another object in the original; cl gave it a custom register convention: text in EDI,
+// out_len in EDX, buffer and &capacity on the stack). A static noinline copy here reproduces that convention.
+static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int* buf, const int* maxn)   // 0x487b00
+{
+    *out_len = 0;
+    int n = s->len;
+    int i = 0;
+    if (n > 0) {
+        do {
+            int cnt = *out_len;
+            if (cnt >= *maxn)
+                break;
+            unsigned char c = s->buf[i];
+            int ch;
+            if (c >= 0xf0 && c < 0xf5) {
+                ch = ((((((unsigned char)s->buf[i] & 7) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6 | ((unsigned char)s->buf[i+2] & 0x3f)) << 6) | ((unsigned char)s->buf[i+3] & 0x3f);
+                i += 4;
+            } else if (c >= 0xe0 && c < 0xf0) {
+                ch = (((((unsigned char)s->buf[i] & 0xf) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6) | ((unsigned char)s->buf[i+2] & 0x3f);
+                i += 3;
+            } else if (c >= 0xc2 && c < 0xe0) {
+                ch = ((((unsigned char)s->buf[i] & 0x1f) << 6) | ((unsigned char)s->buf[i+1] & 0x3f));
+                i += 2;
+            } else {
+                i++;
+                if (c >= 0x80)
+                    continue;
+                ch = (signed char)c;
+            }
+            buf[cnt] = ch;
+            *out_len = cnt + 1;
+        } while (i < n);
+    }
+}
+
+// @ 0x48baa0
+void UiD::set_value(float x)
+{
+    float v = (f170 - f16c) * (x / (rect_max[f178] - f17c)) + f16c;
+    v168 = v;
+    if (v < f16c) {
+        v168 = f16c;
+        return;
+    }
+    if (f170 < v)
+        v168 = f170;
+}
+
+// @ 0x48bb10
+UiE::UiE()
+{
+    f180 = 0;
+    f181 = 0;
+    f184 = 0x1c;
+}
+
+// @ 0x48bb50
+char UiE::key(unsigned p)
+{
+    char b = 0;
+    if (f180) {
+        if (p == 0x1000) {
+            char buf[0x2000];
+            int out_len[2];
+            int n;
+            b = 1;
+            int ch = g_gui.last_key;
+            int maxn = 0x800;
+            decode_utf8(&name, out_len, (int*)buf, &maxn);
+            if (ch >= 0x20 && out_len[0] < (int)f184) {
+                char u[4];
+                if (ch < 0x80) {
+                    u[0] = (char)ch;
+                    n = 1;
+                } else if (ch < 0x7ff) {
+                    u[0] = (char)((ch >> 6) | 0xc0);
+                    u[1] = (char)((ch & 0x3f) | 0x80);
+                    n = 2;
+                } else {
+                    u[0] = (char)((ch >> 12) | 0xe0);
+                    u[1] = (char)(((ch >> 6) & 0x3f) | 0x80);
+                    u[2] = (char)((ch & 0x3f) | 0x80);
+                    n = 3;
+                }
+                for (int i = 0; i < n; i++)
+                    name.push_back(u[i]);
+                get_xy();
+            } else if (ch == 8) {
+                if (name.len > 0) {
+                    n = 1;
+                    const char* q = name.buf + name.len - 1;
+                    while ((*q & 0xc0) == 0x80 && n < name.len) {
+                        n++;
+                        q--;
+                    }
+                    name.erase(name.len - n, n);
+                }
+                get_xy();
+            }
+            if (g_gui.last_key == 0xd)
+                goto leave_edit;
+        } else if (p == 0x10) {
+leave_edit:
+            f180 = 0;
+            g_gui.ui_active = 0;
+            g_gui.play_sound();
+            b = 1;
+            set_key_flags(0x10000);
+        }
+    } else if (p == 0x10) {
+        f180 = 1;
+        b = 1;
+        g_gui.ui_active = this;
+        g_gui.play_sound();
+        if (f181) {
+            {
+                tstring tmp("");
+                set_text(tmp);
+            }
+            unsigned c = 0xff000000;
+            set_color(c);
+            f181 = 0;
+        }
+    }
+    set_key_flags(p);
+    refresh();
+    return b;
+}
+// @ 0x48bda0
+void UiE::render(rgl::scene* a, float* b, float* c, float* d)
+{
+    if (f180 != 0)
+        f178 = 0;
+    else
+        f178 = 1;
+    if (f178 != 0) {
+        b11c[3] = 0;
+        b11c[2] = 1;
+        b11c[1] = 0;
+        MissionUi::render(a, b, c, d);
+        return;
+    }
+    b11c[3] = 0;
+    b11c[2] = 0;
+    b11c[1] = 1;
+    MissionUi::render(a, b, c, d);
+}
+
+// (0x4171f0 in the original's table: a leaf the linker shares with other widgets' kind slots)
+int UiE::kind() { return 6; }

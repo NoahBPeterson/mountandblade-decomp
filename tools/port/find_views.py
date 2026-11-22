@@ -49,6 +49,13 @@ import argparse, bisect, collections, json, os, re, sys
 
 # FIND_VIEWS_ROOT: scan another checkout (tools/port/port64_validate.py runs it on old commits' worktrees)
 ROOT = os.environ.get('FIND_VIEWS_ROOT') or os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+try:   # the shared headers / the rgl layer by their old homes (src/include/, src/rgl/): see find_views_core.json
+    _core = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'find_views_core.json')))
+except OSError:
+    _core = {}
+CORE_INCLUDE, CORE_RGL = set(_core.get('shared_include', ())), set(_core.get('rgl', ()))
+OLD_DIR = _core.get('old_dir', {})
+def old_dir(rel): return OLD_DIR.get(rel, os.path.dirname(rel))
 SRC = os.path.join(ROOT, 'src')
 PATH_DOCS = ['port/INTEGRATION_STATUS.md', 'docs/layout64_inventory.md']
 
@@ -486,15 +493,15 @@ class Index:
         if near:
             for r in rs:
                 if r.f is near: return r
-            d = os.path.dirname(near.rel)
+            d = old_dir(near.rel)
             for r in rs:
-                if os.path.dirname(r.f.rel) == d: return r
+                if old_dir(r.f.rel) == d: return r
             # included headers
             incs = re.findall(r'#include\s+"([^"]+)"', near.text)
             for inc in incs:
-                p = os.path.normpath(os.path.join(os.path.dirname(near.rel), inc))
-                for r in rs:
-                    if r.f.rel == p: return r
+                for p in (os.path.normpath(os.path.join(os.path.dirname(near.rel), inc))):
+                    for r in rs:
+                        if r.f.rel == p: return r
         return rs[0]
 
     def func_at(self, f, pos):
@@ -755,7 +762,7 @@ def classify(ix, r, info, recmap):
         return 'D', 'vector-shaped (%s)' % ('std:: base' if stdbase else '/'.join(sorted(names & VECFIELD)))
     real = info['real']
     if info['srcs'] and set(info['srcs']) <= {'slot', '?'} and 'slot' in info['srcs']:
-        return 'A', 'a screen in g_windows.arr[n] (slot_as<T>(n)): fold into that slot\'s screen class (head_rec family, game/screen_records.h)'
+        return 'A', 'a screen in g_windows.arr[n] (slot_as<T>(n)): fold into that slot\'s screen class (head_rec family, game/ui/screens/screen_records.h)'
     if not real:
         return 'C', 'overlays raw memory / no real record found' + (' (sources: %s)' % ','.join(info['srcs'][:3]) if info['srcs'] else '')
     rr = recmap.get(real)
@@ -768,17 +775,17 @@ def classify(ix, r, info, recmap):
 
 # hand triage (docs/views_inventory.md): name -> (class, reason[, file substring]); class '-' = not a view
 OVERRIDES = {
-    'MissionX': ('B', 'the script\'s Mission (157 mission() calls): EntryPoint[64] at +0x670 vs Mission\'s MarkRec[64], teams / mode / cam_frame to reconcile with game/mission.h, then mission() returns Mission*'),
-    'GameX': ('A', 'method twin of GameData (91 game() calls): declare the script\'s names on GameData (include/game_data.h), game() returns GameData*'),
-    'WVt': ('E', 'mostly folded (lane V2, 2026-11-20): cls_map / widget_mgr / widget_node / party2 / obj_tbl / mission_4 call MissionUi\'s virtuals by name; left: world_data.cpp 0x494110 (5 calls) and widget_mgr::scene (WVt*, slot 50 = ContainerBase::add_child), both waiting on that file. Next: the slot signatures are pointer stand-ins for references / by-value vec2 returns (MeshWidgetVt, text_slot, text_store show const V2& / const int& / text_size by value)'),
-    'PsOps': ('E', 'gone from the sources (only a comment in inventory_panel/inv_common.h names it)'),
+    'MissionX': ('B', 'the script\'s Mission (157 mission() calls): EntryPoint[64] at +0x670 vs Mission\'s MarkRec[64], teams / mode / cam_frame to reconcile with game/mission/mission.h, then mission() returns Mission*'),
+    'GameX': ('A', 'method twin of GameData (91 game() calls): declare the script\'s names on GameData (game/data/game_data.h), game() returns GameData*'),
+    'WVt': ('E', 'mostly folded (lane V2, 2026-11-20): cls_map / widget_mgr / widget_node / party2 / obj_tbl / mission_4 call MissionUi\'s virtuals by name; left: game_data_party_quest.cpp 0x494110 (5 calls) and widget_mgr::scene (WVt*, slot 50 = ContainerBase::add_child), both waiting on that file. Next: the slot signatures are pointer stand-ins for references / by-value vec2 returns (MeshWidgetVt, text_slot, text_store show const V2& / const int& / text_size by value)'),
+    'PsOps': ('E', 'gone from the sources (only a comment in game/mission/inv_common.h names it)'),
     'PsOpsW': ('E', 'PsOps with slot +0xa4 returning WRet: the same virtual under another signature; reconcile with WVt / PsOps first'),
     'ElemVt': ('F', 'declaration-only polymorphic class kept because cl 13.10 swaps two loads in Recf0::frame_update (0x4d63b0) without it; test removing it with run_all on video_page.cpp'),
     'contact_ops': ('F', 'D-shaped (VC7.1 vector<Contact> members written out) and load-bearing: the stock <vector> does not give 0x427450 / 0x427540 / 0x427590; the 64-bit build can use std::vector<Contact> under a non-MSVC branch'),
     'IntStdVec': ('D', 'std::vector<int>::_Insert_n made public over IntVec; keep the specialization declaration in int_vec_insert.h (its placement is codegen-relevant, see the header comment), make IntVec a std::vector<int>'),
-    'lod_mesh': ('B', 'rgl::lod_mesh (rgl/mesh.h) is itself a view: its comment says the 0xe0-byte object is lod_group / lod_mesh2 (ctor 0x41c2a0); reconcile lists / m8c / mask with rgl/scene/scene.h lod_mesh2 and resmgr.h lod_group'),
+    'lod_mesh': ('B', 'rgl::lod_mesh (engine/render/mesh.h) is itself a view: its comment says the 0xe0-byte object is lod_group / lod_mesh2 (ctor 0x41c2a0); reconcile lists / m8c / mask with engine/scene/scene.h lod_mesh2 and resource_manager.h lod_group'),
     'PropEnt': ('A', 'a 32-bit-offset view of rgl::entity (docs/layout64_inventory.md: pad4[0x108 - 4], Vec of int words): mission_3 / terrain_a PlacedObj should read rgl::entity lods / meshes'),
-    'PresentationRec': ('-', 'the real record (include/prsnt_rec.h, integration lane): reached through void* tables, not a view'),
+    'PresentationRec': ('-', 'the real record (game/data/prsnt_rec.h, integration lane): reached through void* tables, not a view'),
     'Blob16': ('A', '16-byte block copy of Sel::rec[].a / .c (int[4]): give those members a 4-int struct type and assign it; no 64-bit effect'),
     'CamSlot': ('A', 'Mission +0x6748..+0x67f4 (CAMSLOT macro, 61 uses, all exact rows): mission.h has f6748 / frame_a / frame_b / blend_*; name them as CamSlot names them and make CamSlot a Mission member'),
     'GameData_s261e0': ('B', 'one of the per-slice GameData views (s261e0): +0x1a090 int map_editor vs GameData\'s member there; reconcile then use GameData'),
@@ -875,7 +882,7 @@ def main():
     for r in ix.recs:
         # the fullest definition of a name stands for it (a TU-local stub of the same name loses)
         o = recmap.get(r.name)
-        if o is None or (len(r.fields) + len(r.methods), r.f.rel.startswith('src/include/')) > (len(o.fields) + len(o.methods), o.f.rel.startswith('src/include/')):
+        if o is None or (len(r.fields) + len(r.methods), r.f.rel in CORE_INCLUDE) > (len(o.fields) + len(o.methods), o.f.rel in CORE_INCLUDE):
             recmap[r.name] = r
     refs = collections.Counter()
     for f in ix.files: refs.update(re.findall(r'[A-Za-z_]\w*', f.code))
@@ -1007,7 +1014,7 @@ def main():
         if view:
             info['class'], info['reason'] = classify(ix, r, info, recmap)
             # confidence that this is a view and not a real record reached through casts
-            core = r.f.rel.startswith(('src/include/', 'src/rgl/')) and not r.f.rel.startswith('src/rgl/xmlcfg/')
+            core = r.f.rel in CORE_INCLUDE or r.f.rel in CORE_RGL
             if nm_sig or (rec_srcs and r.pads) or wraps.get(k):
                 conf = 'high'
             elif core or refs[r.name] > 2 * len(cs) + 4 or (not rec_srcs and not r.pads):

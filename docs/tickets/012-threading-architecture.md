@@ -10,11 +10,11 @@ work-stealing pool) and parallelise the subsystems that are naturally data-paral
 ## Evidence: what exists
 
 - Frame loop (single thread): `CD3DApplication::Run` 0x402ee0 -> `Render3DEnvironment` 0x402430 -> `FrameMove` (dt as float seconds from `DXUtil_Timer`, variable timestep) -> `Render` -> `Present`;
-  frame limiter is a **spin-wait** `while (fElapsedAppTime < m_fMinFrameTime) fElapsedAppTime += DXUtil_Timer(...)` (d3dapp.cpp:837; `m_fMinFrameTime` is `g_res_scale = 1/max_framerate`, default 100 fps, cls_map.cpp:141).
-- Worker: `_beginthread(loader_thread_body, 0x40000)` only if `force_single_threading == 0 && GetProcessAffinityMask > 1` (cls_map.cpp:130-137). Body (gui_edit.cpp:1699, 0x4c8900):
+  frame limiter is a **spin-wait** `while (fElapsedAppTime < m_fMinFrameTime) fElapsedAppTime += DXUtil_Timer(...)` (d3dapp.cpp:837; `m_fMinFrameTime` is `g_res_scale = 1/max_framerate`, default 100 fps, winmain_and_menu_screens.cpp:141).
+- Worker: `_beginthread(loader_thread_body, 0x40000)` only if `force_single_threading == 0 && GetProcessAffinityMask > 1` (winmain_and_menu_screens.cpp:130-137). Body (editor_selection_and_translation.cpp:1699, 0x4c8900):
   `WaitForSingleObject(g_mt_event); EnterCriticalSection(&g_mt_cs); if (g_paused_time > 0) { g_phys.update(g_paused_time); g_paused_time = 0; } LeaveCriticalSection`.
 - `Screen_s261e0::tick` 0x5261e0 (mission_5.cpp:455) **enters `g_mt_cs` for the entire tick** (input, `update`, `g_mission->frame(sdt,1)`, camera, GUI flush) and leaves it just before returning,
-  then `SetEvent(g_mt_event)`. `MissionG::frame` 0x483f60 (mesh_game.cpp:607) skips `g_phys.update(dt)` when `g_mt_inited` and accumulates `g_paused_time += dt` instead.
+  then `SetEvent(g_mt_event)`. `MissionG::frame` 0x483f60 (agent_spawn_and_tick.cpp:607) skips `g_phys.update(dt)` when `g_mt_inited` and accumulates `g_paused_time += dt` instead.
   Net effect: physics for tick N runs *concurrently with rendering of tick N* (and can never overlap game logic). It is a 2-stage pipeline, not parallel simulation.
 - Thread safety is by lock, not design: shared globals everywhere (`g_phys`, `g_mission`, `g_game`), 75 `volatile` uses, 4 `CRITICAL_SECTION` mentions.
 
@@ -25,11 +25,11 @@ work-stealing pool) and parallelise the subsystems that are naturally data-paral
 | physics step | `PhysSet::update` 0x472dc0: loops `recs[i].world` calling `NewtonUpdate` | per-world, independent worlds (up to 4+) | Jolt gives intra-world parallelism (011) |
 | world update | `rgl::world::step` 0x427f40 (entity_types.cpp:72): `ents[i]->update(dt)` for all entities, then `release_links/insert_obj` into `world_grid`, then emitters | entity update loop; insert phase writes shared grid | split update (parallel) from grid insertion (serial or sharded by cell) |
 | agents | `MissionG::frame` 0x483f60: three agent passes (non-horses, horses, ticks), `update_team_stats`, `update_team_counts` | per-agent AI/animation; reads shared team state | AI decisions in parallel against a snapshot, commit serially |
-| skinning | `FxDef::skin` 0x4291c0 (fxdef_skin.cpp): per vertex 4-bone blend of position+normal, `mesh::ensure_skin` 0x412700; 5 vertex decls incl. `skinning`/`normalmap_skin` | embarrassingly parallel per mesh | CPU skinning today; GPU skinning (008) removes it |
+| skinning | `FxDef::skin` 0x4291c0 (fx_def_skin.cpp): per vertex 4-bone blend of position+normal, `mesh::ensure_skin` 0x412700; 5 vertex decls incl. `skinning`/`normalmap_skin` | embarrassingly parallel per mesh | CPU skinning today; GPU skinning (008) removes it |
 | pathfinding | `NavMesh::reachable`, `ChainGraph::build_chain` (0x49d47a), `CellGrid::update_probes` 0x472ed0, `nearest_face@level` | per query | profile samples show `reachable@NavMesh` 0.4% of one load phase |
 | terrain generation | `Terrain::generate_heights` 0x4713d0, `make_river` 0x46bc70, `mesh_terrain` 0x481570/0x47ff60, `create_water` 0x480db0; hot leaf `noise_gradient` 0x414ae0 + `__ftol2` | per-tile/row; mission load only | parallelise rows; docs/patches.md open ticket "battle-load time" lists the same suspects |
-| particles | `psys`/`emitter::update` (world::step), `FxDef::render`, mesh_obj.cpp | per emitter | CPU particle meshes; candidate for GPU later |
-| scene rendering | `render_scene` (terrain_b.cpp, rgl/scene/render_scene.cpp), frustum cull `frustum_grid.cpp` | cull per cell parallel; command recording serial or per-pass (SDL_GPU supports multiple command buffers) | after 008 |
+| particles | `psys`/`emitter::update` (world::step), `FxDef::render`, mesh.cpp | per emitter | CPU particle meshes; candidate for GPU later |
+| scene rendering | `render_scene` (terrain_scene_renderer.cpp, engine/scene/render_scene.cpp), frustum cull `frustum_grid.cpp` | cull per cell parallel; command recording serial or per-pass (SDL_GPU supports multiple command buffers) | after 008 |
 | script interpreter | `Operation::execute` 0x49fa10 | inherently serial, global state | keep on the main thread |
 | resource loading | `resmgr::load_pack` 0x41e150, texture loads | I/O + parse | per-file parallel (013) |
 
@@ -48,7 +48,7 @@ Measured context: a real CrossOver run (patches/profile, 181.8 s, 134,928 sample
 ## Code sketch
 
 ```cpp
-// world::step, parallel update phase (src/rgl/scene/entity_types.cpp)
+// world::step, parallel update phase (src/engine/scene/entity_types.cpp)
 jobs::parallel_for(ents.size(), 64, [&](size_t lo, size_t hi) { for (size_t i = lo; i < hi; ++i) ents[i]->update(dt); });
 for (entity* e : ents) if (e->awake()) { release_links(e); insert_obj(e); }       // serial until world_grid is sharded
 ```

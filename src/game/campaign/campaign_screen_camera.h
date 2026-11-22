@@ -1,0 +1,125 @@
+#ifndef SCREEN_CAMERA_H
+#define SCREEN_CAMERA_H
+// Slice s004ece20: the campaign map camera tick and the map widget's constructor / destructor.
+//  0x4ece20  CampaignScreen::camera_update steps the campaign map camera by dt:
+//            * integrates the pan stick (+0x2bc / +0x2c0) and the yaw rate (+0x2c4) at 10x, then the
+//              zoom rate (+0x2c8) at 10x into the zoom (+0x2b8), clamped to 3.5 .. 105.  While the
+//              tactical-view globals 0xa17148 / 0xa1717c / 0x5a9fbc are all set the pan and yaw are
+//              pinned to 0 and the zoom limit becomes 235.
+//            * re-marks the parties (0x4ecce0) whenever the zoom changed.
+//            * eases the four rates to zero, each through its own (1 - dt*9.8, floored at 0) clamp.
+//            * clamps the camera to the +/-50 map rectangle (x: 0x5aa120 / 0x5aa118, y: 0x5aa124 /
+//              0x5aa11c) and derives the pitch from the zoom (0.014*zoom + 0.23, clamped 0.1 .. pi/2).
+//            * when g_game+0x88 is set, follows the selected party: inside 0.05*zoom of the party
+//              centre (+0x30, lifted by 1) it adds 4*dt*delta (delta clamped to +/-10) to the velocity,
+//              and outside it the velocity is zeroed.
+//            * integrates the velocity into the camera target (+0x290 .. +0x298) and halves it
+//              (1 - dt) per frame.
+//            * builds the frame: identity (0x40cd00), a +90 degree matrix_rotate_fu (0x40e570), then
+//              matrix_rotate_su (0x40e670, -yaw) and matrix_rotate_fu (-pitch).  The eye is the camera
+//              target (+0x290) plus zoom * (frame row s + row f), pulled half a row u back; 0x470f40
+//              finds the map position under it, which is moved to at least eye.z + 0.5.
+//            * writes the frame into the map widget's scene (frustum 0x41e4f0 at +0x1ac), computes the
+//              fog distance parameter (from g_game+0x13b3c#0x13b40 and the zoom, with the 1.7 / 1.6 /
+//              1.5 range factors), packs the fog colour (0x40e440 at g_game+0x58) and sets the fade
+//              (0x4624c0), then stores the inverse frame (scene+0x30c) and the listener position
+//              (scene+0x31c), copies the frame into the map label matrix (+0x1ac of the widget) and,
+//              the first time only, sets the 3D listener (0x5342dc).
+//  0x4ed630  MapWidget ctor  widget base 0x48ae20, vptr 0x598698, embedded scene 0x429740 at +0x17c,
+//                            then +0xe0 = 0, +0xe4 = 0, +0xf4 = 1.75, +0xf0 = 0, +0x2e6 = 1, +0x308 = 0x200.
+//  0x4ed6b0  MapWidget dtor  vptr 0x598698, scene dtor 0x41f4e0 at +0x17c, widget dtor 0x487c00, then
+//                            operator delete when the deleting flag's low bit is set.
+// flags /O2 /MT /Gy /TP
+#include "platform/image_addrs.h"
+#include "engine/math/float_consts.h"      // g_half, g_ten, g_k0_23 (the C_549D70 / C_549D74 / C_590E68 constants below)
+#include <new>
+#include <string.h>
+#include <math.h>
+#include "engine/math/rgl_math.h"
+
+using rgl::vector4;
+#include "engine/math/mat4_include.h"   // rgl::mat4: the 0x40-byte frame; rotate_fu 0x40e570 / rotate_su 0x40e670 are its members
+using rgl::mat4;
+
+// ---- the 16-byte engine string -------------------------------------------------------------------------
+#include "engine/core/tstring.h"
+
+// ---- widgets and overlays (src/game/ui/widgets/ui_widget.h, game/ui/widgets/container.h, map_widget.h) -----------------------------------
+#include "game/ui/widgets/ui_widget.h"
+#include "game/ui/widgets/container.h"
+#include "game/campaign/map_widget.h"
+
+// ---- the render scene (0x1d8 bytes, ctor 0x429740; see s00428240/world.h) ------------------------------
+#include "engine/scene/frustum.h"
+using rgl::frustum;
+#include "engine/render/mesh.h"
+#include "game/input/key_names.h"
+using rgl::scene;
+// the camera tick writes the scene container's camera through rgl::world (cam_dir / cam_pos; was the WorldCam view)
+
+// ---- the campaign screen (`this` of 0x4ece20) ----------------------------------------------------------
+#include "game/campaign/campaign_screen.h"            // CampaignScreen (the campaign map screen)
+
+// 0x4903e0 / 0x48ad00: thiscall on the party manager (g_game + 0xf8), one argument each
+#include "game/party/party.h"
+
+// ---- game objects -------------------------------------------------------------------------------------
+#include "game/data/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
+#include "game/common/level_global.h"      // g_level (0xa732b4)
+// (the 0x5ac8-byte party record is Party, src/game/party/party.h; the slice view PartyRec was unused here)
+// ---- globals ------------------------------------------------------------------------------------------
+
+
+extern float g_map_min_x;                            // 0x5aa120  map min x (-50)
+extern float g_map_max_x;                            // 0x5aa118  map max x ( 50)
+extern float g_map_min_y;                            // 0x5aa124  map min y (-50)
+extern float g_map_max_y;                            // 0x5aa11c  map max y ( 50)
+extern char g_world0[0x28];                     // the strategy world whose +0x28 cell table 0x470f40 reads
+
+// the by-name float constants (the originals live in the read-only pools noted here)
+#define C_549D74 (g_ten)             // 10.0
+#define C_549D70 (g_half)             // 0.5
+#define C_549CDC (1.0f)             // 1.0
+#define C_549CA8 (orig::g_zero)             // 0.0
+#define C_54A534 (orig::k_1_5708f)             // 1.5707964
+#define C_54A6D0 (orig::k_1em05f)             // 1e-05
+#define C_598690 (orig::k_105f)             // 105.0
+#define C_59868C (orig::k_235f)             // 235.0
+#define C_598688 (orig::k_m1em05f)             // -1e-05
+#define C_590D8C (orig::k_3_5f)             // 3.5
+#define C_590AF0 (orig::k_9_8f)             // 9.8
+#define C_590F7C (orig::k_0_014f)             // 0.014
+#define C_590E68 (g_k0_23)             // 0.23
+#define C_54B4D0 (orig::k_0_05f)             // 0.05
+#define C_54B3B8 (orig::k_0_4f)             // 0.4
+#define C_590C74 (orig::k_0_08f)             // 0.08
+#define C_590FA4 (1.7f)             // 1.7
+#define C_591AF4 (orig::k_0_94f)             // 0.94
+#define C_590C48 (orig::k_1_6f)             // 1.6
+#define C_5911D8 (orig::k_0_98f)             // 0.98
+#define C_54B8B0 (1.5f)             // 1.5
+#define C_549D6C (orig::k_0_9f)             // 0.9
+
+// the listener frame (written by 0x5342dc, from the map frame) is g_sound_mgr.frame
+#include "engine/audio/sound_mgr.h"
+
+
+// ---- callees ------------------------------------------------------------------------------------------
+#include "game/ui/screens/character_sheet/cs_common.h"
+#include "game/ui/screens/character_sheet/cs_mat.h"                                      // identity_pos 0x40cd00
+#include "game/common/game_globals.h"      // canonical global declarations (g_map_min_x ...)
+using rgl::pack_color;                                      // 0x40e440 (cdecl, ret 0; declared in engine/render/mesh.h)
+
+struct envelope;                                            // the scene-envelope object 0x4624c0 works on
+// ground_height (0x470f40) is GameData::ground_height (game/data/game_data.h): a member that ignores this; this caller loads ecx=g_game
+
+#include "engine/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
+
+// 0x41e4f0: rgl::frustum::build_planes (src/engine/scene/frustum.h), thiscall on the frustum, no arguments
+
+// (scene() 0x429740 and ~scene() 0x41f4e0 are engine/render/mesh.h's, the widget base constructor 0x48ae20 is MissionUi's, its destructor 0x487c00 Buffer's: cs_common.h)
+
+#include "engine/math/vec.h"                      // vector2 (= Vec2)
+#include "engine/audio/fmod_api.h"   // FMOD 3 (one declaration per entry point)
+
+#endif

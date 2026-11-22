@@ -1,0 +1,229 @@
+#include "game/ui/screens/character_sheet/character_sheet_update.h"
+#include "game/common/game_globals.h"   // g_trial_mode (canonical)
+#include "game/config/config_block.h"      // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
+#include "platform/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "engine/core/tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "game/ui/window_mgr.h"      // g_windows (0xa73980): the menu / army screens are its slots 29 (0xa739f4) and 24 (0xa739e0)
+#include "game/ui/window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/ui/widgets/ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "game/ui/screens/character_sheet/char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "game/input/key_names.h"
+#include "game/input/slot.h"
+#include "game/ui/ui_globals.h"      // UI / core globals
+
+// @ 0x4eeb10 -------------------------------------------------------------------------------
+// The click handling of the rows is `selected |= press on either button` / `released |= release on either`;
+// a click on the right button of a row spends the corresponding points.
+void CharSheet::frame_update(float dt)
+{
+    bool selected = false;
+    bool released = false;
+    // The original's dead `mov [esp+0x18],ebp` at entry (0x4eeb23; it is also what makes zero a register constant from
+    // the first instruction) is the entry init of a c1xx conditional-destruction flag: a class temporary in the arm of
+    // a &&/||/?: that c2 later proves unreachable (docs/codegen.md 14A). Which statement it was is not recoverable from
+    // the bytes; this one is a stand-in, as in PartyScreen::init_screen 0x502cc0.
+    if (released && tstring("x").c_str()) {}
+
+    if (scene != 0)
+        scene->step(dt);
+    g_gui.flush();
+    if (f_4d4 != 0)
+        f_430->show();
+    else
+        f_430->hide();
+
+    if (f_4c8 != 0) {
+        if (g_gui.wheel != 0) {
+            UiD* bar = skills_outer->follow[1];
+            bar->set_value(((float)g_gui.wheel / bar->rect_max[bar->f178]) * bar->f17c * 0.0005f +
+                           (bar->rect_max[bar->f178] - bar->f17c) *
+                               ((bar->v168 - bar->f16c) / (bar->f170 - bar->f16c)));
+            skills_outer->follow[1]->set_key_flags(0x10000);
+        }
+        // the skill rows: select on press, then learn a point on click
+        for (int i = 0; i < f_2d0; i++) {
+            if (f_30[i]->clear_mask(2) || f_180[i]->clear_mask(2)) {
+                selected = true;
+                f_2d4 = i;
+                f_2d8 = 1;
+                update_detail();
+            }
+            if (f_30[i]->clear_mask(4) || f_180[i]->clear_mask(4))
+                released = true;
+            if (f_180[i]->clear_mask(0x10000)) {
+                int troop = w14;
+                int id = f_228[i];
+                Troop* tb = g_game->chars;
+                int rank = (int)(tb[troop].nib[id / 8] >> (id % 8 * 4)) & 0xf;
+                if (rank < 0)
+                    rank = 0;
+                else if (rank > g_skill_tbl[id].max_rank)
+                    rank = g_skill_tbl[id].max_rank;
+                tb[troop].set_skill(id, rank + 1);
+                g_game->chars[w14].skill_points--;
+                f_4d4 = 1;
+                update_detail();
+                update_skill_rows();
+                refresh_panels();
+                update_weapons();
+            }
+        }
+        // the seven proficiency rows: train one point on click, paid with proficiency points
+        for (int i = 0; i < 7; i++) {
+            if (f_478[i]->clear_mask(2) || f_494[i]->clear_mask(2)) {
+                selected = true;
+                f_2d4 = i;
+                f_2d8 = 2;
+                update_detail();
+            }
+            if (f_478[i]->clear_mask(4) || f_494[i]->clear_mask(4))
+                released = true;
+            if (f_494[i]->clear_mask(0x10000)) {
+                int cost = g_game->chars[w14].steps_to_point(i);
+                g_game->chars[w14].adjust(i, (float)cost);
+                g_game->chars[w14].prof_points -= cost;
+                f_4d4 = 1;
+                update_weapons();
+                refresh_panels();
+            }
+        }
+    }
+
+    // the four attribute rows
+    for (int i = 0; i < 4; i++) {
+        if (f_44c[i]->clear_mask(2) || f_45c[i]->clear_mask(2)) {
+            selected = true;
+            f_2d4 = i;
+            f_2d8 = 0;
+            update_detail();
+        }
+        if (f_44c[i]->clear_mask(4) || f_45c[i]->clear_mask(4))
+            released = true;
+        if (f_45c[i]->clear_mask(0x10000)) {
+            g_game->chars[w14].add_attr(i, 1);
+            g_game->chars[w14].attr_points--;
+            if (i == 1)
+                g_game->chars[w14].prof_points += 5;
+            f_4d4 = 1;
+            refresh_panels();
+            update_detail();
+            update_skill_rows();
+            update_weapons();
+        }
+    }
+
+    // the face page
+    if (f_52c != 0 && f_4cc != 0 && f_4cc->clear_mask(2)) {
+        selected = true;
+        f_2d4 = 0;
+        f_2d8 = 3;
+        update_detail();
+    }
+    if ((f_52c != 0 && f_4cc != 0 && f_4cc->clear_mask(4) || released) && !selected) {
+        f_2d4 = -1;
+        update_detail();
+    }
+    if (w14 == 0 && f_4c4->clear_mask(0x10000)) {
+        {
+            tstring s(name->name);
+            g_game->chars[0].name = s;
+        }
+        g_game->emit_event(0x18, 0, 0);
+    }
+
+    // previous / next troop
+    int step = 0;
+    if (f_444 != 0 && f_444->clear_mask(0x10000))
+        step = 1;
+    else if (f_448 != 0 && f_448->clear_mask(0x10000))
+        step = -1;
+
+    if (f_2dc == 0) {
+        if (slot_as<Profile>(1)->troop != -1) {
+            g_game->fb4 = slot_as<Profile>(1)->troop;
+            f_2dc++;
+            menu_choose(0xf);
+            return;
+        }
+    } else if (f_2dc == 1) {
+        Troop* hero = g_game->chars;
+        // "Done" stays disabled while the new hero has points to spend or no name yet (0x4ef136 calls slot 0xb8,
+        // disable; 0x4ef126 slot 0xbc, enable)
+        if (hero->attr_points > 0 || hero->skill_points > 0 || hero->prof_points > 5 ||
+            name->f181 != 0)
+            f_42c->flag2_set();
+        else
+            f_42c->flag2_clear();
+        if (f_42c->clear_mask(0x10000)) {
+            f_2dc = -1;
+            g_game->chars[g_game->player].auto_equip(-1, 0, 0, 0);
+            slot_as<head_rec>(29)->w14 = w14;
+            menu_choose(0x1d);
+            return;
+        }
+        if (f_430->clear_mask(0x10000)) {
+            apply_to_troop();
+            f_4d4 = 0;
+            update_detail();
+            update_skill_rows();
+            refresh_panels();
+            update_weapons();
+            return;
+        }
+    } else {
+        if (step != 0) {
+            w14 += step;
+            w14 = (w14 + g_game->ntroops) % g_game->ntroops;
+            w04 = 1;
+            menu_choose(0xf);
+            return;
+        }
+        if (f_52c != 0 && f_4cc != 0 && f_4cc->clear_mask(0x10000)) {
+            slot_as<head_rec>(29)->w14 = w14;
+            slot_as<head_rec>(29)->w18 = 0xf;
+            menu_choose(0x1d);
+            return;
+        }
+        if (f_440 != 0 && f_440->clear_mask(0x10000)) {
+            slot_as<head_rec>(24)->w14 = w14;
+            slot_as<head_rec>(24)->w18 = 0xf;
+            menu_choose(0x18);
+            return;
+        }
+        if (f_430->clear_mask(0x10000)) {
+            apply_to_troop();
+            f_4d4 = 0;
+            update_detail();
+            update_skill_rows();
+            refresh_panels();
+            update_weapons();
+            return;
+        }
+        // "Back", or the escape key released (one statement: the original has a single copy of the call)
+        if (f_42c->clear_mask(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
+            menu_choose(w18);
+        } else {
+            // game keys: rest / export / learning
+            if (g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0)
+                return;
+            if (g_keyboard.down[0x2d] != 0 && g_keyboard.prev[0x2d] == 0 && g_cfg.cheat_mode != 0) {
+                WL_MARKER(12)
+                if (g_trial_mode != 0) {
+                    g_game->add_experience(w14, 1000);
+                    menu_choose(0xf);
+                }
+                WL_MARKER(13)
+                return;
+            }
+            if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[0x11] != 0 && g_keyboard.prev[0x11] == 0 && g_cfg.cheat_mode != 0) {
+                WL_MARKER(12)
+                for (int i = 0; i < 7; i++)
+                    g_game->chars->adjust(i, 50.0f);
+                menu_choose(0xf);
+                WL_MARKER(13)
+                return;
+            }
+        }
+    }
+}

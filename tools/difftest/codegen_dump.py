@@ -116,7 +116,7 @@ def dump_module(item, img):
         elif RESOLVED:
             import equiv as E
             import resolve as R
-            annots = R.source_annotations([src] + glob.glob(os.path.join(S.slice_dir(sid), "*.h")) + S.sibling_headers(src))
+            annots = R.source_annotations(S.annotation_sources(src))
             fs = coff.by_name[sym]
             r = E.context()["res"].resolve(coff, fs, int(va, 16), annots)
             h = hashlib.sha1(b"resolved\0")

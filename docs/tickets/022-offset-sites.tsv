@@ -1,27 +1,27 @@
 file	line	col	va	func	kind	record	offset	access	class	field	note	status	source
-src/dxframework/d3dapp.cpp	379	13	0x401800	vector_constructor_iterator	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	p = (char*)p + size;
-src/dxframework/d3dapp.cpp	387	9	0x401830	vector_destructor_iterator	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	p = (char*)p + size * n;
-src/dxframework/d3dapp.cpp	389	13	0x401830	vector_destructor_iterator	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	p = (char*)p - size;
-src/game/char_sheet/conv_refresh.h	64	20		troop_text	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return v ? v : (const char*)&r->buf;
-src/game/char_sheet/cs_detail.h	26	30		str_text	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return r->buf ? r->buf : (const char*)&r->buf;
-src/game/char_sheet/cs_detail.h	63	30		tr	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return r->buf ? r->buf : (const char*)&r->buf;
-src/game/char_sheet/facegen_misc.cpp	175	53	0x4eb8e0	Render	D	tstring	0x4	char *	X	buf	string small buffer (not a member access)	open	char* s = ts.buf ? ts.buf : (char*)&ts.buf;
-src/game/char_sheet/facegen_misc.cpp	184	49	0x4eb8e0	Render	D	tstring	0x4	char *	X	buf	string small buffer (not a member access)	open	char* s = ts.buf ? ts.buf : (char*)&ts.buf;
-src/game/char_sheet/quest_log.cpp	17	40	0x4ee840	refresh	D	tstring	0x4	char *	X	buf	string small buffer (not a member access)	open	mb_error(msg->buf ? msg->buf : (char*)&msg->buf);
-src/game/char_sheet/save_panel.cpp	72	20	0x4ea0c0	text_of	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return b ? b : (const char*)&s->buf;
-src/game/char_sheet/screen.cpp	46	44	0x4ebc10	take_screenshot	D	tstring	0x4	char *	X	buf	string small buffer (not a member access)	open	sprintf(msg, s->buf ? s->buf : (char*)&s->buf, name);
-src/game/mission5/game_2.cpp	1391	28	0x524bc0	cstr	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return t.buf ? t.buf : (const char*)&t.buf;
-src/game/options_panel/quest_page.cpp	91	58		c_str	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* c_str() const { return e->buf ? e->buf : (const char*)&e->buf; }
-src/game/options_panel/quest_page.cpp	121	63	0x4d5ba0	fill	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* arg = formatted.buf ? formatted.buf : (const char*)&formatted.buf;
-src/game/options_panel/quest_page.cpp	123	55	0x4d5ba0	fill	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	mb_snprintf(buf, 0x200, e->buf ? e->buf : (const char*)&e->buf, arg);
-src/game/options_panel/quest_page.cpp	135	45	0x4d5ba0	fill	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
-src/game/options_panel/quest_page.cpp	157	55	0x4d5ba0	fill	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	mb_snprintf(buf, 0x200, e->buf ? e->buf : (const char*)&e->buf, QREC->f64_lo);
-src/game/options_panel/quest_page.cpp	196	45	0x4d6300	update_difficulty	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
+src/platform/dxframework/d3dapp.cpp	379	13	0x401800	vector_constructor_iterator	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	p = (char*)p + size;
+src/platform/dxframework/d3dapp.cpp	387	9	0x401830	vector_destructor_iterator	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	p = (char*)p + size * n;
+src/platform/dxframework/d3dapp.cpp	389	13	0x401830	vector_destructor_iterator	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	p = (char*)p - size;
+src/game/ui/screens/conversation/conversation_refresh.h	64	20		troop_text	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return v ? v : (const char*)&r->buf;
+src/game/ui/screens/character_sheet/character_sheet_detail.h	26	30		str_text	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return r->buf ? r->buf : (const char*)&r->buf;
+src/game/ui/screens/character_sheet/character_sheet_detail.h	63	30		tr	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return r->buf ? r->buf : (const char*)&r->buf;
+src/game/ui/screens/face_generator/face_generator_refresh.cpp	175	53	0x4eb8e0	Render	D	tstring	0x4	char *	X	buf	string small buffer (not a member access)	open	char* s = ts.buf ? ts.buf : (char*)&ts.buf;
+src/game/ui/screens/face_generator/face_generator_refresh.cpp	184	49	0x4eb8e0	Render	D	tstring	0x4	char *	X	buf	string small buffer (not a member access)	open	char* s = ts.buf ? ts.buf : (char*)&ts.buf;
+src/game/ui/screens/quest_log.cpp	17	40	0x4ee840	refresh	D	tstring	0x4	char *	X	buf	string small buffer (not a member access)	open	mb_error(msg->buf ? msg->buf : (char*)&msg->buf);
+src/game/ui/screens/save_panel.cpp	72	20	0x4ea0c0	text_of	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return b ? b : (const char*)&s->buf;
+src/game/ui/screens/screen_misc.cpp	46	44	0x4ebc10	take_screenshot	D	tstring	0x4	char *	X	buf	string small buffer (not a member access)	open	sprintf(msg, s->buf ? s->buf : (char*)&s->buf, name);
+src/game/campaign/map_builder_and_data_load.cpp	1391	28	0x524bc0	cstr	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return t.buf ? t.buf : (const char*)&t.buf;
+src/game/ui/screens/options/quest_page.cpp	91	58		c_str	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* c_str() const { return e->buf ? e->buf : (const char*)&e->buf; }
+src/game/ui/screens/options/quest_page.cpp	121	63	0x4d5ba0	fill	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* arg = formatted.buf ? formatted.buf : (const char*)&formatted.buf;
+src/game/ui/screens/options/quest_page.cpp	123	55	0x4d5ba0	fill	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	mb_snprintf(buf, 0x200, e->buf ? e->buf : (const char*)&e->buf, arg);
+src/game/ui/screens/options/quest_page.cpp	135	45	0x4d5ba0	fill	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
+src/game/ui/screens/options/quest_page.cpp	157	55	0x4d5ba0	fill	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	mb_snprintf(buf, 0x200, e->buf ? e->buf : (const char*)&e->buf, QREC->f64_lo);
+src/game/ui/screens/options/quest_page.cpp	196	45	0x4d6300	update_difficulty	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
 src/game/script/script_interpreter.cpp	583	30	0x49c170	order_string	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	return r->buf ? r->buf : (const char*)&r->buf;
-src/game/terrain_a/terrain_render.cpp	1475	33	0x46d060	upload	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	char* dst = (char*)scratch + elem_size * n;
-src/game/terrain_a/terrain_render.cpp	1523	25	0x46d060	upload	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	char* dst = (char*)scratch + elem_size * n;
-src/game/terrain_a/terrain_render.cpp	1576	21	0x46d060	upload	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	char* dst = (char*)scratch + elem_size * n;
-src/game/triggers/trigger_vec.cpp	246	53	0x4bebc0	module_ini_exists	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	HANDLE h = FindFirstFileA(path.buf ? path.buf : (const char*)&path.buf, &fd);
-src/game/triggers/trigger_vec.cpp	332	47	0x4bee10	show_options	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	(LPARAM)(s.buf ? s.buf : (const char*)&s.buf));
-src/game/tstring.h	28	52		c_str	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* c_str() const { return buf ? buf : (const char*)&buf; }
-src/rgl/shapes/shapes.cpp	23	69	0x407c10	c_str_out_of_line	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* tstring::c_str_out_of_line() const { return buf ? buf : (const char*)&buf; }
+src/game/terrain/terrain_render.cpp	1475	33	0x46d060	upload	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	char* dst = (char*)scratch + elem_size * n;
+src/game/terrain/terrain_render.cpp	1523	25	0x46d060	upload	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	char* dst = (char*)scratch + elem_size * n;
+src/game/terrain/terrain_render.cpp	1576	21	0x46d060	upload	A	-	?		X		untyped pointer arithmetic (element stride / array cookie), not a member access	open	char* dst = (char*)scratch + elem_size * n;
+src/game/app/options_dialog_and_module_tables.cpp	246	53	0x4bebc0	module_ini_exists	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	HANDLE h = FindFirstFileA(path.buf ? path.buf : (const char*)&path.buf, &fd);
+src/game/app/options_dialog_and_module_tables.cpp	332	47	0x4bee10	show_options	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	(LPARAM)(s.buf ? s.buf : (const char*)&s.buf));
+src/engine/core/tstring.h	28	52		c_str	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* c_str() const { return buf ? buf : (const char*)&buf; }
+src/engine/physics/collision_shapes.cpp	23	69	0x407c10	c_str_out_of_line	D	tstring	0x4	const char *	X	buf	string small buffer (not a member access)	open	const char* tstring::c_str_out_of_line() const { return buf ? buf : (const char*)&buf; }

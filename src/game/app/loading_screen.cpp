@@ -1,0 +1,273 @@
+// s0050f440 - loading screen: module table load, frame/quads meshes, record reader.
+// All six functions belong to the module-loading state machine object.
+#include <stdio.h>
+#include "game/config/config_block.h"
+
+#include "engine/core/tstring.h"
+#include "engine/audio/music_player.h"   // music_player (g_music 0xa73a10), MusicTrack
+#include "engine/io/stream.h"   // stream_base (the readers' r_int / r_tstr slots)
+#include "game/common/shared_vars.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+
+
+
+
+
+#include "engine/math/rgl_math.h"
+#include "engine/core/rgl_string.h"
+#include "engine/render/mesh.h"                  // rgl::mesh (build_panel 0x4de3e0, compute_normals, finish_load, set_color, clone)
+#include "game/data/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in game/app/options_dialog_and_module_tables.cpp)
+#include "game/common/game_globals.h"
+#include "game/ui/gui_manager.h"
+using rgl::vector4;
+using rgl::mesh;
+
+#include "engine/resource/resource.h"                   // resmgr g_resmgr (0x5d6fa0): get_object 0x419540, load_all 0x41c540
+// ---------------------------------------------------------------- 0x50f7e0
+// @ 0x50f7e0
+void music_player::build(stream_base* s)
+{
+    s->r_int(&track_count);
+    if (track_count > 0x100)
+        track_count = 0x100;
+    for (int i = 0; i < track_count; i++) {
+        tracks[i].read(s);
+        start[i] = 0;
+    }
+}
+
+// ---------------------------------------------------------------- 0x50f840
+// @ 0x50f840
+void MusicTrack::read(stream_base* s)
+{
+    s->r_tstr(&name);
+    s->r_int(&f0);
+    s->r_int(&f4);
+    f4 = f0 | f4;
+    f8 = f0 & 0x3f;
+    if (!f8)
+        f8 = 0x3f;
+    fc = (f4 & 0x3f) | f8;
+}
+
+// ---------------------------------------------------------------- 0x50f8a0
+// @ 0x50f8a0
+void gui_manager::build_quad()
+{
+    mesh* m = &m570;
+    int color = 0xff000000;
+    vec2 uv1 = { 0.1f, 1.0f };
+    vec2 uv0 = { 0.0f, 0.0f };
+    struct { vec2 size; vector4 base; } q;
+    q.size.x = 0.1f;
+    q.size.y = 1.0f;
+    q.base.x = 0.0f;
+    q.base.y = 0.0f;
+    q.base.z = 0.0f;
+
+    m->build_panel(&q.base, &q.size, &uv0, &uv1, &color);
+    m->compute_normals();
+}
+
+// ---------------------------------------------------------------- 0x50f930
+static void set_frame_color(mesh* m)
+{
+    vector4 c;
+    c.x = 1.3f;
+    c.y = 1.3f;
+    c.z = 1.0f;
+    m->set_color(c);
+    m->compute_normals();
+    m->compute_bounds();
+}
+
+// @ 0x50f930
+void gui_manager::build_frames()
+{
+    {
+        mesh* m = &mfb0;
+        int color = 0xa0ffffff;
+        vec2 uv1 = { 0.1f, 1.0f };
+        vec2 uv0 = { 0.0f, 0.0f };
+        vec2 size;
+        vector4 base;
+
+        size.x = 0.1f;
+        size.y = 1.0f;
+        base.x = 0.0f;
+        base.y = 0.0f;
+        base.z = 0.0f;
+        m->build_panel(&base, &size, &uv0, &uv1, &color);
+        m->compute_normals();
+    }
+
+    {
+        tstring n("frame_corner_a");
+        corner[0] = g_resmgr.get_object(&n)->clone();
+    }
+    {
+        vector4 c;
+        c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
+        corner[0]->set_color(c);
+    }
+    corner[0]->compute_normals();
+    corner[0]->compute_bounds();
+
+    {
+        tstring n("frame_corner_b");
+        corner[1] = g_resmgr.get_object(&n)->clone();
+    }
+    {
+        vector4 c;
+        c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
+        corner[1]->set_color(c);
+    }
+    corner[1]->compute_normals();
+    corner[1]->compute_bounds();
+
+    {
+        tstring n("frame_corner_c");
+        corner[2] = g_resmgr.get_object(&n)->clone();
+    }
+    {
+        vector4 c;
+        c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
+        corner[2]->set_color(c);
+    }
+    corner[2]->compute_normals();
+    corner[2]->compute_bounds();
+
+    {
+        tstring n("frame_corner_d");
+        corner[3] = g_resmgr.get_object(&n)->clone();
+    }
+    {
+        vector4 c;
+        c.x = 1.3f; c.y = 1.3f; c.z = 1.0f;
+        corner[3]->set_color(c);
+    }
+    corner[3]->compute_normals();
+    corner[3]->compute_bounds();
+}
+
+// ---------------------------------------------------------------- 0x50fbf0
+// std::vector<RagModel>::push_back: the skeleton list's append (SkeletonBody::load 0x50fc60, skeleton_load.cpp). Its slow path
+// instantiates the header's _Insert_n 0x50d260 with _Ufill 0x50d140 and _Destroy 0x50d230 (the linker placed those COMDATs after
+// widget_text's functions). The element helpers are out of line in other modules (declared, not instantiated here):
+#include "engine/physics/rag_model.h"
+namespace std {
+extern template vector<RagdollBone>::vector(const vector<RagdollBone>&);                                                               // 0x4da1f0 (cls_map)
+extern template void _Destroy_range(RagdollBone*, RagdollBone*, allocator<RagdollBone>&, _Nonscalar_ptr_iterator_tag);                        // 0x4d10f0 (module_load)
+template<> RagModel* _Uninit_copy(RagModel*, RagModel*, RagModel*, allocator<RagModel>&, _Nonscalar_ptr_iterator_tag);   // 0x4ebe10 (game/ui/screens/screen_misc.cpp)
+template<> void _Uninit_fill_n(RagModel*, unsigned, const RagModel&, allocator<RagModel>&, _Nonscalar_ptr_iterator_tag); // 0x4f65f0 (game/editor/editor_widgets.cpp)
+template<> void _Destroy_range(RagModel*, RagModel*, allocator<RagModel>&, _Nonscalar_ptr_iterator_tag);               // 0x4f6680 (game/editor/editor_widgets.cpp)
+template<> void fill(RagModel*, RagModel*, const RagModel&);                                                            // 0x4e5f80 (game/ui/screens/progress_bar_and_load_screens.cpp)
+template<> RagModel* _Copy_backward_opt(RagModel*, RagModel*, RagModel*, _Nonscalar_ptr_iterator_tag);                 // 0x4e42b0 (game/ui/screens/progress_bar_and_load_screens.cpp)
+}
+
+// @ 0x50fbf0
+template void std::vector<RagModel>::push_back(const RagModel&);
+
+// ---------------------------------------------------------------- 0x50f440 loading-screen state machine
+// Called once per frame by the loading screen's update (0x50f390) as
+//   advance(&this->step, &this->total, &text);
+// It translates the current phase name into `text`, runs the phase's work and bumps the step
+// (the caller is done when it returns true).  `total` is unused here.
+
+#include "game/data/str_table.h"
+extern StrTable g_strtable;                          // 0x5e2a18
+extern tstring  g_module_path;                       // 0x8ee3c28 (the module directory)
+
+void mb_error(const char* fmt, ...);                 // 0x42cc80
+void parse_module_info();                            // 0x4c05b0
+void load_data_files();                                    // 0x4d0c20 (game/data/module_record_loaders.cpp)
+void load_module_files();                                    // 0x50d5e0 (game/data/module_files_loader.cpp)
+
+// the text stream used to read music.txt (vtable 0x54ac88, 0x38 bytes, `failed` at +0x34): engine/io/stream.h's tstream3, whose constructor and
+// destructor (0x4172d0, 0x417310) are called out of line here
+#include "engine/io/stream.h"
+
+struct Table2;                                       // built by MusicTable::build below (0x50f7e0)
+
+#include "game/config/ini_file.h"                          // ini_file (load 0x4bd630) and g_module_info (0xa18238)
+
+// 0x4c0520 is a cdecl function without parameters (game/app/options_dialog_and_module_tables.cpp); the original calls it with ecx = the application object,
+// which it ignores: the call goes to that symbol through the fastcall type of the original's call
+void load_game_variables();                                      // 0x4c0520
+#include "game/config/core.h"                       // GameApp g_app_obj (0x8ee3c48)
+
+
+
+
+
+#include "game/ui/screens/screen_records.h"       // C4c3290: advance 0x50f440 here
+
+// @ 0x50f440
+bool C4c3290::advance(int* step, int* total, tstring* text)
+{
+    bool finished = false;
+
+    text->assign("");
+    if (*step == 0) {
+        f48 = 0;
+        { tstring key("ui_loading_module_info_file"); text->assign(g_strtable.lookup(key)->c_str()); }
+        (*step)++;
+    } else if (*step == 1) {
+        ((void (__fastcall*)(void*))load_game_variables)(&g_app_obj);
+        tstring path(g_module_path);
+        { tstring ini("module.ini"); path.append(ini); }
+        FILE* f = fopen(path.c_str(), "r");
+        if (f) {
+            g_module_info.load(f);
+            f44 = g_module_info.count + 5;   // the table's count (g_module_info.count)
+            fclose(f);
+        } else {
+            mb_error("Unable to find module info file");
+        }
+        { tstring key("ui_processing_ini_file"); text->assign(g_strtable.lookup(key)->c_str()); }
+        (*step)++;
+    } else if (*step == 2) {
+        parse_module_info();
+        g_gui.build_frames();   // 0x50f930: the gui object at 0x5d7080 holds the loading meshes
+        g_gui.build_quad();          // 0x50f8a0
+        { tstring key("ui_loading_music"); text->assign(g_strtable.lookup(key)->c_str()); }
+        (*step)++;
+    } else if (*step == 3) {
+        if (!g_cfg.disable_music && !g_cfg.disable_sound) {
+            ((stream_base&)g_log).w_cstr("Loading Music...\n");
+            tstream3 ts;
+            {
+                tstring name(g_module_path);
+                { tstring m("music.txt"); name.append(m); }
+                if (ts.open_read_text(name.c_str())) {
+                    g_music.build(&ts);
+                    ts.failed = 1;
+                } else {
+                    mb_error("Unable to find module music file");
+                }
+            }
+        }
+        { tstring key("ui_loading_data"); text->assign(g_strtable.lookup(key)->c_str()); }
+        *step += 2;
+    } else if (*step == 4) {
+        *step = 5;
+    } else if (*step == 5) {
+        load_data_files();
+        { tstring key("ui_loading_setting_data"); text->assign(g_strtable.lookup(key)->c_str()); }
+        (*step)++;
+    } else if (*step == 6) {
+        load_module_files();
+        { tstring key("ui_loading_textures"); text->assign(g_strtable.lookup(key)->c_str()); }
+        (*step)++;
+    } else if (*step == 7) {
+        ((stream_base&)g_log).w_cstr("Loading Textures...\n");
+        g_resmgr.load_all(g_module_settings.scan_module_textures, &g_module_path);
+        ((stream_base&)g_log).w_cstr("Finished Loading Textures...\n");
+        { tstring key("ui_finished"); text->assign(g_strtable.lookup(key)->c_str()); }
+        (*step)++;
+    } else {
+        finished = true;
+    }
+    return finished;
+}

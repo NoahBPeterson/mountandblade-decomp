@@ -1,4 +1,4 @@
-// port/platform/net.cpp: Winsock over POSIX sockets, for the launcher's version check (src/game/config/options_dlg.cpp:
+// port/platform/net.cpp: Winsock over POSIX sockets, for the launcher's version check (src/game/config/launcher_options_dialog.cpp:
 // socket / connect / send / recv / gethostbyname / htons / inet_addr). The functions are exported as mbws_<name>:
 // winsock2.h maps the game's names onto them (the plain names belong to the C library, with different types).
 #include "mbp_internal.h"

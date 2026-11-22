@@ -1,5 +1,5 @@
 // Slice s00413e50: particle system - builds the frame, colour and geometry for one particle.
-#include "psys.h"
+#include "particle_system.h"
 
 namespace rgl { unsigned pack_color(const vector4* c); }
 unsigned pack_color(const float* c);          // 0x40e440

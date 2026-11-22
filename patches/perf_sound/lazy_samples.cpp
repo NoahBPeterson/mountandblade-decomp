@@ -7,7 +7,7 @@
 //       rest and sits in the menu (default), and
 //   (2) on the game thread, immediately, if a sample is played before the thread got to it (FSOUND_PlaySoundEx).
 // No function of the reconstruction is replaced: five of our own fmod.dll import slots are swapped (devfast/iat_hook.h),
-// so src/ is untouched. The game only ever hands a sample to FSOUND_PlaySoundEx (ui_widgets_a.cpp play_sound,
+// so src/ is untouched. The game only ever hands a sample to FSOUND_PlaySoundEx (toggle_and_text_fit.cpp play_sound,
 // agent_fx_sound.cpp SoundMgr::play) and to the three Sample_* calls music_set::load makes; those are the five hooks:
 //   FSOUND_Sample_Load      returns a stub (static array, so a stub is recognised by address, never dereferenced blindly)
 //   FSOUND_Sample_SetDefaults  stored in the stub and applied right after the real load (-1 = "leave", as in FMOD)

@@ -308,14 +308,14 @@ def test_fp_realistic_floats_are_finite_and_bounded():
 
 # ---------------------------------------------------------------------- --transparent
 
-RESMGR_SRC = os.path.join(ROOT, "src", "rgl", "core", "resmgr.cpp")
+RESMGR_SRC = os.path.join(ROOT, "src", "engine", "resource", "resource_manager.cpp")
 # ??_Eframe_set: the original inlines ??_EBone (0x41a550) on its array path as ??_I (0x401830, calling
 # ~Bone 0x41a510) + operator delete[], ours calls ??_EBone on both paths
 FS_TRANSPARENT = ["--transparent", "401830,41a510,41a550"]
 
 
 def resmgr_run(extra, src=RESMGR_SRC):
-    return equiv.test_function("resmgr", 0x41aee0, equiv.parse_args(["resmgr", "41aee0", "--src", src, "--inputs", "300",
+    return equiv.test_function("resource_manager", 0x41aee0, equiv.parse_args(["resource_manager", "41aee0", "--src", src, "--inputs", "300",
                                                                       *extra]))
 
 
@@ -393,9 +393,9 @@ def test_program_exit_is_a_compared_run():
     except M.Exit as e:
         assert str(e) == "code -1"
     assert equiv.noreturn_stop("exit: code -1")
-    src = os.path.join(ROOT, "src", "rgl", "core", "resmgr.cpp")
-    r = equiv.test_function("resmgr", 0x41db20, equiv.parse_args(
-        ["resmgr", "41db20", "--src", src, "--inputs", "100", "--time-limit", "90", "--no-regress"]))
+    src = os.path.join(ROOT, "src", "engine", "resource", "resource_manager.cpp")
+    r = equiv.test_function("resource_manager", 0x41db20, equiv.parse_args(
+        ["resource_manager", "41db20", "--src", src, "--inputs", "100", "--time-limit", "90", "--no-regress"]))
     assert r["verdict"] in ("PASS", "WEAK") and r["valid"] > 50, r
     assert not any(k.startswith("import:SetUnhandledExceptionFilter") for k in r["discarded"]), r["discarded"]
 
@@ -404,7 +404,7 @@ def test_lookup_stub_makes_row_testable():
     """make_scroll_track calls resmgr::get_object, which exit()s on a name an empty test resource manager lacks:
     stubbed (the default) the row is measured past the lookup; unstubbed every input ends at the exit (a compared
     run since program exits are modelled, but one that never reaches the code after the lookup)."""
-    src = os.path.join(ROOT, "src", "game", "char_sheet", "quest_log.cpp")
+    src = os.path.join(ROOT, "src", "game", "ui", "screens", "quest_log.cpp")
     run = lambda *x: equiv.test_function("quest_log", 0x4ee910, equiv.parse_args(
         ["quest_log", "4ee910", "--src", src, "--inputs", "150", "--no-regress", "--time-limit", "900", *x]))
     r = run()
@@ -437,9 +437,9 @@ def test_callee_narrow_args():
 def test_tail_call_pops_count():
     """0x48bda0 has no ret of its own: it ends in `jmp 0x488720`, whose `ret 0x10` pops its four arguments. Read as
     0, every input was discarded as orig-abi-broken; with the tail target's pops the row is measured."""
-    src = os.path.join(ROOT, "src", "game", "config", "ui_widgets_c.cpp")
-    r = equiv.test_function("ui_widgets_c", 0x48bda0, equiv.parse_args(
-        ["ui_widgets_c", "48bda0", "--src", src, "--inputs", "100", "--no-regress"]))
+    src = os.path.join(ROOT, "src", "game", "ui", "widgets", "text_editor_widget.cpp")
+    r = equiv.test_function("text_editor_widget", 0x48bda0, equiv.parse_args(
+        ["text_editor_widget", "48bda0", "--src", src, "--inputs", "100", "--no-regress"]))
     assert r["callee_pop"] == 0x10 and r["valid"] > 0, r
 
 
@@ -468,7 +468,7 @@ def test_uninit_copy_is_excused():
     """scene_tbl::placed 0x499050: Frame3's rows leave w unset and set_part copies them into the mesh, so both builds
     store an uninitialised stack slot there (different leftovers). The original's value is a plain copy of a slot
     its run never wrote, so it is excused; with --no-uninit-copy the row FAILs on it."""
-    run = lambda *x: frozen_row(FROZEN_OBJ, "obj_tbl", 0x499050, "src/game/world_data/obj_tbl.cpp",
+    run = lambda *x: frozen_row(FROZEN_OBJ, "object_table_spawners", 0x499050, "src/game/data/object_table_spawners.cpp",
                                 "--inputs", "120", "--fp-tol", "--typed-share", "0", *x)
     r = run()
     assert r["verdict"] in ("PASS", "PASS-FP", "WEAK", "WEAK-FP") and r["tolerated"].get("uninit-copy"), r
@@ -483,14 +483,14 @@ def _row(sid, va, src, *x):
 def test_forced_callee_result_covers_branch():
     """0x4b25c0 branches on `call 0x435740; test al, al`: the predicate reads game state soup never satisfies, so
     one edge stayed missed; forcing the callee's result (both builds call it) covers it, and the switch removes it."""
-    assert _row("party_2", 0x4b25c0, "src/game/party2/party_2.cpp")["verdict"] == "PASS"
-    assert _row("party_2", 0x4b25c0, "src/game/party2/party_2.cpp", "--no-force-results")["verdict"] == "WEAK"
+    assert _row("party_map", 0x4b25c0, "src/game/party/party_map.cpp")["verdict"] == "PASS"
+    assert _row("party_map", 0x4b25c0, "src/game/party/party_map.cpp", "--no-force-results")["verdict"] == "WEAK"
 
 
 def test_fault_only_edge_is_unreachable():
     """0x48f480: the NULL-vector arm of the size idiom reads first[-1]: every input taking it faults in both builds,
     so the edge is reported unreachable with that reason, not missed."""
-    r = _row("mission_4", 0x48f480, "src/game/mission_ui2/mission_4.cpp")
+    r = _row("container_and_tableau_misc", 0x48f480, "src/game/ui/widgets/container_and_tableau_misc.cpp")
     assert r["verdict"] == "PASS" and any("fault" in u["reason"] for u in r["edges"]["orig"]["unreachable"]), r
 
 
@@ -498,13 +498,13 @@ def test_import_float_args_are_fp_judged():
     """0x4f8c80 passes the listener frame to FSOUND_3D_Listener_SetAttributes by value; on some inputs the two builds'
     floats are 1 ulp apart (x87 rounding). --fp-tol judges import arguments against the reference run like memory, so
     the row is not a FAIL; the arguments are still compared exactly without --fp-tol."""
-    r = _row("agent_hud", 0x4f8c80, "src/game/agent5/agent_hud.cpp", "--fp-tol")
+    r = _row("agent_hud", 0x4f8c80, "src/game/ui/hud/agent_hud.cpp", "--fp-tol")
     assert r["verdict"] != "FAIL" and not r["fp_tol"]["real_mismatches"], r
 
 
 def test_tail_call_through_pointer_is_a_fake_method():
     """0x48d7e0 ends in `jmp [eax+0x68]`: the generated target takes the function's own arguments (no call site)."""
-    r = _row("mission_3", 0x48d7e0, "src/game/mission_ui2/mission_3.cpp")
+    r = _row("stacks_and_loot", 0x48d7e0, "src/game/party/stacks_and_loot.cpp")
     assert r["verdict"] == "PASS" and not r["discarded"].get("fake-arity"), r
 
 
@@ -512,7 +512,7 @@ def test_indirect_call_into_midfunction_is_discarded():
     """0x4eb3c0 (FaceGen::refresh): a repair-mapped null page of soup bytes read at an odd offset gives the vtable
     call at 0x4eb3f6 a target such as 0x4fef00 (the middle of 0x4fe860). No game object has such a slot: the input is
     discarded as call-midfunction (reason with target and call site), not compared as a FAIL."""
-    r = _row("facegen_misc", 0x4eb3c0, "src/game/char_sheet/facegen_misc.cpp", "--fp-tol", "--inputs", "60")
+    r = _row("face_generator_refresh", 0x4eb3c0, "src/game/ui/screens/face_generator/face_generator_refresh.cpp", "--fp-tol", "--inputs", "60")
     assert r["verdict"] != "FAIL" and r["discarded"].get("call-midfunction"), r
     assert "call at 004eb3f6 targets" in r["call_midfunction"][0] and "not a function entry" in r["call_midfunction"][0], r
 
@@ -552,13 +552,13 @@ def test_prologue_pushes_are_not_fake_call_args():
     mov eax,[ebx]; push edi; call [eax+7Ch]`: the four pushes save callee-saved registers, so the soup method
     takes no arguments. Counting them made the fake pop 16 bytes and every input returned through a float
     (fake-arity "no call site before cccccccc", 0/400 valid)."""
-    r = _row("dynamic_entity", 0x4260a0, "src/rgl/dynamic/dynamic_entity.cpp", "--fp-tol")
+    r = _row("rigid_body", 0x4260a0, "src/engine/physics/rigid_body.cpp", "--fp-tol")
     assert r["verdict"] in ("PASS", "PASS-FP") and not r["discarded"].get("fake-arity"), r
 
 
 def test_transparent_keeps_real_differences():
     """--transparent hides only the call boundary: a real difference (here, ours leaks the delete[] of the bones
-    that the original does) must still FAIL. The mutant is built from the current resmgr.cpp by dropping the
+    that the original does) must still FAIL. The mutant is built from the current resource_manager.cpp by dropping the
     `delete[] bones;` in frame_set::~frame_set, located by regex rather than by exact text."""
     import re
     text = open(RESMGR_SRC).read()
@@ -589,7 +589,7 @@ def test_mangled_scopes_find_namespace_std():
     assert not equiv.is_std_name("??$uninit_copy@Umface@@@@YAPAUmface@@PAU0@00@Z")     # a global helper of the game
 
 
-MESH_PASS_SRC = os.path.join(ROOT, "src", "game", "mesh_slot", "mesh_pass.cpp")
+MESH_PASS_SRC = os.path.join(ROOT, "src", "game", "mission", "render_passes.cpp")
 
 
 def test_std_calls_are_transparent():
@@ -597,10 +597,10 @@ def test_std_calls_are_transparent():
     `tmp.push_back(only)`, ours expands it. Without --transparent (its old row option) that call boundary FAILed the
     depth-1 trace; std-library code is transparent by default now, and recording it again brings the FAIL back.
     (60 inputs: the row runs ~130 valid inputs in its 180 s limit, so 200 would end UNSUPPORTED on the clock.)"""
-    r = _row("mesh_pass", 0x47e520, MESH_PASS_SRC, "--inputs", "60")
+    r = _row("render_passes", 0x47e520, MESH_PASS_SRC, "--inputs", "60")
     assert r["verdict"] in ("PASS", "WEAK"), r
     assert "004119d0" in r.get("transparent_std", []), r
-    base = _row("mesh_pass", 0x47e520, MESH_PASS_SRC, "--inputs", "60", "--no-std-transparent")
+    base = _row("render_passes", 0x47e520, MESH_PASS_SRC, "--inputs", "60", "--no-std-transparent")
     assert base["verdict"] == "FAIL" and "call #" in base["first_mismatch"]["observable"], base
 
 
@@ -614,7 +614,7 @@ def test_std_transparency_keeps_real_differences():
     path = os.path.join(os.path.dirname(MESH_PASS_SRC), "_mut_mesh_pass_std.cpp")      # beside its headers
     open(path, "w").write(mut)
     try:
-        r = _row("mesh_pass", 0x47e520, path, "--inputs", "60")
+        r = _row("render_passes", 0x47e520, path, "--inputs", "60")
     finally:
         os.remove(path)
     assert r["verdict"] == "FAIL", r
@@ -855,8 +855,8 @@ def test_stdcall_through_vtable_ecx_is_not_compared():
     """GuiScreen::process 0x4ebfd0 calls DirectInput's GetDeviceData through `mov ecx,[eax]; ... call [ecx+0x28]`: ecx is
     the vtable, the device is a stack argument (__stdcall), so ecx is dead at the call. The original leaves the vtable
     there, ours a stack address; comparing it made 200/201 inputs FAIL. Every stack argument is still compared."""
-    src = "src/game/char_sheet/screen.cpp"
-    r = _row("screen", 0x4ebfd0, src, "--inputs", "60")
+    src = "src/game/ui/screens/screen_misc.cpp"
+    r = _row("screen_misc", 0x4ebfd0, src, "--inputs", "60")
     assert r["verdict"] in ("PASS", "WEAK", "PASS-FP", "WEAK-FP") and r["valid"] > 0, r
 
 
@@ -865,9 +865,9 @@ def test_com_and_cdecl_calls_through_pointers_ignore_ecx():
     the vtable of the first stack argument, so the callee is a COM __stdcall method and ecx (a leftover) is dead there.
     mesh::render 0x413750 calls a function pointer member with `push eax; call [eax+68h]; add esp,4`: caller-cleaned, so
     __cdecl, and ecx again carries nothing. Comparing ecx made 194/480 and 107/514 inputs FAIL."""
-    r = _row("terrain_a", 0x46d060, "src/game/terrain_a/terrain_render.cpp", "--inputs", "60")
+    r = _row("terrain_cells", 0x46d060, "src/game/terrain/terrain_render.cpp", "--inputs", "60")
     assert r["verdict"] in ("PASS", "WEAK", "PASS-FP", "WEAK-FP") and r["valid"] > 0, r
-    r = _row("mesh_obj", 0x413750, "src/rgl/particles/mesh_obj.cpp", "--inputs", "60")
+    r = _row("mesh", 0x413750, "src/engine/render/mesh.cpp", "--inputs", "60")
     assert r["verdict"] in ("PASS", "WEAK", "PASS-FP", "WEAK-FP") and r["valid"] > 0, r
 
 
@@ -877,12 +877,12 @@ def test_loop_repair_shrinks_runaway_trip_count():
     finds the hot loop, samples its exit compare (esi steps by 0x204, the bound is the argument slot) and rewrites
     `last` to first + n*0x204; the input, replayed identically on both sides, then finishes. Without it every input
     is cut off. (A small --budget keeps the unrepaired run fast; the repair itself never changes the cap.)"""
-    src = "src/game/triggers/trigger_vec.cpp"
+    src = "src/game/app/options_dialog_and_module_tables.cpp"
     _row = lambda sid, va, src, *x: frozen_row(FROZEN_LOOP, sid, va, src, *x)      # the live source's own runaway differs
-    r = _row("trigger_vec", 0x4c1b60, src, "--inputs", "30", "--budget", "200000", "--loop-repair")
+    r = _row("options_dialog_and_module_tables", 0x4c1b60, src, "--inputs", "30", "--budget", "200000", "--loop-repair")
     assert r["valid"] > 0 and not r.get("budget_cutoff"), r
     assert any(k.startswith("budget-loop:") for k in r.get("shrink_repairs", {})), r
-    r = _row("trigger_vec", 0x4c1b60, src, "--inputs", "30", "--budget", "200000", "--no-loop-repair")
+    r = _row("options_dialog_and_module_tables", 0x4c1b60, src, "--inputs", "30", "--budget", "200000", "--no-loop-repair")
     assert r["valid"] == 0 and r["verdict"] == "UNSUPPORTED", r
 
 
@@ -1289,7 +1289,7 @@ def test_d3d_lockrect_surface_comes_from_the_input():
     pBits. The locked surface is the input's own pool memory (Runner.D3D_LOCK_BITS, the same address for both builds),
     not a zero block, so lit and shadowed pixels both occur and the row covers every edge (it was WEAK: the skip edge
     was never taken). A lock call writes {Pitch, pBits} with that address and returns D3D_OK."""
-    r = frozen_row(FROZEN_OBJ, "agent_hud", 0x4faee0, "src/game/agent5/agent_hud.cpp", "--fp-tol")
+    r = frozen_row(FROZEN_OBJ, "agent_hud", 0x4faee0, "src/game/ui/hud/agent_hud.cpp", "--fp-tol")
     assert r["verdict"] == "PASS" and not r["fp_tol"]["real_mismatches"], r
     assert equiv.Runner.D3D_LOCK_BITS == equiv.M.POOL_BASE + equiv.M.POOL_SIZE - 0x40000
     assert equiv.Runner.D3D_LOCK_BITS % equiv.M.SLOT == 0
@@ -1347,7 +1347,7 @@ def test_native_hooks_give_identical_row_results():
     uninit-copy pass (its tolerated 'uninit-copy' count); the config mutant under --fp-tol exercises the reference run's
     write/read tracking (fstore, huge/denormal inputs)."""
     a, b = _both_paths(lambda: _strip_seconds(frozen_row(
-        FROZEN_OBJ, "obj_tbl", 0x499050, "src/game/world_data/obj_tbl.cpp",
+        FROZEN_OBJ, "object_table_spawners", 0x499050, "src/game/data/object_table_spawners.cpp",
         "--inputs", "120", "--fp-tol", "--typed-share", "0", "--time-limit", "3000")))
     assert a == b
     assert a["tolerated"].get("uninit-copy"), a["tolerated"]
@@ -1458,7 +1458,7 @@ def test_delete_statement_is_not_an_annotation(tmp_path):
 
 
 def test_deep_variable_ignores_code_addresses():
-    """A variable never resolves to a function start; one stray code address in the repository (cls_map.cpp's
+    """A variable never resolves to a function start; one stray code address in the repository (winmain_and_menu_screens.cpp's
     `delete[] g_propkinds;  // ??_EMissionObj (0x4c7ee0)`) made g_propkinds ambiguous and a model page, and
     build_mesh_name 0x5302f0 then copied a vector out of soup (false FAIL)."""
     res = equiv.context()["res"]
@@ -1476,7 +1476,7 @@ def test_icf_folded_template_instance_binds_its_sibling():
     it into vector<point20>::capacity 0x40f090 (ICF). The row's alignment pairs the call with 0x40f090 only weakly
     (a 2-reference gap beside our local reserve copy), so it was modelled as a zero stub: 153/153 FAIL at import
     call #0. Weak alignment plus a same-template sibling name at that address now binds it."""
-    t = equiv.prepare("dust", 0x4f4060, src=os.path.join(ROOT, "src/game/char_sheet/dust.cpp"), log=lambda *a: None)
+    t = equiv.prepare("dust_particles", 0x4f4060, src=os.path.join(ROOT, "src/game/terrain/dust_particles.cpp"), log=lambda *a: None)
     cap = "?capacity@?$vector@Uface20@rgl@@V?$allocator@Uface20@rgl@@@std@@@std@@QBEIXZ"
     pt = "?capacity@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QBEIXZ"
     assert t.res.method.get(cap) == "orig-code(icf-sibling(%s))" % pt, t.res.method.get(cap)
@@ -1507,7 +1507,7 @@ def test_reentry_through_an_image_callee_runs_ours():
     both builds) replays every line through draw_string. That call reached the ORIGINAL's entry in our run too, so its
     calls fell outside our span: 85/333 FAIL at call #12 (the original's recursive tstring::operator= against none).
     Our run now enters our function there, as the relinked game does."""
-    r = _row("progress_bar", 0x4e43e0, "src/game/cls_map/progress_bar.cpp", "--inputs", "60", "--fp-tol")
+    r = _row("progress_bar_and_load_screens", 0x4e43e0, "src/game/ui/screens/progress_bar_and_load_screens.cpp", "--inputs", "60", "--fp-tol")
     assert r["verdict"] != "FAIL", r
 
 

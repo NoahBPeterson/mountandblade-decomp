@@ -1,5 +1,5 @@
 {
-  "resmgr 0041aee0": {
+  "resource_manager 0041aee0": {
     "args": [
       "--transparent",
       "401830,41a510,41a550"
@@ -23,7 +23,7 @@
     ],
     "why": "InventoryPanel::refresh_lists loops over view_count / view_count2 (+0x964 / +0x968); a random int is almost never 1 or 2, so the widget loops were not entered (10/136 edges). Soft hints only, nothing is discarded (66/140 with them)."
   },
-  "mission_3 0048c5c0": {
+  "stacks_and_loot 0048c5c0": {
     "args": [
       "--rand-seeded",
       "--inputs",
@@ -205,7 +205,7 @@
     ],
     "why": "the harness rand() always starts from state 1, so the first draw is always 41 and ItemRef::randomize_modifier's `rand()%15817*k < 0.1` early return (and the draw-dependent loops of spawn_items) never varied; --rand-seeded seeds the sequence per input (both sides identical). Its modifier loops also hang on g_sort_val (0xa75f90, 0x28-byte records: the weight float at +4 is the speed_scale base, the float at +0: its ref): the image leaves them 0, so `total` never exceeded `ref` and the pick loop never ran; the g:ADDR soft hints put weights 0.5/1/2 into all 0x2b records (9 -> 42 of 44 edges; the two left, found<0 and found>=0x2b, cannot happen: found is a loop index)"
   },
-  "mission_3 0048cc40": {
+  "stacks_and_loot 0048cc40": {
     "args": [
       "--rand-seeded"
     ],
@@ -235,14 +235,14 @@
     ],
     "why": "Agent::pick_target clamps 3.0/dist to 4.0 only when the target is within 0.75 of this->pos; random floats are never that close. Soft hints bias this+0x50..0x58 (pos) to 0 / 0.25 (nothing discarded); with them all 10/10 edges are covered."
   },
-  "mesh_pass 0047e520": {
+  "render_passes 0047e520": {
     "args": [
       "--transparent",
       "4119d0"
     ],
     "why": "RenderPass::render copies the pass into a local vector<int> with the out-of-line std::vector<int>::push_back (0x4119d0) that ours inlines; 0x410610/0x410b60 are already auto-transparent, so the allocation (engine_new) inside the hidden call made the depth-1 trace of ours differ from the original in every input that also reached a later transparent allocation (call #6 mismatch, not a behavioural difference)"
   },
-  "config_dialog 004d0240": {
+  "launcher_config_dialog 004d0240": {
     "args": [
       "--hint",
       "arg1=4e,110,111,114@0.9",
@@ -262,7 +262,7 @@
     ],
     "why": "GameApp::FrameMove calls gui_manager::process (0x4ebfd0), which hands a 16-event stack buffer to the keyboard device's GetDeviceData (a generated fake method in the harness, so it writes neither the buffer nor the count, left at 0x10) and then walks the 16 uninitialised events. What they hold is the stack residue at process's frame, which sits 4 bytes lower in the original (FrameMove frame 0xc vs ours 8), so the event loop took different branches and wrote different widget fields (pool @4920167c 4 vs 0xe via MissionUi::refresh 0x42ce50; traced with a write watch: orig esp 7dffde48, ours 7dffde4c). process is image code both builds call identically; stubbing it (plus the default lookup stubs) removes the uninitialised walk. bm9fv 2026-11-08"
   },
-  "view_open 00509980": {
+  "character_sheet_view 00509980": {
     "args": [
       "--hint",
       "this+2dc=ffffffff@0.8",
@@ -271,7 +271,7 @@
     ],
     "why": "char_window::open_view's flat-fallback branch (the elem2 path) needs +0x2dc == -1; random ints never hit it (68.5% -> 84.4% insns with the soft hint, nothing discarded). bm9fv 2026-11-08: --stub 41e4f0 (frustum::build_planes, plus the default lookup stubs): identity_pos's worker 0x40cd60 fills the camera matrix' w lanes from its own uninitialised locals, i.e. whatever an earlier callee left there, which differs because our frame sits 0x1c lower (write watch: orig esp 7dffdf20, ours 7dffdf04; orig u.w 50001820 vs ours 7dffdee4, o.w 0 vs 50001948). The copies are excused as uninit-copy, but build_planes computes planes from them, so its output differed on ~74/386 inputs. build_planes is image code both builds call with the same this; stubbed: 392/395 -> see the row note."
   },
-  "fx_anim 00423b60": {
+  "fx_animation 00423b60": {
     "args": [
       "--inputs",
       "1000",
@@ -280,7 +280,7 @@
     ],
     "why": "only 171 of the default inputs are valid (200 needed); more inputs reach 200 valid, 2/2 edges"
   },
-  "fx_anim 00422130": {
+  "fx_animation 00422130": {
     "args": [
       "--typed-share",
       "0.8",
@@ -291,7 +291,7 @@
     ],
     "why": "the bone-0 add_pos accumulation needs typed objects and more inputs (PASS with DIFFTEST_CONCOLIC=1; 61/68 edges without)"
   },
-  "render_shape 004ed6f0": {
+  "map_widget_render 004ed6f0": {
     "args": [
       "--inputs",
       "1000",
@@ -308,7 +308,7 @@
     ],
     "why": "render_shape_frame rounds four view-extent products (floor + 'fraction above 0.5' bump); random floats almost never land the fraction above 0.5 for every product, so two of the +1 edges were missed. Soft hints on the four view-rect floats (this+0xe0/e4/f0/f4) only, nothing discarded (10/10 edges with them)."
   },
-  "editor_ui 004f6360": {
+  "editor_widgets 004f6360": {
     "args": [
       "--inputs",
       "1000",
@@ -317,7 +317,7 @@
     ],
     "why": "_Uninit_fill_n wrapper: 46 bytes, but most random inputs fault on the 0x1f8-byte TextRow copies; the default 400 inputs gave 168 valid (< 200). More inputs only."
   },
-  "module_load 004d1230": {
+  "module_record_loaders 004d1230": {
     "args": [
       "--inputs",
       "1500",
@@ -326,7 +326,7 @@
     ],
     "why": "std::_Uninit_copy over 0x68-byte elements: most random pointer ranges fault, the default budget gave 186 valid (< 200). More inputs only."
   },
-  "module_load 004d12c0": {
+  "module_record_loaders 004d12c0": {
     "args": [
       "--inputs",
       "1500",
@@ -357,14 +357,14 @@
     ],
     "why": "GameData::save_state loops `for i < g_party_template_count` (0x5e29fc, a zero global in the harness) over g_party_templates[i].write(out); the g:ADDR soft hint sets the count to 1..3. Valid inputs that survive the loop body are rare (the typed RecB0 list8 has to be consistent): seed 1 did not reach the loop in 3000 inputs, seed 2 does within 1500"
   },
-  "game_state 00463790": {
+  "scene_paths_and_wind_noise 00463790": {
     "args": [
       "--hint",
       "g:5e28fc=0,1@0.5"
     ],
     "why": "Ramp::eval packs the colour through pow(c, g_ramp_gamma) only when g_use_shaders (0x5e28fc) == 0; the harness leaves the flag at its image value 0, so the != 0 side of the branch (0x463851 -> 0x46388a) was never taken. Soft hint sets it to 0 or 1"
   },
-  "map_editor 005305b0": {
+  "map_editor_update 005305b0": {
     "args": [
       "--hint",
       "g:a17458=0,1@0.6",
@@ -391,9 +391,9 @@
       "--plateau",
       "800"
     ],
-    "why": "MapEditorDialog::update's three blocks are gated on keyboard-modifier globals (0xa17458/0xa17858 list modifier, 0xa17148/0xa17348 select-all, 0xa1714c/0xa1754c, 0xa17420/0xa17820 delete) that are zero in the harness, so everything below the first test was unreached; soft g:ADDR hints set them to 0 or 1 [bm7cr 2026-11-08: + 0xa1712c/0xa1752c (down/prev[0x16], the Ctrl+U frame push-back in section 7), which our source had read as down[0x14]; the select-all test read down[0x1c] where the original reads down[0x1e] (0xa1714c) - both real bugs, fixed in map_editor.cpp]"
+    "why": "MapEditorDialog::update's three blocks are gated on keyboard-modifier globals (0xa17458/0xa17858 list modifier, 0xa17148/0xa17348 select-all, 0xa1714c/0xa1754c, 0xa17420/0xa17820 delete) that are zero in the harness, so everything below the first test was unreached; soft g:ADDR hints set them to 0 or 1 [bm7cr 2026-11-08: + 0xa1712c/0xa1752c (down/prev[0x16], the Ctrl+U frame push-back in section 7), which our source had read as down[0x14]; the select-all test read down[0x1c] where the original reads down[0x1e] (0xa1714c) - both real bugs, fixed in map_editor_update.cpp]"
   },
-  "mission_ctx 00513710": {
+  "mission_context 00513710": {
     "args": [
       "--hint",
       "g:a7333c=1,2,4,8,10,20,40,80,100,200,400,800,1000,2000@0.9",
@@ -434,7 +434,7 @@
     ],
     "why": "Agent::hit_damage: the missile / melee / bow / couched-lance branches were behind inputs the default budget plateaued on (28.7% insns, 14/118 edges); more typed inputs, a longer plateau and a bias of the hand argument to 0/1 give 87.1% insns, 87/118 edges with no mismatch. Soft hints only."
   },
-  "editor_dialog 004fe860": {
+  "terrain_brush_dialog 004fe860": {
     "args": [
       "--inputs",
       "4000",
@@ -451,7 +451,7 @@
     ],
     "why": "EditorPanel::terrain_dialog is a window proc: a random msg is almost never WM_INITDIALOG/WM_NOTIFY/WM_COMMAND and a random wParam never a control id, so 0.8% of the insns were reached. Soft hints on msg (arg1) and the control id / notification code in wParam (arg2) reach 52%+ with nothing discarded. With --inputs 4000 --plateau 3000 --typed-share 0.8 and DIFFTEST_CONCOLIC=1: 69.7% insns, 178/286 edges, 4027 valid inputs, 0 mismatches (the remaining misses are the equal-string and listbox-selection paths that need matching GetDlgItemTextA/LB_ results)."
   },
-  "party_2 004b7460": {
+  "party_map 004b7460": {
     "args": [
       "--rand-seeded",
       "--hint",
@@ -497,7 +497,7 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "cls_map 004de1b0": {
+  "winmain_and_menu_screens 004de1b0": {
     "args": [
       "--party-table",
       "--typed-share",
@@ -509,13 +509,13 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable; the string-table hit needs typed objects and more inputs"
   },
-  "exchange_screens 00531800": {
+  "mission_menu_and_exchange_screens 00531800": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "exchange_screens 00532de0": {
+  "mission_menu_and_exchange_screens 00532de0": {
     "args": [
       "--party-table"
     ],
@@ -557,7 +557,7 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "gui_edit 004c8ca0": {
+  "editor_selection_and_translation 004c8ca0": {
     "args": [
       "--party-table"
     ],
@@ -587,7 +587,7 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "mesh_game 004832b0": {
+  "agent_spawn_and_tick 004832b0": {
     "args": [
       "--party-table"
     ],
@@ -615,67 +615,67 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable; a match only at the last history element needs more inputs"
   },
-  "mission_ctx 00513f80": {
+  "mission_context 00513f80": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "mission_ctx 00514890": {
+  "mission_context 00514890": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "mission_ctx 00516370": {
+  "mission_context 00516370": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "mission_ctx 00516700": {
+  "mission_context 00516700": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "party_2 004b2c00": {
+  "party_map 004b2c00": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "party_2 004b3910": {
+  "party_map 004b3910": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "party_2 004b4800": {
+  "party_map 004b4800": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "party_2 004b4a00": {
+  "party_map 004b4a00": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "party_2 004b6070": {
+  "party_map 004b6070": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "party_2 004b6180": {
+  "party_map 004b6180": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "party_2 004b6870": {
+  "party_map 004b6870": {
     "args": [
       "--party-table"
     ],
@@ -699,79 +699,79 @@
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "terrain_b 00473a60": {
+  "terrain_scene_renderer 00473a60": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "troop_rec 0051f1a0": {
+  "new_game_setup 0051f1a0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "widget_text 0050cc70": {
+  "text_box 0050cc70": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "world_data 00490990": {
+  "game_data_party_quest 00490990": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "world_data 00490ce0": {
+  "game_data_party_quest 00490ce0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "world_data 004910a0": {
+  "game_data_party_quest 004910a0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "world_data 00491430": {
+  "game_data_party_quest 00491430": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "world_data 004915d0": {
+  "game_data_party_quest 004915d0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "world_data 004918d0": {
+  "game_data_party_quest 004918d0": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "world_data 00491b20": {
+  "game_data_party_quest 00491b20": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "world_data 00492530": {
+  "game_data_party_quest 00492530": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "world_data 00494b60": {
+  "game_data_party_quest 00494b60": {
     "args": [
       "--party-table"
     ],
     "why": "calls the party lookup 0x48ad00: --party-table builds a consistent PartyMgr id map / page table / Party records so the code behind it is reachable"
   },
-  "world_data 00494e40": {
+  "game_data_party_quest 00494e40": {
     "args": [
       "--party-table"
     ],
@@ -898,7 +898,7 @@
     ],
     "why": "--item-table: item-type branches need g_items records of each type; the hints point the agent's slot item ids (this+0x1d0..) and slot indices (this+0x22c..) into the table; --party-table because the row reads g_game"
   },
-  "mesh_3 0052da20": {
+  "poly_mesh_pick 0052da20": {
     "args": [
       "--typed-share",
       "1.0",
@@ -911,7 +911,7 @@
     ],
     "why": "pick_edge's ratio branch needs >= 2 typed vertices both under 0.1: full typed share, more inputs"
   },
-  "mesh_3 0052dc00": {
+  "poly_mesh_pick 0052dc00": {
     "args": [
       "--typed-share",
       "1.0",
@@ -950,14 +950,14 @@
     ],
     "why": "the pitch term's sign depends on rand(): seed the modelled rand per input"
   },
-  "mission_3 0048d5f0": {
+  "stacks_and_loot 0048d5f0": {
     "args": [
       "--typed-share",
       "0.8"
     ],
     "why": "typed 0x1dc-byte elements let the virtual v08 return a negative value"
   },
-  "terrain_a 00464d50": {
+  "terrain_cells 00464d50": {
     "args": [
       "--hint",
       "g:5e28fc=1",
@@ -989,7 +989,7 @@
     ],
     "why": "the clamp branch depends on two rand() draws"
   },
-  "progress_bar 004e5e60": {
+  "progress_bar_and_load_screens 004e5e60": {
     "args": [
       "--hint",
       "g:a75f3c=ffffffff@0.7",
@@ -998,14 +998,14 @@
     ],
     "why": "a negative g_save_idx makes BlockOwner::init skip writing this+0x40, so a negative value survives"
   },
-  "mission_ctx 00514360": {
+  "mission_context 00514360": {
     "args": [
       "--hint",
       "g:5e2a04=2,3,4@0.8"
     ],
     "why": "the template count must be 2+ so several records match"
   },
-  "exchange_screens 005316f0": {
+  "mission_menu_and_exchange_screens 005316f0": {
     "args": [
       "--hint",
       "this+1c=fffffff6,fffffff0,fffffffb@0.7"
@@ -1019,7 +1019,7 @@
     ],
     "why": "the empty-vector path needs a size argument of 0"
   },
-  "psys 00414960": {
+  "particle_system 00414960": {
     "args": [
       "--hint",
       "this+10=40010400@1.0",
@@ -1028,7 +1028,7 @@
     ],
     "why": "places a two-particle vector inside this so the particle loop runs more than once"
   },
-  "mission_ui 00489e70": {
+  "widget_base 00489e70": {
     "args": [
       "--hint",
       "arg0=ffffffff,fffffffe@0.7",
@@ -1039,7 +1039,7 @@
     ],
     "why": "lo+rand%(hi-lo) can be -1 only with a negative lo"
   },
-  "world_data 00490160": {
+  "game_data_party_quest 00490160": {
     "args": [
       "--time-limit",
       "3000"
@@ -1084,7 +1084,7 @@
     ],
     "why": "a bucket vector in spare .bss holding a node whose key equals the argument"
   },
-  "fx_anim 00421df0": {
+  "fx_animation 00421df0": {
     "args": [
       "--hint",
       "this+0=1@1",
@@ -1105,7 +1105,7 @@
     ],
     "why": "a node chain in spare .bss with a non-empty vector at node+0xb4"
   },
-  "resmgr 0041b960": {
+  "resource_manager 0041b960": {
     "args": [
       "--hint",
       "arg1=6000000@1",
@@ -1128,7 +1128,7 @@
     ],
     "why": "six passing entries: VC7.1 vector growth reaches spare capacity on the 6th push"
   },
-  "mesh_terrain 00481570": {
+  "terrain_water_regen 00481570": {
     "args": [
       "--transparent",
       "476130,476020,4772f0,477380,476240,4762b0,424830,424db0"
@@ -1142,21 +1142,21 @@
     ],
     "why": "HashTab::insert: the original's rehash splice has std::list::_Splice's `this != &_Right` size move (0x4d3ce0 `cmp ecx,ecx; je` over `push 0; call 0x4cb6f0`), never taken; ours keeps the call's shape with an always-true pointer test (stand-in, see world_app.cpp), so ours calls list_node::grow(0) where the original does not. grow(0) is a provable no-op (0x7ffffff - size >= 0 unsigned, then size += 0) with no inner calls, so making 0x4cb6f0 transparent hides only the no-op calls; the saved FAIL input replays with no difference (bm7cr 2026-11-08)."
   },
-  "game_2 00524710": {
+  "map_builder_and_data_load 00524710": {
     "args": [
       "--transparent",
       "401800"
     ],
     "why": "TroopRec ctor: the original builds its tstring names[8] member through the out-of-line vector constructor iterator ??_H (0x401800: push 0x42bbd0; push 8; push 0x10; a plain loop calling the ctor count times), ours expands that loop inline, so the original's 8 tstring::tstring calls were hidden inside one ??_H call at depth 1. Same constructor, same 8 this pointers (+0x10 stride) in the same order; replay of the saved FAIL input with --transparent 401800 shows no difference (bm7ct 2026-11-08)."
   },
-  "game_2 00524860": {
+  "map_builder_and_data_load 00524860": {
     "args": [
       "--transparent",
       "401800"
     ],
     "why": "QuestRec ctor: the original builds its tstring names[8] member through the out-of-line vector constructor iterator ??_H (0x401800: push 0x42bbd0; push 8; push 0x10; a plain loop calling the ctor count times), ours expands that loop inline, so the original's 8 tstring::tstring calls were hidden inside one ??_H call at depth 1. Same constructor, same 8 this pointers (+0x10 stride) in the same order; replay of the saved FAIL input with --transparent 401800 shows no difference (bm7ct 2026-11-08)."
   },
-  "game_2 005249f0": {
+  "map_builder_and_data_load 005249f0": {
     "args": [
       "--transparent",
       "401800"
@@ -1170,7 +1170,7 @@
     ],
     "why": "bm9fv 2026-11-08: the two closing gui_manager::draw_string calls (0x4e43e0) reach 0x4dc350, which stores a vector4 whose w is its own uninitialised local ([esp+0x1c], a stale stack address: orig 7dff5e60, ours 7dff5e2c) into the font record; with g_font NULL in the harness that record is page 0, and Font::layout_text then divides by it, so g_gui 0x5d876c differed by 16-32 ulp in proportion to our frame offset (0x34). Original-code uninitialised read; draw_string is image code both builds call with the same arguments (still compared); stubbed: 64/200 FAIL -> 0/245 mismatches."
   },
-  "slot 00487b00": {
+  "input_device 00487b00": {
     "args": [
       "--param-regs",
       "orig:edi=0,orig:edx=1,ours:edi=0"
@@ -1184,14 +1184,14 @@
     ],
     "why": "GameData::attach_party_center ends with Mission::spawn_battle_icon (0x49bbb0), which creates the battle icon's scene entity and runs the world's collision queries (rgl::cell::collect_point 0x439780 calls shape methods through [vtable+0x2c]/[+0x28]); on random scene state those virtual calls fetch from junk vtables (66 fault(fetch) and most of the 136 fault(read) discards, ~100k fake-call retries, 'input 0 needed more than 100000 instructions'), so only 142/400 inputs were valid (WEAK). spawn_battle_icon is image code both builds call last with the same this and id (the stub still compares the call and its arguments; the row 0x49bbb0 tests its body); stubbed (plus the default lookup stubs): PASS 200/254 valid, 4/4 edges, 100% insns, 16 s. The remaining discards are in alloc_record 0x493700 (random free-id / page vectors) and the party lookups (random PartyMgr pages); --party-table did not change them."
   },
-  "world_data 00492f40": {
+  "game_data_party_quest 00492f40": {
     "args": [
       "--transparent",
       "431480"
     ],
     "why": "GameData::world_free deletes the module triggers with `delete[] triggers.array`: cl inlines ??_ETriggerRec (0x431480) here where the original calls it, so the depth-1 call trace of ours shows the inlined element destructors (call #65 mismatch, not a behavioural difference)"
   },
-  "mesh_start 00484590": {
+  "mission_start_setup 00484590": {
     "args": [
       "--stub-callees",
       "--stub-out",

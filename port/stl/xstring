@@ -278,7 +278,7 @@ public:
     }
     _Alloc get_allocator() const { return this->_Alval; }
 
-    // ---- VC7.1 internals (src/rgl/shapes/shapes.cpp instantiates _Copy) ----
+    // ---- VC7.1 internals (src/engine/physics/collision_shapes.cpp instantiates _Copy) ----
     void _Copy(size_type _Newsize, size_type _Oldlen)
     {
         size_type _Newres = _Newsize | _ALLOC_MASK;

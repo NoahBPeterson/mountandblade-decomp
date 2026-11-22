@@ -1,0 +1,10 @@
+../src/game/ui/widgets/widget_manager.cpp  ?create_game_button_overlay@widget_mgr@@QAEHABUtstring@@@Z  00499830  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_manager.cpp  ?create_image_button_overlay@widget_mgr@@QAEHHH@Z  00499a20  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_manager.cpp  ?create_check_box_overlay@widget_mgr@@QAEHHH@Z  00499b50  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_manager.cpp  ?create_progress_overlay@widget_mgr@@QAEHHH@Z  00499b80  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_manager.cpp  ?create_combo_button_overlay@widget_mgr@@QAEHXZ  00499d90  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_manager.cpp  ?create_text_box_overlay@widget_mgr@@QAEHXZ  0049a0b0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_manager.cpp  ?set_area_size@widget_mgr@@QAEXHABUvec2@@@Z  0049ab80  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_manager.cpp  ?key@DropDown@@UAEDI@Z  0049aca0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_manager.cpp  ?layout_text_to@MissionUi@@UAEXABUtstring@@ABUvec2@@@Z  0049abc0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/widget_manager.cpp  ?set_size@widget_mgr@@QAEXHABUvec2@@@Z  0049a300  /O2 /MT /Gy /TP

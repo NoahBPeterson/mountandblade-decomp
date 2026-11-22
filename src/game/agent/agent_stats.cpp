@@ -1,0 +1,1080 @@
+//-----------------------------------------------------------------------------
+// File: agent_stats.cpp  (0x437830..0x43a280; the rest of this object is in agent4/agent_logic.cpp)
+//
+// Desc: the 0x1c8-byte placed-object record (ctor, deleting dtor, copy ctor, assignment), the agent's combat-stat
+//       and order helpers, the skill lookup, the std::vector / std::_Uninit_* instantiations the linker kept,
+//       the mesh node bounds, the level queries over the collision grid and the navigation mesh, the animation
+//       controller's link setup, the translation table lookup, the agent's hand position / quiver / channel
+//       start, the physics set's two members and the light accumulator. Functions in ascending address order.
+//       Flags: /O2 /MT /Gy /TP. Names provisional.
+//-----------------------------------------------------------------------------
+#define ALLOC_PLACED_CONSTRUCT_DEFINED_HERE   // agent_types.h: allocator<PlacedObj>::construct 0x439040 is below
+#define HNODE_LOAD_ORDER_COPY        // hnode.h: adjust_heap_node 0x438b10 needs the user-written copy (before mission.h pulls hnode.h in)
+#define PLACEDOBJ_CTOR_OUT_OF_LINE   // PlacedObj::PlacedObj is defined below (0x437830)
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <new>
+#include <vector>
+#include <algorithm>
+#include <stdexcept>
+#define ANIM_SLOT_SET_OUT_OF_LINE   // AnimSlot::set 0x4378a0 stays a real function in this TU
+#include "game/dialog/dialog_manager.h"      // g_script 0xa70440 (g_ev_a / g_ev_b live in it; listed directly: the resolution audit reads only the source's own includes)
+#include "game/agent/agent_queries.h"
+#include "game/agent/ai/agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/agent/agent_stats.h"
+#include "game/agent/anim_slot.h"      // (named here too for the resolution audit)
+#include "engine/fx/env_curve.h"      // Curve: the canonical class of the Skeleton record (Curve::recs +0x40 is Skeleton::chans)
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "engine/math/mat4_include.h"
+#include "engine/core/ptr_tag.h"
+#include "engine/core/timer.h"
+#include "engine/math/vec.h"
+#include "engine/physics/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "engine/physics/phys_set.h"
+#include "engine/physics/height_field.h"
+#include "engine/scene/world.h"
+#include "engine/render/light.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "game/mission/placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/resource/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "game/data/item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/agent/agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/mission/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/terrain/poly_mesh.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/party/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include <vector>
+#include "game/data/str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/config/options.h"   // g_options 0x5aa008
+#include "game/data/item_kind_include.h"   // g_items 0x5e29d0
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+const RangePair g_range_tbl[6] = {                       // 0x590aac
+    { -0.5f, 3.1415927f }, { -2.0f, 2.0f }, { -1.5f, 2.5f }, { -1.0f, 3.0f }, { -1.3f, 2.8f }, { -3.0f, 1.0f } };
+
+
+// inline vector helpers of the original: rgl's operators are out-of-line in other objects
+static __forceinline vector4 vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
+static __forceinline vector4 vneg(const vector4& a) { return vector4(-a.x, -a.y, -a.z); }
+static __forceinline float vdot(const vector4& a, const vector4& b) { return a.x * b.x + (a.z * b.z + a.y * b.y); }
+
+
+// ---- the 0x1c8-byte record -----------------------------------------------------------------------------------------
+// @ 0x437830
+PlacedObj::PlacedObj()
+{
+    reset();
+}
+
+// copy constructor and assignment (explicit memberwise copies; the compiler-generated ones are identical)
+// @ 0x437bb0
+PlacedObj::PlacedObj(const PlacedObj& o)
+    : IfaceB(o), m10(o.m10), m14(o.m14), frame(o.frame), m58(o.m58), start_frame(o.start_frame), md8(o.md8), m118(o.m118),
+      scale(o.scale), m168(o.m168), f16c(o.f16c), tween_clock(o.tween_clock),
+      last_t(o.last_t), m184(o.m184), kind(o.kind), id(o.id), name(o.name), value(o.value), m1a4(o.m1a4),
+      m1a8(o.m1a8), m1ac(o.m1ac), m1b0(o.m1b0), ent(o.ent), ent2(o.ent2), max_hp(o.max_hp), hp(o.hp),
+      m1c4(o.m1c4)
+{
+}
+// @ 0x437d60
+PlacedObj& PlacedObj::operator=(const PlacedObj& o)
+{
+    IfaceB::operator=(o);
+    m10 = o.m10; m14 = o.m14;
+    frame = o.frame; m58 = o.m58; start_frame = o.start_frame; md8 = o.md8; m118 = o.m118;
+    scale = o.scale; m168 = o.m168; f16c = o.f16c;
+    tween_clock = o.tween_clock;
+    last_t = o.last_t; m184 = o.m184; kind = o.kind; id = o.id;
+    name = o.name;
+    value = o.value; m1a4 = o.m1a4; m1a8 = o.m1a8; m1ac = o.m1ac; m1b0 = o.m1b0; ent = o.ent;
+    ent2 = o.ent2; max_hp = o.max_hp; hp = o.hp; m1c4 = o.m1c4;
+    return *this;
+}
+
+// ---- animation / order slot and the agent's order helpers -------------------------------------------------------------
+// accept a new animation when its priority is not lower than the current one
+// @ 0x4378a0
+inline bool AnimSlot::set(int id, unsigned prio)
+{
+    if ((prio & 0x1ffff) < (events & 0x1ffff) && (cur != -1 || next != -1))
+        return false;
+    next = id;
+    events = prio;
+    if (id == -1)
+        events = 0;
+    return true;
+}
+
+// @ 0x4378f0
+void Agent::get_dir(vec2* out)
+{
+    vec2 v;
+    v.x = vel.x;
+    v.y = vel.y;
+    float l = (float)sqrt(v.x * v.x + v.y * v.y);
+    if (l > 0.0f) {
+        float inv = 1.0f / l;
+        v.x = inv * v.x;
+        v.y = inv * v.y;
+    } else {
+        v.x = 0.0f;
+        v.y = 1.0f;
+    }
+    if (kind == 0 && horse != -1 && (active != 0 || f5610 != 0)) {
+        float t = cur;
+        float c = (float)cos((double)t);
+        float s = (float)sin((double)t);
+        float nx = c * v.x - s * v.y;
+        float tt = c * v.y;
+        v.y = tt + s * v.x;
+        v.x = nx;
+    }
+    *out = v;
+}
+
+// @ 0x4379c0
+void Agent::set_order(int slot, int id, unsigned prio, float rate)
+{
+    if (id >= -1 && id < defs->count) {
+        if (anim[slot].set(id, prio)) {
+            anim[slot].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
+            if (prio & 0x4000000)
+                body->fx->set_rec_phase(slot, 0.0f);
+            if (slot == 0) {
+                if (id >= 0 && (defs->data[id].flags & 0x400) && anim[1].cur != -1 &&
+                    (prio & 0x1ffff) > (anim[1].events & 0x1ffff))
+                    anim[1].set(-1, prio & 0x1ffff);
+            } else if (slot == 1) {
+                int k = slots[0];
+                if (k >= 0 && pairs[k].item >= 0) {
+                    if (prio & 0x10000000)
+                        links[k]->mask = 0;
+                    else
+                        links[k]->mask = 0xffff;
+                }
+            }
+        }
+    }
+}
+
+// skill level of a troop: the packed 4-bit level plus the event bonus, clamped to the skill's cap
+// @ 0x437b20
+int GameData::skill_level(int agent, int skill)
+{
+    unsigned w = chars[agent].nib[skill / 8];
+    int lvl = (w >> (skill % 8 * 4)) & 0xf;
+    g_script.trigger_result.store0 = 0;
+    g_script.trigger_result.store1 = 0;
+    emit_event(0x17, agent, skill);       // 0x435790
+    lvl += g_script.trigger_result.store0;
+    if (lvl < 0)
+        return 0;
+    int cap = g_skill_tbl[skill].max_rank;
+    if (lvl > cap)
+        return cap;
+    return lvl;
+}
+
+// ---- combat stats ----------------------------------------------------------------------------------------------------
+// @ 0x432790
+ItemRef Agent::slot_pair(int idx) const
+{
+    const ItemRef* p = 0;
+    int i = slots[idx];
+    if (i >= 0 && (idx == 0 || slots[4] == 0)) p = &pairs[i];
+    ItemRef r;
+    r.item = -1;
+    if (p) r = *p;
+    return r;
+}
+
+// @ 0x437f00
+bool Agent::has_weapon_for(int mode)
+{
+    bool found = false;
+    int t1 = team;
+    if (t1 < 0 || t1 >= 8) t1 = 7;
+    int tr = troop;
+    int k1 = 0;
+    if (tr >= 0) {
+        if (horse >= 0)
+            k1 = 2;
+        else
+            k1 = (g_game->chars[tr].flags30 & 0x4000000) ? 1 : 0;
+    }
+    int ra = g_mission->teams[t1].cls[k1].a;
+    int t2 = team;
+    if (t2 < 0 || t2 >= 8) t2 = 7;
+    int k2 = 0;
+    if (tr >= 0) {
+        if (horse >= 0)
+            k2 = 2;
+        else
+            k2 = (g_game->chars[tr].flags30 & 0x4000000) ? 1 : 0;
+    }
+    int rb = g_mission->teams[t2].cls[k2].b;
+    for (int i = 0; i < 4; i++) {
+        if (found) return found;
+        ItemRef* p = &pairs[i];
+        if (p->item >= 0) {
+            ItemKind* ik = &g_items[p->item];
+            unsigned fl = ik->type_flags;
+            unsigned type = fl & 0xff;
+            bool ok = ((ik->swing_damage & 0x300) == 0x200 || p->damage(0) <= 1) &&
+                      ((ik->thrust_damage & 0x300) == 0x200 || p->damage(1) <= 1);
+            if ((ra == 0 || ok) &&
+                (rb == 0 || (type != 8 && type != 9 && type != 10 && type != 0x10 && type != 0x11))) {
+                if (mode == 1) {
+                    if ((type == 2 || type == 3 || type == 4) && (fl & 0x400000))
+                        found = true;
+                } else if (mode == 2) {
+                    if (type == 8 || type == 9 || type == 10 || type == 0x10 || type == 0x11) {
+                        int missing, total, slot_out;
+                        best_ammo(i, &missing, &total, &slot_out);
+                        if (missing > 0) {
+                            if (type != 9 || !(ik->type_flags & 0x100000) || horse == -1)
+                                found = true;
+                        }
+                    }
+                } else if (mode == 3) {
+                    if (type == 4)
+                        found = true;
+                }
+            }
+        }
+    }
+    return found;
+}
+
+// @ 0x438180
+float Agent::stamina_scale()
+{
+    if (kind != 1) {
+        float r = 1.0f - equip_value * 0.11f / (g_game->chars[troop].lvl58 + 9);
+        if (0.0f > r) return 0.0f;
+        return r;
+    }
+    return 1.0f;
+}
+
+// signed angle between two 2-D vectors (the first normalised; (0,1) for a zero vector)
+// @ 0x4381e0
+float __cdecl signed_angle(const rgl::vector4& a, const rgl::vector4& b)
+{
+    vec2 u;
+    u.x = a.x;
+    u.y = a.y;
+    float l = (float)sqrt(u.x * u.x + u.y * u.y);
+    if (l > 0.0f) {
+        float inv = 1.0f / l;
+        u.x = inv * u.x;
+        u.y = inv * u.y;
+    } else {
+        u.x = 0.0f;
+        u.y = 1.0f;
+    }
+    vec2 bb;
+    bb.x = b.x;
+    bb.y = b.y;
+    vec2 r;
+    r.x = bb.x * u.y - bb.y * u.x;
+    r.y = bb.y * u.y + bb.x * u.x;
+    float l2 = (float)sqrt(r.y * r.y + r.x * r.x);
+    if (l2 > 0.0f) {
+        float inv = 1.0f / l2;
+        r.x = inv * r.x;
+        r.y = inv * r.y;
+    } else {
+        r.x = 0.0f;
+        r.y = 1.0f;
+    }
+    return (float)atan2(-r.x, r.y);
+}
+
+// @ 0x4382e0
+void Agent::set_default_order()
+{
+    set_order(1, f561c, 0x500000f, 1.0f);
+}
+
+// @ 0x438360
+float Agent::attack_speed()
+{
+    float f = 1.0f;
+    float base = 10.0f;
+    ItemRef cur = cur_pair();
+    if (cur.item < 0)
+        goto done;
+    {
+        ItemKind* it = &g_items[cur.item];
+        base = (float)it->shoot_speed;
+        unsigned type = it->type_flags & 0xff;
+        if (type == 8) {
+            int lvl = g_game->skill_level(troop, 0x21);
+            int v = cur.difficulty() + 4;
+            if (v >= lvl) v = lvl;
+            f = (float)v * 0.12f + 1.0f;
+            if (horse != -1)
+                f = ((float)g_game->skill_level(troop, 0x17) * 0.019 + 0.8) * f;
+            if (g_mission->precip_mode == 1)
+                return (float)sqrt(f * 0.9f) * base * 1.2f;
+        } else if (type == 10) {
+            f = (float)g_game->skill_level(troop, 0x22) * 0.1f + 1.0f;
+            if (horse != -1)
+                return (float)sqrt(((float)g_game->skill_level(troop, 0x17) * 0.019 + 0.8) * f) * base * 1.2f;
+        } else if (type == 9) {
+            if (g_mission->precip_mode == 1) f = 0.75f;
+        }
+    }
+done:
+    return (float)sqrt(f) * base * 1.2f;
+}
+
+// ItemRef::reduce (0x437510) with n == 0, as cl inlines it here
+static __forceinline void reduce_inl(ItemRef* r)
+{
+    if (r->item > 0) {
+        unsigned t = g_items[r->item].type_flags & 0xff;
+        if (t == itp_type_thrown || t == itp_type_arrows || t == itp_type_bolts || t == itp_type_pistol ||
+            t == itp_type_musket || t == itp_type_crossbow || t == itp_type_bullets) {
+            r->b.amount = 0;
+        } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
+            unsigned v = r->hit_points();
+            r->w.count = 0;
+            r->m4 |= v;
+        }
+    }
+}
+
+// @ 0x438520
+void Agent::clear_ammo(int unused)
+{
+    for (int i = 0; i < 4; i++) {
+        ItemRef* p = &pairs[i];
+        if (pairs[i].item >= 0) {
+            unsigned t = g_items[pairs[i].item].type_flags & 0xff;
+            if (t == itp_type_arrows || t == itp_type_bolts || t == itp_type_bullets || t == itp_type_thrown) {
+                if (p->item > 0)
+                    reduce_inl(p);
+            }
+        }
+    }
+}
+
+// The slot-class lookup 0x4350c0 (src/game/agent) uses cl's register convention for same-TU statics (item in EAX,
+// flag on the stack): reproduced by defining it here as a static (copy of the body).
+// @ 0x4350c0
+static __declspec(noinline) int slot_class_impl(int item, int flag)
+{
+    unsigned t = g_items[item].type_flags & 0xff;
+    if (t == itp_type_bow) return 3;
+    if (t == itp_type_crossbow) return 4;
+    if (t == itp_type_thrown) return 5;
+    if (t == itp_type_pistol || t == itp_type_musket) return 6;
+    if (t == itp_type_polearm) return 2;
+    if (t == itp_type_one_handed_wpn) return 0;
+    return flag == 0;
+}
+
+// @ 0x4385e0
+float Agent::damage_factor(int idx)
+{
+    float r = 1.0f;
+    ItemRef sel = slot_pair(idx);
+    int item = sel.item;
+    if (item >= 0) {
+        r = (float)sel.speed_rating() * 0.01f;
+        unsigned flags = g_items[item].type_flags;
+        unsigned type = flags & 0xff;
+        ItemKind* ik = &g_items[item];
+
+        if (type == 2 || type == 3 || type == 4 || type == 8 || type == 9 || type == 10 || type == 0x10 ||
+            type == 0x11) {
+            ItemRef o = slot_pair_inl(1);
+            int cls = slot_class_impl(item, o.item >= 0);
+            int v = (int)g_game->chars[troop].stat[cls + 0];
+            float frac = 0.07f;
+            if ((char)ik->type_flags == 8) frac = 0.11f;
+            float vv = (float)v * 0.01f;
+            r = ((1.0f - frac) + vv * frac) * r;
+        }
+        if (type == 3 || type == 4) {
+            ItemRef o = slot_pair_inl(1);
+            if (o.item >= 0 || horse >= 0) {
+                r = r - 0.15f;
+                if (flags & 0x200000) r = r - 0.05f;
+            }
+        } else if (type == 7) {
+            int lvl = g_game->skill_level(troop, 0x1a);
+            r = ((float)lvl * 0.25f + 1.0f) * r;
+            Mission* m = g_mission;
+            if (pool_id == m->player_id) {
+                if (g_options.agent_count > 1)
+                    r = (((float)g_options.agent_count * 0.7f + 9.3f) * r) * 0.07f;
+            } else {
+                r = ((float)g_options.agent_count * 0.07f + 0.93f) * r;
+            }
+        }
+        unsigned t2 = ik->type_flags & 0xff;
+        Mission* m = g_mission;
+        if ((t2 == 2 || t2 == 3 || t2 == 4) && (pool_id != m->player_id || g_options.agent_count > 1))
+            r = ((float)g_options.agent_count * 0.07f + 0.93f) * r;
+    }
+    return r;
+}
+
+// ---- the eased turn value ------------------------------------------------------------------------------------------------
+// @ 0x438860
+void Agent::smooth_turn(float dt)
+{
+    float v = signed_angle(vel, in_now.move);
+    float c;
+    if (g_range_tbl[variant].lo <= v && v < g_range_tbl[variant].hi)
+        c = v;
+    else
+        c = closer_angle(&v, &g_range_tbl[variant].lo, &g_range_tbl[variant].hi);
+    float d = c - cur;
+    if (!(fabs(d) < 0.8f))
+        c = d * dt * 9.0f + cur;
+    cur = c;
+}
+
+// ---- VC7.1 <algorithm> / <memory> instantiations ----------------------------------------------------------------------------
+// std::remove_copy over vector<T*>::iterator (0x438910, ICF-folded: one body for every pointer element type): not written here,
+// cl instantiates it from the std::remove call of FxDef::remove_group (the symbol in the manifest is that instance)
+
+// std::_Uninit_fill_n for 12-byte elements (catch funclet 0x4389c4: `throw;`)
+// @ 0x438960
+template void std::_Uninit_fill_n(E12*, unsigned, const E12&, std::allocator<E12>&, std::_Nonscalar_ptr_iterator_tag);
+
+// std::copy_backward for the 0x1c8-byte elements
+// @ 0x4389d0
+template E1c8* std::_Copy_backward_opt(E1c8*, E1c8*, E1c8*, std::_Nonscalar_ptr_iterator_tag);
+
+// std::_Uninit_copy for tstring (catch funclet 0x438a7a: destroys [s, d) then `throw;`)
+// @ 0x438a10
+template tstring* std::_Uninit_copy(tstring*, tstring*, tstring*, std::allocator<tstring>&, std::_Nonscalar_ptr_iterator_tag);
+
+// std::_Uninit_copy for the ragdoll bone pointer vector's copy (0x43a4f0 / copy constructor 0x43ed20; catch funclet 0x438b06: `throw;`)
+// @ 0x438aa0
+template const NewtonRagDollBone** std::_Uninit_copy(std::vector<const NewtonRagDollBone*>::const_iterator, std::vector<const NewtonRagDollBone*>::const_iterator, const NewtonRagDollBone**, std::allocator<const NewtonRagDollBone*>&, std::_Nonscalar_ptr_iterator_tag);
+
+// std::_Adjust_heap (min-heap on key) for 12-byte nodes
+// @ 0x438b10
+void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, node_gt pred)
+{
+    int top = hole;
+    int child = 2 * hole + 2;
+    for (; child < bottom; child = 2 * child + 2) {
+        if (pred(first[child], first[child - 1]))
+            --child;
+        first[hole] = first[child];
+        hole = child;
+    }
+    if (child == bottom) {
+        first[hole] = first[bottom - 1];
+        hole = bottom - 1;
+    }
+    push_heap_elem(first, hole, top, val, pred);     // 0x4b2520 (game/party/party_map.cpp)
+}
+
+// ---- small members -----------------------------------------------------------------------------------------------------------
+// ItemRef::set_modifier: stores a 0..0x2a modifier in the top byte of the packed word, then re-clamps the amount
+// @ 0x438bc0
+void ItemRef::set_modifier(int k)
+{
+    if (k >= 0 && k < 0x2b) {
+        b.mod = 0;
+        m4 |= k << 24;
+        reduce(0);
+    }
+}
+
+// @ 0x438bf0 (the pointer vectors' pop_back: ICF folded every element type's copy into this one)
+template void std::vector<Agent*>::pop_back();
+
+// @ 0x438c10
+template PlacedObj& std::vector<PlacedObj>::operator[](size_t);
+
+// @ 0x438c30
+template int* std::vector<int>::_Ufill(int*, size_t, const int&);
+
+// @ 0x438c60
+template void std::fill(E1c8*, E1c8*, const E1c8&);
+
+// @ 0x438c90
+template E12* std::vector<E12>::_Ucopy(E12*, E12*, E12*);
+
+// ---- ranged hit chance ---------------------------------------------------------------------------------------------------------
+extern float g_one;   // 0x549cdc
+static __forceinline int item_rank(int idx)
+{
+    if (idx < 0)
+        return 100;
+    int r = g_items[idx].leg_armor;
+    if (r == 0)
+        r = 99;
+    return r;
+}
+
+// @ 0x438cb0
+float __cdecl hit_chance(int* who, Agent* a)
+{
+    float v = a->attack_speed() * 2.0f;
+    if (a->horse >= 0)
+        v *= 0.9f;
+    int idx = *who;
+    if (idx >= 0) {
+        unsigned k = g_items[idx].type_flags & 0xff;
+        if (k == 10)
+            v *= 0.65f;                          // thrown
+        else if (k == 8)
+            v *= 0.9f;                           // bow
+        else if (k == 0x11 || k == 0x10)
+            v *= 0.55f;                          // musket / pistol
+    }
+    int s1 = item_rank(idx);
+    int s2 = item_rank(idx);
+    float p = (float)(s2 * s1) * 0.0001f;
+    if (!(p < g_one)) p = g_one;
+    float r = p * v;
+    return r;
+}
+
+// ---- mesh instance helpers --------------------------------------------------------------------------------------------------------
+// min/max as written by the engine: first argument wins ties (the order decides the x87 code)
+template<class T> inline T minv(T a, T b) { return (a < b) ? a : b; }
+template<class T> inline T maxv(T a, T b) { return (a > b) ? a : b; }
+
+// @ 0x438d80
+void rgl::mesh::calc_bounds(vector4* mn, vector4* mx)
+{
+    *mn = vector4(1e7f, 1e7f, 1e7f);
+    *mx = vector4(-1e7f, -1e7f, -1e7f);
+    std::vector<rgl::point20>* v = local_points ? &points : &parent->get70();
+    for (unsigned i = 0; i < v->size(); ++i) {
+        const rgl::point20& e = (*v)[i];
+        mn->x = minv(mn->x, e.a.x);
+        mn->y = minv(mn->y, e.a.y);
+        mn->z = minv(mn->z, e.a.z);
+        const rgl::point20& f = (*v)[i];
+        mx->x = maxv(mx->x, f.a.x);
+        mx->y = maxv(mx->y, f.a.y);
+        mx->z = maxv(mx->z, f.a.z);
+    }
+}
+
+// std::_Uninit_fill_n for tstring (catch funclet 0x438f68: destroys [s, f) then `throw;`)
+// @ 0x438f00
+template void std::_Uninit_fill_n(tstring*, unsigned, const tstring&, std::allocator<tstring>&, std::_Nonscalar_ptr_iterator_tag);
+
+// @ 0x438f90
+void rgl::mesh_list::cap_all(const float* limit)
+{
+    for (std::vector<rgl::mesh*>::iterator it = begin(); it < end(); ++it) {
+        rgl::mesh* n = *it;
+        keyframes* l = n->local_points ? &n->kf : &n->parent->get_kf();
+        if (0 < l->count) {
+            if (*limit > (float)l->times[l->count - 1])
+                n->anim_time = (float)l->times[l->count - 1];
+            else
+                n->anim_time = *limit;
+        }
+    }
+}
+
+// @ 0x439000
+void rgl::lod_mesh::cap_all(const float* limit)
+{
+    for (int i = 0; i < count; ++i)
+        lists[i].cap_all(limit);
+}
+
+// @ 0x439040
+template void std::allocator<E1c8>::construct(E1c8*, const E1c8&);
+
+// std::_Uninit_copy for the 0x1c8-byte elements (catch funclet 0x4390d0: destroys [s, d) then `throw;`)
+// @ 0x439060
+template E1c8* std::_Uninit_copy(E1c8*, E1c8*, E1c8*, std::allocator<E1c8>&, std::_Nonscalar_ptr_iterator_tag);
+
+// ---- level and navigation-mesh queries -----------------------------------------------------------------------------------------------
+// clone a body's shape (dispatch on shape_type)
+// @ 0x439100
+shape_base* body_part::copy_shape()
+{
+    shape_base* r;                                      // (uninitialised when the type is unknown)
+    if (shape->shape_type() == 0) {
+        r = new sphere(*(sphere*)shape);
+    } else if (shape->shape_type() == 1) {
+        r = new capsule(*(capsule*)shape);
+    } else if (shape->shape_type() == 2) {
+        r = new face(*(face*)shape);
+    } else if (shape->shape_type() == 3) {
+        r = new composite(*(composite*)shape);
+    } else if (shape->shape_type() == 4) {
+        r = (shape_base*)((manifold*)shape)->build_composite();
+    }
+    return r;
+}
+
+float g_zero = 0.0f;                // 0x549ca8
+
+// @ 0x4391d0
+bool PolyMesh::inside(const int* face, const float* p)
+{
+    MPoly* f = &faces[*face];
+    bool in = true;
+    int i = 0;
+    int n = f->n;
+    const int* vi = f->vert_p();
+    do {
+        if (i >= n) break;
+        const MVert* a = &verts[*vi];
+        i++;
+        const MVert* b = &verts[f->vert_p()[i % f->n]];
+        V2 d(b->pos.x - a->pos.x, b->pos.y - a->pos.y);
+        V2 q(p[0] - a->pos.x, p[1] - a->pos.y);
+        if (q.y * d.x - d.y * q.x < g_zero)
+            in = false;
+        vi++;
+    } while (in);
+    return in;
+}
+
+// @ 0x439280
+float PolyMesh::dist(const int* face, const float* p)
+{
+    float out = 0.0f;
+    MPoly* f = &faces[*face];
+    int n = f->n;
+    int i = 0;
+    bool in = true;
+    if (0 < n) {
+        const int* vi = f->vert_p();
+        do {
+            const MVert* a = &verts[*vi];
+            i++;
+            const MVert* b = &verts[f->vert_p()[i % n]];
+            float dx = b->pos.x - a->pos.x;
+            float dy = b->pos.y - a->pos.y;
+            float len = (float)sqrt(dx * dx + dy * dy);
+            float ux, uy;
+            if (len > 0.0f) {
+                float inv = 1.0f / len;
+                ux = dx * inv;
+                uy = inv * dy;            } else {
+                ux = 0.0f;
+                uy = 1.0f;
+            }
+            float nx = uy, ny = -ux;
+            float d = (p[1] - a->pos.y) * ny + (p[0] - a->pos.x) * nx;
+            if (!(d < 0.0f)) {
+                in = false;
+                if (d > out) out = d;
+            }
+            vi++;
+        } while (i < n);
+        if (!in) goto have_out;
+    }
+    out = 0.0f;
+have_out:
+    const MVert* a0 = &verts[f->vert_p()[0]];
+    float dz = p[2] - (a0->pos.z - ((p[0] - a0->pos.x) * f->normal.x + (p[1] - a0->pos.y) * f->normal.y) / f->normal.z);
+    if (dz > -1.0f && dz < 0.1f)
+        dz = 0.0f;
+    return (float)fabs(dz) + out;
+}
+
+// visit stamp: +3 per search, with a rollover reset of every face stamp past 1e9
+// @ 0x439410
+void PolyMesh::next_stamp()
+{
+    if (stamp > 1000000000) {
+        for (unsigned i = 0; i < faces.size(); ++i)
+            faces[i].stamp = 0;
+        stamp = 0;
+    }
+    stamp += 3;
+}
+
+// walk across neighbouring faces along the segment from `from` to `to`
+// @ 0x439460
+bool PolyMesh::trace(int face, vector4 from, int end_face, const float* to, int* max_steps)
+{
+    vector4 fr = from;
+    float x = fr.x, y = fr.y, z = fr.z;
+    struct { int use_x; int found; int prev; int cur; int steps; } st;
+    bool done;
+    st.cur = -1;
+    if (face >= 0 && end_face >= 0) {
+        float dx = to[0] - x;
+        float dy = to[1] - y;
+        float dz = to[2] - z;
+        if (dx * dx + (dy * dy + dz * dz) < 0.0001f)
+            return true;
+        st.use_x = 1;
+        if (-1e-06f < dx && dx < 1e-06f)
+            st.use_x = 0;
+        st.steps = 0;
+        st.prev = -1;
+        done = false;
+        st.cur = face;
+        while (st.cur != end_face && st.cur >= 0 && !done && st.steps < *max_steps) {
+            ++st.steps;
+            MPoly* f = &faces[st.cur];
+            st.found = -1;
+            for (int i = 0; i < faces[st.cur].n; ++i) {
+                if (f->edge_p()[i] != st.prev) {
+                    const MVert* a = &verts[f->vert_p()[i]];
+                    const MVert* b = &verts[f->vert_p()[(i + 1) % f->n]];
+                    float ex = b->pos.x - a->pos.x;
+                    float ey = b->pos.y - a->pos.y;
+                    float t = ((x - a->pos.x) * dy - (y - a->pos.y) * dx) / (ex * dy - ey * dx);
+                    float s;
+                    if (st.use_x)
+                        s = ((ex * t + a->pos.x) - x) / dx;
+                    else
+                        s = ((ey * t + a->pos.y) - y) / dy;
+                    if (0.1f <= t && t <= 0.9f && 0.0f <= s && s <= 1.0f)
+                        st.found = i;
+                }
+                if (st.found != -1) break;
+            }
+            if (!(st.found >= 0)) { done = true; } else {
+                st.prev = f->edge_p()[st.found];
+                int nb = f->nbr_p()[st.found];
+                done = false;
+                if (nb < 0) {
+                    done = true;
+                } else
+                    st.cur = nb;
+            }
+        }
+    }
+    return st.cur == end_face;
+}
+
+// merge this cell's shapes (those whose group mask does not intersect `mask`) into the sorted array out[0..*count)
+// @ 0x4396b0
+void rgl::cell::collect_masked(unsigned mask, shape_base** out, int* count)
+{
+    int n = 0;
+    shape_base* buf[0x2000];
+    unsigned i = 0;
+    int k = 0;
+    while (i < a.size()) {
+        shape_base* sh = a[i];
+        if (sh->m8 & mask) {
+            i++;
+            continue;
+        }
+        if (k < *count) {
+            shape_base* o = out[k];
+            if (sh >= o) {
+                if (sh == o) {
+                    i++;
+                    buf[n++] = sh;
+                } else {
+                    buf[n++] = o;
+                }
+                k++;
+                continue;
+            }
+        }
+        buf[n++] = sh;
+        i++;
+    }
+    if (k < *count) {
+        int m = *count - k;
+        memcpy(&buf[n], &out[k], m * sizeof(shape_base*));
+        n += m;
+    }
+    *count = n;
+    for (int j = 0; j < *count; j++)
+        out[j] = buf[j];
+}
+
+// shapes of this cell containing the point p (xy box, or the 3-D box via in_box when *use3d != 0)
+// @ 0x439780
+void rgl::cell::collect_point(const vector4* p, int* use3d, unsigned mask, shape_base** out, int* count)
+{
+    unsigned i = 0;
+    *count = 0;
+    while (i < a.size()) {
+        shape_base** q = &a[i];
+        shape_base* sh = *q;
+        if (sh->m8 & mask) {
+            i++;
+            continue;
+        }
+        vector4 tv[2];
+        const vector4* smax = sh->get_max(&tv[0]);
+        const vector4* smin = sh->get_min(&tv[1]);
+        bool hit;
+        if (*use3d == 0)
+            hit = smin->x <= p->x && p->x <= smax->x && smin->y <= p->y && p->y <= smax->y;
+        else
+            hit = in_box(smin, smax, p);
+        if (!hit) {
+            i++;
+            continue;
+        }
+        out[*count] = *q;
+        ++*count;
+        i++;
+    }
+}
+
+// @ 0x439870
+void rgl::world::query_segment(const vector4* a, const vector4* b, unsigned mask, shape_base** out, int* count)
+{
+    int pairs[0x2000][2];
+    int n;
+    walk(&a->x, &b->x, pairs, &n);
+    *count = 0;
+    for (int i = 0; i < n; i++)
+        cells[pairs[i][0]][pairs[i][1]].collect_masked(mask, out, count);
+}
+
+// recursive walk over the neighbours of nav face *face, keeping the nearest face whose polygon contains p
+// @ 0x439900
+void rgl::world::nav_search(const float* p, const int* face, const int* max_depth, int depth, int* best, float* best_d)
+{
+    if (nav != 0) {
+        for (int i = 0; i < nav->faces[*face].n; i++) {
+            int nb = nav->faces[*face].nbr_p()[i];
+            if (nb >= 0 && nav->faces[nb].stamp < nav->stamp) {
+                nav->faces[nb].stamp = nav->stamp;
+                if (nav->inside(&nb, p)) {
+                    const MVert* v = &nav->verts[nav->faces[nb].vert_p()[0]];
+                    MPoly* f = &nav->faces[nb];
+                    float dz = (float)fabs(p[2] - (v->pos.z - ((p[0] - v->pos.x) * f->normal.x + (p[1] - v->pos.y) * f->normal.y) / f->normal.z));
+                    if (dz < 2.0f && dz < *best_d) {
+                        *best = nb;
+                        *best_d = dz;
+                    }
+                }
+                if (depth < *max_depth)
+                    nav_search(p, &nb, max_depth, depth + 1, best, best_d);
+            }
+        }
+    }
+}
+
+// nearest nav face to p: a face containing p (best |dz| < 2 below) wins over near faces (score 10 - dist - |dz|)
+// @ 0x439a50
+int rgl::world::nearest_face(const float* p)
+{
+    // i is initialised first and m last: symbol keys follow first reference, and faces.first + i*0x64 is ordered by
+    // m's key against i's (faces first in the d <= 0 arm's lea)
+    unsigned i = 0;
+    int best = -1;
+    float near_score = 0.0f;
+    bool have = false;
+    float best_dz = 10000.0f;
+    PolyMesh* m = nav;
+    if (m) {
+        for (i = 0; i < m->faces.size(); i++) {
+            float d = m->dist((const int*)&i, p);
+            if (d <= 0.0f) {
+                const MPoly* f = &m->faces[i];
+                const MVert* v = &m->verts[m->faces[i].vert_p()[0]];
+                float dz = p[2] - (v->pos.z - ((p[0] - v->pos.x) * f->normal.x + (p[1] - v->pos.y) * f->normal.y) / f->normal.z);
+                if (dz > -2.0f) {
+                    dz = (float)fabs(dz);
+                    if (!have || dz < best_dz) {
+                        best = i;
+                        best_dz = dz;
+                        have = true;
+                    }
+                }
+            } else if (d < 10.0f) {
+                const MVert* v = &m->verts[m->faces[i].vert_p()[0]];
+                const MPoly* f = &m->faces[i];
+                float dz = p[2] - (v->pos.z - ((p[0] - v->pos.x) * f->normal.x + (p[1] - v->pos.y) * f->normal.y) / f->normal.z);
+                if (dz > -2.0f) {
+                    float s = (10.0f - d) - (float)fabs(dz);
+                    if (s > near_score) {
+                        best = i;
+                        near_score = s;
+                    }
+                }
+            }
+        }
+    }
+    return best;
+}
+
+// highest floor polygon under (or at most 1 above) p; falls back to the lowest polygon above it
+// @ 0x439be0
+void rgl::world::floor_at(const vector4* p, float* out_z, face** out_face)
+{
+    int n = 0;
+    *out_z = -1000000.0f;
+    shape_base* shapes[0x2000];
+    int count;
+    {
+        int use3d = 0;
+        int ci[2];
+        to_cell(&p->x, ci);
+        count = 0;
+        cells[ci[0]][ci[1]].collect_point(p, &use3d, 0x304, shapes, &count);
+    }
+    {
+        float pt[2];
+        pt[0] = p->x;
+        pt[1] = p->y;
+        *out_face = 0;
+        face* far_face = 0;
+        float far_z = 100000.0f;
+        for (; n < count; n++) {
+            face* s = (face*)shapes[n];
+            if (s->m4 >= 0 && s->contains_xy(pt)) {
+                float z = s->w[0].z - ((pt[0] - s->w[0].x) * s->normal.x + (pt[1] - s->w[0].y) * s->normal.y) / s->normal.z;
+                if (z < p->z + 1.0f) {
+                    if (*out_z < z) {
+                        *out_z = z;
+                        *out_face = s;
+                    }
+                } else if (*out_z < far_z) {
+                    far_z = z;
+                    far_face = s;
+                }
+            }
+        }
+        if (*out_z <= -900000.0f) {
+            *out_z = far_z;
+            *out_face = far_face;
+        }
+    }
+}
+
+// @ 0x439d40
+float rgl::world::floor_z(const vector4* p)
+{
+    float z;
+    face* f;
+    floor_at(p, &z, &f);
+    return z;
+}
+
+// sweep the segment a->b (clipped to maxlen) with a thin capsule; false if the height field blocks it or a shape
+// is hit (that shape goes to *hit)
+
+
+// @ 0x439d60
+int rgl::world::trace_ray(const vector4* a, const vector4* b, float maxlen, shape_base** hit, int unused)
+{
+    bool ok = true;
+    if (hit) *hit = 0;
+    if (hf == 0 || (ok = hf->line_clear(a, b))) {
+        vector4 d;
+        d.x = b->x - a->x;
+        d.y = b->y - a->y;
+        d.z = b->z - a->z;
+        float len = d.normalize();
+        if (maxlen < len) len = maxlen;
+        vector4 t;
+        t.y = d.y * len;
+        t.z = d.z * len;
+        t.x = d.x * len;
+        d.x = t.x + a->x;
+        d.y = t.y + a->y;
+        d.z = t.z + a->z;
+        capsule cap(0.015f, a, &d);
+        shape_base* shapes[0x2000];
+        int n;
+        query_segment(a, &d, 0x114, shapes, &n);
+        int i = 0;
+        for (; i < n; i++) {
+            if (!ok) break;
+            ok = shape_contact_count(shapes[i], &cap, 0, 0) == 0;
+        }
+        if (!ok) {
+            if (hit) *hit = shapes[i - 1];
+        }
+    }
+    return ok;
+}
+
+// ---- animation controller ------------------------------------------------------------------------------------------------------------
+// remove a shape from the controller's own list, else from the first region list that holds it
+// @ 0x439ec0
+void FxDef::remove_group(rgl::lod_mesh* s)
+{
+    int i;
+    if (s) {
+        bool done = false;
+        std::vector<rgl::lod_mesh*>::iterator it = std::remove(groups.begin(), groups.end(), s);
+        if (it == groups.end()) {
+            std::vector<rgl::lod_mesh*>::iterator r;
+            for (i = 0; i < count; i++) {
+                if (done) break;
+                r = std::remove(elems[i].groups.begin(), elems[i].groups.end(), s);
+                if (r != elems[i].groups.end()) {
+                    elems[i].groups.erase(r, elems[i].groups.end());
+                    done = true;
+                }
+            }
+        } else
+            groups.erase(it, groups.end());
+    }
+}
+
+// set up channel `rec` to run an animation between key a and key b
+// @ 0x439fc0
+void FxDef::start_anim(int rec, skel_anim* poly, int a, int b)
+{
+    if (poly->keys.size() >= (unsigned)count) {
+        env[rec].k44 = 0x33;
+        env[rec].k48 = 0x33;
+        env[rec].key_begin = a;
+        env[rec].key_end = b;
+        env[rec].v7c[0] = poly->sample(a);
+        env[rec].v7c[1] = poly->sample(b);
+        env[rec].table = poly;
+        for (int i = 0; i < count; i++) {
+            env[rec].keys_a[i] = poly->keys[i].sample(a);
+            env[rec].keys_b[i] = poly->keys[i].sample(b);
+        }
+    }
+}
+
+// all shapes of the controller and of its regions, at most 32
+// @ 0x43a130
+void FxDef::all_groups(rgl::lod_mesh** out, int* n)
+{
+    int i = 0;
+    *n = 0;
+    for (unsigned k = 0; k < groups.size(); k++) {
+        if (*n < 0x20) {
+            out[*n] = groups[k];
+            (*n)++;
+        }
+    }
+    for (int j = 0; j < count; j++) {
+        for (unsigned k = 0; k < elems[j].groups.size(); k++) {
+            if (*n < 0x20) {
+                out[*n] = elems[j].groups[k];
+                (*n)++;
+            }
+        }
+    }
+}
+
+// ---- string table ("STR NOT FOUND: ") ---------------------------------------------------------------------------------------------------
+// @ 0x43a1e0
+tstring* StrTable::lookup(const tstring& key)
+{
+    unsigned h = hash_string(&key);
+    unsigned n = keys[h].size();
+    for (unsigned i = 0; (int)i < (int)n; i++) {
+        if (keys[h][i].equals(key))
+            return &vals[h][i];
+    }
+    notfound.assign("STR NOT FOUND: ");
+    notfound.append(key);
+    return &notfound;
+}

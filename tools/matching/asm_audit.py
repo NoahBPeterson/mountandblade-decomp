@@ -8,7 +8,7 @@ uses `_emit`, is `__declspec(naked)`, or has an `__asm` block longer than HELPER
 the old ">3 blocks" rule missed single-block transcriptions claimed as byte-exact). Helper-sized blocks (cvtss2si,
 maxss/minss clamps, fnstcw/fldcw, rdtsc) are EA's own inline-asm math helpers and are allowed; --review also lists
 bodies with more than 3 such blocks or mostly such blocks, for a human look (they do not fail run_all).
-Exception: `_emit` is allowed only inside the WL_MARKER macro (src/include/wl_marker.h); a WL_MARKER(id) use is not asm.
+Exception: `_emit` is allowed only inside the WL_MARKER macro (src/platform/wl_marker.h); a WL_MARKER(id) use is not asm.
 By default only manifest (byte-exact) rows are checked; --all-rows also checks nonmatching.txt rows.
 Output: "<slice-or-tu> <va> <kind> <reason>"; exit 1 if any.
 run_all.py calls transcribed() and reports such rows as ASM instead of MATCH (docs/matching.md, "No assembly
@@ -62,7 +62,7 @@ def why(body, review=False):
     """Reason string when a function body is an assembly transcription, else None. With review=True also report
     bodies that only use helper-sized blocks but many of them or mostly (they need a human look, not a demotion)."""
     code = _strip_comments(body)
-    # WL_MARKER(id) (src/include/wl_marker.h) is the one allowed emitter of marker bytes: a use expands to no
+    # WL_MARKER(id) (src/platform/wl_marker.h) is the one allowed emitter of marker bytes: a use expands to no
     # `_emit`/`__asm` token in the body, so it is not asm. A body that defines it or spells _emit itself is rejected.
     if re.search(r"\b_?_emit\b", code) or re.search(r"#\s*define\s+WL_MARKER\b", code):
         return "_emit"
@@ -77,7 +77,7 @@ def why(body, review=False):
 
 
 def marker_header_ok():
-    """The `_emit` exemption: only src/include/wl_marker.h may spell `_emit`, and only inside its WL_MARKER define.
+    """The `_emit` exemption: only src/platform/wl_marker.h may spell `_emit`, and only inside its WL_MARKER define.
     Returns a list of offending files (any other src header/source that spells _emit)."""
     bad = []
     for ext in ("h", "cpp"):
@@ -124,7 +124,7 @@ def main(argv):
     units = []  # (label, [sources], bookkeeping dir)
     if not args:
         args = sorted(os.path.basename(d) for d in glob.glob(os.path.join(ROOT, "match/slices/*")))
-        args += sorted(os.path.relpath(f, ROOT) for f in glob.glob(os.path.join(ROOT, "src/game/**/*.cpp"), recursive=True))
+        args += sorted(os.path.relpath(f, ROOT) for f in glob.glob(os.path.join(ROOT, "src/**/*.cpp"), recursive=True))
     for a in args:
         if a.endswith(".cpp"):
             f = os.path.join(ROOT, a)

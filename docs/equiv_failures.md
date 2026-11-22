@@ -18,7 +18,7 @@ A mismatch on some input.
   - Values: ours failed where the original succeeded
 - Why:
   - Harness limit: ours calls the new out-of-line helper set_transform (the D3DMATRIX copy + the device vtable call), whose fake call the harness cannot pair (fake-arity); the original passes &cur to SetTransform directly. Same 16 floats.
-- Full trace: the 0x00408170 note in src/rgl/shapes/shapes.nonmatching.txt
+- Full trace: the 0x00408170 note in src/engine/physics/collision_shapes.nonmatching.txt
 
 ### shapes 0x004081b0
 
@@ -30,7 +30,7 @@ A mismatch on some input.
   - Values: ours failed where the original succeeded
 - Why:
   - Harness limit: same as 0x408170 (set_transform helper).
-- Full trace: the 0x004081b0 note in src/rgl/shapes/shapes.nonmatching.txt
+- Full trace: the 0x004081b0 note in src/engine/physics/collision_shapes.nonmatching.txt
 
 ### shapes 0x0040a870
 
@@ -42,7 +42,7 @@ A mismatch on some input.
   - Values: ours failed where the original succeeded
 - Why:
   - Harness limit: same as 0x408170 (set_transform helper).
-- Full trace: the 0x0040a870 note in src/rgl/shapes/shapes.nonmatching.txt
+- Full trace: the 0x0040a870 note in src/engine/physics/collision_shapes.nonmatching.txt
 
 ### mesh_obj 0x0040f3f0
 
@@ -55,7 +55,7 @@ A mismatch on some input.
   - Values: imports called (any depth), args normalised
 - Why:
   - Harness limit: the set_transform helper is a call the original does not have (modelled as an import call).
-- Full trace: the 0x0040f3f0 note in src/rgl/particles/mesh_obj.nonmatching.txt
+- Full trace: the 0x0040f3f0 note in src/engine/render/mesh.nonmatching.txt
 
 ### terrain_b 0x0046e590
 
@@ -67,7 +67,7 @@ A mismatch on some input.
   - Values: stack argument of a call through a generated pointer (normalised)
 - Why:
   - Equivalent by reading: a call argument is the address of a local copy where the original passes the address of the particle frame member; not a value difference.
-- Full trace: the 0x0046e590 note in src/game/terrain_b/terrain_b.nonmatching.txt
+- Full trace: the 0x0046e590 note in src/game/terrain/terrain_scene_renderer.nonmatching.txt
 
 ### poly_mesh 0x00471b30
 
@@ -79,7 +79,7 @@ A mismatch on some input.
   - Values: callee, this/edx and stack args (normalised)
 - Why:
   - Equivalent by reading: same as 0x47ff60 (unpack_color argument address).
-- Full trace: the 0x00471b30 note in src/game/terrain_b/poly_mesh.nonmatching.txt
+- Full trace: the 0x00471b30 note in src/game/terrain/poly_mesh.nonmatching.txt
 
 ### mesh_terrain 0x0047ff60
 
@@ -91,7 +91,7 @@ A mismatch on some input.
   - Values: callee, this/edx and stack args (normalised)
 - Why:
   - Equivalent by reading: unpack_color gets the address of a local copy of the colour word where the original passes the address inside the vertex.
-- Full trace: the 0x0047ff60 note in src/game/mesh_slot/mesh_terrain.nonmatching.txt
+- Full trace: the 0x0047ff60 note in src/game/mission/terrain_water_regen.nonmatching.txt
 
 ### world_data 0x00492f40
 
@@ -102,7 +102,7 @@ A mismatch on some input.
   - Where: edx (untouched by the original)
   - Values: ours writes a register the original never writes; an LTCG caller may keep a live value there
 - Why: not summarised yet
-- Full trace: the 0x00492f40 note in src/game/world_data/world_data.nonmatching.txt
+- Full trace: the 0x00492f40 note in src/game/campaign/game_data_party_quest.nonmatching.txt
 
 ### widget_node 0x0049ad20
 
@@ -114,7 +114,7 @@ A mismatch on some input.
   - Values: callee, this/edx and stack args (normalised)
 - Why:
   - Harness limit: the real std::vector body is inlined where the original calls the out-of-line 0x488930; operator new is reached through another call path.
-- Full trace: the 0x0049ad20 note in src/game/config/widget_node.nonmatching.txt
+- Full trace: the 0x0049ad20 note in src/game/ui/widgets/drop_down_list.nonmatching.txt
 
 ### script_interpreter 0x0049b1c0
 
@@ -137,7 +137,7 @@ A mismatch on some input.
   - Values: callee, this/edx and stack args (normalised)
 - Why:
   - Equivalent by reading: set_order_pos receives a Vec2 temporary (order_pos.xy()) where the original passes &order_pos; the callee copies it, so only the argument address differs.
-- Full trace: the 0x004b3bc0 note in src/game/party2/party_2.nonmatching.txt
+- Full trace: the 0x004b3bc0 note in src/game/party/party_map.nonmatching.txt
 
 ### save_records 0x004e99d0
 
@@ -149,7 +149,7 @@ A mismatch on some input.
   - Values: different generated callee
 - Why:
   - Equivalent by reading: w_int(unsigned) / w_bool(bool) pass the address of a local copy; the stream receives the same value.
-- Full trace: the 0x004e99d0 note in src/game/char_sheet/save_records.nonmatching.txt
+- Full trace: the 0x004e99d0 note in src/game/save/save_records.nonmatching.txt
 
 ### save_records 0x004e9c50
 
@@ -161,7 +161,7 @@ A mismatch on some input.
   - Values: different generated callee
 - Why:
   - Equivalent by reading: same as 0x4e99d0.
-- Full trace: the 0x004e9c50 note in src/game/char_sheet/save_records.nonmatching.txt
+- Full trace: the 0x004e9c50 note in src/game/save/save_records.nonmatching.txt
 
 ### dust 0x004f4860
 
@@ -174,7 +174,7 @@ A mismatch on some input.
   - Values: bytes allocated through malloc-like imports
 - Why:
   - Harness limit: the name reserve matched several instances; the row compared vector<vertex60>::reserve, not vector<point20>::reserve.
-- Full trace: the 0x004f4860 note in src/game/char_sheet/dust.nonmatching.txt
+- Full trace: the 0x004f4860 note in src/game/terrain/dust_particles.nonmatching.txt
 
 ### agent_hud 0x004fc820
 
@@ -188,7 +188,7 @@ A mismatch on some input.
   - Harness limit: the original frees the split() pieces through the out-of-line vector deleting destructor 0x4fd0e0 (push 3; an opaque depth-1 call), ours expands delete[] inline, so the element ~tstring calls (0x42bc40) show up in ours' call stream before the virtual set_text (0x488b50) the original reaches at call #19.
   - The work is the same: reverse loop of ~tstring over [arr-4] elements, then operator delete[] on arr-4. cl cannot be made to call the vector deleting destructor of a class without a virtual destructor (the old TStringArray::destroy(3) hand call was dropped for delete[] by lane L-H3).
   - Verdict: harness artefact, not a source bug
-- Full trace: the 0x004fc820 note in src/game/agent5/agent_hud.nonmatching.txt
+- Full trace: the 0x004fc820 note in src/game/ui/hud/agent_hud.nonmatching.txt
 
 ### agent_hud 0x004fd700
 
@@ -205,7 +205,7 @@ A mismatch on some input.
   - Allocation checked on the replayed input: the import traces of both sides are identical (free x5, malloc 4, 0x10, 4, ...), i.e. args/links grow by one int (4 bytes) and rects_a by one vector4 (0x10) in the same order. clear() is VC7.1's _Tidy (work/toolchain/vc71tk/include/vector): free the block, zero first/last/end, no allocation, exactly what the original inlines for the int lists and calls 0x41f4b0 for the others.
   - Making ours' _Tidy an out-of-line specialization did not change the verdict (local copies stay transparent): the original's call target is not bound to ours.
   - Verdict: harness artefact, not a source bug
-- Full trace: the 0x004fd700 note in src/game/agent5/agent_hud.nonmatching.txt
+- Full trace: the 0x004fd700 note in src/game/ui/hud/agent_hud.nonmatching.txt
 
 ### game 0x0051d1c0
 
@@ -217,7 +217,7 @@ A mismatch on some input.
   - Values: bytes allocated through malloc-like imports
 - Why:
   - Harness limit: the marker name _Buy matched several instances and the closest-size pick chose vector<int>::_Buy (4-byte elements), so the row compared the wrong function. chk.py binds the right symbol (vector<TrackRec>::_Buy).
-- Full trace: the 0x0051d1c0 note in src/game/party/game.nonmatching.txt
+- Full trace: the 0x0051d1c0 note in src/game/campaign/game_state_load.nonmatching.txt
 
 ### game 0x0051e840
 
@@ -229,7 +229,7 @@ A mismatch on some input.
   - Where: fake call #1
   - Values: different generated callee
 - Why: not summarised yet
-- Full trace: the 0x0051e840 note in src/game/party/game.nonmatching.txt
+- Full trace: the 0x0051e840 note in src/game/campaign/game_state_load.nonmatching.txt
 
 ### mesh_poly_ray 0x005302f0
 
@@ -241,7 +241,7 @@ A mismatch on some input.
   - Where: memory .data @005a9fb0
   - Values: differing dwords (addr: orig/ours): 005a9fb0: 00000001/00000000 [as float32: 1.401298464324817e-45 vs 0.0, 1 ulp apart]
 - Why: not summarised yet
-- Full trace: the 0x005302f0 note in src/game/mission5/mesh_poly_ray.nonmatching.txt
+- Full trace: the 0x005302f0 note in src/game/editor/poly_mesh_poly_ray_edit.nonmatching.txt
 
 ## UNSUPPORTED: too few valid inputs (21)
 

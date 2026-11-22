@@ -15,79 +15,79 @@
 //       and 0x43a280 (ui_weapon_class_name) are this object's (callers at 0x4385e0, 0x448eb0, 0x44e2b0, 0x453710, 0x457b40).
 //       Functions in ascending address order (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
-#define ANIM_SLOT_SET_OUT_OF_LINE       // 0x4378a0 is a real call here (the body is agent2/agent_stats.cpp's), written out at two sites of on_wield_changed
+#define ANIM_SLOT_SET_OUT_OF_LINE       // 0x4378a0 is a real call here (the body is game/agent/agent_stats.cpp's), written out at two sites of on_wield_changed
 #define STD_VECTOR_INT_INSTANTIATED_HERE   // std_vec_out_of_line.h: vector<int>::resize 0x43f310 and operator= 0x43f0a0 are this file's
 #define INT_HASH_LOWER_BOUND_INSTANTIATED_HERE   // glyph_hash.h: the glyph table's lookup 0x43b210 is this file's
 #include <vector>
 #include <deque>
-#include "../../rgl/rgl_math.h"
-#include "../std_vec_out_of_line.h"
-#include "../agent2/agent_types.h"
-#include "../agent3/agent_types.h"
-#include "../agent2/agent_ai.h"
-#include "./agent_logic.h"
-#include "../game_globals.h"
+#include "engine/math/rgl_math.h"
+#include "engine/core/std_vec_out_of_line.h"
+#include "game/agent/ai/agent_types.h"
+#include "game/agent/combat/agent_types.h"
+#include "game/agent/ai/agent_ai.h"
+#include "game/agent/agent_logic.h"
+#include "game/common/game_globals.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <new>
 #include <algorithm>
 #include <stdexcept>
-#include "../dialog_manager.h"      // g_script 0xa70440 (g_ev_a / g_ev_b live in it; listed directly: the resolution audit reads only the source's own includes)
-#include "../agent2/agent_stats.h"
-#include "../anim_slot.h"      // (named here too for the resolution audit)
-#include "../agent/curve.h"      // Curve: the canonical class of the Skeleton record (Curve::recs +0x40 is Skeleton::chans)
-#include "../../include/mat4.h"
-#include "../../include/ptr_tag.h"
-#include "../../include/timer.h"
-#include "../../include/vec.h"
-#include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/phys_set.h"
-#include "../../include/height_field.h"
-#include "../../rgl/scene/world.h"
-#include "../../rgl/dynamic/rigid_body.h"      // rgl::dynamic_entity: a kind-7 prop's rigid body (spawn_prop 0x44c210)
-#include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../terrain_b/poly_mesh.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../terrain_b/scene_file.h"     // SceneFile: GameData::scenes' record (flags)
-#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/dialog/dialog_manager.h"      // g_script 0xa70440 (g_ev_a / g_ev_b live in it; listed directly: the resolution audit reads only the source's own includes)
+#include "game/agent/agent_stats.h"
+#include "game/agent/anim_slot.h"      // (named here too for the resolution audit)
+#include "engine/fx/env_curve.h"      // Curve: the canonical class of the Skeleton record (Curve::recs +0x40 is Skeleton::chans)
+#include "engine/math/mat4_include.h"
+#include "engine/core/ptr_tag.h"
+#include "engine/core/timer.h"
+#include "engine/math/vec.h"
+#include "engine/physics/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
+#include "engine/physics/phys_set.h"
+#include "engine/physics/height_field.h"
+#include "engine/scene/world.h"
+#include "engine/physics/rigid_body_rgl_dynamic.h"      // rgl::dynamic_entity: a kind-7 prop's rigid body (spawn_prop 0x44c210)
+#include "engine/render/light.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "game/mission/placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/resource/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "game/data/item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/agent/agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/mission/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/terrain/poly_mesh.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/terrain/scene_file.h"     // SceneFile: GameData::scenes' record (flags)
+#include "game/data/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/party/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include <vector>
-#include "../str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../rgl/options.h"   // g_options 0x5aa008
-#include "../../include/item_kind.h"   // g_items 0x5e29d0
-#include "../slot.h"
-#include "../agent3/agent_combat.h"
-#include "../tstring.h"
-#include "../font.h"
-#include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../agent/phys_set.h"
-#include "../../include/quaternion.h"
-#include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
-#include "../res_mgr.h"
-#include "../config/config_block.h"
-#include "../../include/fx.h"
-#include "../emit.h"
-#include "../strat/gui_manager.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../../rgl/mesh.h"
-#include "../dialog_mgr.h"
+#include "game/data/str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/config/options.h"   // g_options 0x5aa008
+#include "game/data/item_kind_include.h"   // g_items 0x5e29d0
+#include "game/input/slot.h"
+#include "game/agent/combat/agent_combat.h"
+#include "engine/core/tstring.h"
+#include "engine/render/font.h"
+#include "game/common/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/agent/physics/phys_set.h"
+#include "engine/math/quaternion.h"
+#include "game/data/env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
+#include "engine/resource/res_mgr.h"
+#include "game/config/config_block.h"
+#include "engine/fx/fx.h"
+#include "game/data/emit.h"
+#include "game/ui/gui_manager.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "engine/audio/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/render/mesh.h"
+#include "game/dialog/dialog_mgr.h"
 #include <memory>
-#include "../agent/agent.h"
-#include "../key_names.h"      // g_keyboard (0xa170c8): pick_sound_ids
-#include "../mode_rec.h"
-#include "../../include/mesh_parts.h"
-#include "../../include/mesh_prims.h"
-#include "../hnode.h"
-#include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
-#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
+#include "game/agent/agent_queries.h"
+#include "game/input/key_names.h"      // g_keyboard (0xa170c8): pick_sound_ids
+#include "game/data/mode_rec.h"
+#include "engine/render/mesh_parts.h"
+#include "engine/render/mesh_prims.h"
+#include "engine/core/hnode.h"
+#include "game/agent/blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/script/script_state.h"   // ScriptState g_script (0xa70440): the one object
+#include "game/mission/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 
 // visible bodies of callees another object defines (raises the match of the rows that call them; the calls stay calls)
 inline __declspec(noinline) ItemRef Agent::slot_pair(int idx) const
@@ -222,7 +222,7 @@ void Agent::hand_pos(vector4* out)
     out->z = height;
 }
 
-// 0x433770 (rgl::psys::set_placement, rgl/xmlcfg/agent_pick.cpp owns the row): the body
+// 0x433770 (rgl::psys::set_placement, game/agent/agent_item_pick.cpp owns the row): the body
 // visible, so the frame EmitTable::setup (0x4424c0) passes does not escape and its origin stores are independent of the loads through d.
 inline __declspec(noinline) void rgl::psys::set_placement(const matrix* m, const vector4* a, const vector4* b, float c)
 {
@@ -238,7 +238,7 @@ inline __declspec(noinline) void rgl::psys::set_placement(const matrix* m, const
     }
 }
 
-// 0x40cd60 / 0x40cd00 (rgl::identity3 / rgl::identity_pos, rgl/shapes/shapes.cpp owns the rows): the bodies visible, so a frame passed to
+// 0x40cd60 / 0x40cd00 (rgl::identity3 / rgl::identity_pos, engine/physics/collision_shapes.cpp owns the rows): the bodies visible, so a frame passed to
 // identity_pos does not escape and its later stores are independent of pointer loads (EmitTable::setup 0x4424c0).
 inline __declspec(noinline) rgl::mat3* __cdecl rgl::identity3(rgl::mat3* out)
 {
@@ -267,7 +267,7 @@ void Agent::release_body()
 
 // Bodies the original's object saw for the box query chain (0x42aa50 strat_entity, 0x426500 / 0x426690 / 0x426700
 // world_collide): the shape array and the count passed to query_box do not escape
-// Body the original's object saw (row owner rgl/core/frustum_grid.cpp 0x41ed00): with it visible lo/hi do not escape,
+// Body the original's object saw (row owner engine/scene/frustum_grid.cpp 0x41ed00): with it visible lo/hi do not escape,
 // so hi[1] is not reloaded after each cell walk and, with no callee-saved register left, stays in memory
 inline __declspec(noinline) void rgl::world::to_cell(const float* p, int* out)
 {
@@ -1576,7 +1576,7 @@ template void std::vector<int>::_Insert_n(std::vector<int>::iterator, size_t, co
 template void std::vector<PlacedObj>::_Insert_n(std::vector<PlacedObj>::iterator, size_t, const PlacedObj&);
 // @ 0x43ed20 (+ 0x43edd9): PhysRec's bone vector; its body vector's copy constructor is the same code and the
 // original linker folded the two (EH-framed COMDATs fold only among copies kept from one object). vector<int>'s own
-// copy constructor is kept from a later object: 0x4cc280 (rgl/mesh2/mesh_2.cpp).
+// copy constructor is kept from a later object: 0x4cc280 (game/editor/poly_mesh_edge_face_ops.cpp).
 template std::vector<const NewtonRagDollBone*>::vector(const std::vector<const NewtonRagDollBone*>&);
 // @ 0x43edf0 (+ 0x43ef97)
 template void std::vector<E12>::_Insert_n(std::vector<E12>::iterator, size_t, const E12&);
@@ -1669,7 +1669,7 @@ bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, i
 
 // Which of the four attack directions (1 left, 2 right, 3 up?, 0 thrust) the agent picks; derived from the
 // mouse movement (mode > 0) or from where the target stands relative to the view (mode 0).
-// rgl::matrix::transform_point_to_local (0x407f70, src/rgl/shapes/shapes.cpp) with its body visible here (inline noinline
+// rgl::matrix::transform_point_to_local (0x407f70, src/engine/physics/collision_shapes.cpp) with its body visible here (inline noinline
 // duplicate, as map_panel.cpp): its argument does not escape
 inline __declspec(noinline) vector4 rgl::matrix::transform_point_to_local(const vector4& p) const
 {
@@ -1983,7 +1983,7 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
     }
 }
 
-// 0x4378f0 (Agent::get_dir, agent2/agent_stats.cpp owns the row): the body visible, so the direction pair passed by address does not escape
+// 0x4378f0 (Agent::get_dir, game/agent/agent_stats.cpp owns the row): the body visible, so the direction pair passed by address does not escape
 // in Agent::can_hit (0x4406a0) and the slot_pair temporaries share its frame slot.
 inline __declspec(noinline) void Agent::get_dir(vec2* out)
 {
@@ -2363,7 +2363,7 @@ void Agent::build_static_collision()
         bmax.x = body->local.o.x + 5.0f;
         bmax.y = body->local.o.y + 5.0f;
         bmax.z = body->local.o.z + 5.0f;
-        g_mission->scene->query_box(&bmin, &bmax, 0x8106, hits, &cnt);   // scene is the scene object Ctx (strat/strat_entity.h)
+        g_mission->scene->query_box(&bmin, &bmax, 0x8106, hits, &cnt);   // scene is the scene object Ctx (engine/scene/strategic_entity.h)
     }
     int i;
     for (i = 0; i < cnt; i++) {
@@ -2428,7 +2428,7 @@ void Agent::build_static_collision()
 //       display and the wield-change animation / sound selection. Functions in ascending address order (cl's
 //       bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
 //=============================================================================
-#include "../agent3/agent_fx_sound.h"   // after the 0x43e190.. section: its itcf_* macros are i64, that section's enum is int
+#include "game/agent/combat/agent_fx_sound.h"   // after the 0x43e190.. section: its itcf_* macros are i64, that section's enum is int
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -2444,9 +2444,9 @@ const int g_xp_table[63] = {                             // 0x590974
 // 0x440b30 vector<int>::push_back (agent_combat.cpp) is kept out of line
 
 
-#include "../std_vec_insert_n.h"      // vector<rgl::mesh*>::_Insert_n 0x410610 (declared only: the call is out of line)
+#include "engine/core/std_vec_insert_n.h"      // vector<rgl::mesh*>::_Insert_n 0x410610 (declared only: the call is out of line)
 struct named_object;
-template<> void std::vector<named_object*, std::allocator<named_object*> >::_Insert_n(std::vector<named_object*, std::allocator<named_object*> >::iterator, size_t, named_object* const&);   // 0x41a2c0 (rgl/core/resmgr.cpp)
+template<> void std::vector<named_object*, std::allocator<named_object*> >::_Insert_n(std::vector<named_object*, std::allocator<named_object*> >::iterator, size_t, named_object* const&);   // 0x41a2c0 (engine/resource/resource_manager.cpp)
 
 // @ 0x441ff0
 void rgl::lod_mesh::add_mesh(int idx, rgl::mesh* val)
@@ -2462,7 +2462,7 @@ template void std::allocator<PhysRec>::construct(PhysRec*, const PhysRec&);
 // @ 0x442080 (+ catch-all funclet 0x4420ea: destroys [next, dest), then `throw;`)
 template PhysRec* std::_Uninit_copy(PhysRec*, PhysRec*, PhysRec*, std::allocator<PhysRec>&, std::_Nonscalar_ptr_iterator_tag);
 
-// 0x442110 rgl::entity::add_mesh: the header's inline member (rgl/scene/scene_entity.h), emitted out of line here
+// 0x442110 rgl::entity::add_mesh: the header's inline member (engine/scene/scene_entity.h), emitted out of line here
 
 // ---- the world's box query --------------------------------------------------------------------------------------------
 static __forceinline bool box3_inl(const vector4* a, const vector4* b, const vector4* c, const vector4* d)
@@ -2501,7 +2501,7 @@ void FxElem::add_psys(rgl::mesh* p) { psys.push_back(p); }   // the list holds t
 // @ 0x4423f0
 void FxElem::add_group(rgl::lod_mesh* g)
 {
-    groups.push_back(g);         // the slow path is vector<lod_mesh*>::_Insert_n 0x41a2c0 (resmgr.cpp's instance)
+    groups.push_back(g);         // the slow path is vector<lod_mesh*>::_Insert_n 0x41a2c0 (resource_manager.cpp's instance)
     ngroups++;
 }
 // @ 0x442460
@@ -2551,7 +2551,7 @@ void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
 
 // ---- the FMOD sound player ---------------------------------------------------------------------------------------------------
 static __forceinline int round_i(float v) { return round_float(&v); }
-// 0x432510 (rgl/xmlcfg/game_util.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x432510 (game/common/game_util.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) int __cdecl clamp_index(const int* v, const int* lo, const int* hi)      // 0x432510
 {
     if (*v < *lo) return *lo;
@@ -3218,7 +3218,7 @@ static __forceinline void set_order_1(Agent* a, int id, unsigned prio, float rat
         }
     }
 }
-// 0x433b20 (game/agent/curve.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x433b20 (engine/fx/env_curve.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) void FxDef::set_rec_phase(int i, float p)      // 0x433b20
 {
     if (p < 0.0f) p = 0.0f;
@@ -3383,7 +3383,7 @@ static inline vector4 a_vsub(const vector4& a, const vector4& b) { return vector
 
 // ---- PolyMesh::find_path: A*-style search over the navigation faces ---------------------------------------------------------
 
-// More bodies the original's object saw (rgl header inlines left out of line; shapes.cpp and game_util.cpp own the rows).
+// More bodies the original's object saw (rgl header inlines left out of line; collision_shapes.cpp and game_util.cpp own the rows).
 inline __declspec(noinline) float rgl::vector4::normalize()
 {
     float len = (float)sqrt(x * x + y * y + z * z);
@@ -3624,7 +3624,7 @@ template void std::vector<PhysRec>::_Insert_n(std::vector<PhysRec>::iterator, si
 // ---- Agent: top up the ammunition of the held ranged weapon ----------------------------------------------------
 // 0x434b70 / 0x434be0 / 0x434c30 (ItemRef::max_amount / add_amount / room_left) are header-inline in the original: the bodies are
 // visible here, so cl inlines some uses and keeps a call for the others (the slice's local copies did the same)
-static inline int round_float_inl(const float* p)       // 0x432540 (inlined here; agent/agent.h declares the out-of-line round_float)
+static inline int round_float_inl(const float* p)       // 0x432540 (inlined here; game/agent/agent_queries.h declares the out-of-line round_float)
 {
     float fl = (float)floor((double)*p);
     int i = (int)fl;
@@ -3655,7 +3655,7 @@ static int ir_room_left(ItemRef* r)                      // 0x434c30
     return ir_max_amount(r) - (int)(r->m4 & 0xff);
 }
 // The original agent translation unit (0x4353a0..0x45fxxx) saw these bodies: a local whose address reaches only them does not
-// escape, so it shares stack slots (codegen 7). agent/agent.cpp and agent2/agent_stats.cpp own the rows.
+// escape, so it shares stack slots (codegen 7). game/agent/agent_queries.cpp and game/agent/agent_stats.cpp own the rows.
 inline __declspec(noinline) int ItemRef::max_amount() const     // 0x434b70
 {
     if (item < 0) return 0;
@@ -3954,7 +3954,7 @@ void Agent::start_attack(int kind)
 // ---- Agent::update_ai: the per-tick order executor ------------------------------------------------------------------
 #define AG(i) (*agent_by_id(i))
 #define tf_guarantee_ranged 0x4000000i64
-float __cdecl hit_chance(int* who, Agent* a);                          // 0x438cb0 (agent2/agent_stats.cpp)
+float __cdecl hit_chance(int* who, Agent* a);                          // 0x438cb0 (game/agent/agent_stats.cpp)
 static __forceinline float hit_chance_ref(const ItemRef& who, Agent* a) { return hit_chance((int*)&who, a); }
 int __cdecl team_leader(const Agent* a);                                // 0x435b60
 float frand();                                                          // 0x40e400
@@ -4754,7 +4754,7 @@ static inline const vector4& a_pos(const Agent* a) { return a->pos; }
 static inline void a_sub2(vec2& r, const vector4& a, const vector4& b) { r.x = a.x - b.x; r.y = a.y - b.y; }
 static inline void a_clamp(float& v, float lo, float hi) { if (v < lo) v = lo; else if (v > hi) v = hi; }
 
-// 0x4354d0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x4354d0 (game/agent/agent_queries.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) bool Agent::flag_0x400_or_0x114() const      // 0x4354d0
 {
     bool r = false;
@@ -5677,7 +5677,7 @@ void Agent::cycle_slot(int which)
 
 
 // ---- Mission::spawn_missile ---------------------------------------------------------------------------------
-// the missile record of an id: pages of 16 records of 0xb0 bytes at Mission+0x30 (Pool<Missile>, include/pool.h)
+// the missile record of an id: pages of 16 records of 0xb0 bytes at Mission+0x30 (Pool<Missile>, engine/core/pool.h)
 static __forceinline Agent& mag(Mission* m, unsigned id) { return m->agents.pages[id >> 4][id & 0xf]; }
 static __forceinline Missile& mrec(Pool<Missile>* p, unsigned id)
 {
@@ -5758,7 +5758,7 @@ static inline rgl::mesh* item_mesh(int item, int packed)
 }
 int find_item(const tstring* name);                     // 0x434ad0 (cdecl)
 
-// 0x4285e0 (rgl/scene/shape_load.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x4285e0 (engine/scene/shape_load.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) shape_base* body_part::clone_shape()      // 0x4285e0
 {
     shape_base* r;
@@ -6461,7 +6461,7 @@ void rgl::mesh::add_quad(const vector4* p0, const vector4* p1, const vec2* uv0, 
     slots[0].f28 = 1;
     slots[1].f28 = 1;
 }
-// rgl::aabb::extend_box (0x4201b0, src/rgl/scene/entity_render.cpp) with its body visible here (inline noinline
+// rgl::aabb::extend_box (0x4201b0, src/engine/scene/entity_render.cpp) with its body visible here (inline noinline
 // duplicate, as transform_point_to_local above): the matrix append_skinned / append_plain receive does not escape
 inline __declspec(noinline) void rgl::aabb::extend_box(const aabb* b, const rgl::matrix* m)
 {
@@ -6497,7 +6497,7 @@ inline __declspec(noinline) void rgl::aabb::extend_box(const aabb* b, const rgl:
 }
 
 namespace rgl { static inline unsigned min255(unsigned v) { return v < 255 ? v : 255; } }
-// 0x40e440 (rgl/shapes/shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x40e440 (engine/physics/collision_shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 namespace rgl {
 inline __declspec(noinline) unsigned pack_color(const vector4* c)      // 0x40e440
 {
@@ -6718,7 +6718,7 @@ static inline tstring item_mesh_name(ItemKind* items, const ItemRef& r)
     return tstring("Error: Invalid item");
 }
 static __forceinline rgl::mesh* get_obj(const tstring& n) { return (rgl::mesh*)g_resmgr.get_object(&n); }
-// 0x40e670 / 0x40e770 (rgl/shapes/shapes.cpp owns the rows): the bodies visible, so the angle passed to them does not escape
+// 0x40e670 / 0x40e770 (engine/physics/collision_shapes.cpp owns the rows): the bodies visible, so the angle passed to them does not escape
 static __forceinline vector4 rm_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 rm_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 rm_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
@@ -6741,7 +6741,7 @@ inline __declspec(noinline) void rgl::mat3::rotate_about_u(const float* angle)
     f = nf;
 }
 
-// 0x4351f0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x4351f0 (game/agent/agent_queries.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) ItemRef Missile::ranged_ref()      // 0x4351f0
 {
     ItemRef r;
@@ -6797,7 +6797,7 @@ mesh* Missile::make_ranged_mesh()
     return result;
 }
 
-#include "../placed_obj.h"      // PlacedObj (Mission::props is a std::vector<PlacedObj>)
+#include "game/mission/placed_obj.h"      // PlacedObj (Mission::props is a std::vector<PlacedObj>)
 
 // @ 0x44f870
 int Mission::add_placed(const int* kind, const int* id, const int* value, const matrix* m, int* spawn_id)
@@ -6806,7 +6806,7 @@ int Mission::add_placed(const int* kind, const int* id, const int* value, const 
     int prev = -1;
     int idx = (int)props.size();
     {
-        PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent.cpp): shared rec1c8.h
+        PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent_queries.cpp): shared rec1c8.h
         props.push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
         ::init_placed(&props[idx], kind, id, value, m);
         if (*kind == 7 || *kind == 6)
@@ -7459,7 +7459,7 @@ void Mission::blood_burst(float x, float y, float z, int unused, float amount)
         }
     }
 }
-// rgl::matrix::relative (0x4329d0, src/rgl/xmlcfg/game_util.cpp) visible here too (inline noinline duplicate): with both bodies refresh_carried's rel does not escape, so the target-mesh load is hoisted
+// rgl::matrix::relative (0x4329d0, src/game/common/game_util.cpp) visible here too (inline noinline duplicate): with both bodies refresh_carried's rel does not escape, so the target-mesh load is hoisted
 // above the rel.o.y store as in the original
 inline __declspec(noinline) rgl::matrix rgl::matrix::relative(const rgl::matrix& b) const
 {
@@ -7692,7 +7692,7 @@ void Mission::log_message(const tstring* s, float seconds)
     g_gui.add(*s, -261);
 }
 
-// rgl::matrix::transform_point (0x408460, src/rgl/shapes/shapes.cpp) with its body visible from here on (inline noinline
+// rgl::matrix::transform_point (0x408460, src/engine/physics/collision_shapes.cpp) with its body visible from here on (inline noinline
 // duplicate): its hidden return temporary does not escape, so get_label_box's third result shares p2's dead slot (frame 0x20)
 inline __declspec(noinline) vector4 rgl::matrix::transform_point(const vector4& p) const
 {
@@ -7737,7 +7737,7 @@ void Agent::get_label_box(capsule* out)
 // ---- Agent::shield_hit, Agent::on_removed ---------------------------------------------------------------------------------------------
 #define itp_type_shield 7
 
-// 0x434eb0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x434eb0 (game/agent/agent_queries.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) int ItemRef::body_armor()      // 0x434eb0
 {
     if (item < 0) return 0;
@@ -7850,7 +7850,7 @@ void Agent::on_removed()
 }
 
 // ---- Agent::hit_damage: the damage of a melee blow or missile hit ------------------------------------------------------------------
-// 0x434c50 / 0x434cb0 / 0x434d70 (ItemRef::difficulty / damage / speed_rating, agent/agent.cpp owns the rows): bodies that only read *this, so
+// 0x434c50 / 0x434cb0 / 0x434d70 (ItemRef::difficulty / damage / speed_rating, game/agent/agent_queries.cpp owns the rows): bodies that only read *this, so
 // Agent::hit_damage (0x453710) keeps sp.item in a register across the calls (no `item` local) and sp does not escape.
 inline __declspec(noinline) int ItemRef::difficulty()      // 0x434c50
 {
@@ -8288,8 +8288,8 @@ void Agent::ragdoll_update()
 #define itcf_carry_slot2 0x200000000i64
 #define itcf_carry_quiver_back_right 0x60000000i64
 #define itcf_carry_quiver_back 0x80000000i64
-// get_carry_pos (0x433e40, src/game/agent/item_kind.cpp) and the two shape constructors (0x4332a0 / 0x433310,
-// src/rgl/xmlcfg/agent_pick.cpp) with their bodies visible here (inline noinline duplicates): reduce_blow's carry frame,
+// get_carry_pos (0x433e40, src/game/data/item_kind.cpp) and the two shape constructors (0x4332a0 / 0x433310,
+// src/game/agent/agent_item_pick.cpp) with their bodies visible here (inline noinline duplicates): reduce_blow's carry frame,
 // bone / aux, lo and hi then do not escape, so the packer shares their slots with the later locals as the original does
 inline __declspec(noinline) void ItemKind::get_carry_pos(rgl::matrix* out, int* bone_flags, int* bone)
 {
@@ -9392,7 +9392,7 @@ void Agent::update_controls(float dt)
 
 
 
-#include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628): .data is the array of 0x30-byte animation definitions
+#include "engine/fx/anim_set.h"   // AnimSet g_anim_set (0xa76628): .data is the array of 0x30-byte animation definitions
 #define itp_wooden_attack 0x00020000
 #define itcf_throw_stone 0x0000000000010000i64
 #define tf_allways_fall_dead 0x80
@@ -9411,12 +9411,12 @@ void Agent::update_controls(float dt)
             impulse.z = impulse.z + 1.0f; \
         } \
     }
-// 0x407c80 (rgl/shapes/shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x407c80 (engine/physics/collision_shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 namespace rgl {
 inline __declspec(noinline) float vector4::out_length_squared() const { return length_squared(); }      // 0x407c80
 }
 
-// 0x435130 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x435130 (game/agent/agent_queries.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) bool Troop::is_hero()      // 0x435130
 {
     if (flags30 & 0x10) return true;
@@ -9993,7 +9993,7 @@ void Agent::process_blow(float unused)
             v.x = s * g_emit_defs.defs[e1].b.x;
             v.y = s * g_emit_defs.defs[e1].b.y;
             v.z = s * g_emit_defs.defs[e1].b.z;
-            em->set_v184(&v);       // 0x433740 (xmlcfg/agent_pick.cpp)
+            em->set_v184(&v);       // 0x433740 (game/agent/agent_item_pick.cpp)
             em->spawn_rate = ef * g_emit_defs.defs[e1].spawn_rate;
         }
         if (e2 >= 0) {
@@ -10003,7 +10003,7 @@ void Agent::process_blow(float unused)
             v.x = s * g_emit_defs.defs[e2].b.x;
             v.y = s * g_emit_defs.defs[e2].b.y;
             v.z = s * g_emit_defs.defs[e2].b.z;
-            em->set_v184(&v);       // 0x433740 (xmlcfg/agent_pick.cpp)
+            em->set_v184(&v);       // 0x433740 (game/agent/agent_item_pick.cpp)
             em->spawn_rate = ef * g_emit_defs.defs[e2].spawn_rate;
         }
     }
@@ -10108,7 +10108,7 @@ void Agent::process_blow(float unused)
 
 // ---- Agent::swing_trace: the melee swing / missile hit test ------------------------------------------------------------------------
 // Agent::f100_is_0x48_and_charged 0x432470 (game_util.cpp); the agent calls it with an unused agent in ecx
-int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag);   // 0x43a720 (agent2/agent_stats.cpp)
+int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag);   // 0x43a720 (game/agent/agent_stats.cpp)
 static __forceinline int round_inl(const float& x)
 {
     float fl = (float)floor((double)x);
@@ -11037,7 +11037,7 @@ static __forceinline vector4 mv_unit_up(const vector4& v)
     return vector4(0.0f, 1.0f, 0.0f);
 }
 static __forceinline vector4 mv_vscale(const float& s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
-// 0x4353a0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+// 0x4353a0 (game/agent/agent_queries.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) Blow* Blow::init()      // 0x4353a0
 {
     flags = 0;

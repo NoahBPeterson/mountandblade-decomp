@@ -1,0 +1,5 @@
+../src/game/ui/screens/screen_misc.cpp  ?take_screenshot@@YAXXZ  004ebc10  /O2 /MT /Gy /TP
+../src/game/ui/screens/screen_misc.cpp  ??$_Uninit_copy@PAURagModel@@PAU1@V?$allocator@URagModel@@@std@@@std@@YAPAURagModel@@PAU1@00AAV?$allocator@URagModel@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004ebe10  /O2 /MT /Gy /TP
+../src/game/ui/screens/screen_misc.cpp  ?frame_hook@head_rec@@QAEXXZ  004ec460  /O2 /MT /Gy /TP
+../src/game/ui/screens/screen_misc.cpp  ?destroy@?$allocator@URagModel@@@std@@QAEXPAURagModel@@@Z  004ebdc0  /O2 /MT /Gy /TP
+../src/game/ui/screens/screen_misc.cpp  $L  004ebe7a  /O2 /MT /Gy /TP

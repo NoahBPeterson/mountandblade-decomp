@@ -1,0 +1,2 @@
+# src/game/mission/scene_entities.cpp: the std instantiation the original calls out of line (game/mission/scene_container_grid.cpp's vector<PhysRec>::resize)
+0047a980 ?resize@?$vector@UPhysRec@@V?$allocator@UPhysRec@@@std@@@std@@QAEXIUPhysRec@@@Z  # vector<PhysRec>::resize(n, val)

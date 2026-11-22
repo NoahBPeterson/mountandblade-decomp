@@ -1,4 +1,4 @@
-// port/platform/gdi.cpp: the GDI subset the game uses (src/dxframework/d3dfont.cpp's font bake, the launcher's bitmap):
+// port/platform/gdi.cpp: the GDI subset the game uses (src/platform/dxframework/d3dfont.cpp's font bake, the launcher's bitmap):
 // memory device contexts, DIB sections, bitmaps loaded from .bmp files, TrueType text (SDL3_ttf), BitBlt / StretchBlt.
 // A window DC (GetDC / BeginPaint) has no pixel store: the window's pixels belong to the renderer, so drawing into it
 // is accepted and has no visible effect (the launcher's paint of a dialog whose controls are virtual, dialog.cpp).

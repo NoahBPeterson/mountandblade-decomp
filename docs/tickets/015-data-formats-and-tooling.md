@@ -8,10 +8,10 @@ The decomp already contains reference readers and writers for the engine's forma
 
 ## Evidence
 
-- **BRF (binary resource) / TRF (text twin)**: `resmgr::load_pack` 0x41e150 (src/rgl/core/resmgr.cpp:1183): opens `CommonRes\<name>.trf|.brf` (or `<module>\Resource\`); if `g_use_text_res` and the `.trf` is newer it parses the text, then **writes the `.brf`** with `bin_writer`. Block tags dispatched in `load_stream` (resmgr.cpp:1100-1170):
+- **BRF (binary resource) / TRF (text twin)**: `resmgr::load_pack` 0x41e150 (src/engine/resource/resource_manager.cpp:1183): opens `CommonRes\<name>.trf|.brf` (or `<module>\Resource\`); if `g_use_text_res` and the `.trf` is newer it parses the text, then **writes the `.brf`** with `bin_writer`. Block tags dispatched in `load_stream` (resource_manager.cpp:1100-1170):
   `mesh`, `material`, `shader`, `texture`, `body`, `skeleton`, `skeleton_anim`. The TRF text format is therefore a built-in text *input* path for every BRF block (a reader exists: `text_reader`; whether a TRF *writer* exists is unverified - `text_stream` has write slots, check before promising brf2trf).
   CommonRes holds 148 BRF files (76 MB); Native has `Modules/Native/Resource/` plus data tables.
-- **Streams are typed**: `stream_base` slots `w_int/w_float/w_u64/w_i64/w_bool/w_cstr/w_tstr` and mirrored readers (src/rgl/stream.h): all binary formats are therefore width-explicit, which makes them portable to 64-bit.
+- **Streams are typed**: `stream_base` slots `w_int/w_float/w_u64/w_i64/w_bool/w_cstr/w_tstr` and mirrored readers (src/engine/io/stream.h): all binary formats are therefore width-explicit, which makes them portable to 64-bit.
 - **SCO scene files**: `Modules/Native/SceneObj/*.sco` (e.g. `scn_castle_1_exterior.sco`), written by `scenes[idx].save(&w, 0)` (mission_5.cpp:1066) and `SceneObj_s27c90::save`, grids via `grids.save(&rec->stream_a)`.
 - **Saves**: `sg%d%d.sav` paths (5 sprintf sites), written by `SavePanel`; `save_path` helper (crash C5 in docs/crashes.md shows the path buffer contract).
 - **Module tables**: 42 text files per module (Native listing), sizes tiny; parsed with `split_line`/`Config::load_file`-style readers; 8-bit codepage text.

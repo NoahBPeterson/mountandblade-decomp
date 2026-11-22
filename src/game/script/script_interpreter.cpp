@@ -13,97 +13,97 @@
 //         numbering, `switch (op)` over 30..2385 with a 2356-entry jump table at 0x4ae458; 591 opcodes are implemented, the
 //         rest report "Unrecognized opcode"), and applies the neg / this_or_next flags to the condition result. Case bodies
 //         are in opcode order. Control opcodes below 30 are run by the block runner (DialogBlock::emit 0x4b09e0, below).
-//       See NOTES.md. Flags: /O2 /MT /Gy /TP. Names provisional except the Module System ones.
+//       See game_script_NOTES.md. Flags: /O2 /MT /Gy /TP. Names provisional except the Module System ones.
 //-----------------------------------------------------------------------------
 
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
-#include "../../include/layout32.h"
-#include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
-#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
-#include "../config/config.h"   // mesh_record (set_background_mesh)
-#include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
-#include "../music_player.h"   // g_music (0xa73a10)
-#include "../animator.h"      // Animator g_anim (0x8ed4f60)
-#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
+#include "engine/core/layout32.h"
+#include "game/data/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
+#include "game/mission/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
+#include "game/config/config.h"   // mesh_record (set_background_mesh)
+#include "game/data/env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
+#include "engine/audio/music_player.h"   // g_music (0xa73a10)
+#include "game/agent/animator.h"      // Animator g_anim (0x8ed4f60)
+#include "game/config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include <stdlib.h>
-#include "./script_interpreter.h"
-#include "../strat/gui_manager.h"          // gui_manager: g_gui
+#include "game/script/script_interpreter.h"
+#include "game/ui/gui_manager.h"          // gui_manager: g_gui
 // the shared headers it builds on (included again here so their address annotations are read with this file)
-#include "../dialog_manager.h"
-#include "../agent/agent.h"
-#include "../tstring.h"
+#include "game/dialog/dialog_manager.h"
+#include "game/agent/agent_queries.h"
+#include "engine/core/tstring.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
-#include "../str_table.h"
-#include "../../include/mat4.h"
-#include "../../include/quaternion.h"
-#include "../../include/timer.h"
-#include "../../include/vec.h"
-#include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../slot_array.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../event.h"           // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/str_table.h"
+#include "engine/math/mat4_include.h"
+#include "engine/math/quaternion.h"
+#include "engine/core/timer.h"
+#include "engine/math/vec.h"
+#include "engine/render/light.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "game/mission/placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/resource/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "game/party/slot_array.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/agent/agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/mission/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/agent/blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/campaign/event.h"           // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include <vector>
-#include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../string_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../rgl/scene/world.h"      // rgl::world (the scene object at mission +0 and in g_script.level)
-#include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
-#include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
-#include "../../include/image_addrs.h"
-#include "../animator.h"      // Animator g_anim (0x8ed4f60)
-#include "../../include/skin.h"      // Skin (g_anim.skin_vec)
-#include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
+#include "game/data/mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/data/string_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/party/party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/party/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "engine/scene/world.h"      // rgl::world (the scene object at mission +0 and in g_script.level)
+#include "engine/audio/sound_mgr.h"   // g_sound_mgr 0x5aa128
+#include "game/data/item_kind_include.h"   // g_item_kind_count 0x5e29d4
+#include "platform/image_addrs.h"
+#include "game/agent/animator.h"      // Animator g_anim (0x8ed4f60)
+#include "engine/render/skin.h"      // Skin (g_anim.skin_vec)
+#include "platform/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <new>
 #include <string.h>
-#include "../../rgl/rgl_math.h"
-#include "../../rgl/identity_value.h"   // rgl::identity3_value (0x40cd60 by value)
-#include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
-#include "../world_data/scene_object.h"   // SceneObject: the tableau scene (TableauTbl::worlds)
-#include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
+#include "engine/math/rgl_math.h"
+#include "engine/core/identity_value.h"   // rgl::identity3_value (0x40cd60 by value)
+#include "engine/core/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
+#include "game/data/scene_object.h"   // SceneObject: the tableau scene (TableauTbl::worlds)
+#include "game/common/game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include <vector>
 #include <windows.h>
 #include <stdio.h>
 #include <math.h>
 #include <stddef.h>
-#include "../tstring.h"
-#include "../font.h"
-#include "../../include/game_data.h"
-#include "../../include/fx.h"          // FxDef (the effect definition of a scene entity)
-#include "../../include/dialog_rec.h"
-#include "../../rgl/mesh.h"
-#include "../../rgl/resource.h"             // resmgr g_resmgr (0x5d6fa0)
-#include "../../include/party.h"
-#include "../party2/camera.h"
-#include "../mesh_slot/mesh_build.h"   // build_appearance (0x482240), setup_item_meshes (0x47cfe0)
-#include "../skeleton.h"                // node_groups / node_list (cap_all 0x438f90)
-#include "../party2/camera_class.h"      // Camera (the one declaration of the 0x4a8-byte view object)
-#include "../../include/sound_mgr.h"      // g_sound_mgr 0x5aa128 (listener at +0x40 = 0x5aa168)
-#include "../str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
-#include "../ui/container.h"                 // ContainerBase (ui/mission_ui.h)
-#include "../event.h"                         // Event: the 0x98-byte map event / battle record (GameData::events, pages at +0xe4, 0x49bbb0)
-#include "../strat/gui_manager.h"       // gui_manager (set_font_mesh 0x49b630 is defined here)
-#include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-#include "../../include/game_recs.h"
-#include "../../include/level_global.h"      // g_level (0xa732b4)
-#include "../mode_rec.h"   // g_mission_templates 0x5e2a00
-#include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
-#include "../animator.h"
-#include "../../include/clock_table.h"
-#include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
-#include "../../rgl/text_stream.h"
+#include "engine/core/tstring.h"
+#include "engine/render/font.h"
+#include "game/data/game_data.h"
+#include "engine/fx/fx.h"          // FxDef (the effect definition of a scene entity)
+#include "game/dialog/dialog_rec.h"
+#include "engine/render/mesh.h"
+#include "engine/resource/resource.h"             // resmgr g_resmgr (0x5d6fa0)
+#include "game/party/party.h"
+#include "game/mission/camera.h"
+#include "game/mission/mesh_build.h"   // build_appearance (0x482240), setup_item_meshes (0x47cfe0)
+#include "engine/resource/skeleton.h"                // node_groups / node_list (cap_all 0x438f90)
+#include "game/mission/camera_class.h"      // Camera (the one declaration of the 0x4a8-byte view object)
+#include "engine/audio/sound_mgr.h"      // g_sound_mgr 0x5aa128 (listener at +0x40 = 0x5aa168)
+#include "game/data/str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
+#include "game/ui/widgets/container.h"                 // ContainerBase (game/ui/widgets/widget_base.h)
+#include "game/campaign/event.h"                         // Event: the 0x98-byte map event / battle record (GameData::events, pages at +0xe4, 0x49bbb0)
+#include "game/ui/gui_manager.h"       // gui_manager (set_font_mesh 0x49b630 is defined here)
+#include "game/data/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in game/app/options_dialog_and_module_tables.cpp)
+#include "game/data/game_recs.h"
+#include "game/common/level_global.h"      // g_level (0xa732b4)
+#include "game/data/mode_rec.h"   // g_mission_templates 0x5e2a00
+#include "engine/math/float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
+#include "game/agent/animator.h"
+#include "engine/core/clock_table.h"
+#include "game/script/script_state.h"   // ScriptState g_script (0xa70440): the one object
+#include "engine/io/text_stream.h"
 extern int g_propkind_count;                                // 0x5e29e0
 
 
-#include "../shared_vars.h"
+#include "game/common/shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 widget_mgr* g_presentation;                                 // 0x5e299c the running presentation
@@ -119,9 +119,9 @@ widget_mgr* g_presentation;                                 // 0x5e299c the runn
 int g_visitor_scene;                                        // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 float g_spawn_radius = 3.0f;                                // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
 
-#include "../animator.h"
+#include "game/agent/animator.h"
 
-#include "./script_globals.h"      // canonical declarations of the interpreter's globals (listed directly: the resolution audit reads only the source's own includes)
+#include "game/script/script_globals.h"      // canonical declarations of the interpreter's globals (listed directly: the resolution audit reads only the source's own includes)
 
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_cur_param;                                 // 0x5e2590 (.bss)
@@ -133,7 +133,7 @@ int g_lineno;                                    // 0x5e2598 (.bss) line of the 
 static int g_script_error;                       // 0x5e259c (.bss)
 int g_cur_opcode;                                // 0x5e25a0 (.bss) opcode word of the statement being run
 int g_or_latch;                                  // 0x5e25a4 (.bss) this_or_next chain already satisfied
-#include "../ui_globals.h"      // UI / core globals
+#include "game/ui/ui_globals.h"      // UI / core globals
 // ---- data this module owns (docs/standalone_data.md) ----
 
 extern Font* g_font;                                // 0x5e2934
@@ -143,22 +143,22 @@ extern Font* g_font;                                // 0x5e2934
 // the linker cannot resolve: the mangled name has to carry the class that DEFINES the function. These are member-only stubs under
 // the defining name (only their `// 0x...` callee is declared); the views forward to them with `this` cast, which compiles to the
 // same call. Each comment names the defining source.
-#include "../../include/vec_xlen.h"                                                // 0x43e2a0 std::vector<int>::_Xlen (agent3/agent_combat.cpp)
-// level::nearest_face 0x439a50 (agent2/agent_stats.cpp): terrain_b/cell_grid.h
+#include "engine/core/vec_xlen.h"                                                // 0x43e2a0 std::vector<int>::_Xlen (agent3/agent_combat.cpp)
+// level::nearest_face 0x439a50 (game/agent/agent_stats.cpp): game/terrain/cell_grid.h
 struct SphereC {
-    SphereC(rgl::vector4 c, const float* r);   // 0x4332a0 rgl/xmlcfg/game_util.cpp (named `sphere` there)
+    SphereC(rgl::vector4 c, const float* r);   // 0x4332a0 game/common/game_util.cpp (named `sphere` there)
 };
 namespace rgl { struct mesh; }
-rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);                               // 0x495b20 world_data/mesh_hud.cpp
+rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);                               // 0x495b20 game/ui/widgets/hud_bar_widgets.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
-ItemRef __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 terrain_a/terrain_a.cpp
+ItemRef __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 game/terrain/terrain_cells.cpp
 struct CarryCtx;
-void __cdecl place_scene_agents(rgl::strategic_entity* holder, ItemRef* table, CarryCtx* ctx);   // 0x495430 world_data/world_data.cpp
+void __cdecl place_scene_agents(rgl::strategic_entity* holder, ItemRef* table, CarryCtx* ctx);   // 0x495430 game/campaign/game_data_party_quest.cpp
 
 
 // camera.h's views of the interpreter's callees forward to the defining classes
 template<> void std::vector< ::Party*, std::allocator< ::Party*> >::push_back(::Party* const& v);   // 0x4936b0 (every pointer vector's push_back)
-template<> void std::vector<int>::push_back(const int&);                           // 0x4936b0 world_data/world_data.cpp (out-of-line instance: only declared)
+template<> void std::vector<int>::push_back(const int&);                           // 0x4936b0 game/campaign/game_data_party_quest.cpp (out-of-line instance: only declared)
 
 // ======================================================================================
 // slice s0049aca0 (namespace c49aca0)
@@ -176,18 +176,18 @@ using rgl::vector4;
 // ---- shared engine types -------------------------------------------------------------------------
 using rgl::mesh;
 
-// ---- std::vector<NodeA*> (the container's rows): push_back 0x49b120 / insert 0x49b170 are config/widget_node.cpp's instances;
+// ---- std::vector<NodeA*> (the container's rows): push_back 0x49b120 / insert 0x49b170 are game/ui/widgets/drop_down_list.cpp's instances;
 // _Insert_n 0x49b1c0 is the real vector's, instantiated below (after the namespace)
 // ---- function definitions (in VA order) ----------------------------------------------------------
 
 // 0x49b37d is not a function: it is the catch(...) funclet inside the vector<NodeA*>::_Insert_n (std::vector<NodeA*>::_Insert_n 0x49b1c0, whose COMDAT really spans
 // 0x49b1c0..0x49b4af); see nonmatching.txt.
 
-// 0x49b4f0 is MissionUi::get_xy (config/widget_mgr.cpp): the base class's text-rect slot, not this panel's
+// 0x49b4f0 is MissionUi::get_xy (game/ui/widgets/widget_manager.cpp): the base class's text-rect slot, not this panel's
 
 } // namespace c49aca0
 
-struct NodeA;                                    // the vector's element points at the container (DropDown's rows, config/widget_mgr.cpp)
+struct NodeA;                                    // the vector's element points at the container (DropDown's rows, game/ui/widgets/widget_manager.cpp)
 // @ 0x49b1c0
 template void std::vector<NodeA*>::_Insert_n(std::vector<NodeA*>::iterator, size_t, NodeA* const&);
 
@@ -234,7 +234,7 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);        // 0x536f8f
 
 // ---- scene objects -------------------------------------------------------------------------------
 
-// the map entity world::create_entity(9) builds: rgl::strategic_entity (rgl/scene/scene_entity.h)
+// the map entity world::create_entity(9) builds: rgl::strategic_entity (engine/scene/scene_entity.h)
 typedef rgl::strategic_entity EntityFull;
 
 
@@ -273,7 +273,7 @@ void gui_manager::set_font_mesh(const tstring* text, int arg)
 // GameData members of slice s0049b630 (the slices called the game-data object `Mission`): the value counters, the quest
 // "taken" stamp and the label text layout. Fields not in game_data.h are reached by offset.
 // ======================================================================================
-#include "../event.h"           // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "game/campaign/event.h"           // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // ---- shared log tail of 0x49b720 / 0x49b820 (inlined in both; the source of the original
 // likely had a static helper, but cl 13.10 inlines it at /O2 regardless of `noinline`) ----------
@@ -436,7 +436,7 @@ inline matrix* identity_pos(matrix* out) { return (matrix*)rgl::identity_pos((rg
 
 
 
-// scene object for one order entry (the mission order contour): rgl::strategic_entity (rgl/scene/scene_entity.h)
+// scene object for one order entry (the mission order contour): rgl::strategic_entity (engine/scene/scene_entity.h)
 typedef rgl::strategic_entity OrderObj;
 
 
@@ -1409,11 +1409,11 @@ __declspec(noinline) void TableauTbl::set_camera_parameters(const char* perspect
     c->camera.farz = fz;
     c->camera.build_planes();
 }
-extern const int g_value_max;   // 0x590a9c (agent/agent.cpp)
+extern const int g_value_max;   // 0x590a9c (game/agent/agent_queries.cpp)
 // Bodies this object sees so that execute's temporaries pack as in the original: a local whose address reaches a callee cl cannot see
 // keeps a private frame slot (cl assumes the callee may keep the pointer), and that holds through a chain, so the whole chain has to be
 // visible. unpack_color: cur_tableau_add_mesh*'s colour. PlacedObj::animate_to: prop_instance_animate_to_position's duration and zero.
-// ItemRef + Mission::add_placed + init_placed: spawn_item's ItemRef. Duplicates of the canonical rows (see NOTES.md, "What the object can see").
+// ItemRef + Mission::add_placed + init_placed: spawn_item's ItemRef. Duplicates of the canonical rows (see game_script_NOTES.md, "What the object can see").
 __declspec(noinline) rgl::vector4 rgl::unpack_color(const unsigned* c)
 {
     rgl::vector4 v;
@@ -1502,7 +1502,7 @@ __declspec(noinline) int Mission::add_placed(const int* kind, const int* id, con
     int prev = -1;
     int idx = (int)props.size();
     {
-        PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent.cpp): shared rec1c8.h
+        PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent_queries.cpp): shared rec1c8.h
         ((std::vector<PlacedObj>&)props).push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
         PlacedObj* added = &props[idx];
         ::init_placed(added, kind, id, value, m);
@@ -1537,7 +1537,7 @@ inline __declspec(noinline) void PlacedObj::animate_to(const rgl::matrix* to, co
     tween_clock.restamp();
     last_t = 0;
 }
-// TableauTbl::spawn_scaled / spawn_scaled2 (0x499390, 0x499540; world_data/obj_tbl.cpp owns the rows): visible duplicates. With them
+// TableauTbl::spawn_scaled / spawn_scaled2 (0x499390, 0x499540; game/data/object_table_spawners.cpp owns the rows): visible duplicates. With them
 // execute's cur_tableau_add_* cases share the validator temporaries as in the original (24 more identical cases, frame 0x10 smaller).
 __declspec(noinline) void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::vector4* scale,
                               const float* alpha, const unsigned* color)
@@ -2302,7 +2302,7 @@ namespace c49f060 {
 // trigger block. Module System names: parties, party_tpl, triggers. Names provisional.
 
 // ---- spawn helpers (other slices) ------------------------------------------------------------------------
-// (the effect definition 0x7c bytes created by world::create_entity(2) is FxDef of include/fx.h)
+// (the effect definition 0x7c bytes created by world::create_entity(2) is FxDef of engine/fx/fx.h)
 struct PickArg { char pad[0x400]; };                                              // the v[] argument of 0x482240
 struct SiteRec {                                                                  // 0x1dc bytes, one per scene site
     char pad0[0x34];
@@ -2599,9 +2599,9 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 // unit cl has the callee's summary (docs/c2/callee.md) and knows the call writes none of execute's address-taken locals.
 // A params[] dword then stays in its callee-saved register across the call instead of being reloaded (or copied to a
 // named local first: the "split web" shape, load into a scratch register, use, copy).
-// rgl::string::c_str 0x407c10 (rgl/shapes/shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
-#define HPMAX(t) ((t)->max_hit_points())     // Troop::max_hit_points 0x468770 (terrain_a/terrain_render.cpp)
-// GameData::count_troops 0x48f790 (mission_ui2/party.cpp): party_count_members_of_type keeps params[1] / params[2] in esi / ebx
+// rgl::string::c_str 0x407c10 (engine/physics/collision_shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
+#define HPMAX(t) ((t)->max_hit_points())     // Troop::max_hit_points 0x468770 (game/terrain/terrain_render.cpp)
+// GameData::count_troops 0x48f790 (game/party/party_members.cpp): party_count_members_of_type keeps params[1] / params[2] in esi / ebx
 // across both calls, store_troop_kind_count and 2180 likewise
 inline Party* si_party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * sizeof(Party) + (char*)*(m->pages.begin() + (k >> 4))); }
 inline Party* si_party_of(PartyMgr* m, int id) { return si_party_at(m, m->lookup(id)); }
@@ -2627,14 +2627,14 @@ add:
     return total;
 }
 #undef PARTY
-// Agent::clamped_team 0x435490 (agent/agent.cpp): agent_set_team keeps params[0] in ebx across it
+// Agent::clamped_team 0x435490 (game/agent/agent_queries.cpp): agent_set_team keeps params[0] in ebx across it
 int Agent::clamped_team() const
 {
     int t = team;
     if (t < 0 || t >= 8) t = 7;
     return t;
 }
-// Troop::is_hero 0x435130 (agent/agent.cpp): store_num_regular_prisoners keeps params[1] in ebx through its loop (push ebx
+// Troop::is_hero 0x435130 (game/agent/agent_queries.cpp): store_num_regular_prisoners keeps params[1] in ebx through its loop (push ebx
 // after the call), which leaves no register for its counters: they live in the frame as in the original
 bool Troop::is_hero()
 {
@@ -5525,7 +5525,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 if (mesh >= 0) {
                     if (!ent->fx)
                         break;
-                    ps = ent->fx->psys_of(mesh, (int)params[0]);    // 0x48d5f0 (mission_ui2/mission_3.cpp)
+                    ps = ent->fx->psys_of(mesh, (int)params[0]);    // 0x48d5f0 (game/party/stacks_and_loot.cpp)
                 } else {
                     int k = ent->find_emitter((int)params[0]);
                     if (k < 0)

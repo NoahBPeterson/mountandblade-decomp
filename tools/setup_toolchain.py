@@ -163,7 +163,7 @@ def verify(table, base):
 
 def check():
     py = os.path.join(ROOT, ".venv", "bin", "python")
-    man = os.path.join(ROOT, "src", "game", "strat", "tstring.manifest.txt")
+    man = os.path.join(ROOT, "src", "engine", "core", "tstring.manifest.txt")
     r = subprocess.run([py, os.path.join(ROOT, "tools", "matching", "run_all.py"), "--manifest", man],
                        capture_output=True, text=True)
     last = (r.stdout.strip().splitlines() or ["(no output)"])[-1]

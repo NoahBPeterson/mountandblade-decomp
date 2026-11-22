@@ -1,0 +1,2 @@
+../src/game/ui/screens/face_generator/face_generator_update.cpp  ?update@FaceGen@@QAEXM@Z  004eb050  /O2 /MT /Gy /TP
+../src/game/ui/screens/face_generator/face_generator_update.cpp  ?frame_update@FaceGen@@UAEXM@Z  004ea8e0  /O2 /MT /Gy /TP

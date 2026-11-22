@@ -1,0 +1,832 @@
+// mesh.cpp (0x40e940..0x413b5f): the mesh object (rgl::mesh) with its particle emitters, morph key frames,
+// skinning table and scene queue, plus the render-state setters and the std::vector instantiations the linker
+// placed in this object. Migrated from slices s0040e060 (0x40e940 only), s0040ea00, s0040f300, s0040f9a0,
+// s00410080, s004108b0, s00411150, s00411a90, s00412150, s00412a90 and s00413320 (the last two without
+// vector<vertex60>::erase/resize 0x413b60/0x413bb0, which src/engine/render/particle_system.cpp keeps).
+// Boundaries: start 0x40e940 (class change, low), end 0x413b60 (src/engine/render/particle_system.cpp starts there; see MIGRATION.md).
+#include <windows.h>
+#include <d3d9.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <new>
+#include <vector>
+#define RGL_NAMED_OBJECT_DTOR_OUT_OF_LINE   // ~named_object is 0x4150f0 (tail-called by ~mesh)
+#include "engine/core/rgl_string.h"
+#include "engine/math/rgl_math.h"
+#include "engine/io/stream.h"
+#include "engine/resource/resource.h"
+#include "engine/math/noise.h"
+#include "engine/render/render_cache.h"
+#include "engine/render/mesh_rgl_particles.h"
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "engine/fx/keyframes.h"
+#include "engine/math/mat4_include.h"
+#include "engine/render/d3d_xform.h"
+#include "engine/render/mesh_prims.h"
+#include "engine/math/vec.h"
+#include "engine/render/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/render/light.h"      // Light (p_c0)
+#include "engine/scene/emitter.h"      // psys (update 0x414960)
+#include "engine/render/render_batch.h"   // render_batch (register_scene 0x412040, add_mesh 0x412100), g_batch (0x5fe898)
+#include "engine/render/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "engine/core/clock_table.h"
+
+// ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
+int rgl::g_vert_budget = 30;                      // 0x5a9c34 base vertex budget of should_batch
+
+
+using namespace rgl;
+
+// ---- data this module owns ----
+render_batch g_batch;                               // 0x5fe898 (the batch renderer: 0x418830 bytes; constructed by render_batch::render_batch 0x4ebea0 (config.cpp), destroyed by ~render_batch 0x4ca830)
+
+// ---- render-state setters (global object 0xa17910) ----------------------------------------------------------------
+// @ 0x40e940
+void renderer::set_blend_mode(int mode)
+{
+    if (mode != blend_mode) {
+        blend_mode = mode;
+        if (mode == 0) {
+            dev->SetRenderState(D3DRS_ALPHABLENDENABLE, 0);
+            return;
+        }
+        dev->SetRenderState(D3DRS_ALPHABLENDENABLE, 1);
+        if (blend_mode == 1) {
+            dev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+            dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+            return;
+        }
+        if (blend_mode == 2) {
+            dev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+            dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+        } else {
+            dev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ZERO);
+            dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
+        }
+    }
+}
+
+// @ 0x40ea00
+void renderer::set_texcoord_gen(int stage, int mode)
+{
+    if (stage_texgen[stage] != mode) {
+        if (mode <= 1) {
+            dev->SetTextureStageState(stage, D3DTSS_TEXCOORDINDEX, mode);
+        } else if (mode == 0x10) {
+            dev->SetTextureStageState(stage, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_SPHEREMAP);
+            stage_texgen[stage] = mode;
+            return;
+        } else if (mode == 0x20) {
+            dev->SetTextureStageState(stage, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACENORMAL);
+        } else if (mode == 0x30) {
+            dev->SetTextureStageState(stage, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR);
+            stage_texgen[stage] = mode;
+            return;
+        } else if (mode == 0x40) {
+            dev->SetTextureStageState(stage, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION);
+        }
+    }
+    stage_texgen[stage] = mode;
+}
+
+// ---- small helpers --------------------------------------------------------------------------------------------------
+// @ 0x40eab0 (shader class from the three top flag bits)
+inline int material::get_flags()
+{
+    unsigned v = flags20;
+    int r = 0;
+    if (v & 0x20000000) {
+        r = 1;
+        if (v & 0x40000000)
+            r = v & 0x80000000 ? 4 : 2;
+        else if (v & 0x80000000)
+            r = 3;
+    }
+    return r;
+}
+
+// @ 0x40eaf0 (three zeroed vector4 rows and a zero dword)
+aabb::aabb() : radius(0)
+{
+    min = vector4(0.0f, 0.0f, 0.0f);
+    max = vector4(0.0f, 0.0f, 0.0f);
+    center = vector4(0.0f, 0.0f, 0.0f);
+}
+
+// ---- particle emitter: spawn one particle --------------------------------------------------------------------------
+#define RND(k) ((float)(rand() % 15817) * ((k) / 15817.0f))
+
+
+// @ 0x40ec90
+void psys::spawn(particle* out)
+{
+    if (disabled != 0)
+        return;
+    vector4 r;
+    r.x = (RND(1.0f) - 0.5f) * 2.0f;
+    r.y = (RND(1.0f) - 0.5f) * 2.0f;
+    r.z = (RND(1.0f) - 0.5f) * 2.0f;
+    {
+        vector4 local;
+        local.x = r.x * box.x;
+        local.y = r.y * box.y;
+        local.z = r.z * box.z;
+        out->frame = world;
+        out->frame.o = static_cast<const pos&>(world).transform_point(local);
+    }
+    if (flags & psf_emit_at_water_level)
+        out->frame.o.z = height;
+    r = (r * vel_scale) + vel_base;
+    vector4* vel = &out->vel;
+    *vel = r;
+    if (!(flags & psf_global_emit_dir))
+        *vel = static_cast<const pos&>(world).rot(*vel);
+    float m = RND(1.0f) + RND(1.0f);
+    vel->x = m * vel->x;
+    vel->y = m * vel->y;
+    vel->z = m * vel->z;
+    out->age = 0.0f;
+    out->angle = 0.0f;
+    if (flags & psf_randomize_rotation) {
+        if (!(flags & 0xf00)) {
+            float a = RND(6.2831853f);
+            out->frame.rotate_about_s(&a);
+            a = RND(6.2831853f);
+            out->frame.rotate_about_f(&a);
+            a = RND(6.2831853f);
+            out->frame.rotate_about_u(&a);
+        }
+        out->angle = RND(6.2831853f);
+    }
+    out->angvel = (RND(2.0f) - 1.0f) * spin_scale;
+    out->scale = 1.0f;
+    if (flags & psf_randomize_size) {
+        if (RND(1.0f) > 0.5f)
+            out->scale = (1.0f - RND(0.4f)) * out->scale;
+        else
+            out->scale = (RND(0.6f) + 1.0f) * out->scale;
+    }
+}
+
+// ---- keyframe table lookup ------------------------------------------------------------------------------------------
+// Finds the segment [*lo, *hi] of `times` that contains *t and the fraction of the way through it.
+// @ 0x40f0d0
+void keyframes::find(int* lo, int* hi, float* frac, const float* t)
+{
+    int n = count;
+    if (n <= 0) {
+        *lo = -1;
+        *hi = -1;
+        return;
+    }
+    int l = 0;
+    int h = n - 1;
+    if (h - 1 > 0) {
+        do {
+            int mid = (l + h) >> 1;
+            if ((float)times[mid] > *t)
+                h = mid;
+            else
+                l = mid;
+        } while (l < h - 1);
+    }
+    *lo = l;
+    *hi = h;
+    int k0 = times[*lo];
+    *frac = (*t - (float)k0) / (times[h] - k0);
+}
+
+// ---- morph key frames and the skinning table --------------------------------------------------------------------
+
+// @ 0x411780
+frame_t::frame_t() {}
+
+// @ 0x411c10
+void frame_t::copy_from(const frame_t& o)
+{
+    verts.resize(o.verts.size());
+    for (unsigned i = 0; i < o.verts.size(); ++i)
+        verts[i] = o.verts[i];
+    norms.resize(o.norms.size());
+    for (unsigned j = 0; j < o.norms.size(); ++j)
+        norms[j] = o.norms[j];
+}
+
+// @ 0x4125e0
+void keyframes::operator=(const keyframes& o)
+{
+    count = o.count;
+    if (times) {
+        delete[] times;
+        times = 0;
+    }
+    if (frames) {
+        delete[] frames;
+        frames = 0;
+    }
+    if (o.count) {
+        times = new int[count];
+        frames = new frame_t[count];
+        for (int i = 0; i < count; ++i)
+            frames[i].copy_from(o.frames[i]);
+        memcpy(times, o.times, count * 4);
+    }
+}
+
+// Builds the per-vertex skinning table: up to 4 (bone, weight) influences for each point, then the 0x30-byte
+// skin_vert records.
+// @ 0x411d20
+void mesh::build_skin()
+{
+    float tw[0x10000][4];
+    int tb[0x10000][4];
+    skin_vert tmp;
+    unsigned i;
+
+    for (i = 0; i < points.size(); ++i) {
+        tw[i][0] = 0; tw[i][3] = 0; tw[i][2] = 0; tw[i][1] = 0;
+        tb[i][3] = 0; tb[i][2] = 0; tb[i][1] = 0; tb[i][0] = 0;
+    }
+    for (unsigned bi = 0; bi < influences.size(); ++bi) {
+        for (unsigned k = 0; k < influences[bi].verts.size(); ++k) {
+            int vi = influences[bi].verts[k].index;
+            unsigned s = 0;
+            do {
+                if (!(tw[vi][s] > 1e-5f)) {
+                    if (s < 4) {
+                        tb[vi][s] = influences[bi].bone;
+                        tw[vi][s] = influences[bi].verts[k].weight;
+                    }
+                    break;
+                }
+                ++s;
+            } while (s < 4);
+        }
+    }
+    skin_verts.resize(vertices.size(), tmp);
+    for (i = 0; i < vertices.size(); ++i) {
+        float sum = 0;
+        for (int k = 0; k < 4; ++k) {
+            skin_verts[i].w[k] = tw[vertices[i].index][k];
+            skin_verts[i].bone[k] = tb[vertices[i].index][k];
+            sum += skin_verts[i].w[k];
+        }
+        if (sum < 1.0f)
+            skin_verts[i].w[0] += 1.0f - sum;
+    }
+    for (i = 0; i < vertices.size(); ++i) {
+        for (int k = 0; k < 4; ++k)
+            skin_verts[i].bonef[k] = (float)skin_verts[i].bone[k];
+    }
+}
+
+// ---- the scene queue -------------------------------------------------------------------------------------------------
+// @ 0x412040
+void render_batch::register_scene(scene* e)
+{
+    if (!e->registered && e->active) {
+        if (e->flags & 0x1000) {
+            scenes.push_back(e);
+            e->registered = true;
+            return;
+        }
+        scenes.resize(scenes.size() + 1, 0);
+        int i = (int)scenes.size() - 1;
+        while (i > 0) {
+            scenes[i] = scenes[i - 1];
+            --i;
+        }
+        scenes[0] = e;
+        e->registered = true;
+    }
+}
+
+// @ 0x412100
+void render_batch::add_mesh(scene* e, mesh* m)
+{
+    if (!e->registered && e->active)
+        register_scene(e);
+    idx_weight w;
+    w.m = m;
+    w.weight = 0;
+    e->queue.push_back(w);
+}
+
+// ---- emitter update ----------------------------------------------------------------------------------------------------
+// Advances every particle by *pdt, culls dead ones (age >= 1), updates the bounding radius and spawns new
+// particles from the remaining budget.
+// `pv` is a second induction pointer into the current particle (+0x48 = &vel.z) that cl derives itself in the
+// original; the in-source pointer reproduces its addressing:
+//   pv[-6..-4] = pos.xyz, pv[-2..0] = vel.xyz, pv[2] = age, pv[4] = angle, pv[5] = angvel.
+// The in-place helpers (add_to, scale_f) take references: they stop cl forwarding the stored value, as in the
+// original, which re-reads vel/pos/angvel from memory after each update.
+static inline void add_to(vector4& a, const vector4& b) { a.x = b.x + a.x; a.y = b.y + a.y; a.z = b.z + a.z; }
+static inline void scale_f(float& a, const float& k) { a = k * a; }
+static inline void scale_v(vector4& a, const float& k) { a.x = k * a.x; a.y = k * a.y; a.z = k * a.z; }
+// @ 0x412150
+void psys::update(const float* pdt, const matrix& frame)
+{
+    world = frame * local;
+    float maxd2 = 0.0f;
+    std::vector<particle>::iterator it;
+    for (it = particles.begin(); it != particles.end(); ++it) {
+        float& vz = it->vel.z;
+        vector4 g = vmul(accel, accel_scale);
+        vector4 gd = (g * *pdt);
+        // Each parenthesised float sum here and below is one value-numbering temp for cl; together they put drag's
+        // address temp where `drag * dt` loads drag first, as the original does (docs/c2/symkeys.md 8.2).
+        it->vel.x = (gd.x + it->vel.x);
+        it->vel.y = (gd.y + it->vel.y);
+        vz = (gd.z + vz);
+        if (noise_amount > 0.01f) {
+            vector4 in = it->frame.o;
+            float w = (float)fmod((double)((float)g_ticks[noise_index] * 1e-5f), 4000.0);   // 0x412240: _CIfmod 0x536a6a
+            in.z = w * noise_scale * 0.2f + in.z;
+            vector4 out;
+            noise_gradient(noise_scale, &in.x, &out.x);
+            if (flags & 0x10000)
+                out.z = 0.0f;
+            float f = (double)noise_amount * *pdt;
+            vector4 nd = (out * f);
+            add_to(it->vel, nd);
+        }
+        float kd = drag * (double)*pdt;
+        float k = (1.0f - kd);
+        scale_v(it->vel, k);
+        vector4 dp = *pdt * it->vel;
+        add_to(it->frame.o, dp);
+        float sd = spin_drag * (double)*pdt;
+        float sk = 1.0f - sd;
+        scale_f(it->angvel, sk);
+        it->angle = (*pdt * it->angvel + it->angle);
+        it->age = (*pdt / lifetime + it->age);
+        float d2 = (it->frame.o - world.o).length_squared();
+        if (d2 > maxd2)
+            maxd2 = d2;
+    }
+    radius = (float)sqrt(maxd2);
+
+    int i = 0;
+    unsigned n = particles.size();
+    if (0 < (int)n) {
+      do {
+        if (particles[i].age >= 1.0f) {
+            particles[i] = particles[n - 1];
+            --n;
+        } else {
+            ++i;
+        }
+      } while (i < (int)n);
+    }
+    if (n < particles.size())
+        particles.erase(particles.begin() + n, particles.end());
+
+    if (spawn_left > 0) {
+        float r = ((float)spawn_left + 10.0f) / ((float)spawn_total + 10.0f);
+        if (r < 0.0f)
+            r = 0.0f;
+        else if (r >= 1.0f)
+            r = 1.0f;
+        float rf = r * spawn_rate;
+        spawn_accum += rf * *pdt;
+        float t = (float)(rand() % 0x3dc9) * 6.3223117e-5f + (float)(rand() % 0x3dc9) * 6.3223117e-5f;
+        if (t < spawn_accum) {
+            do {
+                if (spawn_left <= 0)
+                    return;
+                spawn_accum -= t;
+                --spawn_left;
+                particle np;
+                spawn(&np);
+                particles.push_back(np);
+                t = (float)(rand() % 0x3dc9) * 6.3223117e-5f + (float)(rand() % 0x3dc9) * 6.3223117e-5f;
+            } while (t < spawn_accum);
+        }
+    }
+}
+
+// ---- the mesh ------------------------------------------------------------------------------------------------------------
+// @ 0x4126a0
+void mesh::update_emitters(const float* dt, const matrix& frame)
+{
+    for (std::vector<psys*>::iterator it = kids.begin(); it != kids.end(); ++it)
+        (*it)->update(dt, frame * local_frame);
+}
+
+// @ 0x412700
+void mesh::ensure_skin()
+{
+    mesh* p = this;
+    while (!p->local_points)
+        p = p->parent;
+    if (p->skin_verts.size() < p->vertices.size())
+        p->build_skin();
+}
+
+int mesh::type() { return 1; }                                // 0x48b1f0 (folded with UiA::type)
+int named_object::type() { return 0; }                        // 0x408020 (the root of the resources: folded with sphere::shape_type)
+// @ 0x4127f0
+mesh::~mesh()
+{
+    if (res)
+        res->refcount--;
+    if (bone_mats)
+        delete[] bone_mats;
+    for (unsigned i = 0; i < kids.size(); ++i) {
+        psys* e = kids[i];
+        if (e)
+            delete e;
+    }
+    if (p_c0)
+        delete p_c0;
+}
+
+// @ 0x412980
+void mesh::compute_sortkey()
+{
+    if (res->flags & 0x10000) {
+        sortkey = -1000000000LL;
+        return;
+    }
+    int d = local_faces ? slots[1].f4 : parent->slots[1].f4;
+    __int64 t = (__int64)(slots[0].f4 * 100000000) + (__int64)slots[0].f0 * 400000000LL + (__int64)(d * 200000000);
+    unsigned __int64 x = ((res->flags >> 24) - 8) & 0xf;
+    if ((res->flags & 0x700) == 0x700 && (color & 0xff000000) != 0xff000000)
+        x += 4;
+    __int64 u = (__int64)(res->shader->id * 1000);
+    u += (__int64)(sort_order << 20);
+    __int64 k = t | (x << 34);
+    u += k;
+    u += res->id;
+    sortkey = u;
+}
+
+// @ 0x412a90
+mesh::mesh()
+{
+    pos tmp;
+    posed_time = -1.0f;
+    anim_time = -1.0f;
+    parent = 0;
+    local_faces = 1;
+    local_points = 1;
+    mirrored = 0;
+    res = 0;
+    flags = 0;
+    billboard = 0;
+    force_alpha = false;
+    color = (unsigned)-1;
+    color2 = (unsigned)-1;
+    radius = 0;
+    local_frame = *identity_pos(&tmp);
+    tex_matrix = *identity_pos(&tmp);
+    mask = 0xffff;
+    world_frame = *identity_pos(&tmp);
+    anim_phase = 0;
+    bone_mats = 0; bone_origins = 0; nbones = 0;
+    p_c0 = 0;
+    slots[1].f4 = 0;
+    slots[0].f4 = 0;
+    sort_order = 0x80;
+}
+
+// @ 0x412c30
+mesh* scene::get_mesh(skin* r)
+{
+    unsigned found = (unsigned)-1;
+    for (unsigned i = 0; i < cache.size(); ) {
+        if (vat(cache, i)->res == r) found = i;
+        i++;
+        if (found != (unsigned)-1) return vat(cache, found);
+    }
+    unsigned n = cache.size();
+    mesh* m = new mesh;
+    m->res = r;
+    m->flags |= 0xa0000000;
+    m->slots[1].f4 = 1;
+    m->slots[0].f4 = 1;
+    m->radius = 10000.0f;
+    m->force_alpha = true;
+    cache.push_back(m);
+    return vat(cache, n);
+}
+
+// @ 0x412ee0
+void mesh::ensure_local()
+{
+    if (!local_points) {
+        vertices = parent->vertices;
+        skin_verts = parent->skin_verts;
+        points = parent->points;
+        influences = parent->influences;
+        kf = parent->kf;
+        local_points = 1;
+    }
+}
+
+// @ 0x412f50
+int mesh::add_point(const vector4* p)
+{
+    ensure_local();
+    int n = (int)points.size();
+    points.resize(n + 1);
+    points[n].a = *p;
+    points[n].b = *p;
+    return n;
+}
+
+// @ 0x411920
+int mesh::add_face(int x, int y, int z)
+{
+    if (!local_faces) {
+        faces = parent->faces;
+        local_faces = true;
+    }
+    int n = (int)faces.size();
+    faces.resize(n + 1);
+    faces[n].a = x;
+    faces[n].b = y;
+    faces[n].c = z;
+    return n;
+}
+
+// @ 0x412fe0
+void mesh::append(mesh* other, const matrix* m)
+{
+    if (!local_faces) {
+        faces = parent->faces;
+        local_faces = 1;
+    }
+    ensure_local();
+    int npts = (int)points.size();
+    int nverts = (int)vertices.size();
+    std::vector<point20>& pts = other->local_points ? other->points : other->parent->get70();
+    std::vector<vertex60>& vs = other->local_points ? other->vertices : other->parent->get50();
+    vector4 p;
+    for (unsigned i = 0; i < pts.size(); i++) {
+        const vector4& q = pts[i].b;
+        p.x = m->f.x * q.y + m->u.x * q.z + m->s.x * q.x + m->o.x;
+        p.y = m->s.y * q.x + m->u.y * q.z + m->f.y * q.y + m->o.y;
+        p.z = m->s.z * q.x + m->u.z * q.z + m->f.z * q.y + m->o.z;
+        add_point(&p);
+    }
+    const vector4& c = unpack_color(&other->color);
+    for (unsigned i = 0; i < vs.size(); i++) {
+        const vector4& n = vs[i].normal;
+        vertex60 v = vs[i];
+        vector4 t;
+        t.x = (m->f.x * n.y + m->u.x * n.z) + m->s.x * n.x;
+        t.y = (m->f.y * n.y + m->u.y * n.z) + m->s.y * n.x;
+        t.z = (m->f.z * n.y + m->u.z * n.z) + m->s.z * n.x;
+        v.normal = t;
+        v.index += npts;
+        vector4 col = rgl::unpack_color(&v.color);
+        col.x *= c.x; col.y *= c.y; col.z *= c.z; col.w *= c.w;
+        v.color = pack_color(&col);
+        vertices.push_back(v);
+    }
+    std::vector<face20>& fs = other->local_faces ? other->faces : other->parent->get90();
+    for (unsigned i = 0; i < fs.size(); i++)
+        add_face(fs[i].a + nverts, fs[i].b + nverts, fs[i].c + nverts);
+    slots[0].f28 = 1;
+    slots[1].f28 = 1;
+}
+
+// @ 0x413320
+void mesh::update_morph()
+{
+    if (anim_time != posed_time) {
+        keyframes& k = local_points ? kf : parent->get_kf();
+        float t;
+        int b, a;
+        k.find(&a, &b, &t, &anim_time);
+        if (a >= 0) {
+            ensure_local();
+            if (t < 0.001f) {
+                for (unsigned i = 0; i < points.size(); i++)
+                    points[i].b = k.frames[a].verts[i];
+                for (unsigned i = 0; i < vertices.size(); i++)
+                    vertices[i].normal = k.frames[a].norms[i];
+            } else if (t > 0.999f) {
+                for (unsigned i = 0; i < points.size(); i++)
+                    points[i].b = k.frames[b].verts[i];
+                for (unsigned i = 0; i < vertices.size(); i++)
+                    vertices[i].normal = k.frames[b].norms[i];
+            } else {
+                for (unsigned i = 0; i < points.size(); i++) {
+                    float u = 1.0f - t;
+                    points[i].b = vadd((u * k.frames[a].verts[i]), (t * k.frames[b].verts[i]));
+                }
+                for (unsigned i = 0; i < vertices.size(); i++) {
+                    float u = 1.0f - t;
+                    vertices[i].normal = vadd((u * k.frames[a].norms[i]), (t * k.frames[b].norms[i]));
+                    vertices[i].normal.normalize();
+                }
+            }
+            slots[0].f28 = 1;
+        }
+        posed_time = anim_time;
+    }
+}
+
+// ---- material setup and draw-budget test --------------------------------------------------------------------------
+// @ 0x40f3f0
+void mesh::setup_material()
+{
+    unsigned fl = res->flags;
+    unsigned bm = fl & 0x700;
+    if (force_alpha) {
+        g_render.set_blend_mode(1);
+    } else if (bm == 0x700 && (color & 0xff000000) == 0xff000000) {
+        if (g_render.blend_mode) {
+            g_render.blend_mode = 0;
+            g_render.dev->SetRenderState(D3DRS_ALPHABLENDENABLE, 0);
+        }
+    } else if (bm == 0x700) {
+        g_render.set_blend_mode(1);
+    } else {
+        g_render.set_blend_mode((fl >> 8) & 7);
+    }
+    material* m = res->shader;
+    int i = 0;
+    if (0 < m->nstages) {
+        do {
+            g_render.set_texcoord_gen(i, m->stages[i].d & 0xff);
+            if (res->shader->stages[i].d & 0x100) {
+                if (g_render.stage_xform[i] != 1) {
+                    g_render.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+                    g_render.stage_xform[i] = 1;
+                }
+                set_transform(g_render.dev, (D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + i), tex_matrix);
+            } else if (g_render.stage_xform[i] != 0) {
+                g_render.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+                g_render.stage_xform[i] = 0;
+            }
+            m = res->shader;
+            ++i;
+        } while (i < m->nstages);
+    }
+    if (res && (res->shader->flags20 & 0x10000000)) {
+        vector4 c;
+        c = unpack_color(&color);
+        float* tmp = &c.x;
+        g_render.dev->SetPixelShaderConstantF(0, tmp, 1);
+        return;
+    }
+    unsigned col = color;
+    if (g_render.tex_factor != col) {
+        g_render.tex_factor = col;
+        g_render.dev->SetRenderState(D3DRS_TEXTUREFACTOR, col);
+    }
+}
+
+// @ 0x40f7f0
+int mesh::should_batch()
+{
+    skin* p = res;
+    unsigned fl = p->flags;
+    if (!(fl & 0x40000)) {
+        if (!(fl & 0x80000))
+            return 0;
+        std::vector<point20>& v = (local_points ? points : parent->get70());
+        if (!(0 < v.size()))
+            return 0;
+        int n = (int)get70().size();
+        if (!(n < g_vert_budget + ((p->shader->flags20 & 0x80000000) ? 0x46 : 0)))
+            return 0;
+    }
+    return 1;
+}
+
+// ---- rendering --------------------------------------------------------------------------------------------------------
+// @ 0x413750
+int mesh::render(scene* sc, const matrix& frame)
+{
+    if (!(mask & sc->mask)) return 0;
+    skin* r = res;
+    if (r) {
+        slots[0].f0 = r->shader->get_flags();
+        unsigned f20 = r->shader->flags20;
+        if (f20 & 0x80000000) {
+            unsigned n = get60().size();
+            std::vector<vertex60>& w = get50();
+            if (n < w.size())
+                ensure_skin();
+        }
+        if (res->tableau >= 0 && res->tex[0]->rendered == 0)
+            res->on_render(res);
+    } else {
+        slots[0].f0 = 0;
+        string name("default");
+        res = g_resmgr.get_material(name);
+    }
+    update_morph();
+    if (should_batch()) {
+        std::vector<point20>& pts = (local_points ? points : parent->get70());
+        if (pts.size() > 0) {
+            mesh* mm = sc->get_mesh(res);
+            mm->append(this, &frame);
+            goto done;
+        }
+    }
+    {
+        std::vector<face20>& fs = (local_faces ? faces : parent->get90());
+        if (fs.size() != 0) {
+            unsigned f = flags;
+            if (f & 0x10000000) slots[0].f4 = 0;
+            else if (f & 0x20000000) slots[0].f4 = 1;
+            slots[2].f4 = slots[0].f4;
+            if (f & 0x40000000) slots[1].f4 = 0;
+            else if (f & 0x80000000) slots[1].f4 = 1;
+            world_frame = frame * local_frame;
+            g_batch.add_mesh(sc, this);
+        }
+    }
+done:
+    for (std::vector<psys*>::iterator it = kids.begin(); it != kids.end(); ++it)
+        (*it)->update(sc);   // psys::update 0x414960 (engine/scene/emitter.h)
+    if (p_c0) {
+        vector4 t;
+        t.x = local_frame.u.x * p_c0->v34.z + local_frame.f.x * p_c0->v34.y + p_c0->v34.x * local_frame.s.x + local_frame.o.x;
+        t.y = local_frame.s.y * p_c0->v34.x;
+        t.y += local_frame.u.y * p_c0->v34.z;
+        t.y += local_frame.f.y * p_c0->v34.y;
+        t.y += local_frame.o.y;
+        t.z = local_frame.s.z * p_c0->v34.x;
+        t.z += local_frame.u.z * p_c0->v34.z;
+        t.z += local_frame.f.z * p_c0->v34.y;
+        t.z += local_frame.o.z;
+        vector4 u;
+        u.x = t.z * frame.u.x + t.y * frame.f.x + t.x * frame.s.x + frame.o.x;
+        u.y = t.z * frame.u.y + t.y * frame.f.y + t.x * frame.s.y + frame.o.y;
+        u.z = t.z * frame.u.z + t.y * frame.f.z + t.x * frame.s.z + frame.o.z;
+        p_c0->pos = u;
+        sc->list.push_back(p_c0);   // the member itself binds to push_back's const T& (lea of &p_c0, no temporary)
+    }
+    return 0;
+}
+
+// @ 0x413ac0
+void mesh_list::render_all(scene* sc, const matrix& m)
+{
+    for (iterator it = begin(); it < end(); ++it)
+        if (*it) (*it)->render(sc, m);
+}
+
+// @ 0x413b00
+void lod_mesh::render(scene* sc, const matrix& m)
+{
+    if ((mask & sc->mask) && cur < count)
+        lists[cur].render_all(sc, m * frame);
+}
+
+// ---- std::vector instantiations the linker placed in this object ---------------------------------------------------
+// Element types: 8 bytes idx_weight, 0x14 bone_influence, 0x20 point20 (and face20, identical code), 0x30
+// skin_vert, 0x60 vertex60, 0x64 particle. Whole-class instantiations produce the members the callers
+// outside this object reference (size/capacity/operator[] ... 0x40f010..0x40fb80); the helpers below are the
+// algorithm templates they call. Each // 0x comment names the original address of the instantiation.
+template class std::vector<idx_weight>;
+template class std::vector<bone_influence>;
+template class std::vector<point20>;
+template class std::vector<skin_vert>;
+template class std::vector<vertex60>;
+template class std::vector<particle>;
+template size_t std::vector<int>::size() const;                                         // 0x40f010
+template void std::vector<mesh*>::_Insert_n(std::vector<mesh*>::iterator, size_t, mesh* const&);   // 0x410610 (the mesh lists; the other pointer lists share it)
+
+namespace std {
+// 0x40f180 .. 0x40f210 copy, 0x40f270 .. 0x40f3c0 copy_backward
+template vertex60* _Copy_opt<vertex60*, vertex60*>(vertex60*, vertex60*, vertex60*, _Nonscalar_ptr_iterator_tag);
+template skin_vert* _Copy_opt<skin_vert*, skin_vert*>(skin_vert*, skin_vert*, skin_vert*, _Nonscalar_ptr_iterator_tag);
+template point20* _Copy_opt<point20*, point20*>(point20*, point20*, point20*, _Nonscalar_ptr_iterator_tag);
+template idx_weight* _Copy_opt<idx_weight*, idx_weight*>(idx_weight*, idx_weight*, idx_weight*, _Nonscalar_ptr_iterator_tag);
+template bone_influence* _Copy_opt<bone_influence*, bone_influence*>(bone_influence*, bone_influence*, bone_influence*, _Nonscalar_ptr_iterator_tag);
+template vertex60* _Copy_backward_opt<vertex60*, vertex60*>(vertex60*, vertex60*, vertex60*, _Nonscalar_ptr_iterator_tag);
+template skin_vert* _Copy_backward_opt<skin_vert*, skin_vert*>(skin_vert*, skin_vert*, skin_vert*, _Nonscalar_ptr_iterator_tag);
+template point20* _Copy_backward_opt<point20*, point20*>(point20*, point20*, point20*, _Nonscalar_ptr_iterator_tag);
+template idx_weight* _Copy_backward_opt<idx_weight*, idx_weight*>(idx_weight*, idx_weight*, idx_weight*, _Nonscalar_ptr_iterator_tag);
+template particle* _Copy_backward_opt<particle*, particle*>(particle*, particle*, particle*, _Nonscalar_ptr_iterator_tag);
+// 0x40f240 .. 0x40f390 fill
+template void fill<vertex60*, vertex60>(vertex60*, vertex60*, const vertex60&);
+template void fill<skin_vert*, skin_vert>(skin_vert*, skin_vert*, const skin_vert&);
+template void fill<point20*, point20>(point20*, point20*, const point20&);
+template void fill<particle*, particle>(particle*, particle*, const particle&);
+// 0x40f8a0
+template void _Uninit_fill_n<int*, unsigned int, int, allocator<int> >(int*, unsigned int, const int&, allocator<int>&, _Scalar_ptr_iterator_tag);
+// 0x40f630 .. 0x40f780, 0x40faf0 _Uninit_copy
+template vertex60* _Uninit_copy<vertex60*, vertex60*, allocator<vertex60> >(vertex60*, vertex60*, vertex60*, allocator<vertex60>&, _Nonscalar_ptr_iterator_tag);
+template skin_vert* _Uninit_copy<skin_vert*, skin_vert*, allocator<skin_vert> >(skin_vert*, skin_vert*, skin_vert*, allocator<skin_vert>&, _Nonscalar_ptr_iterator_tag);
+template point20* _Uninit_copy<point20*, point20*, allocator<point20> >(point20*, point20*, point20*, allocator<point20>&, _Nonscalar_ptr_iterator_tag);
+template particle* _Uninit_copy<particle*, particle*, allocator<particle> >(particle*, particle*, particle*, allocator<particle>&, _Nonscalar_ptr_iterator_tag);
+template idx_weight* _Uninit_copy<idx_weight*, idx_weight*, allocator<idx_weight> >(idx_weight*, idx_weight*, idx_weight*, allocator<idx_weight>&, _Nonscalar_ptr_iterator_tag);
+template bone_influence* _Uninit_copy<bone_influence*, bone_influence*, allocator<bone_influence> >(bone_influence*, bone_influence*, bone_influence*, allocator<bone_influence>&, _Nonscalar_ptr_iterator_tag);
+// 0x40f8c0 .. 0x40fa80 _Uninit_fill_n
+template void _Uninit_fill_n<vertex60*, unsigned int, vertex60, allocator<vertex60> >(vertex60*, unsigned int, const vertex60&, allocator<vertex60>&, _Nonscalar_ptr_iterator_tag);
+template void _Uninit_fill_n<skin_vert*, unsigned int, skin_vert, allocator<skin_vert> >(skin_vert*, unsigned int, const skin_vert&, allocator<skin_vert>&, _Nonscalar_ptr_iterator_tag);
+template void _Uninit_fill_n<point20*, unsigned int, point20, allocator<point20> >(point20*, unsigned int, const point20&, allocator<point20>&, _Nonscalar_ptr_iterator_tag);
+template void _Uninit_fill_n<idx_weight*, unsigned int, idx_weight, allocator<idx_weight> >(idx_weight*, unsigned int, const idx_weight&, allocator<idx_weight>&, _Nonscalar_ptr_iterator_tag);
+template void _Uninit_fill_n<particle*, unsigned int, particle, allocator<particle> >(particle*, unsigned int, const particle&, allocator<particle>&, _Nonscalar_ptr_iterator_tag);
+// 0x411b20 _Destroy_range, 0x411b60 / 0x411b80 (try/catch destroys the constructed prefix; catch funclet 0x411bea)
+template void _Destroy_range<bone_influence, allocator<bone_influence> >(bone_influence*, bone_influence*, allocator<bone_influence>&);
+}

@@ -1,2 +1,0 @@
-../src/game/mission5/mesh_edge_ray.cpp  ?pick_poly@PolyMesh@@QAEIABUvector4@rgl@@0@Z  0052df40  /O2 /MT /Gy /TP
-../src/game/mission5/mesh_edge_ray.cpp  ?edge_ray@PolyMesh@@QAEXABUvector4@rgl@@0AAIPAM2@Z  0052dcc0  /O2 /MT /Gy /TP

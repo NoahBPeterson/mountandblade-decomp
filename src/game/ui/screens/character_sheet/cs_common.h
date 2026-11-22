@@ -1,0 +1,86 @@
+// cs_common.h: classes and functions of other translation units that the character-sheet / face-generator modules call, declared
+// under the defining class's name with only the members they call (the defining headers do not go with these modules' views).
+// One declaration per line, each with the address of the function that the definition (named in the comment) provides: the
+// equivalence harness resolves a callee from the '// 0x...' comment on its declaration line.
+#ifndef CHAR_SHEET_CS_COMMON_H
+#define CHAR_SHEET_CS_COMMON_H
+struct tstring;                                                     // (complete in the includer: engine/core/tstring.h, or terrain_page.h's own view)
+
+#include "game/ui/widgets/ui_widgets.h"                                      // MissionUi, Camera, UiB, UiD: the real classes
+#include "game/ui/window_mgr.h"                                    // WindowMgrW g_windows (0xa73980): the one definition
+#include "engine/render/skin.h"                                      // Skin: the 0x1f8-byte skin record (relax 0x4735e0)
+struct FaceGenome {                                                 // terrain_b: the animator g_anim 0x8ed4f60 is one
+    Skin* unpack(const unsigned __int64* rec);                      // 0x473800
+};
+void __cdecl load_game_variables();                                 // 0x4c0520 (trigger_vec)
+struct SoundCtl {                                                   // game/agent/agent_queries.h; the game object's event emitter
+    char emit_event(int id, int a, int b);                          // 0x435790
+};
+struct TroopEq {                                                    // game/terrain/misc.h
+    void auto_equip(int seed, int unused, char civilian, char no_helmet);   // 0x4687e0
+};
+
+#include "engine/scene/world.h"                          // rgl::world (create_entity 0x428440, render_scene 0x429890, step, reset ...): the one definition
+
+// ---- widgets: MissionUi's constructor (0x48ae20) in place; the container kinds are game/ui/widgets/container.h's classes (`new NodeA`, `new text_box`) ----
+#include "platform/image_addrs.h"
+#include <new>
+#include "game/data/raw_place.h"
+namespace rgl { struct mesh; }                                     // (the set_track pointer argument; game/ui/widgets/widget_base.h has the full class)
+int __cdecl clamp_index(const int* a, const int* b, const int* c); // 0x432510 (game_util)
+struct ContainerBase;
+struct UiA;
+UiA* __cdecl make_short_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4e5570 (progress_bar)
+MissionUi* __cdecl make_hint(ContainerBase* parent, const tstring& text, float a, float b, float c, float d);   // 0x4dada0 (cls_map)
+#include "engine/audio/sound_mgr.h"
+// the particle / shadow system g_shadow_map (0xa70248)
+namespace rgl { struct world; }                                                    // game/terrain/cell_grid.h (a TU that calls into it includes that header)
+#include "engine/render/shadow_map.h"
+UiA* __cdecl new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4dce70 (cls_map)
+UiA* __cdecl new_button(ContainerBase* o, const tstring& text, float px, float py, float sx, float sy);   // 0x4db810 (cls_map)
+UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
+                            const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50 (cls_map)
+
+// out-of-line std instances (the defining modules are named in the comments)
+#include <vector>
+#include <memory>
+#include "engine/core/arr_set.h"                    // the Skin helpers below are inline header templates: their element types complete
+#include "engine/render/face_texture.h"
+namespace std {
+extern template Skin* _Uninit_copy(vector<Skin>::const_iterator first, vector<Skin>::const_iterator last,
+                                   Skin* dest, allocator<Skin>& al, _Nonscalar_ptr_iterator_tag);   // 0x4e4340 (progress_bar)
+extern template void _Uninit_fill_n(Skin* first, unsigned n, const Skin& v, allocator<Skin>& al,
+                                    _Nonscalar_ptr_iterator_tag);                                     // 0x4e5fc0 (progress_bar)
+}
+Skin* __cdecl copy_configs_forward(Skin* first, Skin* last, Skin* dest);   // 0x4da880 (cls_map; the original passes a dead fourth argument)
+struct named_object;
+namespace std { template<> void vector<named_object*, allocator<named_object*> >::push_back(named_object* const& v); }   // 0x41b750 (resmgr)
+namespace rgl { struct lod_mesh; }
+namespace std { template<> void vector<rgl::lod_mesh*, allocator<rgl::lod_mesh*> >::push_back(rgl::lod_mesh* const& v); }   // 0x41b750 (ICF: resource_manager.cpp's vector<named_object*> instance)
+namespace std { template<> void vector<int, allocator<int> >::push_back(const int& x); }   // 0x440b30 (agent_combat)
+namespace std { template<> vector<int, allocator<int> >& vector<int, allocator<int> >::operator=(const vector<int, allocator<int> >& x); }   // 0x43f0a0 (agent_combat)
+struct SceneObject;
+struct RagModel;
+namespace std { template<> void allocator<RagModel>::construct(RagModel* p, const RagModel& v); }   // 0x4e42f0 (progress_bar)
+// the children vector of the container widgets (std::vector<SceneObject*>, 0x10 bytes: allocator slot, first, last, end): its
+// out-of-line _Insert_n instance is 0x4927d0 (world_data); the widgets' push_back reaches it
+namespace std { template<> void vector<SceneObject*, allocator<SceneObject*> >::_Insert_n(iterator where, size_type n, const value_type& v); }   // 0x4927d0 (world_data)
+
+struct Camera;                                                      // game/mission/camera_class.h: the 0x4a8-byte view / editor list object (ctor 0x49deb0)
+struct MapWidget;
+MissionUi* __cdecl new_key_label(ContainerBase* parent, const tstring* name, const tstring* text);   // 0x4f5d20 (editor_ui)
+void __cdecl label_refresh(MissionUi* w, tstring name);             // 0x4e4c70 (progress_bar: sets a freshly built widget up from its ini keys)
+UiD* __cdecl make_scrollbar(ContainerBase* parent, const tstring* name); // 0x4f6160 (editor_ui)
+UiB* __cdecl make_slider(ContainerBase* parent, const tstring* name);    // 0x4f5fb0 (editor_ui)
+UiA* __cdecl make_left_arrow(MissionUi* parent, float a2, float a3, float x, float a5, float z);    // 0x4f5df0 (editor_ui)
+UiA* __cdecl make_right_arrow(MissionUi* parent, float a2, float a3, float x, float a5, float z);   // 0x4f5ed0 (editor_ui)
+struct UiD;
+Camera* __cdecl make_editor_list(ContainerBase* parent, const tstring* name, UiD* scroll);   // 0x4f62f0 (editor_ui)
+struct Buffer {                                                     // game_data_party_quest.h: the widget base
+    virtual ~Buffer();                                              // 0x487c00
+};
+void __cdecl menu_variables_loaded(char flag);                      // 0x4ebb80 (face_generator_refresh.cpp)
+struct PlacedObj;
+void __stdcall select_entity(rgl::mesh* m, PlacedObj* o, unsigned flags);   // 0x4ea0c0 (a free stdcall function)
+struct NodeA;
+#endif

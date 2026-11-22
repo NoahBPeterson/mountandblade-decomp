@@ -38,7 +38,7 @@ Files under `work/` are not in git; changes to them (a new `mb.analysis.bin`, re
 
 ## Run a shard there and fetch its JSON
 
-    tools/remote/worker.py run fg "set DIFFTEST_NO_LEDGER=1 && .venv\Scripts\python tools\difftest\equiv.py facegen_win 004f1460 --src src/game/char_sheet/facegen_win.cpp --fp-tol --json D:\mb\out\fg.json"
+    tools/remote/worker.py run fg "set DIFFTEST_NO_LEDGER=1 && .venv\Scripts\python tools\difftest\equiv.py facegen_win 004f1460 --src src/game/editor/terrain_page/terrain_page_init.cpp --fp-tol --json D:\mb\out\fg.json"
     tools/remote/worker.py status
     tools/remote/worker.py tail fg 20
     tools/remote/worker.py get D:/mb/out/fg.json work/remote/fg.json
@@ -137,7 +137,7 @@ Measured (30 real `src/game/*/*.cpp` modules, 11 compiles in flight, load averag
 Mac only (`MB_RC=0`) 760 s wall, 173 to 445 s per compile (the queue for a slot, not the compiler); with the laptop 3.9 s wall,
 0.3 to 2 s per compile (a few seconds with a cold store; the connect + auth + reserve handshake is ~25 ms over Tailscale). The 30
 objects were compared to the Mac-built ones with a COFF section/relocation/symbol comparison: 30 of 30 identical apart from the
-timestamp, `.file` and `.debug$S` path fields (also agent.cpp, curve.cpp, item_kind.cpp, facegen_win.cpp).
+timestamp, `.file` and `.debug$S` path fields (also agent_queries.cpp, env_curve.cpp, item_kind.cpp, terrain_page_init.cpp).
 
 ## Smoke test on the laptop (`smoke.py --host win`)
 

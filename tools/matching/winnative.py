@@ -20,7 +20,7 @@ def winpath(p):
 
 def include_dirs():
     """cl.sh's INCLUDE order (see the comments there for why each directory is where it is)."""
-    return [os.path.join(ROOT, "src", "include"), os.path.join(ROOT, "match", "include"), os.path.join(VC, "include"),
+    return [os.path.join(ROOT, "src"), os.path.join(ROOT, "match", "include"), os.path.join(VC, "include"),
             os.path.join(TC, "sal"), os.path.join(TC, "vc9sp1", "WinSDK", "Include"),
             os.path.join(ROOT, "work", "ext", "dxsdk_jun10", "DXSDK", "Include")]
 

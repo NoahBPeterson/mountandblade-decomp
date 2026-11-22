@@ -45,9 +45,9 @@ E is "a named field exists at that offset", not "the types agree": an E row thro
 another type (`OvObj::m108` an `OvMesh*` over `MissionUi::tracks[0]`, a `rgl::mesh*`) still needs the view class
 folded into the real one first.
 
-Where the work is (E + N + V by file, top): script_interpreter.cpp 276, editor_dialog.cpp 168, config.cpp 162,
-agent_hud.cpp 154, game_tick.cpp 110, world_data.cpp 100, mission_3.cpp 80, party_2.cpp 54, mission_ctx.cpp 53,
-trigger_vec.cpp 50, save_state.cpp 47, mission_5.cpp 42. By record (E + N): GameData 777, GameG 129, MissionUi 104,
+Where the work is (E + N + V by file, top): script_interpreter.cpp 276, terrain_brush_dialog.cpp 168, config.cpp 162,
+agent_hud.cpp 154, game_tick.cpp 110, game_data_party_quest.cpp 100, stacks_and_loot.cpp 80, party_map.cpp 54, mission_context.cpp 53,
+options_dialog_and_module_tables.cpp 50, save_state.cpp 47, mission_5.cpp 42. By record (E + N): GameData 777, GameG 129, MissionUi 104,
 Mission 99, Troop 50, Slot 45.
 
 ### What the N and C rows are
@@ -58,23 +58,23 @@ Mission 99, Troop 50, Slot 45.
   `player_kill_count`, `next_window`, `current_menu` = GameData's `cnt_killed`, `mode`, `f13aec`). The fix is one
   GameData with the union of the names (ticket 021 names the `fNN` ones) and the views deleted.
 - **Pads of GameData** (378 rows): the editor, menu and presentation state from +0x13a60 to +0x1a298 is mostly
-  `char padNNN[..]` in include/game_data.h; GameX and EditorGameView already know the fields.
-- **A pointer kept in an `int`**: `GameData::f1a200` (the entity's first mesh, written as `rgl::mesh*` in party_2.cpp),
-  `MissionView::p64` (an `int*` that holds a `skin*`, ui/mission.h), `Mission::f65e4` (a `Pawn*`). These break the
+  `char padNNN[..]` in game/data/game_data.h; GameX and EditorGameView already know the fields.
+- **A pointer kept in an `int`**: `GameData::f1a200` (the entity's first mesh, written as `rgl::mesh*` in party_map.cpp),
+  `MissionView::p64` (an `int*` that holds a `skin*`, game/ui/widgets/mission.h), `Mission::f65e4` (a `Pawn*`). These break the
   64-bit build outright; retype them.
 - **Records incomplete in the TU**: `save_panel.cpp` has no GameData definition (`g_game + 8` is `title`),
-  `party_2.cpp` no MissionCtx (`+ 0x138` is `side`). Needs the include; check the bytes (an include can move numbering).
+  `party_map.cpp` no MissionCtx (`+ 0x138` is `side`). Needs the include; check the bytes (an include can move numbering).
 
 ### V rows (43)
 
 `graph_obj` (rgl/mesh2/graph_obj.h: `pad28` + `faces/faces_end/faces_cap` and three more triples, read back through
-`*(std::vector<T>*)((char*)this + 0x28)`), `I64VecW` (world_data.h `first()/last()/end()` at +4/+8/+0xc),
-`BattleTable` +0x14 and GameData +0xe0 / +0x13a60 / +0x1a1b8 (party_2.cpp, map_editor.h, agent_hud.cpp), the mission5
+`*(std::vector<T>*)((char*)this + 0x28)`), `I64VecW` (game_data_party_quest.h `first()/last()/end()` at +4/+8/+0xc),
+`BattleTable` +0x14 and GameData +0xe0 / +0x13a60 / +0x1a1b8 (party_map.cpp, map_editor_update.h, agent_hud.cpp), the mission5
 slices' `Mission_s257f0` +0x18 agent vector, `Mission::agents.pages._Myfirst` read raw (`pages_raw()`), `NavGraph`
 +0x10, `Rec78` +0x40, `Geom_t` +0x10, `MissionV` +0x63c0, `lod_group::lists`, `Mission` +0x6688 props. docs/codegen.md
 5.6: spell them as the real `std::vector<T>`.
 
-Naming lane 5 (V, 2026-11-16): 20 of the 43 V rows fixed, plus graph_obj's 3 E rows in mesh_edit.cpp, all byte-identical
+Naming lane 5 (V, 2026-11-16): 20 of the 43 V rows fixed, plus graph_obj's 3 E rows in poly_mesh_edit_ops.cpp, all byte-identical
 (same_code over every includer) except `graph_obj::combine` 0x4caa40, a far-off row that moves with the class layout
 (65 -> 67 bytes, aligned 236 -> 243). Real `std::vector` members now: graph_obj (stamp, the open list, nodes / faces /
 edges, three editor vectors), NavGraph::nodes, BattleTable::pages (+ serial, f28: Pool<Event>'s layout), Geom_t's
@@ -83,9 +83,9 @@ pts / elems (NavCore's layout, no views), GlobVec::list; pages_raw(), I64VecW::f
 indexes raw (no `lea` per access) read `v._Myfirst[i]`: `operator[]` and `begin()[i]` both materialise the element.
 Open V rows and why: GameData +0xe0 / +0x13a60 / +0x1a1b8 (lane 1: game_data.h), Mission +0x1c / +0x6688 / +0x668c and
 the mission5 `Mission_s257f0`-family +0x18 slices (lane 2), Rec78 +0x40 (rec78.h's tail union overlaps the vector;
-gui_edit.cpp's Rec78Block destroys it), lod_group::lists in gui_edit.cpp (resmgr.h cannot be included there: its
-rgl_config clashes with gui_edit.cpp's own), E68W::slots (E68::v is `std::vector<scalar4>`, whose instances are
-manifest rows of mesh_2), MissionV +0x63c0 (inventory_panel/mission_ctx.cpp's mission view).
+editor_selection_and_translation.cpp's Rec78Block destroys it), lod_group::lists in editor_selection_and_translation.cpp (resource_manager.h cannot be included there: its
+rgl_config clashes with editor_selection_and_translation.cpp's own), E68W::slots (E68::v is `std::vector<scalar4>`, whose instances are
+manifest rows of mesh_2), MissionV +0x63c0 (game/mission/mission_context.cpp's mission view).
 
 ## How each fix is checked
 
@@ -102,12 +102,12 @@ Byte-identical object code in every touched TU; chk unchanged on every touched r
 | commit | file(s) | what |
 |---|---|---|
 | world_data | world_data.cpp/.h | container bounds `screen[]`/`fE0..`/`f100`, QuestRec flags/text, TeamRec `cls[k].use/a/b`, listener frame, upgrade_troop, attach_party, weapon_mode |
-| mission5 | mesh_3.cpp, mesh_poly_ray.cpp | `g_keyboard.down[]/prev[]/axis[]` (45 sites) |
-| party_2 | party_2.cpp | route `path[]`/`detail[]`, stacks, options, reveal_all, faction color/relation, mesh slots, cam_pos, `battles()` |
+| mission5 | poly_mesh_pick.cpp, poly_mesh_poly_ray_edit.cpp | `g_keyboard.down[]/prev[]/axis[]` (45 sites) |
+| party_2 | party_map.cpp | route `path[]`/`detail[]`, stacks, options, reveal_all, faction color/relation, mesh slots, cam_pos, `battles()` |
 | script_interpreter | script_interpreter.cpp | 115 GameX accesses + the faction()/quest() macros onto GameData's own members |
 | game, mission_ui, trigger_vec, renderer | 4 files | TroopIO::read's fields, the shadow skin copy, sl_take's inventory, `g_options.scale_x` |
-| mesh_slot | mesh_char.cpp, mesh_scene.cpp, mesh_slot.h | `ShadowMap::scn`, ItemKind sound/flags, the sound-event fields |
-| agent/inventory | agent_logic.cpp, agent_hud.cpp, inventory_panel.cpp, progress_bar.cpp | `Mission::agents`, `ItemRef::b.mod`, Rec78 flags, EQUIP/GRID macros, mesh dirty flags |
+| mesh_slot | character_meshes.cpp, scene_entities.cpp, mesh_slot.h | `ShadowMap::scn`, ItemKind sound/flags, the sound-event fields |
+| agent/inventory | agent_logic.cpp, agent_hud.cpp, inventory_panel.cpp, progress_bar_and_load_screens.cpp | `Mission::agents`, `ItemRef::b.mod`, Rec78 flags, EQUIP/GRID macros, mesh dirty flags |
 
 Counts against the baseline are in the TSV's `status` column (`fixed` / `open` / `kept: why`).
 
@@ -115,35 +115,35 @@ Counts against the baseline are in the TSV's `status` column (`fixed` / `open` /
 
 | site | why |
 |---|---|
-| world_data.cpp count_units 0x490ce0 | `stacks[n]` instead of the `k += 0x20` byte walk: aligned 191 -> 327 |
-| exchange_screens.cpp stack_remove 0x532830 | `party_index(x)->stacks[i].field`: aligned 529 -> 803 |
-| party_2.h NavRec gen/parent/pos/limit | naming `NavCell::pad6c` (nav_data.h) moves `render_batch::render_scene` 0x46e590 (203 -> 157) and, as four members, `Mission::start_setup` 0x484590 (1795 -> 1706). Both closer, but not byte-neutral: left for the maintainer |
-| mesh_scene.cpp setup_item_meshes 0x47cfe0 | `kind->flags >> 32` moved it; `((unsigned*)&kind->flags)[1]` is neutral and used |
-| mission_ui.cpp MissionView::make 0x489b20 | a `skin* src` local moved it; the casts stay inline |
-| save_panel.cpp 0x4ea290 | GameData incomplete in the TU (party_2.cpp 0x4b6180 fixed by lane 2: MissionCtx included) |
+| game_data_party_quest.cpp count_units 0x490ce0 | `stacks[n]` instead of the `k += 0x20` byte walk: aligned 191 -> 327 |
+| mission_menu_and_exchange_screens.cpp stack_remove 0x532830 | `party_index(x)->stacks[i].field`: aligned 529 -> 803 |
+| party_map.h NavRec gen/parent/pos/limit | naming `NavCell::pad6c` (nav_data.h) moves `render_batch::render_scene` 0x46e590 (203 -> 157) and, as four members, `Mission::start_setup` 0x484590 (1795 -> 1706). Both closer, but not byte-neutral: left for the maintainer |
+| scene_entities.cpp setup_item_meshes 0x47cfe0 | `kind->flags >> 32` moved it; `((unsigned*)&kind->flags)[1]` is neutral and used |
+| widget_base.cpp MissionView::make 0x489b20 | a `skin* src` local moved it; the casts stay inline |
+| save_panel.cpp 0x4ea290 | GameData incomplete in the TU (party_map.cpp 0x4b6180 fixed by lane 2: MissionCtx included) |
 
 ### Naming lane 1 (2026-11-16): GameData and the views over g_game
 
 449 rows fixed (N 395, E 35, X 11, V 4, U 4), byte-identical in every touched TU: the views GameConfig, EditorGameView, SiteKeys,
 World3, GDTimer, Frame, Placement, EmitAudio are deleted, GameX keeps only its forwarders (GameX : GameData), the offset macros
-GAME_AT, GD_C, GD_F, GI, GF, GDP and map_editor.h's ed_* accessors are gone; save_panel.cpp, mission_items.cpp, quest_log.cpp,
-cam_view.cpp, trigger_vec.cpp and editor_dialog.cpp include game_data.h. GameData::event_ctx.mesh (was `int f1a200`) is a
+GAME_AT, GD_C, GD_F, GI, GF, GDP and map_editor_update.h's ed_* accessors are gone; save_panel.cpp, mission_item_records.cpp, quest_log.cpp,
+face_generator_update.cpp, options_dialog_and_module_tables.cpp and terrain_brush_dialog.cpp include game_data.h. GameData::event_ctx.mesh (was `int f1a200`) is a
 `rgl::mesh*`, trigger_frame a `rgl::matrix`. Open: the script interpreter's `game()` / `scene()` casts to GameX (now a
 derived method view), the +0x13a60 track vector (a real `std::vector<E92>` moved push_event 0x4b5fe0 and render_scene),
 events as BattleTable (Pool<Event> and BattleTable are one record under two names), GameMapView, the mission5 slices.
 
-### Naming lane 2 (2026-11-16): mission_5.cpp / mission_5.h, Mission
+### Naming lane 2 (2026-11-16): mission_5.cpp / mission_frame_update.h, Mission
 
 68 baseline sites fixed in mission_5.{cpp,h} (X 47, V 8, N 6, U 7) plus Mission::f65e4 (gui_edit `*(Pawn**)&f65e4` is now
 `&edit_obj->local`); 15 sites respelled onto real classes stay listed (3 kept: the ClassInfo `use` walk, MissionProps,
-c49c2c0::Mission::order). party_2.cpp includes mission_ctx_rec.h: detach 0x4b6180 reads g_mission_ctx.side (was
-`+ 0x138`). Byte-identical on all 57 TUs that include the touched headers, and on party_2.cpp.
+c49c2c0::Mission::order). party_map.cpp includes mission_ctx_rec.h: detach 0x4b6180 reads g_mission_ctx.side (was
+`+ 0x138`). Byte-identical on all 57 TUs that include the touched headers, and on party_map.cpp.
 
-Naming lane 4 (renderer / mesh, 2026-11-16): 157 sites fixed in mission_3.cpp, agent_hud.cpp, gui_edit.cpp, progress_bar.cpp
+Naming lane 4 (renderer / mesh, 2026-11-16): 157 sites fixed in stacks_and_loot.cpp, agent_hud.cpp, editor_selection_and_translation.cpp, progress_bar_and_load_screens.cpp
 (E 63, N 26, V 3, U 9, X 56), same_code identical over every includer. Views deleted: OvObj / OvNode / OvMesh / OvVt (the overlay
 setters take the widget manager's MissionUi* and, by kind(), UiC / XyzButton / DropDown), FrameNode (rgl::entity::local), the
-gui_edit.h world_root / world_sub / code_tab / scene_vert / var_rec / scene_obj (rgl::world::hf / ground, NavData, NavCell, face),
-Map / Pawn (Mission::f65e4->local, Mission::props), progress_bar.h's 0x6698-pad MapScreen (now a member-less Mission subclass
+editor_selection_and_translation.h world_root / world_sub / code_tab / scene_vert / var_rec / scene_obj (rgl::world::hf / ground, NavData, NavCell, face),
+Map / Pawn (Mission::f65e4->local, Mission::props), progress_bar_and_load_screens.h's 0x6698-pad MapScreen (now a member-less Mission subclass
 until mission.h declares frame_step). Not kept: naming PolyMesh's pad48 (+0x78 edit mode, +0x80 light direction) or declaring the
 preview builders on PolyMesh flips render_scene 0x46e590 203 <-> 157 and start_setup 0x484590 1795 <-> 1706, the same two states
 NavCell::pad6c moves them to: a TU-wide numbering effect (any member or declaration added to a header in mission.h's include
@@ -152,7 +152,7 @@ closure can flip them), not a property of the names.
 ## What is left
 
 1. E rows through plain records (no view class): finish file by file with the same gate. The biggest remaining E
-   blocks are behind view classes (mission_3.cpp OvObj, trigger_vec.cpp GameConfig, agent_hud.cpp FrameNode).
+   blocks are behind view classes (stacks_and_loot.cpp OvObj, options_dialog_and_module_tables.cpp GameConfig, agent_hud.cpp FrameNode).
 2. Fold the view classes into the real ones (GameX, EditorGameView, GameConfig, OvObj/OvNode, EditorSceneView): with
    ticket 021, one header change each, checked over all includers.
 3. Retype the pointers kept in ints (f1a200, p64, f65e4) before 006's 64-bit layout work.

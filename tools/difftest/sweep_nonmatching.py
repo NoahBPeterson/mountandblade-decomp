@@ -118,7 +118,7 @@ def rows():
     for c in _claims():
         if not c["src"] and int(c["va"], 16) in live:
             # a slice claim for a function a module now compiles (the slices stay in place after a migration,
-            # src/rgl/mesh2/MIGRATION.md) and does not list as nonmatching: the slice's source is dead code and
+            # docs/migration/rgl_mesh2.md) and does not list as nonmatching: the slice's source is dead code and
             # the module's function is exact, so there is no row (verdicts.py counts module rows only)
             continue
         by_va[c["va"]].append(c)

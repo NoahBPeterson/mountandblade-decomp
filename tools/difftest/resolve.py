@@ -866,8 +866,8 @@ class Resolver:
     def by_deep(self, name, want_func, called):
         """-> (va, how) from the repository-wide symbol universe, demangled and with the qualification
         ignored. by_annotation sees only the row's own source, its slice headers and its direct
-        includes; a declaration one include deeper (Terrain::ground_color in terrain_a/terrain.h for
-        mesh_terrain.cpp, SoundMgr::play in include/sound_mgr.h) stayed unresolved although the
+        includes; a declaration one include deeper (Terrain::ground_color in game/terrain/terrain.h for
+        terrain_water_regen.cpp, SoundMgr::play in engine/audio/sound_mgr.h) stayed unresolved although the
         original implements it. A *qualified* match (the class our mangled name spells) is accepted
         when the address is unique; a bare-identifier match (our slice renamed the class:
         block_base::free_materials is the original's Block::free_materials) only when it is unique
@@ -1290,8 +1290,8 @@ class Resolver:
         # ---- still-unresolved required symbols: the whole repository's name evidence --------------
         # by_annotation only sees the row's own source, its slice headers and its direct includes, and
         # the alignment pass needs an anchor to work from. A symbol declared one include deeper
-        # (Terrain::ground_color in terrain_a/terrain.h for mesh_terrain.cpp, SoundMgr::play in
-        # include/sound_mgr.h) is still on record in src/ and symbols/. Binding it to the original's
+        # (Terrain::ground_color in game/terrain/terrain.h for terrain_water_regen.cpp, SoundMgr::play in
+        # engine/audio/sound_mgr.h) is still on record in src/ and symbols/. Binding it to the original's
         # address (kind "orig-code") makes our call run the original's own body, the honest model.
         # Runs after alignment so a positional match the original's own call operands confirm keeps
         # its (possibly ICF-folded) address. Symbols reached only through EH or vtable sections ("eh") get the same

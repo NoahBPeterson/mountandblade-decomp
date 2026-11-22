@@ -1,0 +1,872 @@
+//-----------------------------------------------------------------------------
+// File: stacks_and_loot.cpp  (0x48c330..0x48e5d0)
+//
+// Desc: the party's stack editors (remove_slot, consume_stack, add_members), the game data's loot generators (free
+//       inventory slots, give / pick / spawn items, the event string), the item reference setters, the script triggers'
+//       lookups, the battle-scene field panel, the string-resolving accessors of the quest / faction / troop / party records,
+//       the force label, and the widget setters of the script's overlay operations. Names provisional. Functions in
+//       ascending address order (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP.
+//
+// Boundary: class changes only (Troop | Party at 0x48c330, Party | SlotAPI at 0x48e5d0); no forward call in or out.
+//-----------------------------------------------------------------------------
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include "game/data/item_mod.h"   // g_item_mods: the sort weights (price / rarity)
+#include "engine/core/tstring.h"
+#include "engine/math/rgl_math.h"
+#include "engine/render/mesh.h"
+#include "engine/fx/fx.h"              // FxDef::psys_of 0x48d5f0 (defined here)
+#include "game/ui/widgets/ui_common.h"
+#include "game/data/item_ref_game_ui.h"
+#include "game/ui/widgets/widget_base.h"
+#include "game/ui/widgets/widget_manager.h"
+#include "game/data/troop_inventory_stats.h"
+#include "game/party/stacks_and_loot.h"
+#include "game/mission/camera_class.h"      // Camera: the scrolling view (its layout members 0x48d350 / 0x48d3c0 / 0x48d470 are defined here)
+// the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
+#include "game/mission/mission.h"
+#include "game/data/item_ref.h"
+#include "game/party/slot_array.h"
+#include "game/data/str_table.h"
+#include "game/mission/placed_obj.h"
+#include "engine/scene/scene_entity.h"   // rgl::entity (PlacedObj::ent): lods / meshes
+#include "game/data/item_kind_include.h"
+#include "game/data/troop.h"
+#include "game/party/party.h"
+#include "engine/scene/scene_entity.h"   // rgl::strategic_entity: Party::model (clear_emitters, slot 26)
+#include "game/data/game_recs.h"
+#include "game/data/game_data.h"
+
+#include "game/common/game_globals.h"
+#include "game/data/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in game/app/options_dialog_and_module_tables.cpp)
+#include "game/script/script_state.h"   // ScriptState g_script (0xa70440): the one object
+extern unsigned __int64 g_bit[];                // 0x5a8e68 g_bit[i] == 1 << i
+extern int g_item_kind_count;                   // 0x5e29d4 (item_kind.h)
+
+// custom-ABI helpers and other-object callees
+
+// @ 0x48c330
+void Party::remove_slot(int index)
+{
+    // a prisoner stack (flag bit 0), or the first stack, stays where it is; otherwise the stack is swapped up past every
+    // prisoner stack in front of it
+    if ((stacks[index].flags & 1) || index <= 0) {
+        dirty = 1;
+        return;
+    }
+    int i = index;
+    do {
+        if (!(stacks[i - 1].flags & 1)) {
+            dirty = 1;
+            return;
+        }
+        Stack t = stacks[i - 1];
+        stacks[i - 1] = stacks[i];
+        stacks[i] = t;
+        i--;
+    } while (i > 0);
+    dirty = 1;
+}
+
+// @ 0x48c3c0
+int Party::consume_stack(int index, int amount, SeedRow* rows, char keep)
+{
+    int r = 0;
+    Stack* e = &stacks[index];
+    e->count -= amount;
+    int v = e->count;
+    if (keep) {
+        e->wounded -= amount;
+        e->wounded = e->wounded > 0 ? e->wounded : 0;
+    } else {
+        if (e->wounded > v)
+            e->wounded = v;
+    }
+    if (e->f14 > v)
+        e->f14 = v;
+    if (stacks[index].count <= 0) {
+        remove_row(index, rows);
+        r = 1;
+    }
+    dirty = 1;
+    return r;
+}
+
+// @ 0x48c460
+int material_type()
+{
+    return 4;
+}
+
+// @ 0x48c470
+tstring GameData::event_string(int id)
+{
+    g_script.result_string.assign("");
+    emit_event(0xf, id / 0x18, id);
+    return g_script.result_string;
+}
+
+// @ 0x48c4c0
+void GameData::init_slots(int troop, int want)
+{
+    Troop* t = &troops[troop];
+    int n = t->inv_count();
+    int filled = 0, i;
+    for (i = 0; i < n; i++)
+        if (t->inv[i].item == -1)
+            filled++;
+    for (i = 0; i < 200 && filled < want; i++) {
+        int pick = n <= 1 ? 0 : rand() % n;
+        int item = t->inv[pick].item;
+        if (item != -1 && !(g_items[item].type_flags & 0x1000)) {
+            t->inv[pick].item = -1;
+            filled++;
+        }
+    }
+    t->inv[0].compact(t->inv_count());
+}
+
+// @ 0x48c570
+struct Rec8 { int a, b; };
+Rec8* __stdcall copy_records8(Rec8* first, Rec8* last, Rec8* dst)
+{
+    int n = last - first;
+    return static_cast<Rec8*>(memmove(dst, first, n * sizeof(Rec8))) + n;
+}
+
+// @ 0x48c5a0
+void ItemRef::set_item(int item_)
+{
+    item = item_;
+    m4 = 0;
+    reduce(0);
+}
+
+// the item kind's modifier-usage bits, tested against g_bit[imod]
+static __forceinline unsigned __int64 item_mods(int it) { return g_items[it].modifiers; }
+// 0x488ff0 (game/ui/widgets/widget_base.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
+inline __declspec(noinline) float ItemRef::speed_scale(const float* base, const float* ref, float r)      // 0x488ff0
+{
+    float d = fabsf(r - *ref);
+    if ((r > 1.001f && *ref < 1.001f) || (r < 0.999f && *ref > 0.999f))
+        d = d * 5.0f + 3.0f;
+    return *base / (d + 1.0f);
+}
+
+// @ 0x48c5c0
+void ItemRef::randomize_modifier(float quality)
+{
+    if (item < 0)
+        return;
+    if ((float)(rand() % 15817) * 6.322312e-05f < 0.1f)
+        return;
+    int found = -1;
+    float base_in = 1.0f, base_out = 1.0f;
+    float total = speed_scale(&base_out, &base_in, quality);
+    float ref = total;
+    unsigned __int64 mods = item_mods(item);
+    for (int i = 0; i < 0x2b; i++) {
+        if ((mods & g_bit[i]) != 0)
+            total = speed_scale(&g_item_mods[i].rarity, &g_item_mods[i].price, quality) + total;
+    }
+    float target = (float)(rand() % 15817) * total * 6.322312e-05f;
+    if (target > ref) {
+        total = ref;
+        for (int i = 0; 0x2b > i; i++) {
+            if (found != -1)
+                break;
+            if ((item_mods(item) & g_bit[i]) != 0) {
+                total = speed_scale(&g_item_mods[i].rarity, &g_item_mods[i].price, quality) + total;
+                if (target < total)
+                    found = i;
+            }
+        }
+    }
+    if (found < 0)
+        return;
+    if (found < 0x2b) {
+        b.mod = 0;
+        m4 |= (unsigned)found << 24;
+        reduce(0);
+    }
+    if (item > 0) {
+        unsigned t = g_items[item].type_flags & 0xff;
+        if (t == itp_type_thrown || t == itp_type_arrows || t == itp_type_bolts ||
+            t == itp_type_pistol || t == itp_type_musket || t == itp_type_crossbow ||
+            t == itp_type_bullets) {
+            b.amount = 0;
+        } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {   // 7, 1, 0x13 (0x48c7b1)
+            int v = hit_points();
+            w.count = 0;
+            m4 |= (unsigned)v;
+        }
+    }
+}
+
+// @ 0x48c7f0
+void Troop::set_slot(int item, int idx, int mod)
+{
+    ItemRef* r = &inv[0] + idx;
+    r->set_item(item);
+    if (mod >= 0 && mod < 0x2b) {
+        r->b.mod = 0;
+        r->m4 |= (unsigned)mod << 24;
+        r->reduce(0);
+    }
+}
+
+// @ 0x48c840
+int Party::add_members(int troop, int count, int flags, int wounded, char force)
+{
+    if (count == 0)
+        return 0;
+    int idx = find_or_add(troop, flags, force == 0);
+    if (idx < 0) {
+        dirty = 1;
+        return -1;
+    }
+    if (idx == nstacks) {
+        Stack* e = &stacks[nstacks];
+        e->count = 0;
+        e->flags = 0;
+        e->f14 = 0;
+        e->spawned = 0;
+        e->wounded = 0;
+        e->xp = 0;
+        e->troop = -1;
+        stacks[nstacks].troop = troop;
+        stacks[nstacks].count = count;
+        stacks[nstacks].wounded = wounded;
+        stacks[nstacks].f14 = 0;
+        stacks[nstacks].xp = 0;
+        stacks[nstacks].flags = flags;
+        nstacks++;
+        if (!(flags & 1)) {
+            remove_slot(nstacks - 1);
+            dirty = 1;
+            return idx;
+        }
+    } else {
+        stacks[idx].count += count;
+        stacks[idx].wounded += wounded;
+    }
+    dirty = 1;
+    return idx;
+}
+
+// @ 0x48c9b0
+void GameData::give_item(int troop, int item, int count)
+{
+    int left = count;
+    int n = (troops + troop)->inv_count();
+    for (int i = 0; i < n; i++) {
+        if (left <= 0)
+            return;
+        ItemRef* r = &troops[troop].inv[i];
+        if (r->item == -1) {
+            left--;
+            r->set_item(item);
+        }
+    }
+}
+
+// 0x48ca30 calls ItemRef::leg_armor (0x462a10, src/game/data/item_ref.cpp; the raw 0x435090 of agent_queries.cpp is ItemRef::accuracy),
+// the canonical member of item_ref.h. The declaration here repeats its address for the resolution tools.
+namespace icf_twin {
+struct ItemRef {
+    int leg_armor();   // 0x462a10
+};
+}
+
+// @ 0x48ca30
+int GameData::pick_random_item(int t0, int t1, int t2, int t3)
+{
+    for (;;) {
+        float prob = 1.0f;
+        int idx;
+        if (g_item_kind_count <= 1)
+            idx = 0;
+        else
+            idx = rand() % g_item_kind_count;
+        ItemKind* k = &g_items[idx];
+        ItemRef r;
+        r.item = idx;
+        r.m4 = 0;
+        if (idx > 0) {
+            unsigned t = k->type_flags & 0xff;
+            if (t == itp_type_thrown || t == itp_type_arrows || t == itp_type_bolts ||
+                t == itp_type_pistol || t == itp_type_musket || t == itp_type_crossbow ||
+                t == itp_type_bullets)
+                r.m4 = 0;
+            else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal)
+                r.m4 = (unsigned)r.hit_points();
+        }
+        unsigned tf = k->type_flags;
+        unsigned t = tf & 0xff;
+        unsigned char f = tf >> 12;
+        if ((tf & 0x10000) != 0 && (f & 1) == 0 &&
+            (t == (unsigned)t0 || t == (unsigned)t1 || t == (unsigned)t2 || t == (unsigned)t3)) {
+            float v = (float)troops[player].level;
+            float value = (float)k->value;
+            prob = (v * 30.0f + 200.0f) / (value + 200.0f);
+            if (t == itp_type_head_armor || t == itp_type_body_armor ||
+                t == itp_type_foot_armor || t == itp_type_hand_armor) {
+                int a = r.leg_armor();
+                int b = r.head_armor();
+                int c = r.body_armor();
+                if (c > b) {
+                    if (c > a)
+                        a = c;
+                } else if (b > a) {
+                    a = b;
+                }
+                if (a <= 4)
+                    prob = 0.0f;
+            } else {
+                unsigned u = k->type_flags & 0xff;
+                if (u == itp_type_one_handed_wpn || u == itp_type_two_handed_wpn ||
+                    u == itp_type_polearm) {
+                    int a = r.damage(1);
+                    int b = r.damage(0);
+                    if (b <= a)
+                        b = a;
+                    if (b <= 0xa)
+                        prob = 0.0f;
+                }
+            }
+        } else {
+            idx = -1;
+        }
+        float roll = (float)(rand() % 0x3dc9) * 6.322312e-05f;
+        if (roll >= prob || idx == -1)
+            continue;
+        return idx;
+    }
+}
+
+// @ 0x48cc40
+void GameData::spawn_items(int type, int want, int troop)
+{
+    int got = 0;
+    Troop* ag = &troops[troop];
+    for (int tries = 0; got < want; tries++) {
+        if (tries >= 10000)
+            break;
+        int idx;
+        if (g_item_kind_count <= 1)
+            idx = 0;
+        else
+            idx = rand() % g_item_kind_count;
+        unsigned tf = g_items[idx].type_flags;
+        if ((tf & 0xff) != (unsigned)type || (tf & 0x1000) != 0 || (tf & 0x10000) == 0)
+            continue;
+        float c = (float)g_items[idx].abundance * g_items[idx].merchandise_probability * 0.01f;
+        float chance;
+        if (c < 0.0f)
+            chance = 0.0f;
+        else if (c >= 20.0f)
+            chance = 20.0f;
+        else
+            chance = c;
+        float roll = (float)(rand() % 0x3dc9) * 6.322312e-05f;
+        for (; chance > roll && got < want; got++) {
+            chance -= 1.0f;
+            int n = ag->inv_count();
+            int slot;
+            if (n <= 1)
+                slot = 0;
+            else
+                slot = rand() % n;
+            ItemRef* e = &ag->inv[slot];
+            if (e->item == -1 || (g_items[e->item].type_flags & 0x1000) == 0) {
+                e->item = idx;
+                e->m4 = 0;
+                if (idx > 0) {
+                    unsigned t = g_items[idx].type_flags & 0xff;
+                    if (t == itp_type_thrown || t == itp_type_arrows || t == itp_type_bolts ||
+                        t == itp_type_pistol || t == itp_type_musket || t == itp_type_crossbow ||
+                        t == itp_type_bullets) {
+                        e->b.amount = 0;
+                    } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
+                        int v = e->hit_points();
+                        e->w.count = 0;
+                        e->m4 |= (unsigned)v;
+                    }
+                }
+                e->randomize_modifier(merchandise_modifier_quality);
+            }
+        }
+    }
+    ag->inv[0].compact(ag->inv_count());
+}
+
+// @ 0x48ce90
+ItemRef* __stdcall copy_refs(ItemRef* dst, unsigned n, const ItemRef* src)
+{
+    ItemRef* p = dst;
+    if (n > 0) {
+        unsigned i = n;
+        do {
+            *p = *src;
+            p++;
+        } while (--i);
+    }
+    return dst + n;
+}
+
+// The mesh / LOD id lists of a placed object's entity, as the std::vectors they are. The original tests size() and then
+// indexes [0], re-evaluating props[i].ent for each (no named object or entity local): size() keeps &vector as `this`,
+// operator[] re-reads the entity through the materialised props[i].
+static inline std::vector<rgl::lod_mesh*>& ent_lods(const PlacedObj& o) { return o.ent->lods; }
+static inline std::vector<rgl::mesh*>& ent_meshes(const PlacedObj& o) { return o.ent->meshes; }
+// @ 0x48cec0
+rgl::lod_mesh* __fastcall trigger_item(int key)
+{
+    rgl::lod_mesh* r = 0;
+    if (key == -0x28 || key == -0x2b || key == -0x2a) {
+        int i = g_game->event_ctx.prop;
+        if (i >= 0) {
+            if (ent_lods(g_mission->props[i]).size() > 0)
+                r = ent_lods(g_mission->props[i])[0];       // the first LOD entry
+        }
+    } else if (key == -0x32 || key == -0x33)
+        r = g_game->event_ctx.key_a;
+    return r;
+}
+
+// @ 0x48cf40
+rgl::mesh* __fastcall trigger_mesh_obj(int key)
+{
+    rgl::mesh* r = 0;
+    if (key == -0x28) {
+        int i = g_game->event_ctx.prop;
+        if (i >= 0) {
+            if (ent_meshes(g_mission->props[i]).size() > 0)
+                r = ent_meshes(g_mission->props[i])[0];
+        }
+    } else if (key == -0x32 || key == -0x46)
+        r = g_game->event_ctx.mesh;
+    return r;
+}
+
+// @ 0x48cfc0
+void rgl::lod_mesh::set_material(skin* m)
+{
+    int i = 0;
+    if (count > 0) {
+        rgl::mesh_list* l = lists;
+        do {
+            for (std::vector<rgl::mesh*>::iterator it = l->begin(); it < l->end(); it++) {
+                rgl::mesh* obj = *it;
+                if (obj->res != 0)
+                    obj->res->refcount--;
+                obj->res = m;
+                if (m != 0)
+                    m->refcount++;
+            }
+            i++;
+            l++;
+        } while (i < count);
+    }
+}
+
+// The bounds are folded with the windef.h-style min / max (a > b ? a : b) into two float pairs that cl builds as temporaries.
+static __forceinline float fmax2(float a, float b) { return (a > b) ? a : b; }
+static __forceinline float fmin2(float a, float b) { return (a < b) ? a : b; }
+
+// @ 0x48d020
+void MissionUi::update_bounds()
+{
+    bool has = tracks[0] != 0;
+    V2 mx(0.0f, 0.0f);
+    V2 mn(999999.0f, 999999.0f);
+    if (has) {
+        tracks[0]->compute_bounds();
+        mx = V2(fmax2(mx.x, tracks[0]->bounds.max.x), fmax2(mx.y, tracks[0]->bounds.max.y));
+        mn = V2(fmin2(mn.x, tracks[0]->bounds.min.x), fmin2(mn.y, tracks[0]->bounds.min.y));
+    }
+    if (tracks[2]) {
+        tracks[2]->compute_bounds();
+        mx = V2(fmax2(mx.x, tracks[2]->bounds.max.x), fmax2(mx.y, tracks[2]->bounds.max.y));
+        mn = V2(fmin2(mn.x, tracks[2]->bounds.min.x), fmin2(mn.y, tracks[2]->bounds.min.y));
+    }
+    if (tracks[1]) {
+        tracks[1]->compute_bounds();
+        mx = V2(fmax2(mx.x, tracks[1]->bounds.max.x), fmax2(mx.y, tracks[1]->bounds.max.y));
+        mn = V2(fmin2(mn.x, tracks[1]->bounds.min.x), fmin2(mn.y, tracks[1]->bounds.min.y));
+    }
+    if (tracks[3]) {
+        tracks[3]->compute_bounds();
+        mx = V2(fmax2(mx.x, tracks[3]->bounds.max.x), fmax2(mx.y, tracks[3]->bounds.max.y));
+        mn = V2(fmin2(mn.x, tracks[3]->bounds.min.x), fmin2(mn.y, tracks[3]->bounds.min.y));
+    }
+    if (sqrt(mx.x * mx.x + mx.y * mx.y) > 0.0f) {
+        set_xy(mx);
+        rect_min = mn;     // one pair copy: mn's lanes stay in edi / ebx across the call
+    }
+}
+
+
+// @ 0x48d350
+void Camera::set_view_color(unsigned rgb)
+{
+    unsigned c = (target->kids[0]->color14c & 0xff000000) | rgb;   // its own local (cl homes it in rgb's argument slot)
+    target->kids[0]->set_color(c);
+    target->kids[0]->get_xy();
+}
+
+// @ 0x48d3c0
+void Camera::set_view_alpha(unsigned a)
+{
+    unsigned u = a << 24;
+    a = (target->kids[0]->color14c & 0xffffff) | u;
+    target->kids[0]->set_color(a);
+    target->kids[0]->get_xy();
+    follow[1]->tracks[0]->color = (tracks[0]->color & 0xffffff) | u;
+    follow[1]->tracks[2]->color = (tracks[2]->color & 0xffffff) | u;
+}
+
+// The pair temporaries of update(): one per call, built from const float& (the view's f0/f4 are read as addresses, f4's
+// left unfolded as `add eax,0xf4; mov eax,[eax]`).
+struct FV2r : V2 { FV2r(const float& a, const float& b) { x = a; y = b; } };
+// @ 0x48d470
+void Camera::update()
+{
+    // the call goes through the ContainerBase member itself, so +0x490 is read again after the arguments (0x48d48c)
+    target->set_xy(FV2r(target->kids[0]->rect_max.x, target->kids[0]->rect_max.y));
+    if (sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f)
+        set_xy(FV2r(tail.x, tail.y));
+    else
+        set_xy(FV2r(target->rect_max.x, rect_max.y));
+    if (target->rect_max.y < rect_max.y) {
+        target->kids[0]->move_a(FV2r(0.0f, rect_max.y - target->rect_max.y));
+        target->set_xy(FV2r(target->rect_max.x, rect_max.y));
+    } else
+        target->kids[0]->move_a(FV2r(0.0f, 0.0f));
+    follow[1]->move_a(FV2r(rect_max.x + position.x + 0.01f, position.y));     // the UiD slot itself
+    draw();
+}
+
+// @ 0x48d5f0
+rgl::psys* FxDef::psys_of(int elem, int id)
+{
+    int i = elems[elem].find_kid(id);
+    if (i >= 0 && elems[elem].psys.size() != 0)
+        return elems[elem].psys[0]->kids[i];
+    return 0;
+}
+
+// @ 0x48d650
+// The bound is the real vector's size(): its `first == 0 ? 0 : ...` zero arm is folded away after the scratch
+// registers are picked, and that vanished pick is what leaves `last - first` in eax and not in the dead `this`.
+__int64 SlotArray::get(const int& slot)
+{
+    int i = slot;
+    if (i < 0 || (unsigned)i >= size())
+        return 0;
+    return (*this)[i];
+}
+
+// @ 0x48d690
+int ScriptState::get_var(unsigned index)
+{
+    return (int)vars.get(index);
+}
+
+// @ 0x48d6d0
+tstring* Troop::plural_name()
+{
+    tstring* r;
+    {
+        tstring sfx("_pl");
+        r = g_strtable.find(&(key + sfx));
+    }
+    return r ? r : &plural;
+}
+
+// @ 0x48d730
+tstring* QuestRec::raw_text()
+{
+    tstring* r = g_strtable.find(&key);
+    return r ? r : &name;
+}
+
+// @ 0x48d750
+tstring* QuestRec::raw_title()
+{
+    tstring* r;
+    {
+        tstring sfx("_text");
+        r = g_strtable.find(&(key + sfx));
+    }
+    return r ? r : &desc;
+}
+
+// @ 0x48d7b0
+tstring* Party::display_name()
+{
+    if (g_module_settings.show_party_ids_instead_of_names)
+        return &key;
+    if (flag == 0) {
+        tstring* r = g_strtable.find(&key);
+        if (r)
+            return r;
+    }
+    return &name;
+}
+
+// @ 0x48d7e0
+void Party::clear_particle_systems()
+{
+    deferred.clear();
+    if (model)
+        model->clear_emitters();
+}
+
+static __declspec(noinline) void unit_class_name(unsigned kind, char* out);
+
+// @ 0x48d830
+static void unit_class_name(unsigned kind, char* out)
+{
+    if (kind == 0) {
+        tstring key("ui_infantry");
+        strcpy(out, g_strtable.lookup(key)->c_str());
+    } else if (kind == 2) {
+        tstring key("ui_cavalry");
+        strcpy(out, g_strtable.lookup(key)->c_str());
+    } else if (kind == 1) {
+        tstring key("ui_archers");
+        strcpy(out, g_strtable.lookup(key)->c_str());
+    } else {
+        tstring key("ui_everyone");
+        strcpy(out, g_strtable.lookup(key)->c_str());
+    }
+}
+
+// @ 0x48d940
+void TeamRec::make_label(char* out)
+{
+    char all = 1;
+    if (cls[0].use == 0)
+        all = 0;
+    if (cls[1].use == 0)
+        all = 0;
+    if (cls[2].use != 0 && all) {
+        tstring key("ui_everyone");
+        strcpy(out, g_strtable.lookup(key)->c_str());
+        return;
+    }
+
+    char part[0x200];
+    char acc[0x200];
+    char first_done = 1;
+    for (int i = 0; i < 3; i++) {
+        if (cls[i].use == 0)
+            continue;
+        char grouped = 1;
+        for (int j = i + 1; j < 3; j++)
+            if (cls[j].use != 0)
+                grouped = 0;
+        unit_class_name(i, part);
+        if (first_done) {
+            strcpy(out, part);
+            first_done = 0;
+        } else {
+            strcpy(acc, out);
+            if (grouped) {
+                tstring key("ui_str_and_str");
+                sprintf(out, g_strtable.lookup(key)->c_str(), acc, part);
+            } else {
+                tstring key("ui_str_comma_str");
+                sprintf(out, g_strtable.lookup(key)->c_str(), acc, part);
+            }
+        }
+    }
+}
+
+// @ 0x48db00
+tstring* FactionRec::display_name()
+{
+    if (flag == 0) {
+        tstring* r = g_strtable.find(&key);
+        if (r)
+            return r;
+    }
+    return &name;
+}
+
+// @ 0x48db20
+void* widget_mgr::set_mesh_matrix(int idx, const void* src)
+{
+    rgl::matrix m;
+    rgl::identity_pos(&m);
+    memcpy(&m, src, 0x30);
+    if (widgets[idx]->tracks[0]) memcpy(&widgets[idx]->tracks[0]->local_frame, &m, 0x40);
+    if (widgets[idx]->tracks[2]) memcpy(&widgets[idx]->tracks[2]->local_frame, &m, 0x40);
+    if (widgets[idx]->tracks[1]) memcpy(&widgets[idx]->tracks[1]->local_frame, &m, 0x40);
+    if (widgets[idx]->tracks[3]) memcpy(&widgets[idx]->tracks[3]->local_frame, &m, 0x40);
+    void* slot = &widgets[idx];
+    if (widgets[idx]->tracks[4]) memcpy(&widgets[idx]->tracks[4]->local_frame, &m, 0x40);
+    return slot;
+}
+
+// the widget `idx` is re-read from the manager's vector at every use (cl keeps no copy across the virtual calls)
+#define OW(idx) widgets[idx]
+
+// @ 0x48dc30
+void widget_mgr::set_color(int idx, unsigned argb)
+{
+    if (OW(idx)->kind() != 0 && OW(idx)->kind() != 1 && OW(idx)->kind() != 9 && OW(idx)->kind() != 5 &&
+        OW(idx)->kind() != 6) {
+        if (OW(idx)->kind() == 4) {
+            OW(idx)->tracks[0]->color = (OW(idx)->tracks[0]->color & 0xff000000) | argb;
+            unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
+            OW(idx)->set_color(c);
+        } else if (OW(idx)->kind() == 8) {
+            OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xff000000) | argb;
+            OW(idx)->tracks[1]->color = (OW(idx)->tracks[1]->color & 0xff000000) | argb;
+            unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
+            OW(idx)->set_color(c);
+        } else if (OW(idx)->kind() == 7) {
+            static_cast<Camera*>(OW(idx))->set_view_color(argb);
+            return;
+        } else {
+            return;
+        }
+    } else {
+        unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
+        OW(idx)->set_color(c);
+        OW(idx)->get_xy();
+    }
+}
+
+// The colour write-back is written twice: once at the end of the else chain and once at the end of the function
+// (reached only from the type 4 arm), each in its own block. cl merges the two copies and keeps the lexically last
+// one, which the block order places right behind the type 4 arm, as in the original.
+// @ 0x48de00
+void widget_mgr::set_alpha(int idx, unsigned a)
+{
+    if (OW(idx)->kind() == 0 || OW(idx)->kind() == 1) {
+        unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
+        OW(idx)->set_color(c);
+        OW(idx)->get_xy();
+        return;
+    }
+    if (OW(idx)->kind() == 4) {
+        OW(idx)->tracks[0]->color = (OW(idx)->tracks[0]->color & 0xffffff) | (a << 24);
+    } else {
+        if (OW(idx)->kind() == 8 || OW(idx)->kind() == 9) {
+            OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xffffff) | (a << 24);
+            OW(idx)->tracks[1]->color = (OW(idx)->tracks[1]->color & 0xffffff) | (a << 24);
+        } else if (OW(idx)->kind() == 2) {
+            OW(idx)->tracks[0]->color = (OW(idx)->tracks[0]->color & 0xffffff) | (a << 24);
+            OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xffffff) | (a << 24);
+        } else if (OW(idx)->kind() == 3) {
+            OW(idx)->tracks[0]->color = (OW(idx)->tracks[0]->color & 0xffffff) | (a << 24);
+            OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xffffff) | (a << 24);
+            ((UiC*)OW(idx))->mask = a << 24;
+            ((UiC*)OW(idx))->f194 = -12343243.0f;   // the 'no frame built' sentinel (bits 0xcb3c57cb)
+        } else if (OW(idx)->kind() == 5 || OW(idx)->kind() == 6) {
+            OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xffffff) | (a << 24);
+            OW(idx)->tracks[1]->color = (OW(idx)->tracks[1]->color & 0xffffff) | (a << 24);
+            if (OW(idx)->kind() == 5)
+                OW(idx)->tracks[3]->color = (OW(idx)->tracks[3]->color & 0xffffff) | (a << 24);
+            unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
+            OW(idx)->set_color(c);
+            OW(idx)->get_xy();
+            return;
+        } else if (OW(idx)->kind() == 7) {
+            static_cast<Camera*>(OW(idx))->set_view_alpha(a);
+            return;
+        } else {
+            return;
+        }
+        {
+            unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
+            OW(idx)->set_color(c);
+        }
+        return;
+    }
+    {
+    unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
+    OW(idx)->set_color(c);
+    }
+}
+
+// @ 0x48e1a0
+void widget_mgr::set_hilight_color(int idx, unsigned rgb)
+{
+    if (OW(idx)->kind() != 0 && OW(idx)->kind() != 1 && OW(idx)->kind() != 9 && OW(idx)->kind() != 5 &&
+        OW(idx)->kind() != 6)
+        return;
+    unsigned c = (OW(idx)->color14c & 0xff000000) | rgb;
+    OW(idx)->set_hilight_color(c);
+    OW(idx)->get_xy();
+}
+
+// @ 0x48e270
+void widget_mgr::set_hilight_alpha(int idx, unsigned a)
+{
+    if (OW(idx)->kind() != 0 && OW(idx)->kind() != 1 && OW(idx)->kind() != 9 && OW(idx)->kind() != 5 &&
+        OW(idx)->kind() != 6)
+        return;
+    unsigned c = (OW(idx)->color150 & 0xffffff) | (a << 24);
+    OW(idx)->set_hilight_color(c);
+    OW(idx)->get_xy();
+}
+
+// @ 0x48e340
+void widget_mgr::set_val(int idx, int v)
+{
+    if (OW(idx)->kind() == 2 || OW(idx)->kind() == 3) {
+        OW(idx)->set168((float)v);
+        if (OW(idx)->v168 < OW(idx)->f16c) {
+            OW(idx)->v168 = OW(idx)->f16c;
+            return;
+        }
+        if (OW(idx)->v168 > OW(idx)->f170)
+            OW(idx)->v168 = OW(idx)->f170;
+        return;
+    }
+    if (OW(idx)->kind() == 5) {
+        if (v < OW(idx)->f160)
+            v = OW(idx)->f160;
+        else if (v > OW(idx)->f164)
+            v = OW(idx)->f164;
+        OW(idx)->set15c(v);
+        return;
+    }
+    if (OW(idx)->kind() != 8)
+        return;
+    if (((XyzButton*)OW(idx))->f184 != 1)
+        return;
+    if (v < 0)
+        v = 0;
+    else if (v > 2)
+        v = 2;
+    OW(idx)->set15c(v);
+    ((XyzButton*)OW(idx))->f180 = v != 0;
+}
+
+// @ 0x48e4c0
+void widget_mgr::set_limits(int idx, int lo, int hi)
+{
+    if (OW(idx)->kind() != 2 && OW(idx)->kind() != 3)
+        return;
+    OW(idx)->f16c = (float)lo / g_script.fixed_point_multiplier;
+    OW(idx)->f170 = (float)hi / g_script.fixed_point_multiplier;
+    if (OW(idx)->v168 < OW(idx)->f16c) {
+        OW(idx)->v168 = OW(idx)->f16c;
+        return;
+    }
+    if (OW(idx)->v168 > OW(idx)->f170)
+        OW(idx)->v168 = OW(idx)->f170;
+}
+
+// @ 0x48e590
+void widget_mgr::add_item(int idx, const tstring& text)
+{
+    if (OW(idx)->kind() == 5)
+        ((DropDown*)OW(idx))->append(&text);
+}

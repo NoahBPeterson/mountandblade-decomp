@@ -276,7 +276,7 @@ static void sc_effect()
     HRESULT hr = D3DXCreateEffectFromFileA(dev, fxp.c_str(), nullptr, nullptr, 0x800, nullptr, &fx, &err);
     if (FAILED(hr)) { printf("effect: create failed %08x\n", (unsigned)hr); g_fail++; return; }
     IDirect3DTexture9* t = load_tex("cursor.dds");
-    // the game's "regular" vertex declaration (rec_tables.cpp): position, normal, colour 0/1, texcoord
+    // the game's "regular" vertex declaration (module_option_records.cpp): position, normal, colour 0/1, texcoord
     D3DVERTEXELEMENT9 el[] = {
         {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0}, {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
         {0, 16, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1}, {0, 20, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
@@ -754,7 +754,7 @@ static void sc_ffp_extras()
     t->Release();
 }
 
-// every technique of mb.fx: each pass drawn once with the game's vertex declaration for it (rec_tables.cpp)
+// every technique of mb.fx: each pass drawn once with the game's vertex declaration for it (module_option_records.cpp)
 static void sc_fx_all()
 {
     std::string fxp = g_game + "/mb.fx";

@@ -1,0 +1,4 @@
+../src/game/data/module_files_loader.cpp  ?load_module_files@@YAXXZ  0050d5e0  /O2 /MT /Gy /TP
+# compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
+../src/game/data/module_files_loader.cpp  _$E1  00548050  /O2  /MT  /Gy  /TP
+../src/game/data/module_files_loader.cpp  _$E2  005483f0  /O2  /MT  /Gy  /TP

@@ -75,7 +75,7 @@ def annotations(src):
     if src not in c["annots"]:
         import slice as S
         c["annots"][src] = c["R"].source_annotations(
-            [src] + glob.glob(os.path.join(os.path.dirname(src), "*.h")) + S.sibling_headers(src))
+            S.annotation_sources(src))
     return c["annots"][src]
 
 
@@ -111,7 +111,7 @@ def manifest_vas():
     """{mangled name: VA} of every external symbol a src/ module's manifest row lists at exactly one address. The
     src/ modules link together, so their names are unique; a row is verified byte-exact at its VA, stronger evidence
     than a declaration annotation the resolver matches by identifier (`??4tstring@@` took the annotation of a vector's
-    operator= in mesh_2.h, `??0Skin@@QAE@ABU0@@Z` the default constructor's). For src/ rows this wins over the
+    operator= in poly_mesh_edge_face_ops.h, `??0Skin@@QAE@ABU0@@Z` the default constructor's). For src/ rows this wins over the
     resolver; match/slices rows keep the resolver's own-source annotation first (each slice spells its own E36,
     tstring, Terrain::reset, so their names collide across slices)."""
     c = context()

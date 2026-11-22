@@ -1,0 +1,54 @@
+#ifndef PICK_ENTITY_H
+#define PICK_ENTITY_H
+// Slice s004ed8d0: the cursor pick.
+//   0x4ed8d0  pick_entity - one contact test per scene object against the view cell; the nearest hit is
+//             selected (MissionBlocker::sel_target) and its label drawn.
+// Class and member names are provisional.
+#include <stdio.h>
+#include "engine/core/layout32.h"
+#include <string.h>
+#include <math.h>
+#include <vector>
+#include "engine/math/rgl_math.h"
+#include "game/ui/screens/character_sheet/cs_common.h"
+#include "game/ui/screens/character_sheet/cs_mat.h"
+
+using rgl::vector4;
+
+// ---- constants / callees ------------------------------------------------------------------------------------
+extern const float g_549d70;            // 0.5f
+// compile-time constants: the original stores / pushes them as immediates (0x4ed921, 0x4ed99d, 0x4ed9a9), no image address
+const float g_3f000000 = 0.5f;          // 0x3f000000 (contact radius)
+const float g_3f8ccccd = 1.1f;          // 0x3f8ccccd (pick tolerance)
+const float g_4e6e6b28 = 1e9f;          // 0x4e6e6b28 (far reach)
+const float g_3ac49ba6 = 1.5e-3f;       // 0x3ac49ba6 (capsule radius)
+
+// ---- globals ------------------------------------------------------------------------------------------------
+// (the menu-mode flag is g_game->f1a20c, the selected entity g_game->editor.sel_index, the scene is *g_mission: all fields of the pointed-to
+//  objects, not globals of their own)
+
+// ---- types --------------------------------------------------------------------------------------------------
+#include "engine/core/tstring.h"
+
+#include "engine/physics/shape.h"
+
+
+using rgl::smat;
+// (identity_pos 0x40cd00: cs_mat.h; capsule::capsule(float, const vector4*, const vector4*) 0x433310 and sphere::transform 0x408420: shape.h)
+struct contact;
+int __cdecl shape_contact_count(shape_base* a, shape_base* b, int max, contact* out);    // 0x40bfe0
+#include "game/campaign/map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0 (MissionBlocker::name_widget)
+
+#include "game/mission/mission.h"
+#include "game/data/game_data.h"   // g_game
+
+#include "engine/math/vec.h"                      // vector2 (= Vec2)
+
+#include "game/ui/view_rect.h"                    // ViewRect
+#include "game/data/mission_item_recs.h"   // MissionBlocker: pick_entity is its member (the screen at slot 14)
+#include "game/mission/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
+#include "game/data/ptype.h"
+#include "engine/math/float_consts.h"
+
+// ------------------------------------------------------------------------------------------------------------
+#endif

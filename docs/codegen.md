@@ -95,10 +95,10 @@ mechanisms. This guide does not depend on it.
 - **WinLicense markers are source, and we can emit them.** An 18-byte
   `EB 10 "WL  " <id dword> 00000000 "WL  "` in a function is a WinLicense/Themida
   SDK region marker (ids 12/13 start/end, also 4/5, 6): the jmp skips it, no
-  runtime effect. Write `WL_MARKER(id)` from `src/include/wl_marker.h` at that
+  runtime effect. Write `WL_MARKER(id)` from `src/platform/wl_marker.h` at that
   point in the source (the one place `_emit` is allowed; asm_audit knows it).
-  Functions with markers do reach byte-exact (game.cpp 0x51de70, troop_rec.cpp,
-  exchange_screens.cpp). The `__asm` is also a scheduling and register-allocation
+  Functions with markers do reach byte-exact (game_state_load.cpp 0x51de70, new_game_setup.cpp,
+  mission_menu_and_exchange_screens.cpp). The `__asm` is also a scheduling and register-allocation
   barrier, exactly as in the original, so a missing marker shifts registers and
   slots around it too: add the markers before chasing those differences. Older
   notes that say a WinLicense row "can never be byte-exact" predate the header.
@@ -427,8 +427,8 @@ compiler cannot fold: a constructor-expression temporary, or a union overlay.
   inputs only build realistic elements for the real type. M&B
   `rgl::entity::lods` and `meshes` (+0x108/+0x118) are
   `std::vector<lod_mesh2*>` and `std::vector<mesh*>` in
-  `src/rgl/scene/scene_entity.h:92`. A module that copies such a class locally
-  (`facegen_misc.h`: `ent_vec<T>`, `ui_vec`, and placeholder virtuals `s00()` to
+  `src/engine/scene/scene_entity.h:92`. A module that copies such a class locally
+  (`face_generator_refresh.h`: `ent_vec<T>`, `ui_vec`, and placeholder virtuals `s00()` to
   `s48()` to reach slot +0x4c) usually does so because its slice `rgl.h`
   redefines `rgl::string`/`rgl::vector4` and clashes with the shared header.
   Fix the include, not the class: move the module onto the shared headers and
@@ -464,8 +464,8 @@ compiler cannot fold: a constructor-expression temporary, or a union overlay.
 
 ### 5.7 Overriding a record's vtable slots (the head_rec family)
 
-The head_rec family's records (`head_rec.h`, `item_rec.h`'s ItemRec/ItemRec2,
-`mission_items.cpp`'s MissionBlocker/ItemA/ItemB/ItemC/ItemD) are never
+The head_rec family's records (`head_rec.h`, `item_head_records.h`'s ItemRec/ItemRec2,
+`mission_item_records.cpp`'s MissionBlocker/ItemA/ItemB/ItemC/ItemD) are never
 constructed by the binary - each table is referenced only by its own
 constructor's vptr store - so a row's evidence is the table's slot targets, not
 executed behaviour (docs/Papercuts.md). When the image's derived table
@@ -477,7 +477,7 @@ row fails on the vtable bytes. The fix pattern (mission_items 0x4ce960
 - Declare the overridden slots **in the derived class, under the base's slot
   names** (head_rec.h's `reset_screen/2/4`, `frame_update/5/6`, `pure_7`,
   `always_true`), one `// slot N  0x<va> <Target>::<method> (owner TU)` comment
-  per declaration - the item_rec.h shape. Never append new virtual names (each
+  per declaration - the item_head_records.h shape. Never append new virtual names (each
   compiles to its own extra slot and the table grows past the image's), and
   never put two declarations on one annotated line.
 - Declarations, not definitions: nothing in a row TU calls the overrides, so a
@@ -503,11 +503,11 @@ row fails on the vtable bytes. The fix pattern (mission_items 0x4ce960
   overrides end to end. If the relink reports unresolved externals for the slot
   symbols, fall back to one-line forwarding thunks defined in the target's
   owning TU (`void ItemRec::screen_build() { ((MainMenuScreen*)this)->create(); }`,
-  cls_map.cpp:3023; also hud.cpp:390, save_game.cpp:225). Targets owned by
-  rgl-layer TUs (`reset_gui`, `MapDialog::reset_state` in gui_edit.cpp,
+  winmain_and_menu_screens.cpp:3023; also mission_hud_buttons.cpp:390, save_game.cpp:225). Targets owned by
+  rgl-layer TUs (`reset_gui`, `MapDialog::reset_state` in editor_selection_and_translation.cpp,
   `static_entity::awake` in entity_types.cpp) cannot include a game header, so
   their thunks stay with the record (`void ItemRec::reset_screen() {
-  reset_gui(); }`, item_rec.cpp:55).
+  reset_gui(); }`, item_head_records.cpp:55).
 
 ---
 
@@ -1040,10 +1040,10 @@ Derive float sum **grouping from the assembly, not from a decompile**.
 >
 > On 2026-11-10 it made five functions byte-exact in one afternoon, one after another:
 > - `rot2::rotate_2x2` 0x4f3b40: `double s = sin(angle)` (details below).
-> - shapes.cpp 0x409e90: the scale factor `t` declared `double`.
-> - shapes.cpp 0x409980: `double t` plus a `vector4 dt(d.x*t, d.y*t, d.z*t)` temporary.
-> - shapes.cpp 0x408a50: `v[i].y * (double)s[1]`.
-> - fx_keys.cpp 0x423390: `double t = 1.0f - rec(i)->f18`.
+> - collision_shapes.cpp 0x409e90: the scale factor `t` declared `double`.
+> - collision_shapes.cpp 0x409980: `double t` plus a `vector4 dt(d.x*t, d.y*t, d.z*t)` temporary.
+> - collision_shapes.cpp 0x408a50: `v[i].y * (double)s[1]`.
+> - fx_key_frames.cpp 0x423390: `double t = 1.0f - rec(i)->f18`.
 >
 > It also took fx_keys 0x423440 from 82 to 80. Earlier lanes had tried many spellings of these rows, and every
 > `float` spelling failed. `tools/matching/vsearch.py` tries it mechanically: its x87-type rewrite
@@ -1090,7 +1090,7 @@ Derive float sum **grouping from the assembly, not from a decompile**.
   vector4* o=&cur.o; o->x += t.x; ... }` fixed an asymmetric `fld` order that
   `float*` spellings could not (`s00409500`).
 - **Vector helpers set operand order downstream (M&B `terrain_b`, round bm6tb).**
-  - **Inline vs out-of-line normalize (`render_batch::render_scene` 0x46e590):** going through the header's inline `vector4::normalize` body, whose `length()` sums z, y, x (wrapped as `vec4n`, like `shapes.cpp`'s `vec4i`), changed which x87 operand loads first. Both cross products after it then matched.
+  - **Inline vs out-of-line normalize (`render_batch::render_scene` 0x46e590):** going through the header's inline `vector4::normalize` body, whose `length()` sums z, y, x (wrapped as `vec4n`, like `collision_shapes.cpp`'s `vec4i`), changed which x87 operand loads first. Both cross products after it then matched.
   - **Re-derived references reproduce reloads (`PolyMesh::compute_face_normals` 0x4705e0):** `const vector4& p0 = verts.begin()[faces.begin()[i].vid[0]].pos;`, then p1 the same way, gives the original's second `vid[0]` load.
   - **A loop-scoped vector temporary (`compute_edge_creases` 0x470750):** `vector4 d = b.pos - a.pos;` inside the loop fixed the normalisation's fld/fmul order.
   - **A `const vector4&` helper bound to a temporary keeps the last lane on the stack (M&B `Game::build_map_trees` 0x5213d0, round bm9bt).** The original multiplies `c` by a lit vector with `fld c.z; fmul st(1); fstp c.z; fstp st(0)`: lit.z isn't consumed. A named `vector4 lit = ...; c.x *= lit.x; ...` consumes it (`fmul [c.z]`). `map_mul(c, lightL + lightM * s)`, with `map_mul(vector4& a, const vector4& b) { a.x *= b.x; ... }`, gives the original's shape (+4). The same kind of helper, `map_add(sum, q + d * 0.25f)`, gave a chain sum's `fld r.x; faddp st(4)`. It doesn't work everywhere: a `const float&` scale bound to a temporary or to a named float changed nothing, and in a loop where the original consumes the value, the helper's reference is wrong.
@@ -1111,7 +1111,7 @@ Derive float sum **grouping from the assembly, not from a decompile**.
         r[0] = r0; r[1] = r1;
     }
     ```
-    In the tree the row type is `rot2_row` in `src/include/rot2.h`, not `vec.h`'s `Vec2`. The operators were first
+    In the tree the row type is `rot2_row` in `src/engine/math/rot2.h`, not `vec.h`'s `Vec2`. The operators were first
     added to the shared `Vec2`, and that swapped two stack slots in `MapPanel::draw_party_line` 0x51c090, a
     function that never uses them: new inline members in a header that 112 sources include shift cl's symbol ids
     (6.2). Put a new inline helper in the narrowest header that needs it.
@@ -1158,7 +1158,7 @@ Derive float sum **grouping from the assembly, not from a decompile**.
       is an explicit `out->vector4::vector4(...)`; the clean form is the by-value signature.
     - *Operand order of a quaternion sum, and unnamed temporaries (fx_anim 0x422130, 1437 -> 838, FAIL -> PASS).*
       `quaternion().set(...) + quaternion().set(...)` instead of named `qa`/`qb`, and `q = t2 + t1`. The frame stays
-      0x10 short because `FxAnim::chain` (0x423b60) is an out-parameter in `fx_anim.h` but returns a `quaternion` by
+      0x10 short because `FxAnim::chain` (0x423b60) is an out-parameter in `fx_animation.h` but returns a `quaternion` by
       value in the original: fix the header before the next attempt.
     - *A `double` average scale and one object for three rotated vectors (light_mesh 0x47b7b0, 2855 -> 323).*
       `double k = (col.x + col.y + col.z) * 0.33f; c.x *= k; ...` gave 1238 -> 826; keeping the three rotated
@@ -1358,7 +1358,7 @@ Source types and comparison spellings go literally into instructions.
   dependence; the barrier pins the order. Place it between a scheduling-critical
   store and the load or store it must precede. cl 13.10 has no `<intrin.h>`, so
   declare it `extern "C" void _ReadWriteBarrier(void);`. M&B: `0x488560`
-  (`MissionUi::set_a`, src/game/ui/mission_ui.cpp) is byte-exact with `periodA = a; _ReadWriteBarrier();
+  (`MissionUi::set_a`, src/game/ui/widgets/widget_base.cpp) is byte-exact with `periodA = a; _ReadWriteBarrier();
   t0 = g_ticks[clock0];`. It also pinned a load after earlier stores in
   Spore's cl 13.10-family code (15 diff bytes to 0). When the compiler still CSEs
   the reload, read the field through a `volatile` access at that one site, and
@@ -1536,7 +1536,7 @@ merged by discovery; split the extent instead of treating it as one ABI.
   `isize` (4). Use them to **measure**: the smallest `/d2inlT<N>` at which a call
   is inlined is that callee's cost at that site. `??_Eframe_set` (`0x41aee0`)
   matches byte for byte with `/d2inlT88` and above (the cost of `??_EBone`'s
-  array path is 87), but a global `inlT88` drops `resmgr.cpp` from 62 to 54
+  array path is 87), but a global `inlT88` drops `resource_manager.cpp` from 62 to 54
   matches, so the original was not built with another threshold: our source
   presents `??_EBone` (or the call site) as costlier than the original's did.
   Replacing `Bone`'s `std::vector` with a minimal struct did not change the cost.

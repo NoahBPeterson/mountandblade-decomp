@@ -1,0 +1,62 @@
+// camera_class.h: the one declaration of the 0x4a8-byte view object built by the constructor 0x49deb0 (Camera). Its members are defined
+// in party2/camera.cpp: type 0x49df30, mask 0x49df40, move 0x49df60, update 0x49dfe0, scalar deleting destructor 0x49e580, render 0x49e5b0.
+//
+// Layout: the container (ContainerBase, 0x188 bytes: MissionUi, constructed by 0x48ae20, and the child vector), the render scene (rgl::scene, 0x1d8 bytes at +0x188),
+// the box frustum (rgl::frustum, 0x120 bytes at +0x360), two follow objects at +0x480 and the followed shape at +0x490.
+// The scrolling-list widgets of the other modules (party screen skills list, the editor / quest list 0x4f62f0, the HUD tree, the
+// party-create item list) are built by the same constructor and use +0x484 (follow[1]) and +0x490 (target) for their scroll bar and
+// parent / row count.
+// Include after the translation unit's declaration of rgl::scene (src/engine/render/mesh.h, or src/game/rgl_mesh.h in the rgl.h universe: both are
+// the 0x1d8-byte class); a translation unit that only passes Camera pointers around forward-declares it.
+#ifndef MB_CAMERA_CLASS_H
+#define MB_CAMERA_CLASS_H
+#include <stddef.h>
+#include "engine/core/layout32.h"
+#include "engine/scene/frustum.h"
+#include "game/ui/widgets/container.h"
+#include "game/ui/widgets/ui_widgets.h"            // UiD: the scroll bars the list widgets keep in follow[]          // ContainerBase: the view is a container (MissionUi + the child vector at +0x178)
+
+
+// ---- the view itself ----------------------------------------------------------------------------------------------
+struct Camera : ContainerBase {
+    rgl::scene   scene;                         // +0x188  (0x429740 / 0x41f4e0)
+    rgl::frustum fr;                            // +0x360  (0x41ef60)
+    UiD*    follow[2];                          // +0x480  the two follow objects (scroll bars; the list widgets keep theirs in follow[1], +0x484)
+    int     slot_on[2];                         // +0x488  whether each is shown (draw 0x488d50 sets them, animate 0x49dfe0 reads them)
+    ContainerBase* target;                      // +0x490  the object the view tracks (the list widgets keep their parent / row count here)
+    float   shake_x;                            // +0x494
+    float   shake_y;                            // +0x498
+    V2      tail;                               // +0x49c
+    int     f4a4;                               // +0x4a4
+
+    Camera();                                   // 0x49deb0
+    // no destructor of its own: slot 0 is the implicit one, whose scalar deleting destructor 0x49e580 runs the scene's destructor, then ContainerBase's 0x490520
+    virtual void animate(int unused);           // +0x08 0x49dfe0
+    virtual void render(rgl::scene* sc, float* pos, float* c, float* d);   // +0x28 0x49e5b0
+    virtual void on_child_moved(MissionUi* e);  // +0x5c 0x49df60
+    virtual int kind();                         // +0xc0 0x49df30 (7)
+    virtual unsigned mask(int a);               // +0xcc 0x49df40 (vtable slot 51)
+    void draw();                                // 0x488d50 (game/ui/widgets/widget_base.cpp: shows or hides each scroll bar by the target's size, then repositions the target)
+    // The view's layout members (callers reach them on a kind-7 widget: widget_mgr's set_size / set_area_size, the
+    // overlay colour / alpha / text operations, the menus' title list). The view widget is the target's first child
+    // (target->kids[0], read through operator[] at every use); follow[1] the scroll bar.
+    void set_view_color(unsigned rgb);          // 0x48d350 (game/party/stacks_and_loot.cpp: the view's colour, keeping its alpha)
+    void set_view_alpha(unsigned a);            // 0x48d3c0 (game/party/stacks_and_loot.cpp: the view's and the scroll bar's alpha)
+    void update();                              // 0x48d470 (game/party/stacks_and_loot.cpp: re-places target, the view and the scroll bar)
+    void relayout(const tstring* text);         // 0x48f020 (game/ui/widgets/container_and_tableau_misc.cpp, ret 4: the view's text, then update)
+    void resize(const vec2& size);              // 0x48f120 (game/ui/widgets/container_and_tableau_misc.cpp, ret 4: the view's size, then update)
+    void scroll_refresh(const vec2& size);      // 0x498420 (game/ui/widgets/hud_bar_widgets.cpp, ret 4: new scroll bar meshes for a size)
+};
+
+// compile-time layout check (VC7.1 has no static_assert)
+#define MB_CAMERA_ASSERT(name, cond) MB_LAYOUT32_ASSERT(camera_assert_##name, (cond))
+MB_CAMERA_ASSERT(scene_off, offsetof(Camera, scene) == 0x188);
+MB_CAMERA_ASSERT(frustum_off, offsetof(Camera, fr) == 0x360);
+MB_CAMERA_ASSERT(follow_off, offsetof(Camera, follow) == 0x480);
+MB_CAMERA_ASSERT(follow1_off, offsetof(Camera, follow) + sizeof(UiD*) == 0x484);
+MB_CAMERA_ASSERT(slot_on_off, offsetof(Camera, slot_on) == 0x488);
+MB_CAMERA_ASSERT(target_off, offsetof(Camera, target) == 0x490);
+MB_CAMERA_ASSERT(flags_off, offsetof(Camera, f104) == 0x104);
+MB_CAMERA_ASSERT(camera_size, sizeof(Camera) == 0x4a8);
+
+#endif // MB_CAMERA_CLASS_H

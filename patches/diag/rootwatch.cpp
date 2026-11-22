@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 struct gui_manager;
-extern gui_manager g_gui;   // 0x5d7080 (strat/gui_manager.h)
+extern gui_manager g_gui;   // 0x5d7080 (game/ui/gui_manager.h)
 
 namespace {
 

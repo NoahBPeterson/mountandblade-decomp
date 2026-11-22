@@ -1,1 +1,0 @@
-../src/game/inventory_panel/skeleton_load.cpp  ?load@SkeletonBody@@QAEXABUtstring@@@Z  0050fc60  /O2 /MT /Gy /TP

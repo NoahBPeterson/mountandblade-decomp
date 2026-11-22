@@ -13,7 +13,7 @@ Base side: a detached git worktree of REV (default HEAD) under --base-tree (defa
 to REV on demand; its work/ and .venv are symlinks to this repo's, so it uses the same toolchain and object cache).
 Both sides compile through tools/difftest/slice.compile_obj of their own tree (cl.sh under wine, or the compile
 server unless MB_RC=0; objects cached by source + headers + flags, so an unchanged TU costs nothing on the second run).
-Compiles run one at a time. Flag sets per TU: those of its manifest rows plus explicit `flags /..` notes of its
+Compiles run --jobs at a time; a file moved since REV (git mv) is compiled from its old path on the base side. Flag sets per TU: those of its manifest rows plus explicit `flags /..` notes of its
 nonmatching rows (the defaults /O2 /MT /Gy /TP when it has none).
 
 Per symbol: every defined symbol (function, data, string literal, static) is compared by its bytes (up to the next
@@ -51,7 +51,7 @@ def include_graph():
                 p = os.path.join(d, f)
                 out = []
                 for name in INC.findall(open(p, "rb").read().decode("latin-1")):
-                    for base in (d, os.path.join(ROOT, "match", "include")):
+                    for base in (d, os.path.join(ROOT, "src"), os.path.join(ROOT, "match", "include")):
                         c = os.path.normpath(os.path.join(base, name))
                         if os.path.isfile(c):
                             out.append(c)
@@ -187,6 +187,17 @@ def describe(a, b):
 
 # ---------------------------------------------------------------- main
 
+def renames(rev):
+    """{new path: old path} of the files `git mv` moved since REV (a restructure: the base side compiles the old path)."""
+    out = git("diff", "-M10%", "--name-status", "--diff-filter=R", rev, "--", "src").splitlines()
+    m = {}
+    for l in out:
+        p = l.split("\t")
+        if len(p) == 3:
+            m[p[2]] = p[1]
+    return m
+
+
 def changed_tus(rev):
     files = [os.path.join(ROOT, f) for f in git("diff", "--name-only", rev, "--", "src", "match/include").splitlines()]
     files = [f for f in files if os.path.exists(f)]
@@ -205,37 +216,84 @@ def cmd_cmp(a):
     tree = os.path.abspath(a.base_tree)
     sha = base_tree(tree, a.base)
     print("base %s (%s), %d TU(s)" % (sha[:10], tree, len(tus)))
+    moved = renames(a.base)
+    jobs = [(src, fl) for src in tus for fl in flag_sets(src)]
     bad = 0
-    for src in tus:
+
+    def one(job):
+        src, fl = job
         rel = os.path.relpath(src, ROOT)
-        for fl in flag_sets(src):
-            fs = " ".join(fl)
-            bsrc = os.path.join(tree, rel)
-            if not os.path.exists(bsrc):
-                print("NEW      %s [%s]: no base version" % (rel, fs))
-                continue
-            ob, lb = compile_in(tree, bsrc, fl)
-            on, ln = compile_in(ROOT, src, fl)
-            if not ob or not on:
-                bad += 1
-                print("COMPILE FAIL %s [%s] (%s)\n%s" % (rel, fs, "base" if not ob else "tree", (lb if not ob else ln)[-1500:]))
-                continue
-            old, new = symbols(ob, rename, rename_re), symbols(on)
-            names = sorted(set(old) | set(new))
-            diff = []
-            for n in names:
-                if n not in new:
-                    diff.append((n, "only in base"))
-                elif n not in old:
-                    diff.append((n, "only in tree"))
-                elif old[n] != new[n]:
-                    diff.append((n, describe(old[n], new[n])))
-                elif a.verbose:
-                    print("  identical %s" % n)
-            print("%s %s [%s]: %d symbols, %d differ" % ("SAME    " if not diff else "DIFFERS ", rel, fs, len(names), len(diff)))
-            for n, why in diff:
-                print("  differs  %s: %s" % (n, why))
-            bad += bool(diff)
+        fs = " ".join(fl)
+        out = []
+        bsrc = os.path.join(tree, moved.get(rel, rel))
+        if not os.path.exists(bsrc):
+            return ["NEW      %s [%s]: no base version" % (rel, fs)], 0
+        ob, lb = compile_in(tree, bsrc, fl)
+        on, ln = compile_in(ROOT, src, fl)
+        if not ob or not on:
+            return ["COMPILE FAIL %s [%s] (%s)\n%s" % (rel, fs, "base" if not ob else "tree", (lb if not ob else ln)[-1500:])], 1
+        old, new = symbols(ob, rename, rename_re), symbols(on)
+        names = sorted(set(old) | set(new))
+        diff = []
+        for n in names:
+            if n not in new:
+                diff.append((n, "only in base"))
+            elif n not in old:
+                diff.append((n, "only in tree"))
+            elif old[n] != new[n]:
+                diff.append((n, describe(old[n], new[n])))
+            elif a.verbose:
+                out.append("  identical %s" % n)
+        out.append("%s %s [%s]: %d symbols, %d differ" % ("SAME    " if not diff else "DIFFERS ", rel, fs, len(names), len(diff)))
+        for n, why in diff:
+            out.append("  differs  %s: %s" % (n, why))
+        return out, int(bool(diff))
+
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=max(1, a.jobs)) as ex:
+        for lines, b in ex.map(one, jobs):
+            print("\n".join(lines))
+            bad += b
+    return 1 if bad else 0
+
+
+def cmd_split(a):
+    """One object split into parts (tools/migrate/restructure.py b): every symbol of the base object must come out of
+    some part with the same bytes and relocations (a helper copy may be in several parts; a symbol only a part has,
+    such as a copied static, is listed apart)."""
+    tree = os.path.abspath(a.base_tree)
+    sha = base_tree(tree, a.base)
+    fl = flag_sets(os.path.join(ROOT, a.parts[0]))[0]
+    ob, lb = compile_in(tree, os.path.join(tree, a.old), fl)
+    if not ob:
+        print("COMPILE FAIL base %s\n%s" % (a.old, lb[-1500:]))
+        return 1
+    old = symbols(ob)
+    from concurrent.futures import ThreadPoolExecutor
+    def comp(part):
+        o, l = compile_in(ROOT, os.path.join(ROOT, part), fl)
+        return part, o, l
+    new = {}
+    with ThreadPoolExecutor(max_workers=max(1, a.jobs)) as ex:
+        for part, o, l in ex.map(comp, a.parts):
+            if not o:
+                print("COMPILE FAIL %s\n%s" % (part, l[-1500:]))
+                return 1
+            new[part] = symbols(o)
+    bad = 0
+    for n in sorted(old):
+        homes = [p for p, sy in new.items() if n in sy]
+        same = [p for p in homes if new[p][n] == old[n]]
+        if not homes:
+            print("  missing  %s" % n); bad += 1
+        elif not same:
+            print("  differs  %s [%s]: %s" % (n, homes[0], describe(old[n], new[homes[0]][n]))); bad += 1
+        elif a.verbose and len(homes) > 1:
+            print("  copies   %s in %d parts" % (n, len(homes)))
+    extra = sorted({n for sy in new.values() for n in sy} - set(old))
+    print("%s -> %d parts: %d base symbols, %d not reproduced, %d symbols only in the parts" % (a.old, len(new), len(old), bad, len(extra)))
+    for n in extra[:a.max_extra]:
+        print("  new      %s  [%s]" % (n, ",".join(os.path.basename(p) for p, sy in new.items() if n in sy)))
     return 1 if bad else 0
 
 
@@ -250,7 +308,16 @@ def main():
     c.add_argument("--changed", action="store_true", help="add every TU that sees a src/ file changed since --base")
     c.add_argument("--rename", action="append", default=[], metavar="OLD=NEW")
     c.add_argument("--rename-re", action="append", default=[], metavar="PAT=>REP")
+    c.add_argument("--jobs", type=int, default=4, help="TUs compared at once (compiles themselves go to the compile server)")
     c.add_argument("-v", "--verbose", action="store_true", help="also list identical symbols")
+    sp = sub.add_parser("split")
+    sp.add_argument("old")
+    sp.add_argument("parts", nargs="+")
+    sp.add_argument("--base", default="HEAD")
+    sp.add_argument("--base-tree", default=os.path.join(ROOT, "work", "objcmp_base"))
+    sp.add_argument("--jobs", type=int, default=4)
+    sp.add_argument("--max-extra", type=int, default=40)
+    sp.add_argument("-v", "--verbose", action="store_true")
     i = sub.add_parser("includers")
     i.add_argument("headers", nargs="+")
     a = ap.parse_args()
@@ -258,6 +325,8 @@ def main():
         for f in includers(a.headers):
             print(os.path.relpath(f, ROOT))
         return 0
+    if a.cmd == "split":
+        return cmd_split(a)
     return cmd_cmp(a)
 
 

@@ -50,26 +50,26 @@ sum of all pad arrays in the struct.
 
 | struct | file | pad bytes | sizeof / note |
 |---|---|---:|---|
-| MapScreen | src/game/char_sheet/save_game.h | 138,795,291 | view of the map-screen object, `padview[0x845d984-..]`; no size check |
-| conv_rec | src/rgl/mesh2/gui_edit.h | 12,824,788 | `pad24` 12.8 M inside a view; no check |
-| GameMapView | src/game/mission5/game_2.h | 107,096 | view |
-| SiteKeys | src/game/mission_ui2/mission_3.h | 107,000 | view over the game object, `pad0[0x1a1f0]` |
-| CampaignGame_s2b5c0 | src/game/mission5/mission_5.h | 106,975 | view |
-| Game_s2cf60 | src/game/mission5/mesh_3.h | 106,956 | view |
-| GameData_s261e0 | src/game/mission5/mission_5.h | 106,947 | view, 16 pads |
-| Frame | src/rgl/mesh2/gui_edit.h | 106,904 | view |
+| MapScreen | src/game/save/save_game.h | 138,795,291 | view of the map-screen object, `padview[0x845d984-..]`; no size check |
+| conv_rec | src/game/editor/editor_selection_and_translation.h | 12,824,788 | `pad24` 12.8 M inside a view; no check |
+| GameMapView | src/game/campaign/map_builder_and_data_load.h | 107,096 | view |
+| SiteKeys | src/game/party/stacks_and_loot.h | 107,000 | view over the game object, `pad0[0x1a1f0]` |
+| CampaignGame_s2b5c0 | src/game/mission/mission_frame_update.h | 106,975 | view |
+| Game_s2cf60 | src/game/editor/poly_mesh_pick.h | 106,956 | view |
+| GameData_s261e0 | src/game/mission/mission_frame_update.h | 106,947 | view, 16 pads |
+| Frame | src/game/editor/editor_selection_and_translation.h | 106,904 | view |
 | GameConfig | src/game/config/config.h | 106,892 | view |
-| Frame__s2f250 | src/game/mission5/mesh_3.h | 106,827 | view |
-| CampaignGame_s2bf40 | src/game/mission5/mission_5.h | 106,704 | view |
-| EditorGameView | src/game/agent5/editor_dialog.cpp | 106,668 | view |
-| Game_s284a0 | src/game/mission5/mission_5.h | 106,636 | view |
-| OutRecList | src/game/char_sheet/save_records.h | 82,004 | view over the save writer |
-| Placement | src/game/agent/agent.h | 81,908 | view, placement block at +0x13fb4 |
+| Frame__s2f250 | src/game/editor/poly_mesh_pick.h | 106,827 | view |
+| CampaignGame_s2bf40 | src/game/mission/mission_frame_update.h | 106,704 | view |
+| EditorGameView | src/game/editor/terrain_brush_dialog.cpp | 106,668 | view |
+| Game_s284a0 | src/game/mission/mission_frame_update.h | 106,636 | view |
+| OutRecList | src/game/save/save_records.h | 82,004 | view over the save writer |
+| Placement | src/game/agent/agent_queries.h | 81,908 | view, placement block at +0x13fb4 |
 
 The real (non-view) structs rank differently; by pad bytes: GameData_s261e0 (106,947), OuterGame (80,384), Game_s257f0 and Game_s26130 (80,380 each),
-Mission_s261e0 (26,553), Mission_s257f0 (26,344), progress_bar.h MapScreen (26,256). Most of the top of both lists are the numbered `_sNNNN`
-overlay structs in src/game/mission5/mission_5.h (242 pads in that one file) and mesh_3.h (55). By array count the worst files are mission_5.h 242,
-gui_edit.h 57, mesh_3.h 55, script_interpreter.h 49, script_interpreter.cpp 48, agent_obj.h 44, mesh_game.cpp 38, game_data.h 37, party/game.h 32.
+Mission_s261e0 (26,553), Mission_s257f0 (26,344), progress_bar_and_load_screens.h MapScreen (26,256). Most of the top of both lists are the numbered `_sNNNN`
+overlay structs in src/game/mission/mission_frame_update.h (242 pads in that one file) and poly_mesh_pick.h (55). By array count the worst files are mission_frame_update.h 242,
+editor_selection_and_translation.h 57, poly_mesh_pick.h 55, script_interpreter.h 49, script_interpreter.cpp 48, agent_obj.h 44, agent_spawn_and_tick.cpp 38, game_data.h 37, game/campaign/game_state_load.h 32.
 
 ## Behaviour on 64-bit, per class
 
@@ -110,15 +110,15 @@ not change codegen. If a rename moves bytes (a member order or alignment effect)
 
 | lane | scope | pads | scalars |
 |---|---|---:|---:|
-| L1 | src/game/mission5/mission_5.h (the `_sNNNN` overlay structs) | 242 | see tsv | 2026-11-16 (naming lane 2): 243 -> 183 pad arrays; the Mission / Agent / AgentTable / DialogMgr views of slices s25160, s257f0, s26130, s261e0, s27c90 (Mission, grids), s29ec0 (Mission), s2ae70 deleted for the real classes; Mission gains clock, time_speed (Timer blend), ordered_blunt / hold_fire / dismount, edit_obj (was f65e4); TerrainDesc gains mission_result (+0x154), talk_troop (+0x188). Left: the Agent views of s284a0 / s29130 / s29840 / s29ec0 / s2b5c0 wait for agent_obj.h (facing as vector4, start_health +0x571c, f94), Mission_s29840 / s29130 / s2b5c0 (methods taking the Agent views; s2b5c0 mixes MissionBlocker), the g_game views (lane 1) |
-| L2 | src/rgl/mesh2/gui_edit.h, rec_tables.h; src/game/mission5/mesh_3.h | 112+ | |
+| L1 | src/game/mission/mission_frame_update.h (the `_sNNNN` overlay structs) | 242 | see tsv | 2026-11-16 (naming lane 2): 243 -> 183 pad arrays; the Mission / Agent / AgentTable / DialogMgr views of slices s25160, s257f0, s26130, s261e0, s27c90 (Mission, grids), s29ec0 (Mission), s2ae70 deleted for the real classes; Mission gains clock, time_speed (Timer blend), ordered_blunt / hold_fire / dismount, edit_obj (was f65e4); TerrainDesc gains mission_result (+0x154), talk_troop (+0x188). Left: the Agent views of s284a0 / s29130 / s29840 / s29ec0 / s2b5c0 wait for agent_obj.h (facing as vector4, start_health +0x571c, f94), Mission_s29840 / s29130 / s2b5c0 (methods taking the Agent views; s2b5c0 mixes MissionBlocker), the g_game views (lane 1) |
+| L2 | src/game/editor/editor_selection_and_translation.h, module_option_records.h; src/game/editor/poly_mesh_pick.h | 112+ | |
 | L3 | src/game/script/script_interpreter.{h,cpp} (Mission, AgentTable views) | 97 | naming lane 3 (2026-11-16): views ItemKindX, PropInst, the local Sel / MissionView / NamedSelRec / Named16, c49c2c0 Agent / AgentTable, Rec468770 / Rec468770B gone (about 20 pads); TroopX is an empty GameX element type. Left: GameX (lane 1), MissionX and the c49* Mission views (mission.h), PartyV (GameX signatures, EmitterCtl / NamedSelRec folds), SceneRec (Level494 in game_data.h), TableauOverrides, Presentation, SceneEntity, EntityFull / OrderObj / OrderEntry (rgl::strategic_entity, Party) |
-| L4 | src/game/agent_obj.h, agent/*, agent4/agent_logic.cpp | 44+ | lane 3 (2026-11-16): Agent pad94 / pad194 / pad571c named (seed, lods, start_health), f8c / f2c0 / f2ec / f310 named and typed (item, ai_ta/tb/tc_interval), fbc is face* floor_face, path_face / path_pos at their real bounds. **Agent's member count is load-bearing**: one field or method more or less flips terrain_b render_batch::render_scene 0x46e590 (aligned 203 -> 157), so the Blow at +0x563c and a vector4 `facing` at +0x55d8 are not folded yet |
-| L5 | src/game/mesh_slot/mesh_game.cpp, party/game.h, include/game_data.h | 107 | | 2026-11-16 (naming lane 1): GameData has the fields of every named view over g_game (game_data.h 37 -> 19 pad arrays, the rest alignment gaps and unknown runs; sub-objects debugger +0x1a060, editor +0x1a090, event_ctx +0x1a1f0); views SiteKeys, World3, GDTimer, Frame, GameConfig, EditorGameView, Placement, EmitAudio deleted, GameX has no data; 36 fNN renamed from the views. Left: GameMapView (Game's padding, party/game.h), the mission5 `_sNNNN` g_game views, Game vs GameData (two classes for one object) |
+| L4 | src/game/agent/agent_obj.h, agent/*, agent4/agent_logic.cpp | 44+ | lane 3 (2026-11-16): Agent pad94 / pad194 / pad571c named (seed, lods, start_health), f8c / f2c0 / f2ec / f310 named and typed (item, ai_ta/tb/tc_interval), fbc is face* floor_face, path_face / path_pos at their real bounds. **Agent's member count is load-bearing**: one field or method more or less flips terrain_b render_batch::render_scene 0x46e590 (aligned 203 -> 157), so the Blow at +0x563c and a vector4 `facing` at +0x55d8 are not folded yet |
+| L5 | src/game/mission/agent_spawn_and_tick.cpp, game/campaign/game_state_load.h, game/data/game_data.h | 107 | | 2026-11-16 (naming lane 1): GameData has the fields of every named view over g_game (game_data.h 37 -> 19 pad arrays, the rest alignment gaps and unknown runs; sub-objects debugger +0x1a060, editor +0x1a090, event_ctx +0x1a1f0); views SiteKeys, World3, GDTimer, Frame, GameConfig, EditorGameView, Placement, EmitAudio deleted, GameX has no data; 36 fNN renamed from the views. Left: GameMapView (Game's padding, game/campaign/game_state_load.h), the mission5 `_sNNNN` g_game views, Game vs GameData (two classes for one object) |
 | L6 | src/game/char_sheet/* (save_game.h, save_records.h; MapScreen views) | | |
 | L7 | src/game/terrain_a, terrain_b, ui, config, cls_map | | |
 | L4b | naming lane 4 (2026-11-16): renderer / mesh views | 21 pads removed with their views (OvObj, OvNode, OvMesh, FrameNode, progress_bar MapScreen, gui_edit world_root/world_sub/scene_vert/scene_obj, Pawn, Map) | MPoly::f60 -> flag; PolyMesh pad48 kept (naming it flips render_scene / start_setup, see 022) |
-| L8 | the 44 size-check headers: `#if` guard pass (does not touch layout) | done | 274 checks in 50 files go through MB_LAYOUT32_ASSERT (src/include/layout32.h, 32-bit x86 only); same_code identical on 168 TUs, commit_frozen gate PASS; x86_64 burndown 19/187 -> 178/187 compile (9 fail) |
+| L8 | the 44 size-check headers: `#if` guard pass (does not touch layout) | done | 274 checks in 50 files go through MB_LAYOUT32_ASSERT (src/engine/core/layout32.h, 32-bit x86 only); same_code identical on 168 TUs, commit_frozen gate PASS; x86_64 burndown 19/187 -> 178/187 compile (9 fail) |
 
 Per-file counts for any lane: `rg -c` in the tsv by file column (`cut -f1 docs/tickets/021-padding-sites.tsv | sort | uniq -c | sort -rn`).
 Recommended first lane: L1 (the largest file, mostly class A/C2) after L8's size-guard pass lands, because the guard is small, has no byte risk, and unblocks the

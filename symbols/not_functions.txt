@@ -10,18 +10,18 @@
 00520b2d  # inside GameState::build_map 0x520b20 (one 215-byte function: Ghidra split it after the 13-byte prologue because the body is entered with EBX/ZF already set; slice s00520520)
 00524d3a  # catch funclet of uninit_copy_str 0x524cd0 (slice s00524cd0)
 00524cb6  # catch funclet of tstring_vec::reserve 0x524bc0 (slice s00524360)
-004be742  # interior of MissionCtx::init 0x4be730 (src/game/triggers/trigger_vec.cpp, byte-exact from 0x4be730): the index's thunk_FUN_004be742 entry right after the 18-byte WinLicense jmp +0x10 over "WL  " data
-004610c2  # interior of DialogMgr::start 0x4610b0 (src/game/dialog_manager.cpp, byte-exact from 0x4610b0): the index entry right after the 18-byte WinLicense marker
+004be742  # interior of MissionCtx::init 0x4be730 (src/game/app/options_dialog_and_module_tables.cpp, byte-exact from 0x4be730): the index's thunk_FUN_004be742 entry right after the 18-byte WinLicense jmp +0x10 over "WL  " data
+004610c2  # interior of DialogMgr::start 0x4610b0 (src/game/dialog/dialog_manager.cpp, byte-exact from 0x4610b0): the index entry right after the 18-byte WinLicense marker
 # cold tails / catch funclets inside a parent's COMDAT (verified byte-for-byte with the parent; src/game/world_data)
 00492930  # cold copy loops + catch(...) funclets of 0x4927d0
 00492c96  # __catch funclet + non-reallocating insert branches of 0x492b30
 # catch(...) funclets with no source of their own (entered with the parent's ebp frame, or the tail of its catch block)
-004c50ea  # catch funclet of copy_range38 0x4c5080 (src/rgl/mesh2/gui_edit.cpp): [ebp-0x14], [ebp+0x10] destroy loop, rethrow
-004d120a  # catch funclet of _Uninit_copy<flora> 0x4d11a0 (module_load.cpp)
-004d129a  # catch funclet of _Uninit_copy<ground> 0x4d1230 (module_load.cpp)
-004d1330  # catch funclet of _Uninit_copy<mission> 0x4d12c0 (module_load.cpp)
-004fe184  # rethrow tail (push 0; push 0; call _CxxThrowException) of the catch in cell_fill 0x4fe120 (agent_vec.cpp, byte-exact with it)
-004fe516  # rethrow tail of the catch in cell_copy 0x4fe4b0 (agent_vec.cpp, byte-exact with it)
-004c4e2f  # EH funclet inside std::list::_Buynode 0x4c4dc0 (gui_edit.cpp, byte-exact with it: section compared, 2026-11-06)
-004c4ebd  # EH funclet inside list_int_make_node 0x4c4e50 (gui_edit.cpp, byte-exact with it: section compared, 2026-11-06)
-004c5074  # rethrow funclet of 0x4c5010 (gui_edit.cpp, byte-exact with it: section compared, 2026-11-06)
+004c50ea  # catch funclet of copy_range38 0x4c5080 (src/game/editor/editor_selection_and_translation.cpp): [ebp-0x14], [ebp+0x10] destroy loop, rethrow
+004d120a  # catch funclet of _Uninit_copy<flora> 0x4d11a0 (module_record_loaders.cpp)
+004d129a  # catch funclet of _Uninit_copy<ground> 0x4d1230 (module_record_loaders.cpp)
+004d1330  # catch funclet of _Uninit_copy<mission> 0x4d12c0 (module_record_loaders.cpp)
+004fe184  # rethrow tail (push 0; push 0; call _CxxThrowException) of the catch in cell_fill 0x4fe120 (hud_vector_instances.cpp, byte-exact with it)
+004fe516  # rethrow tail of the catch in cell_copy 0x4fe4b0 (hud_vector_instances.cpp, byte-exact with it)
+004c4e2f  # EH funclet inside std::list::_Buynode 0x4c4dc0 (editor_selection_and_translation.cpp, byte-exact with it: section compared, 2026-11-06)
+004c4ebd  # EH funclet inside list_int_make_node 0x4c4e50 (editor_selection_and_translation.cpp, byte-exact with it: section compared, 2026-11-06)
+004c5074  # rethrow funclet of 0x4c5010 (editor_selection_and_translation.cpp, byte-exact with it: section compared, 2026-11-06)

@@ -55,7 +55,7 @@ sessions keep it warm with `tools/matching/keepalive.sh <hours>`.
 
 ## Workflow: matching an equivalent function
 
-Source lives in `src/`, one `.cpp` per original translation unit (e.g. `src/game/strat/tstring.cpp`), each function
+Source lives in `src/`, one `.cpp` per original translation unit (e.g. `src/engine/core/tstring.cpp`), each function
 preceded by a `// @ 0x<va>` marker. Next to each `.cpp`:
 - `<stem>.manifest.txt`: byte-exact functions, one row each (`../src/... <symbol> <va> <flags>`);
 - `<stem>.nonmatching.txt`: complete and equivalent but not byte-exact, `<va> <diff> <note>`.
@@ -66,7 +66,7 @@ preceded by a `// @ 0x<va>` marker. Next to each `.cpp`:
    Ghidra's decompile. `tools/matching/disasm.py <va>` prints just the instructions.
 3. **Edit the function in its module `.cpp`** and compile-check it:
    ```sh
-   .venv/bin/python tools/matching/chk.py src/game/strat/tstring.cpp 0042bac0
+   .venv/bin/python tools/matching/chk.py src/engine/core/tstring.cpp 0042bac0
    ```
    One compile, a differing-byte count per VA, and a finished manifest row when a function matches. For an
    instruction-level view: `tools/matching/cmpdis.py`, and `tools/matching/insn_align.py`, which aligns
@@ -76,14 +76,14 @@ preceded by a `// @ 0x<va>` marker. Next to each `.cpp`:
 4. **When it matches:** move the row from `<stem>.nonmatching.txt` to `<stem>.manifest.txt` (the row chk prints),
    then verify the whole module and make sure nothing else in it moved:
    ```sh
-   .venv/bin/python tools/matching/run_all.py --manifest src/game/strat/tstring.manifest.txt
+   .venv/bin/python tools/matching/run_all.py --manifest src/engine/core/tstring.manifest.txt
    ```
    Every row of the module must still match. Header changes can move other functions; `run_all.py` is the
    arbiter.
 5. **If it doesn't match yet** but you improved it, keep the function equivalent: run the equivalence harness and
    update the row's note with what still differs.
    ```sh
-   .venv/bin/python tools/difftest/equiv.py tstring 0042bac0 --src src/game/strat/tstring.cpp
+   .venv/bin/python tools/difftest/equiv.py tstring 0042bac0 --src src/engine/core/tstring.cpp
    ```
    It runs the original and your compiled function under emulation on the same inputs. A FAIL means your change
    altered behaviour: fix it before committing.
@@ -93,8 +93,10 @@ preceded by a `// @ 0x<va>` marker. Next to each `.cpp`:
 - **Only what the verifier prints counts.** A function is byte-exact when `run_all.py` says so, nothing else.
 - **No assembly transcription.** `__declspec(naked)`, `_emit` and long `__asm` blocks never count as matched;
   short helpers (`fnstcw`, a `cvtss2si`) are fine (see `docs/matching.md`).
-- **One definition per class.** Shared layouts live in the canonical headers (`src/include/`, `src/game/*.h`,
-  `src/game/include/`); extend those rather than declaring a local partial copy. Member offsets carry `// +0x..`
+- **Includes are `src/`-rooted and module-prefixed** (`#include "engine/math/mat4.h"`, `"game/data/troop.h"`; the tree is
+  described in `docs/source_tree.md`, the notes of the old directories are in `docs/migration/`).
+- **One definition per class.** Shared layouts live in the canonical headers (`src/engine/*/`, `src/game/*/`: the header of the
+  class sits with the code that owns it); extend those rather than declaring a local partial copy. Member offsets carry `// +0x..`
   comments citing the address that proves them.
 - **Globals and functions keep their address annotation** (`// 0x5e2930`). Names are free to improve; the
   annotation is how the tools map a name to the original.

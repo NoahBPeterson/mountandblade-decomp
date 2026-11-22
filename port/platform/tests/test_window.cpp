@@ -1,4 +1,4 @@
-// A WndProc application on the platform API, the way src/dxframework/d3dapp.cpp uses it: register a class, create the
+// A WndProc application on the platform API, the way src/platform/dxframework/d3dapp.cpp uses it: register a class, create the
 // window, run the PeekMessage / TranslateMessage / DispatchMessage loop, and receive WM_* messages produced from SDL
 // events. Real SDL events are injected with SDL_PushEvent (the keyboard / mouse hardware stand-in); the test runs with
 // SDL's dummy video driver unless MBP_TEST_REAL=1 (then a real window opens).
@@ -243,7 +243,7 @@ int main()
     SDL_zero(e);
     e.type = SDL_EVENT_MOUSE_WHEEL; e.wheel.windowID = wid; e.wheel.y = -2;
     SDL_PushEvent(&e);
-    // the game asks for 0x14-byte records (screen.cpp's DiObjectData: ofs, data, time, seq, app), as the 32-bit struct was
+    // the game asks for 0x14-byte records (screen_misc.cpp's DiObjectData: ofs, data, time, seq, app), as the 32-bit struct was
     struct Rec20 { DWORD dwOfs, dwData, dwTimeStamp, dwSequence, uAppData; } data[16];
     DWORD count = 16;
     HRESULT hr = mouse->GetDeviceData(0x14, (LPDIDEVICEOBJECTDATA)data, &count, 0);
