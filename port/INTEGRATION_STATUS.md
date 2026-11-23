@@ -406,3 +406,19 @@ its HOut*; WVt virtual destructor slot; and the layout64 items listed in docs/la
   (ticket 022) are the bulk of what is left; ASan finds the heap ones.
 - Views whose slot 0 is a plain virtual where the real class has a virtual destructor (Itanium uses two slots).
 - Teardown paths (Pool<T>::~Pool, GameData::world_free) are untested.
+
+## 64-bit port targets (2026-11-22)
+
+The same reconstruction, built and run for three more targets; byte-exactness stays a 32-bit MSVC criterion — these lanes
+gate on compile + link (0 trapped) + ctest + a run_native / wine smoke run.
+
+- **macOS x86_64**: cross-built from Apple silicon with the same Apple clang (`port/cmake/macos-x86_64.cmake`), runs under
+  Rosetta. Dependencies are static per-target builds from `tools/port/deps.py` (pinned tarballs in `work/port_deps/src/`,
+  install prefix `work/port_deps/macos-x86_64/install`; brew's are arm64-only). Tables at fixpoint in `port/link/macos-x86_64/`
+  (55 duplicates, 80 weakened TUs, 0 trapped). ctest **5/5**; quick_battle reaches mission_frame 30 and renders the battle
+  (work/port_shots/qx86_b.png). The ragdoll test's one failure was not physics: Jolt's PUBLIC ISA flags (-mavx2 -mfma ...)
+  leaked through mb_physics into the test, and Rosetta mistranslated the VEX codegen of its hoisted fmin update
+  (pelvisMinZ corrupted to 0). Jolt is now a PRIVATE dep of mb_physics — only newton_jolt.cpp includes Jolt headers;
+  details in docs/c2scope_evaluation.md.
+- **Linux x86_64**: native clang inside an OrbStack amd64 machine (deps built there with `deps.py --native`); in progress.
+- **Windows x86_64**: zig/clang cross (`x86_64-windows-gnu`), run under Wine; in progress.

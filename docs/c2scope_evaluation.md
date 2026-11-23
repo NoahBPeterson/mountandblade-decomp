@@ -303,3 +303,25 @@ emit is the one row the rejoin moves, and it moves toward the original:
   ports rebuild (linux-i686 is a compile-check lane, no executable/tests), ctest macos-arm64 **5/5**; run_native quick_battle reaches
   mission_frame 100 and renders the battle (work/port_shots/batch_e_gate_b.png); wine smoke of the relinked mb_standalone.exe:
   **menu score 10.0, threshold 12 -> OK**. No byte/codegen question was left to c2scope beyond the emit entry above.
+
+#### macOS x86_64 lane: ragdoll test's pelvisMinZ corrupted to 0 — Jolt's PUBLIC ISA flags under Rosetta (2026-11-22)
+- Question: physics_ragdoll_drop fails deterministically on macos-x86_64 (`pelvis z 2.50 -> min 0.00`, no-tunnel=0) while
+  macos-arm64 passes (min 0.11). The stored numbers violate the test's own arithmetic (minZ <= pelvisMinZ - 0.12 every frame),
+  so not FP chaos: is it the shim / data, or codegen?
+- No c2scope question: c2scope traces the 32-bit MSVC build for byte-exactness; this is 64-bit port-test codegen run under
+  Rosetta, answered with llvm-objdump and controlled rebuilds instead.
+- Evidence: per-frame instrumentation showed the stored pelvisMinZ becoming 0.0 at the first hoisted fmin update (fmin(1e9, 2.5)
+  -> 0) while minZ stayed correct; no fmin symbol in the binary (fully inlined, no port/ shim); an isolated repro with the same
+  flags was correct. Disassembly: clang hoisted both fmin updates to the loop top, keeping wide XMM values (16-byte vmovaps
+  stores) with vcmpunordss+vblendvps NaN fixup, and spilled/restored pm14 across the table printf — statically correct.
+  `volatile float pelvisMinZ` (defeats the hoisting) PASSED with min 0.11, matching arm64; compiling the test without Jolt's ISA
+  flags also PASSED, stored values tracking 2.5 -> 0.1085 correctly.
+- Cause: Jolt sets -mavx2 -mbmi -mpopcnt -mlzcnt -mf16c -mfma -mfpmath=sse as PUBLIC target_compile_options (Jolt/Jolt.cmake);
+  mb_physics linked Jolt PUBLIC, leaking them into the tests, which include no Jolt headers. The VEX codegen that results for the
+  hoisted fmin update is mistranslated by Rosetta (the SSE2 form of the same source is correct; Jolt's own AVX2 internals and the
+  shim are fine — physics_trace_replay_ref passes, and the simulated trajectory matches arm64).
+- Fix: port/physics/CMakeLists.txt links Jolt PRIVATE into mb_physics — a static lib's PRIVATE deps still link into consumers, so
+  the tests keep libJolt.a without the flags; only newton_jolt.cpp includes Jolt headers and keeps them. No src/ change; the test
+  source is back to its committed state (instrumentation removed).
+- Outcome: ctest macos-x86_64 **5/5**; run_native quick_battle reaches mission_frame 30 and renders the battle
+  (work/port_shots/qx86_b.png). Same flag leak would hit the Linux/Windows x86_64 lanes (also Rosetta-hosted); the fix covers them.

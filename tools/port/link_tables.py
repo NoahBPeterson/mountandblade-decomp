@@ -130,8 +130,9 @@ def objects(build):
     with open(os.path.join(build, 'compile_commands.json')) as f:
         cc = json.load(f)
     res = {}
+    src_prefix = os.path.join(ROOT, 'src') + os.sep
     for e in cc:
-        if '/src/' not in e['file']:
+        if not e['file'].startswith(src_prefix):   # only the reconstruction's TUs, not work/port_deps/src/ (Jolt)
             continue
         args = e.get('arguments') or shlex.split(e['command'])
         o = os.path.join(e['directory'], args[args.index('-o') + 1])

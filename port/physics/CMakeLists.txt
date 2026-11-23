@@ -37,10 +37,15 @@ set(CMAKE_BUILD_TYPE "${_mb_saved_build_type}")
 
 add_library(mb_physics STATIC newton_jolt.cpp)
 target_compile_features(mb_physics PRIVATE cxx_std_17)
-target_link_libraries(mb_physics PUBLIC Jolt)
+# PRIVATE: only newton_jolt.cpp includes Jolt headers. Jolt's ISA options (-mavx2 -mfma ...) are PUBLIC on its
+# target; propagated to the tests they made clang hoist the ragdoll test's fmin updates into wide-XMM VEX code
+# that Rosetta mistranslates (pelvisMinZ corrupted to 0 on the first frame). A static lib's PRIVATE deps still
+# link into consumers, so the tests keep libJolt.a without the flags.
+target_link_libraries(mb_physics PRIVATE Jolt)
 set_target_properties(mb_physics PROPERTIES CXX_EXTENSIONS OFF POSITION_INDEPENDENT_CODE ON)
 
 add_executable(physics_ragdoll_drop tests/ragdoll_drop.cpp)
+target_compile_features(physics_ragdoll_drop PRIVATE cxx_std_17)
 target_link_libraries(physics_ragdoll_drop PRIVATE mb_physics)
 
 # Differential test against the real Newton 1.53: replays a trace recorded from the original game (trace/RECORDING.md)

@@ -26,7 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 TOOLCHAINS = {'linux-i686': 'port/cmake/linux-i686.cmake', 'linux-x86_64': 'port/cmake/linux-x86_64.cmake',
-              'macos-arm64': 'port/cmake/macos-arm64.cmake'}
+              'macos-arm64': 'port/cmake/macos-arm64.cmake', 'macos-x86_64': 'port/cmake/macos-x86_64.cmake'}
 ZIG_LIBC = {'linux-i686': 'x86-linux-gnu', 'linux-x86_64': 'x86_64-linux-gnu'}
 ERR_RE = re.compile(r'^(?P<file>[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?:fatal )?error: (?P<msg>.*)$', re.M)
 
@@ -117,11 +117,15 @@ def link_inventory(target, objs):
     dups = sorted(n for n, o in strong.items() if len(o) > 1)
     unres = sorted(undef - defined)
     dem = dict(zip(unres, subprocess.run([filt], input='\n'.join(unres), capture_output=True, text=True).stdout.splitlines()))
-    zig_lib = re.search(r'\.lib_dir = "([^"]+)"', subprocess.run(['zig', 'env'], capture_output=True, text=True).stdout)
+    zig_lib = re.search(r'\.lib_dir = "([^"]+)"', subprocess.run(['zig', 'env'], capture_output=True, text=True).stdout) if target in ZIG_LIBC else None
     libc_dirs = []
     if zig_lib:
         inc = os.path.join(zig_lib.group(1), 'libc', 'include')
         libc_dirs = [os.path.join(inc, d) for d in ('generic-glibc', ZIG_LIBC[target], 'any-linux-any')]
+    elif target.startswith('macos'):
+        sdk = subprocess.run(['xcrun', '--show-sdk-path'], capture_output=True, text=True).stdout.strip()
+        if sdk:
+            libc_dirs = [os.path.join(sdk, 'usr', 'include')]
     libc, shims = header_tokens(libc_dirs), header_tokens([os.path.join(ROOT, 'port', 'include')])
     groups = collections.defaultdict(list)
     for n in unres:
@@ -182,7 +186,8 @@ def link_exe(target, build, jobs):
     if res['links']:
         res['exe_bytes'] = os.path.getsize(exe)
     try:
-        tables = json.load(open(os.path.join(ROOT, 'port', 'link', 'tables.json')))
+        tdir = os.path.join(ROOT, 'port', 'link', target)
+        tables = json.load(open(os.path.join(tdir if os.path.isdir(tdir) else os.path.join(ROOT, 'port', 'link'), 'tables.json')))
         res['tables'] = {k: (len(v) if isinstance(v, list) else v) for k, v in tables.items()
                          if k not in ('_note', 'owner_basis')}
         res['trapped'] = tables.get('trapped', [])
@@ -207,7 +212,7 @@ def main():
     a = ap.parse_args()
 
     build = os.path.join(ROOT, 'build', 'port', a.target)
-    entries = [e for e in configure(a.target, build) if '/src/' in e['file']]
+    entries = [e for e in configure(a.target, build) if e['file'].startswith(os.path.join(ROOT, 'src') + os.sep)]
     if a.only:
         entries = [e for e in entries if any(o in e['file'] for o in a.only)]
     t0 = time.time()
