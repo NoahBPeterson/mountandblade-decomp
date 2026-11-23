@@ -209,7 +209,7 @@ struct Mission {
     // ---- agent4 (agent_think.cpp) ----
     int spawn_missile(const rgl::vector4* pos, const rgl::vector4* dir, ItemRef* launcher, ItemRef* ammo, unsigned shooter_id);   // 0x44be50
     void spawn_prop(int* idx, int* id);         // 0x44c210
-    __declspec(noinline) void log_message(const tstring* s, float seconds);   // 0x453020 (agent4/agent_logic.cpp: the line goes to the game log, g_gui.add)
+    __declspec(noinline) void log_message(const tstring* s, float seconds);   // 0x453020 (game/agent/agent_logic.cpp: the line goes to the game log, g_gui.add)
     void blood_burst(float x, float y, float z, int unused, float amount);   // 0x4525a0 (ret 0x14)
     int add_placed(const int* kind, const int* id, const int* value, const rgl::matrix* m, int* spawn_id);   // 0x44f870
     void set_object_target(int n);              // 0x4c6dc0 (game/editor/editor_selection_and_translation.cpp): prop n's entity takes the prop's frame and scale
@@ -269,13 +269,13 @@ struct Mission {
     void retag_props(int from, int to);         // 0x48ed60 (ret 8: every intact prop named like tag `from` is renamed to tag `to`)
     int count_props(int tag);                   // 0x48ee20 (ret 4: intact props of tag `tag`)
     int find_prop(int tag, int nth);            // 0x48ee90 (ret 8: index of the nth intact prop of tag `tag`, -1 when none)
-    // ---- src/game/agent5 (agent_hud.cpp) ----
+    // ---- src/game/agent/hud (agent_hud.cpp) ----
     void pick_slots(Agent* a);                  // 0x46b2d0 (game/terrain/terrain_render.cpp: ret 4; this unused: pick the ten equipment slots; callers load ecx)
     void init_agent(Agent* a);                  // 0x4f7d70 (ret 4: pick the agent's equipment slots, refresh its look, re-wield the hand slots)
     void refresh_agent(Agent* a);               // 0x4f7e00 (ret 4; this unused: rebuild the agent's appearance and equipment bodies)
     void camera_to(const rgl::matrix* eye, const float* far_plane);   // 0x4fa790 (ret 8: store the camera frame, move the listener, the sun and the flare)
     void apply_sun_light(const rgl::vector4* pos, const float* scale);   // 0x4fb180 (ret 8: the per-agent sun intensity and fade)
-    // ---- src/game/mesh_slot (mission_start_setup.cpp: Mission::start_setup addresses the object by displacement) ----
+    // ---- src/game/mission (mission_start_setup.cpp: Mission::start_setup addresses the object by displacement) ----
     void start_setup();                         // 0x484590 (the per-mission start-up sequence: level + mode, weather, sky/cloud/fog bits, sun, the 64-slot light table, props and spawns)
     void clear_done();                          // 0x4676c0 (terrain_a: clears the spawn-done flags)
     void copy_slot(int k);                      // 0x4676e0 (game/terrain/misc.h: copies a mark slot)

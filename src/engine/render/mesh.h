@@ -1,7 +1,7 @@
 // mesh.h: the 0x260-byte mesh object (rgl::mesh, vtable 0x54a6f4, ctor 0x412a90, dtor 0x4127f0), its element types, the
 // particle emitter that hangs off it (mesh+0xb0), the render scene it is drawn into (0x1d8 bytes, ctor 0x429740), the
-// global scene registry (0x5fe898) and the lod mesh. One definition for src/rgl (mesh.cpp 0x40e940..0x413b5f, psys,
-// the scene objects), src/game/terrain_b / ui and the resource loaders. Merged from the former mesh.h (the slices'
+// global scene registry (0x5fe898) and the lod mesh. One definition for src/engine (mesh.cpp 0x40e940..0x413b5f, psys,
+// the scene objects), src/game/terrain / ui and the resource loaders. Merged from the former mesh.h (the slices'
 // copies s00412a90, s00413320, s00413c50, s00413e50) and mesh_rgl_particles.h (mesh.cpp's complete layout: the destructor
 // 0x4127f0, copy-assignments and particle code need `skin_vert`, `bone_influence`, `frame_t` with its out-of-line
 // ctor, `keyframes` with its destructor, the owned attachment pointer, the scene's registration fields), and
@@ -118,7 +118,7 @@ struct mesh : named_object {
     int add_vertex_rec(int index, const vertex60& v);   // add_vertex's form create_shadow_mesh 0x42b080 reaches: vertices grows by exactly ONE element per ground vertex (0x42b590 _Insert_n, 0x4106f0 _Ufill, 0x40ff60)
     void append_plain(mesh* other, const mat4* m);  // 0x4520b0 (ret 8, tail of append_skinned)
     void transform(mat4 m);                         // 0x44f3c0 (matrix by value, ret 0x40)
-    void build_panel(const vector4* base, const vec2* size, const vec2* uv0, const vec2* uv1, const int* col);   // 0x4de3e0 (game/cls_map: a textured quad: four points, four vertices, two faces)
+    void build_panel(const vector4* base, const vec2* size, const vec2* uv0, const vec2* uv1, const int* col);   // 0x4de3e0 (game/ui/screens: a textured quad: four points, four vertices, two faces)
     void ensure_local();                            // 0x412ee0
     int add_point(const vector4* p);                // 0x412f50
     int add_face(int a, int b, int c);              // 0x411920
@@ -131,14 +131,14 @@ struct mesh : named_object {
     void ensure_skin();                             // 0x412700
     void build_skin();                              // 0x411d20
     void update_emitters(const float* dt, const matrix& frame);   // 0x4126a0
-    // ---- src/game/party2 (the map party's model meshes) ----
+    // ---- src/game/mission (the map party's model meshes) ----
     bool in_use() const;                            // 0x4b17d0 (a keyframe track is present: own, or the parent's)
     void set_time(const float* t);                  // 0x433190 (ret 4)
     void translate(const vector4* d);               // 0x44f240 (ret 4)
-    mesh* clone();                                  // 0x41c6d0 (src/game/party2: s0049aca0 / s0049b630)
+    mesh* clone();                                  // 0x41c6d0 (src/game/mission: s0049aca0 / s0049b630)
     void clear_geometry();                          // 0x428e80
     void compute_normals();                         // 0x451c50
-    // ---- src/game/agent5 (agent_hud.cpp: the HUD's item and status meshes) ----
+    // ---- src/game/agent/hud (agent_hud.cpp: the HUD's item and status meshes) ----
     void append_skinned(mesh* other, const matrix* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)
     void add_quad(const vector4* p0, const vector4* p1, const vec2* uv0, const vec2* uv1, const unsigned* color);   // 0x44e970 (ret 0x14: a two-point quad; game/data/object_table_spawners.cpp)
     void scale(float s);                            // 0x44f0c0 (ret 4)
@@ -184,7 +184,7 @@ struct lod_mesh {
     void render(scene* sc, const matrix& m);        // 0x413b00
     void select(const float* dist);                 // 0x4205b0 (engine/scene/scene_objects.cpp)
     void cap_all(const float* limit);               // 0x439000 (game/agent/agent_stats.cpp)
-    void add_mesh(int level, mesh* m);              // 0x441ff0 (game/agent4/agent_logic.cpp)
+    void add_mesh(int level, mesh* m);              // 0x441ff0 (game/agent/agent_logic.cpp)
     void apply(const matrix* m);                    // 0x46c9f0 (game/terrain/terrain_render.cpp)
     lod_mesh* clone();                              // 0x47a370 (game/mission/scene_container_grid.cpp)
     void set_color(unsigned color);                 // 0x47b5b0 (game/mission/mesh_vertex_ops.cpp: the bone index of every mesh)

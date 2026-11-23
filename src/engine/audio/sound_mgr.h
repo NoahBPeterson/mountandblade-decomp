@@ -1,5 +1,5 @@
 // sound_mgr.h: the FMOD-backed sound player (global g_sound / g_sound_mgr / SOUNDMGR at 0x5aa128) with its sound definitions and groups.
-// ONE definition for src/game/agent3 (agent_fx_sound.cpp: play_slot 0x4428a0, SoundDef/SoundGroup scales), agent5 (agent_hud: start 0x4428a0 =
+// ONE definition for src/game/agent/combat (agent_fx_sound.cpp: play_slot 0x4428a0, SoundDef/SoundGroup scales), agent5 (agent_hud: start 0x4428a0 =
 // play_slot, stop_all 0x494310), party2 (play 0x442650) and inventory_panel (play 0x442650). The includer must have declared vector4
 // (rgl::vector4 of rgl_math.h or of match/include/rgl.h) and <vector>.
 #ifndef MB_SOUND_MGR_H

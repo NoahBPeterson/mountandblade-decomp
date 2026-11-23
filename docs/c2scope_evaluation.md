@@ -249,3 +249,57 @@ they clobber), which is the "visible callee" knowledge of docs/codegen.md 6.3. T
 way: pick_reachable_goal calls 0x43cb30 / 0x43dd70 (targeting part) and 0x443870 / 0x443aa0 / 0x444370 (effects_sound part); draw_glyph and
 refresh_carried call 0x44e970 (mesh members), 0x441ff0, 0x443aa0 and 0x4520b0. The calls chain every part to its neighbours, so no seam is
 left that no row crosses: the object is one translation unit in practice. Outcome: the single file stays (source_tree.md section 10).
+
+### batch E (rejoin run_line with execute, shared headers, comments): no byte moved, so no c2scope question
+chk.py on the 14 nonmatching rows of operation_execute.cpp (13 execute-side rows + DialogBlock::emit) gives the same aligned figures before and after the
+merge (the recorded figures of 0x49d7f0 195, 0x49ebd0 34 and 0x49fa10 23403 are stale, the file at HEAD already measures 203, 93 and 25183: not
+changed here); the 37 manifest rows (36 + run_line) are byte-exact; objcmp of every TU that sees a changed file is in the batch's commit message. The
+standing rule (c2scope on any row whose bytes move) had nothing to act on. The resolver change is not a byte question; its check was resaudit_all
+on two slices of the rows with the old and the new resolver (763 common rows, same status and same disagreements for all).
+
+#### batch E gate correction (2026-11-22, main session): emit DID move — the rejoin improved it; c2scope used
+The entry above compared the post-merge figures with the *recorded* ones; measured against the actual base (cc88c752 in work/objcmp_base),
+emit is the one row the rejoin moves, and it moves toward the original:
+- Question: does rejoining run_line/emit into operation_execute.cpp move bytes, and is the change faithful?
+- chk.py before/after: run_line 0x4b0940 MATCH both sides (158 bytes); the 13 execute-side nonmatching rows measure byte-identical
+  (same size/diff/aligned, incl. the stale-figure rows 0x49d7f0 203, 0x49ebd0 93, 0x49fa10 25183 — stale at HEAD, not moved by batch E);
+  emit 0x4b09e0: aligned 1534 -> 1711, diff 1558 -> 1481, size 1930 -> 1920 (orig 1910). The recorded 1711/1453/1882 was stale at HEAD.
+- Why: the split file reached the file static through script_error_get()/set() calls (4 sites) and carried file-local copies of
+  report/check_script_param; the merged file reads/writes g_script_error directly and calls the real helpers. The original's listing
+  (work/match/c2_orig_004b09e0.s) accesses 0x5e259c directly (mov/cmp at 0x4b09f7/0x4b0a02/0x4b0a68, mov eax at 0x4b10d6) — no accessor
+  calls: the merged shape is the faithful one.
+- c2scope: `c2.py icount 0x4b09e0` (merged): ours 545 vs orig 539 insns (+6); no extra/missing run at the static-access sites remains.
+  `c2.py regmap 0x4b09e0`: the remaining gap is the known colouring swap — _this ours edi / orig ebx (10 of 18 votes), _idx ours ebx /
+  orig edi — exactly the 2026-11-18 finding in the row's sidecar; no new diff class. ~1 min (cached traced compiles on the laptop).
+- Outcome: sidecar figures updated (emit body 1481/1920 + dated note; the three stale leading figures re-measured). The rejoin lands.
+- objcmp gate (full run_all 4889/4889 first): `objcmp.py cmp --changed --base cc88c752`, 178 TUs — 177 SAME (incl. agent_logic's
+  comment-only edit and the shared-header swaps in script_support / the mission trio / terrain_brush: the copies were identical, so the
+  objects are). operation_execute.cpp: 8 symbol diffs, all the merge: run_line (158 B), tstring::c_str (12 B), rec34_table::operator[]
+  (14 B) and the "At %s." / "invalid opcode %d" literals moved byte-identical from the deleted dialog_block_runner.obj (cross-file symbol
+  comparison; objcmp --changed does not pair deleted files); emit 1930 -> 1920 (the improvement above); script_error_get/set definitions
+  removed. Every symbol of the base runner object is present in the merged object.
+
+#### batch E gate: target_gate's 3 new findings were a resolver bug, not codegen (2026-11-22)
+- Question: after the rejoin, target_gate flagged 004d1180 (allocator<FaceTexture>::construct), 004e4320 (allocator<Skin>::construct)
+  and 004fe520 (vector<Skin>::_Insert_n) as calling f:004ce680 / f:004d3640 — addresses the original's rows never call. Did batch E move bytes?
+- No c2scope question: objcmp proves the three TUs' objects byte-identical to cc88c752 (177/178 SAME), and their sources are untouched by the
+  batch. The discrepancy is in name resolution, not codegen, so c2scope (a compiler tracer) cannot answer it; the answer is read off resolve.py.
+- Cause: batch E replaced the frozen annotation_headers.json universe with the real include graph (slice.annotation_sources). That correctly
+  made engine/render/skin.h and face_texture.h visible to the three TUs (the frozen JSON listed 2 / 8 / 1 headers, none of them these).
+  resolve.py by_annotation then bound their `Skin(); // 0x4d3640` / `FaceTexture(); // 0x4ce680` annotations — the DEFAULT ctors — to the
+  COPY ctors ??0Skin@@QAE@ABU0@@Z / ??0FaceTexture@@QAE@ABU0@@Z: the params check only ran when several addresses hit, so a single wrong-overload
+  annotation bound silently, ahead of the manifest rows (004dc030 / 004cd170).
+- Fix (tools/difftest/resolve.py by_annotation): a single ctor/dtor annotation hit must also match parameters when both signatures parse and
+  disagree; unparseable annotations keep the benefit of the doubt. The copy ctors fall through to symbols/ and resolve to 004dc030 / 004cd170.
+- Outcome: relink build re-run (data_values 0, vtable_gate 0 unchanged), target_gate 6 known / 0 new / 0 fixed. The include-graph universe stays;
+  the latent overload-conflation bug is fixed rather than masked.
+
+#### batch E gate outcome (2026-11-22)
+- Full gate on the batch E tree, in order: run_all --jobs 12 **4889/4889 byte-exact** (521 sources, 0 FAIL); objcmp --changed vs cc88c752
+  **177/178 SAME** (the one diff is the merge itself, cross-file symbol check above); relink build **data_values 0 differ, vtable_gate 0,
+  literals 0**; target_gate **6 known, 0 new, 0 fixed** (after the resolve.py fix); link_tables regenerated for both targets to fixpoint
+  (second pass "wrote: nothing"), **0 traps** each — the tables lose the runner's weaken/owner rows (duplicates 55->54 linux, 74->73 macos)
+  and their headers now name work/relink/standalone (build.py's default out) instead of the stale work/relink/rs; macos-arm64 + linux-i686
+  ports rebuild (linux-i686 is a compile-check lane, no executable/tests), ctest macos-arm64 **5/5**; run_native quick_battle reaches
+  mission_frame 100 and renders the battle (work/port_shots/batch_e_gate_b.png); wine smoke of the relinked mb_standalone.exe:
+  **menu score 10.0, threshold 12 -> OK**. No byte/codegen question was left to c2scope beyond the emit entry above.

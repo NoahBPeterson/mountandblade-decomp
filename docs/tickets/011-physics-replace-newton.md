@@ -17,7 +17,7 @@ small (41 functions) and the game uses physics for a limited set of things, whic
   spheres, convex hulls, compound shapes, joints other than ragdolls, callbacks other than the ragdoll force callback. Ragdoll bone layout is data-driven by `Data/skeleton_bodies.xml` (read at src/game/campaign/map_builder_and_data_load.cpp:969).
 - Stepping: `PhysSet::update(dt)` 0x472dc0 (terrain_scene_renderer.cpp:1310): step 0.018 s for one world, 0.021 / 0.024 / 0.026 for 2/3/4+ worlds, x1.5 when `dt > 0.075`; loops `NewtonUpdate(world, s)` over `recs[i].world`.
   It is the work the existing worker thread runs (`loader_thread_body` 0x4c8900, ticket 012).
-- Where bodies are driven: agent4/agent_logic.cpp:3796 (ragdoll bone matrices), 4820-4835 (mounts), game/agent/agent_stats.cpp:1307, agent/phys_set.cpp:94.
+- Where bodies are driven: game/agent/agent_logic.cpp:3796 (ragdoll bone matrices), 4820-4835 (mounts), game/agent/agent_stats.cpp:1307, agent/phys_set.cpp:94.
 
 ## Options
 

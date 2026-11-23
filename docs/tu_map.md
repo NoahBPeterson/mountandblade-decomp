@@ -30,7 +30,7 @@ consecutive objects".
 
 ## What each signal is worth (measured on the known TUs)
 
-Ground truth: the six DX9 framework TUs (src/dxframework manifests) and TinyXML 2.5
+Ground truth: the six DX9 framework TUs (src/platform/dxframework manifests) and TinyXML 2.5
 (`tinystr` 0x42d820, `tinyxml` 0x42d9a0, `tinyxmlparser` 0x42f720..0x431400; split by which file each
 TinyXML function lives in, not from a map).
 

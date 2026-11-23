@@ -10,9 +10,9 @@ rank	class	level	category	file	line	func	detail	suggestion	view	text
 5	D3DDeviceCombo	L	view_raw	src/platform/dxframework/dxutil.h	99	CReferenceList<D3DDeviceCombo>::GetPtr	D3DDeviceCombo from void (return CArrayList::GetPtr)	type the source as D3DDeviceCombo (or the real class)	D3DDeviceCombo	static_cast<T*>( CArrayList::GetPtr( Entry ) )
 6	IDirectInput8A	L	view_raw	src/game/config/config.cpp	884	Slot::init_devices	IDirectInput8A from void (local di)	type the source as IDirectInput8A (or the real class)	IDirectInput8A	(IDirectInput8A*)di
 7	TiXmlString::Rep	L	view_raw	src/third_party/tinyxml/tinystr.h	245	TiXmlString::init	TiXmlString::Rep from int	type the source as TiXmlString::Rep (or the real class)	TiXmlString::Rep	reinterpret_cast<Rep*>( new int[ intsNeeded ] )
-8	rgl::vector4	I	view_ok	src/game/agent4/agent_logic.cpp	756	Agent::local_velocity	vec2 over rgl::vector4 (agrees at 64 bits)	use rgl::vector4's members (fold vec2 into rgl::vector4)	vec2	(vec2*)&v
-8	rgl::vector4	I	view_ok	src/game/agent4/agent_logic.cpp	758	Agent::local_velocity	vec2 over rgl::vector4 (agrees at 64 bits)	use rgl::vector4's members (fold vec2 into rgl::vector4)	vec2	(vec2*)&v
-8	rgl::vector4	I	view_ok	src/game/agent4/agent_logic.cpp	7958	Agent::hit_damage	vec2 over rgl::vector4 (agrees at 64 bits)	use rgl::vector4's members (fold vec2 into rgl::vector4)	vec2	(vec2*)&lv
+8	rgl::vector4	I	view_ok	src/game/agent/agent_logic.cpp	756	Agent::local_velocity	vec2 over rgl::vector4 (agrees at 64 bits)	use rgl::vector4's members (fold vec2 into rgl::vector4)	vec2	(vec2*)&v
+8	rgl::vector4	I	view_ok	src/game/agent/agent_logic.cpp	758	Agent::local_velocity	vec2 over rgl::vector4 (agrees at 64 bits)	use rgl::vector4's members (fold vec2 into rgl::vector4)	vec2	(vec2*)&v
+8	rgl::vector4	I	view_ok	src/game/agent/agent_logic.cpp	7958	Agent::hit_damage	vec2 over rgl::vector4 (agrees at 64 bits)	use rgl::vector4's members (fold vec2 into rgl::vector4)	vec2	(vec2*)&lv
 8	rgl::vector4	I	view_ok	src/game/campaign/map_panel.cpp	529	MapWidget::project	Vec2 over rgl::vector4 (agrees at 64 bits)	use rgl::vector4's members (fold Vec2 into rgl::vector4)	Vec2	(vector2*)&p
 8	rgl::vector4	I	view_ok	src/game/campaign/map_panel.cpp	535	MapWidget::project	Vec2 over rgl::vector4 (agrees at 64 bits)	use rgl::vector4's members (fold Vec2 into rgl::vector4)	Vec2	(vector2*)out
 8	rgl::vector4	I	view_ok	src/game/mission/mission_start_setup.cpp	617	Mission::start_setup	vec2 over rgl::vector4 (agrees at 64 bits)	use rgl::vector4's members (fold vec2 into rgl::vector4)	vec2	(vec2*)&c0
@@ -66,8 +66,8 @@ rank	class	level	category	file	line	func	detail	suggestion	view	text
 10	Troop	I	raw_ok	src/game/ui/screens/party_screen.cpp	1252	PartyScreen::refresh_selection	Troop::upgrade_troop (int[2]) read as unsigned int	name / type the member Troop::upgrade_troop		(unsigned*)&rec->upgrade_troop[1]
 10	Troop	I	raw_ok	src/game/ui/screens/party_screen.cpp	1270	PartyScreen::refresh_selection	Troop::upgrade_troop (int[2]) read as unsigned int	name / type the member Troop::upgrade_troop		(unsigned*)&rec->upgrade_troop[1]
 10	Troop	I	raw_ok	src/game/ui/screens/party_screen.cpp	1291	PartyScreen::refresh_selection	Troop::upgrade_troop (int[2]) read as unsigned int	name / type the member Troop::upgrade_troop		(unsigned*)&rec->upgrade_troop[1]
-10	Troop	I	view_ok	src/game/agent4/agent_logic.cpp	159	Troop::display_name	tstring over Troop (agrees at 64 bits)	use Troop's members (fold tstring into Troop)	tstring	(tstring*)this
-10	Troop	I	view_ok	src/game/agent4/agent_logic.cpp	2681	GameData::add_experience	tstring over Troop (agrees at 64 bits)	use Troop's members (fold tstring into Troop)	tstring	(tstring*)c
+10	Troop	I	view_ok	src/game/agent/agent_logic.cpp	159	Troop::display_name	tstring over Troop (agrees at 64 bits)	use Troop's members (fold tstring into Troop)	tstring	(tstring*)this
+10	Troop	I	view_ok	src/game/agent/agent_logic.cpp	2681	GameData::add_experience	tstring over Troop (agrees at 64 bits)	use Troop's members (fold tstring into Troop)	tstring	(tstring*)c
 10	Troop	I	view_ok	src/game/ui/screens/character_sheet/character_sheet_panels.cpp	42	CharSheet::refresh_panels	tstring over Troop (agrees at 64 bits)	use Troop's members (fold tstring into Troop)	tstring	(tstring*)c
 10	Troop	I	view_ok	src/game/dialog/dialog_manager.cpp	101	ScriptState::expand_token	tstring over Troop (agrees at 64 bits)	use Troop's members (fold tstring into Troop)	tstring	(tstring*)p
 10	Troop	I	view_ok	src/game/campaign/game_tick.cpp	638	GameData::weekly_report	tstring over Troop (agrees at 64 bits)	use Troop's members (fold tstring into Troop)	tstring	(tstring*)tr
@@ -186,7 +186,7 @@ rank	class	level	category	file	line	func	detail	suggestion	view	text
 23	mat2	I	view_ok	src/game/mission/mission_context.cpp	911	CampaignScreen::camera_move	Vec2f over mat2::m (+0x0) (agrees at 64 bits)	make mat2::m a Vec2f (or name its members)	Vec2f	(Vec2f*)m.m
 23	mat2	I	view_ok	src/game/mission/mission_context.cpp	919	CampaignScreen::camera_move	Vec2f over mat2::m (+0x0) (agrees at 64 bits)	make mat2::m a Vec2f (or name its members)	Vec2f	(Vec2f*)m.m
 23	mat2	I	view_ok	src/game/mission/mission_context.h	60	mat2::rotate_2x2	rot2 over mat2::m (+0x0) (agrees at 64 bits)	make mat2::m a rot2 (or name its members)	rot2	(rot2*)m
-24	rgl::Obj	I	view_ok	src/game/agent4/agent_logic.cpp	11348	Agent::move_step	face over rgl::Obj (agrees at 64 bits)	use rgl::Obj's members (fold face into rgl::Obj)	face	(face*)scene->objs[0]
+24	rgl::Obj	I	view_ok	src/game/agent/agent_logic.cpp	11348	Agent::move_step	face over rgl::Obj (agrees at 64 bits)	use rgl::Obj's members (fold face into rgl::Obj)	face	(face*)scene->objs[0]
 24	rgl::Obj	I	view_ok	src/game/mission/mission_start_setup.cpp	925	Mission::start_setup	face over rgl::Obj (agrees at 64 bits)	use rgl::Obj's members (fold face into rgl::Obj)	face	(face*)scene->objs[0]
 24	rgl::Obj	I	view_ok	src/game/mission/scene_container_grid.cpp	455	rgl::world::build_faces	face over rgl::Obj (agrees at 64 bits)	use rgl::Obj's members (fold face into rgl::Obj)	face	(rgl::Obj*)f
 24	rgl::Obj	I	view_ok	src/game/terrain/poly_mesh.cpp	541	Mission::replace_mark	face over rgl::Obj (agrees at 64 bits)	use rgl::Obj's members (fold face into rgl::Obj)	face	(face*)scene->objs[0]
@@ -261,8 +261,8 @@ rank	class	level	category	file	line	func	detail	suggestion	view	text
 43	rgl::smat	I	view_ok	src/game/script/script_interpreter.cpp	471	GameData::add_order_arrow	c49bea0::matrix over rgl::smat (agrees at 64 bits)	use rgl::smat's members (fold c49bea0::matrix into rgl::smat)	c49bea0::matrix	(rgl::smat*)c49bea0::identity_pos(&tmp)
 44	ItemKind	I	view_ok	src/game/ui/screens/inventory/inventory_panel.cpp	700	ItemRef::name	tstring over ItemKind (agrees at 64 bits)	use ItemKind's members (fold tstring into ItemKind)	tstring	(tstring*)it
 44	ItemKind	I	view_ok	src/game/ui/widgets/widget_overlay_api.cpp	213	GameData::add_inventory	tstring over ItemKind (agrees at 64 bits)	use ItemKind's members (fold tstring into ItemKind)	tstring	(tstring*)k
-45	M4	I	view_ok	src/game/agent4/agent_logic.cpp	6942	Agent::start_ragdoll	rgl::matrix over M4 (agrees at 64 bits)	use M4's members (fold rgl::matrix into M4)	rgl::matrix	(matrix*)Wr
-45	M4	I	view_ok	src/game/agent4/agent_logic.cpp	6943	Agent::start_ragdoll	rgl::matrix over M4 (agrees at 64 bits)	use M4's members (fold rgl::matrix into M4)	rgl::matrix	(matrix*)Ar
+45	M4	I	view_ok	src/game/agent/agent_logic.cpp	6942	Agent::start_ragdoll	rgl::matrix over M4 (agrees at 64 bits)	use M4's members (fold rgl::matrix into M4)	rgl::matrix	(matrix*)Wr
+45	M4	I	view_ok	src/game/agent/agent_logic.cpp	6943	Agent::start_ragdoll	rgl::matrix over M4 (agrees at 64 bits)	use M4's members (fold rgl::matrix into M4)	rgl::matrix	(matrix*)Ar
 46	TrackRec	I	raw_ok	src/game/party/party_map.cpp	2044	GameData::push_event	memcpy(0x10) for TrackRec (fits at 64 bits)	sizeof(TrackRec)		memcpy(&r, pos, 4 * sizeof(int))
 46	TrackRec	I	raw_ok	src/game/party/party_map.cpp	2059	GameData::push_party_event	memcpy(0x10) for TrackRec (fits at 64 bits)	sizeof(TrackRec)		memcpy(&r, pos, 4 * sizeof(int))
 47	_D3DLIGHT9	I	raw_ok	src/game/terrain/terrain_render.cpp	1320	rgl::scene::apply_state	memset(0x68) for _D3DLIGHT9 (fits at 64 bits)	sizeof(_D3DLIGHT9)		memset(&L, 0, sizeof(L))

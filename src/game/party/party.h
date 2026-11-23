@@ -198,7 +198,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     void init();                            // 0x48f180 (resets the map party's order, path, speed and per-frame state)
     void add_emitter(int e);                // 0x4955e0 (game_data_party_quest.cpp: spawns emitter e from g_emit_defs, hands it to the model, remembers the id)
     void clear_particle_systems();          // 0x48d7e0 (frees the id list at +0x59f4, then calls slot 0x68 of the model at +0x59c0)
-    // ---- src/game/party2 (0x4b1160..0x4b8f40): the map party's economy, orders, navigation and per-frame update ----
+    // ---- src/game/mission (0x4b1160..0x4b8f40): the map party's economy, orders, navigation and per-frame update ----
     bool update();                          // 0x4b1b80
     int slot_value(int idx, unsigned flags) const;      // 0x4b1be0 (ret 8)
     int find_worth(int value, unsigned flags) const;    // 0x4b1d30 (ret 8)
@@ -249,7 +249,7 @@ struct PartyMgr : Map10007, Pool<Party> {   // 0x138e4 bytes, embedded in the ga
     __declspec(noinline) void reset_ids();  // 0x51eda0 (empties the id hash, frees every record)
     void next_party_id(int* id);            // 0x460ca0
     int first_party_id();                   // 0x460d20
-    int is_live(int id);                    // 0x4903e0 (thiscall, ret 4: id names a live party) (src/game/party2)
+    int is_live(int id);                    // 0x4903e0 (thiscall, ret 4: id names a live party) (src/game/mission)
 };
 
 MB_LAYOUT32_ASSERT(mb_party_size_chk, sizeof(Party) == 0x5ac8);

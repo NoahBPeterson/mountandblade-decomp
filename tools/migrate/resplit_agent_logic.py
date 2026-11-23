@@ -17,7 +17,7 @@ pick_threat, pick_reachable_goal, draw_glyph, refresh_carried, gui_manager::add 
 
 usage: resplit_agent_logic.py [--dump DIR]    --dump writes the parts and the header to DIR and changes nothing else
 Without --dump it rewrites the tree: the parts, their sidecars (match/manifests), symbols/slices, link_inputs.json, tu_order.txt,
-row_opts / equiv_verdicts / equiv_proofs keys, annotation_headers.json and drops agent_logic.* (git rm).
+row_opts / equiv_verdicts / equiv_proofs keys, and drops agent_logic.* (git rm).
 """
 import collections, csv, json, os, re, subprocess, sys
 
@@ -349,15 +349,6 @@ def rewrite_tree(rows, stems, parts, header):
             np = va_part(rows, int(fn.split(".")[0], 16))
             if np:
                 open(fp, "w", encoding="utf-8").write(t.replace(OLD, np))
-    # annotation headers: every part reads what the old file read
-    p = os.path.join(ROOT, "tools", "difftest", "annotation_headers.json")
-    if os.path.exists(p):
-        ann = json.load(open(p))
-        if OLD in ann:
-            for np in new_paths:
-                ann[np] = ann[OLD]
-            del ann[OLD]
-            json.dump(dict(sorted(ann.items())), open(p, "w"), indent=0, ensure_ascii=False)
     # port/link: drop the old file's blocks (link_tables.py regenerates them)
     for dp, _d, fns in os.walk(os.path.join(ROOT, "port", "link")):
         for fn in fns:

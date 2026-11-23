@@ -40,8 +40,8 @@ struct ShadowMap {
     void build_hw();                            // 0x47fce0 (game/mission/character_meshes.cpp)
     void build_sw();                            // 0x47fdd0 (game/mission/character_meshes.cpp)
     void render();                              // 0x47fef0 (game/mission/character_meshes.cpp: the caster pass into the target)
-    bool test(const rgl::vector4* p, float* out);   // 0x468c80 (depth test of a world point; terrain_cells.cpp; src/game/terrain_b calls it Probe::test)
-    bool sample(const rgl::vector4* p, float* out);    // 0x4faee0 (ret 8: nine depth taps around the point; src/game/agent5)
+    bool test(const rgl::vector4* p, float* out);   // 0x468c80 (depth test of a world point; terrain_cells.cpp; src/game/terrain calls it Probe::test)
+    bool sample(const rgl::vector4* p, float* out);    // 0x4faee0 (ret 8: nine depth taps around the point; src/game/agent/hud)
 };
 
 extern ShadowMap g_shadow_map; // 0xa70248

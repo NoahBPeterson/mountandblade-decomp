@@ -1,5 +1,5 @@
 // party_x.h: the party record (Party, game/party/party.h) with the members the map editor's exchange screens and the script
-// interpreter call under their own names. ONE definition of PartyX for src/game/map_editor (mission_menu_and_exchange_screens.h: the economy members
+// interpreter call under their own names. ONE definition of PartyX for src/game/ui/screens (mission_menu_and_exchange_screens.h: the economy members
 // of 0x4b1700 .. 0x532db0) and src/game/script (script_interpreter.h: the Module System operations). No fields: every field the
 // script names (faction, morale, battle, template_id, ai_behavior, flags, carry_gold, notes, slots, ...) is an alias in an anonymous
 // union of Party at the offset the interpreter reads it (party.h cites the script operations). The member functions below are the
@@ -10,7 +10,7 @@
 
 struct PartyX : Party {
     // ---- game/ui/screens/mission_menu_and_exchange_screens.cpp ----
-    void fn_4b1d80();                       // 0x4b1d80 (Party::add_xp_to_stack in src/game/party2: here its caller passes no argument)  // old name of Party::add_xp_to_stack, removed after the names merge
+    void fn_4b1d80();                       // 0x4b1d80 (Party::add_xp_to_stack in src/game/mission: here its caller passes no argument)  // old name of Party::add_xp_to_stack, removed after the names merge
     int sum_stat(unsigned flags);        // 0x4b1cf0 (ret 4)
     int find_or_add(int troop, int type, int flag);        // 0x489620 (ret 0xc)
     __declspec(noinline) void compact();    // 0x532db0

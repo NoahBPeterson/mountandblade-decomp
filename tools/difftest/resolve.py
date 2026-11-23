@@ -991,6 +991,26 @@ class Resolver:
             sel = [h for h in hits if params_match(mt, norm_text_params(h[2]))]
             if sel and len({h[0] for h in sel}) == 1:
                 hits, vas, how = sel, {sel[0][0]}, ",params"
+        elif len(vas) == 1 and name.startswith(("??0", "??1")):
+            # even one annotation can name the wrong overload: `Skin(); // 0x4d3640` is the default ctor, and the
+            # copy ctor ??0Skin@@QAE@ABU0@@Z must not bind it. Batch E's include-graph annotation universe made
+            # skin.h / face_texture.h visible to TUs that only call the copy ctor, and target_gate caught the
+            # allocator::construct / _Insert_n rows calling the default ctor's address (2026-11-22). Reject only
+            # when both signatures are known and disagree; an unparseable annotation keeps the benefit of the doubt.
+            try:
+                import sig as SIG
+                mt = SIG.parse(name).ptypes
+            except Exception:
+                mt = None
+            if mt is not None:
+                keep = []
+                for h in hits:
+                    tt = norm_text_params(h[2])
+                    if tt is None or params_match(mt, tt):
+                        keep.append(h)
+                if not keep:
+                    return None, None
+                hits, vas = keep, {h[0] for h in keep}
         if len(vas) == 1:
             va = next(iter(vas))
             if self.plausible(va, want_func):

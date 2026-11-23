@@ -1,4 +1,4 @@
-// mesh_slot.h: declarations shared by the modules of src/game/mesh_slot (TU 63 "mesh" 0x47aa40..0x4875e0 and TU 64
+// mesh_slot.h: declarations shared by the modules of src/game/mission (TU 63 "mesh" 0x47aa40..0x4875e0 and TU 64
 // "slot" 0x4875e0..0x488560 of work/migrate/tu_map.csv). Views (derived classes that only add member functions:
 // a class cannot be extended from outside), globals and cdecl helpers; offsets cite the function that proves them.
 #ifndef MESH_SLOT_H

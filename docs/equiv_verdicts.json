@@ -2455,8 +2455,8 @@
 "source_changed": true
 },
 "004b09e0": {
-"module": "dialog_block_runner",
-"file": "match/manifests/game/script/dialog_block_runner.nonmatching.txt",
+"module": "operation_execute",
+"file": "match/manifests/game/script/operation_execute.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1910

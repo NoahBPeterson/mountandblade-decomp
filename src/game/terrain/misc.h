@@ -59,7 +59,7 @@ void __cdecl vmin3(float* a, const float* b);   // 0x468360
 #include "engine/render/mesh.h"             // rgl::mesh (shared with src/engine/resource/resource_manager.h)
 
 // ---- effect slot record (0xd8 bytes; reset 0x4686a0, inline ctor / dtor in 0x46b9d0) --------------------------------
-#include "engine/fx/fx.h"           // Quad4, EnvRec (shared with src/rgl/scene)
+#include "engine/fx/fx.h"           // Quad4, EnvRec (shared with src/engine/scene)
 // (the record is FxDef of engine/fx/fx.h: FxDef::set_env_count is defined in terrain_cells.cpp)
 
 // ---- the troop's maximum hit points (Troop::max_hit_points 0x468770, game/data/troop.h) -------------------------------

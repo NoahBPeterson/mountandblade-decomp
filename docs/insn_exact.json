@@ -1850,7 +1850,7 @@
     "?push_back@?$vector@Uhnode@@V?$allocator@Uhnode@@@std@@@std@@QAEXABUhnode@@@Z"
    ],
    "why": "#422 44518a/53a mov dword ptr [esp + 0x14], eax | lea edx, [esp + edx*4 + 0x64]: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00445720": {
    "verdict": "DIFF",
@@ -1860,7 +1860,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#71 44580f/ef mov dword ptr [esp + 0x10], edx | fadd dword ptr [esi + 0xc]: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00445910": {
    "verdict": "DIFF",
@@ -1870,7 +1870,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#16 445947/37 jl 0x4459ae | jl 0x96: branch target #45 vs #43",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00445a90": {
    "verdict": "DIFF",
@@ -1880,7 +1880,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#19 445ac7/37 je 0x445e55 | je 0x3c7: branch target #265 vs #267",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00445ea0": {
    "verdict": "DIFF",
@@ -1892,15 +1892,15 @@
     "__ehhandler$?_Insert_n@?$vector@UE56@@V?$allocator@UE56@@@std@@@std@@IAEXViterator@12@IABUE56@@@Z"
    ],
    "why": "#15 445ec9/29 mov eax, dword ptr [edi] | push eax: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044608f": {
    "verdict": "FRAGMENT",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044614e": {
    "verdict": "FRAGMENT",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "004465e0": {
    "verdict": "DIFF",
@@ -1910,7 +1910,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#11 4465fa/1a jl 0x446601 | mov ebx, 8: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00448eb0": {
    "verdict": "DIFF",
@@ -1920,7 +1920,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#3 448ebb/b mov ebp, ecx | push ebp: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044bc30": {
    "verdict": "DIFF",
@@ -1930,7 +1930,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#9 44bc49/19 mov byte ptr [esp + 0xb], al | mov dword ptr [esp + 0x10], ecx: operand kinds",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044be50": {
    "verdict": "DIFF",
@@ -1940,7 +1940,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#49 44bef6/a5 jne 0x44bf04 | jne 0xb8: branch target #54 vs #56",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044c210": {
    "verdict": "DIFF",
@@ -1950,7 +1950,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#203 44c4de/2ce jle 0x44c50f | jle 0x303: branch target #219 vs #220",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044d000": {
    "verdict": "DIFF",
@@ -1960,7 +1960,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#88 44d163/163 jmp 0x44dbbd | jmp 0xb90: branch target #802 vs #787",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044df30": {
    "verdict": "DIFF",
@@ -1970,7 +1970,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#44 44dfd7/a7 sub ecx, dword ptr [esi + 0x2b8] | mov edx, dword ptr [eax*8 + 4]: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044e2b0": {
    "verdict": "DIFF",
@@ -1980,7 +1980,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#18 44e2e1/31 mov dword ptr [esp + 0x2c], eax | mov ebp, ecx: operand kinds",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044e970": {
    "verdict": "DIFF",
@@ -1990,7 +1990,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#25 44e9b6/46 mov dword ptr [esp + 0x2c], eax | mov dword ptr [esp + 0x50], eax: argument slot -28 vs +8",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044eb00": {
    "verdict": "DIFF",
@@ -2000,7 +2000,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#92 44ec1e/11e lea edx, [eax + esi + 4] | lea edx, [esi + eax + 4]: reads esi / eax but esi is bound to esi",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044f240": {
    "verdict": "DIFF",
@@ -2010,7 +2010,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#29 44f286/46 fld dword ptr [ecx] | fld dword ptr [eax + edx + 0x10]: memory operand registers",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044f3c0": {
    "verdict": "DIFF",
@@ -2020,7 +2020,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#61 44f47e/be fmul dword ptr [eax + ecx + 0x10] | add eax, edx: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044f5d0": {
    "verdict": "DIFF",
@@ -2030,7 +2030,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#22 44f611/41 mov edx, dword ptr [esp + 0x30] | fld dword ptr [eax + 0xc]: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044f6a0": {
    "verdict": "DIFF",
@@ -2040,7 +2040,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#4 44f6ab/b xor ebp, ebp | or esi, 0xffffffff: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044f870": {
    "verdict": "DIFF",
@@ -2050,7 +2050,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#47 44f92e/be add eax, esi | push ebp: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0044fc60": {
    "verdict": "DIFF",
@@ -2060,7 +2060,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#14 44fc8e/31 mov ecx, dword ptr [esi + eax + 4] | mov ecx, dword ptr [eax + esi + 4]: reads eax / esi but eax is bound to eax",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00451710": {
    "verdict": "DIFF",
@@ -2070,7 +2070,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#32 451779/69 je 0x4519ca | je 0x2c0: branch target #203 vs #204",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "004519f0": {
    "verdict": "DIFF",
@@ -2080,7 +2080,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#42 451aa5/b5 je 0x451c3f | je 0x23b: branch target #164 vs #157",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00451c50": {
    "verdict": "DIFF",
@@ -2092,7 +2092,7 @@
     "?resize@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@QAEXIUvector4@rgl@@@Z"
    ],
    "why": "#43 451cda/8a mov dword ptr [esp + 0x10], edi | xor ebx, ebx: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "004520d0": {
    "verdict": "DIFF",
@@ -2102,7 +2102,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#26 45212c/5c mov edi, dword ptr [esp + 0x8068] | lea edx, [esp + 0x60]: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00452650": {
    "verdict": "DIFF",
@@ -2112,7 +2112,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#6 452662/12 jl 0x4529d0 | jl 0x33a: branch target #218 vs #203",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00452c00": {
    "verdict": "DIFF",
@@ -2122,7 +2122,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#28 452c51/51 lea ecx, [edi + ebp] | lea ecx, [ebx + edi]: reads ebp / edi but ebp is bound to ebx",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00453050": {
    "verdict": "DIFF",
@@ -2132,7 +2132,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#48 4530f7/a7 je 0x4531f2 | je 0x1a0: branch target #116 vs #115",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "004532f0": {
    "verdict": "DIFF",
@@ -2142,7 +2142,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#8 453301/11 jl 0x453704 | jl 0x415: branch target #256 vs #254",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00453710": {
    "verdict": "DIFF",
@@ -2152,7 +2152,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#20 453765/54 jl 0x45385a | jl 0x130: branch target #86 vs #82",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "004543a0": {
    "verdict": "DIFF",
@@ -2162,7 +2162,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#4 4543aa/a mov eax, dword ptr [ebp + 0x250] | push esi: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00454e30": {
    "verdict": "DIFF",
@@ -2172,7 +2172,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#36 454e97/67 jne 0x4550e3 | jne 0x290: branch target #190 vs #182",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "004552c0": {
    "verdict": "DIFF",
@@ -2182,7 +2182,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#5 4552cf/f mov esi, dword ptr [ebx + 0x5c] | push edi: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "004556d0": {
    "verdict": "DIFF",
@@ -2198,7 +2198,7 @@
     "insn_share": 0.0,
     "prologue": "DIFF"
    },
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00457710": {
    "verdict": "DIFF",
@@ -2208,7 +2208,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#3 457715/5 mov esi, ecx | push esi: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00457b40": {
    "verdict": "DIFF",
@@ -2218,7 +2218,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#7 457b50/10 jne 0x45a160 | jne 0x24af: branch target #2499 vs #2390",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0045a170": {
    "verdict": "DIFF",
@@ -2228,7 +2228,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#28 45a1fd/8d jne 0x45a605 | jne 0x497: branch target #237 vs #242",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0045c220": {
    "verdict": "DIFF",
@@ -2238,7 +2238,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#48 45c2bd/9d mov esi, dword ptr [edx + 0x304] | mov dword ptr [esp + 0x3c], ecx: operand kinds",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0045d820": {
    "verdict": "DIFF",
@@ -2248,7 +2248,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#3 45d82b/b push ebp | mov ebp, ecx: mnemonic",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "0045f660": {
    "verdict": "DIFF",
@@ -2258,7 +2258,7 @@
    "unverified": 0,
    "unresolved": [],
    "why": "#4 45f66d/d je 0x45fe62 | je 0x7db: branch target #532 vs #521",
-   "src": "src/game/agent4/agent_logic.cpp"
+   "src": "src/game/agent/agent_logic.cpp"
   },
   "00461480": {
    "verdict": "DIFF",

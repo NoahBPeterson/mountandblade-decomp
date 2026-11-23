@@ -778,3 +778,33 @@ gui_manager::add (523) and update_attack (282) are not: c2scope `icount` shows t
 Agent::fire_check 0x441020 appended as `inline __declspec(noinline)` copies makes pick_threat byte-exact: cl uses the bodies of real
 functions of the same object. Those rows call functions of the neighbouring parts, so every seam is crossed by a row; the single file
 stays (the user's rule: keep it if not all nine hold). Details: docs/c2scope_evaluation.md, "re-split attempt".
+
+## 12. Batch E (2026-11-22): the cleanups after the restructure
+
+- **agent_logic.cpp** stays one file (section 10.1); its top now says so, with a table of contents and a `// ---- <section> (<addresses>) ----`
+  banner per subsystem. Comments only (run_all on its manifest: 135/135).
+- **g_script_error**: `DialogBlock::run_line` (0x4b0940) is back in `operation_execute.cpp` with `Operation::execute`, so the file static
+  `g_script_error` (0x5e259c) has one owner again; `dialog_block_runner.cpp`, `script_error_get()` and `script_error_set()` are gone. Evidence for one
+  object: both functions read and write the static (a file static is not shared across objects), the interpreter TU 92 has high-confidence
+  boundaries at both ends (section 3.2). run_line stays byte-exact and the 13 execute-side nonmatching rows are unchanged; emit moves toward the
+  original (aligned 1534 -> 1711) because it now reads/writes the static directly instead of through script_error_get/set (chk.py before/after,
+  c2scope regmap/icount; see c2scope_evaluation.md 'batch E gate correction'). run_all 37/37 on the merged manifest. `script_support.cpp` is still a separate class-change cut inside the same TU 92 (section 3.2);
+  it was not part of this request.
+- **Shared headers** instead of per-part copies of the helper structs and visible bodies: `game/script/script_interpreter_shared.h` (the two
+  `c49b630` / `c49bea0` slice namespaces, forward declarations, `TickPair`, `MB_NOTHROW`, `sprintf`; shared by operation_execute.cpp and
+  script_support.cpp) and `game/mission/mission_shared.h` (the AgentTable walkers, `GameKeys::clicked`, `Blow::init`, `vector4::normalize` visible
+  bodies; shared by mission_frame_update.cpp, mission_hud_and_orders.cpp and editor/terrain_brush.cpp). The chunks were identical text in every
+  part (checked by `cxxchunk.py` normalised code). The agent_logic parts are one file again, so there is nothing to share there.
+- **tools/difftest/annotation_headers.json is deleted.** `slice.annotation_sources()` reads the transitive `#include` graph of the TU (the same
+  walk `compile_key` uses) instead of the frozen list of the headers the TU's old directory had.
+- **Old directory names** (agent2..agent5, mission5, party2, terrain_a/b, rgl/*, src/include, tinyxml, dxframework ...) in src comments and docs were
+  rewritten: every old file path through the old-to-new table of `docs/source_tree_moves.tsv`, and the directory names whose files moved
+  mostly to one place (agent3 -> game/agent/combat, agent4 -> game/agent, agent5 -> game/agent/hud, terrain_a / terrain_b -> game/terrain, cls_map and
+  map_editor -> game/ui/screens, mesh_slot and party2 -> game/mission, rgl -> engine, rgl/dynamic and rgl/shapes -> engine/physics,
+  rgl/particles -> engine/render, rgl/scene -> engine/scene, rgl/mesh2 -> game/editor, dxframework -> platform/dxframework, tinyxml ->
+  third_party/tinyxml). KEPT: (a) the names whose files went to several places (agent2, char_sheet, inventory_panel, mission5, mission_ui2,
+  options_panel, strat, triggers, world_data, src/include, rgl/core, rgl/xmlcfg): they name the old module, not a place; (b) the per-module
+  notes `docs/migration/*.md` (their subject is the former directory; only their file paths were rewritten, and they already were); (c) this
+  document, `docs/source_tree_moves.tsv`, `tools/migrate/restructure*.py`, `docs/original_tus.md` stem tables and the 2026-10-25 transcript; (d)
+  `tools/port/find_views_core.json` ("the old home" ranking data of find_views.py), `docs/insn_exact.json`, `docs/tickets/021-padding-sites.tsv`:
+  generated data keyed by the old names; (e) dated notes inside `.nonmatching.txt` rows and commit hashes with an old path.

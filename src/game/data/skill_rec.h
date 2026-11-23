@@ -1,5 +1,5 @@
 // skill_rec.h: one skill of the skill table (0x8ee3100, stride 0x44) with its language-record accessors.
-// ONE definition for src/rgl/mesh2 (editor_selection_and_translation.cpp: translated 0x4c6100, desc_name 0x4c6190, translated_desc 0x4c61f0) and
+// ONE definition for src/game/editor (editor_selection_and_translation.cpp: translated 0x4c6100, desc_name 0x4c6190, translated_desc 0x4c61f0) and
 // src/game/char_sheet (character_sheet_detail.h: the level cap at +0x38 and the attribute nibble at +0x40, read by update_detail 0x4ef9f0).
 #ifndef MB_SKILL_REC_H
 #define MB_SKILL_REC_H

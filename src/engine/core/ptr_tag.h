@@ -2,7 +2,7 @@
 // class passed by value: cl 13.10 still pushes one 4-byte stack slot for it, and an UNINITIALISED local pushes
 // whatever EAX holds, so callers that mirror the original's `tag` argument declare a local of this type.
 // Callees: the range helpers at 0x4727a0 (_Destroy_range), 0x46b570.. (_Uninit_fill_n), 0x468050 (_Copy_opt).
-// One definition for src/game (game/agent/ai/agent_types.h, game/terrain/records.h) and src/rgl (game/editor/poly_mesh_edge_face_ops.h).
+// One definition for src/game (game/agent/ai/agent_types.h, game/terrain/records.h) and src/engine (game/editor/poly_mesh_edge_face_ops.h).
 #ifndef MB_PTR_TAG_H
 #define MB_PTR_TAG_H
 

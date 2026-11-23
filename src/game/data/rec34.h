@@ -1,6 +1,6 @@
 // rec34.h: rec34, the 0x34-byte record of the module-file table loaded through rec34::read 0x4be470 (name at +4, a float at +0x14,
 // then the script block DialogBlock at +0x18). ONE definition for src/game/config (config.cpp: read 0x4be470, the table loader)
-// and src/rgl/mesh2 (editor_selection_and_translation.cpp 0x4c48d0 builds the array: tstring ctor at +4, DialogBlock ctor at +0x18 inlined, calls 0x4be470
+// and src/game/editor (editor_selection_and_translation.cpp 0x4c48d0 builds the array: tstring ctor at +4, DialogBlock ctor at +0x18 inlined, calls 0x4be470
 // on each element, vector deleting destructor 0x4318c0).
 #ifndef MB_REC34_H
 #define MB_REC34_H

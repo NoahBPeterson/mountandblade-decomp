@@ -1,5 +1,5 @@
 // vec.h: the small float vectors of the engine (global namespace: the symbol maps and the manifest rows of
-// src/game/agent, src/rgl/shapes and src/rgl/xmlcfg bind them by these names). Plain 2- and 3-float records
+// src/game/agent, src/engine/physics and src/rgl/xmlcfg bind them by these names). Plain 2- and 3-float records
 // (NOT padded to four lanes: vector4 of rgl is the 16-byte one).
 //   vec2  : texture / plane coordinates. normalize 0x4367c0 (src/game/agent/agent_queries.cpp) returns the old length,
 //           (0,1) if <= 0. Users: rgl mesh (vertex60::uv), game agent, terrain, strat.

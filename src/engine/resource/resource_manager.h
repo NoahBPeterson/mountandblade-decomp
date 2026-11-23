@@ -34,7 +34,7 @@ struct frame_x : frame_set {
 
 // ---- meshes ------------------------------------------------------------------------------------------------
 // (0x30-byte "tangent frame" views of rgl::vertex60: see the header comment)
-#include "engine/render/mesh.h"                   // rgl::mesh (shared with src/game/terrain_a)
+#include "engine/render/mesh.h"                   // rgl::mesh (shared with src/game/terrain)
 
 // (the lod mesh, rgl::lod_mesh, and its owning mesh lists are ../mesh.h's)
 

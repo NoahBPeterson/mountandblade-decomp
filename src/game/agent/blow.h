@@ -1,4 +1,4 @@
-// blow.h: the blow record (0x58 bytes), ONE definition for src/game/agent4 (Agent::reduce_blow 0x454e30, note_blow 0x457af0,
+// blow.h: the blow record (0x58 bytes), ONE definition for src/game/agent (Agent::reduce_blow 0x454e30, note_blow 0x457af0,
 // swing_trace 0x45a170, the Agent +0x563c last-blow copy) and src/game/script (agent_deliver_damage_to_agent). The initialiser
 // 0x4353a0 (returns this) is the same function in both (game/agent/agent_queries.cpp defines it; game/terrain/agent_rec.h embeds the record at agent
 // +0x563c); mission5 keeps Blow_s284a0 (its own ctor view).

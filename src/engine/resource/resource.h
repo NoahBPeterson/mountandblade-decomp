@@ -1,4 +1,4 @@
-// resource.h: the engine's named resources and the resource manager (one header for every src/rgl module).
+// resource.h: the engine's named resources and the resource manager (one header for every src/engine module).
 // Class names are the slices' provisional ones, kept because symbols/slices/*.txt maps the vtables by them.
 // In BRF terms, `material` (vtable 0x54ab30: alternatives, pixel shader) is a *shader* and `skin` (vtable
 // 0x54abf0: shader name, five textures, colour) is a *material*; the resource manager's lists say so.

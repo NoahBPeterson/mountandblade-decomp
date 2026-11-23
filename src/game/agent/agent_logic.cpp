@@ -1,3 +1,27 @@
+// ONE TRANSLATION UNIT. Read this before cutting the file.
+// This file is one original translation unit, 0x43a280..0x460160 (the original TaleWorlds file was about this large). It is long on
+// purpose and must not be split into parts unless the rows below are accepted as equivalent instead of byte-exact.
+// Evidence: cl uses the bodies of the other NON-INLINE functions of the same object while it compiles a function (what they read and write,
+// which registers they clobber). Rows that only match with those bodies visible: Agent::pick_threat 0x443430 needs Agent::line_of_sight
+// 0x440e30 and Agent::fire_check 0x441020 (byte-exact once their bodies are visible, 10 bytes off otherwise); pick_reachable_goal 0x445720,
+// Font::draw_glyph 0x44f5d0, Agent::refresh_carried 0x452650, gui_manager::add 0x452c00 and Agent::update_attack 0x45c220 call functions of
+// their neighbours the same way. Every one of the 11 planned seams is crossed by such a dependency (docs/source_tree.md sections 9, 10 and
+// 10.1; docs/c2scope_evaluation.md "re-split attempt"; commit cc88c752). The register-convention statics 0x4350c0 and 0x43a280 are this
+// object's too (callers in several sections).
+//
+// Contents (line numbers are of this file; each section starts with a banner `// ---- <title> (<addresses>) ----`):
+//     136- 1490  targeting and navigation updates             0x43a280..0x43e190: weapon-class names, hand position, body release, quiver, light a...
+//    1491- 2264  attack checks, std containers, line of sight 0x43e190..0x441360: font glyph metrics, std::vector / deque instances, std::logic_er...
+//    2265- 2455  static collision (Newton set)                0x441360..0x441ff0: destroy world, add ragdoll bone, static tree
+//    2456- 3400  effects, sounds and target scans             0x441ff0..0x444c50: int lists, record copy helpers, entities-in-box query, effect li...
+//    3401- 6472  AI: navigation path search, goals and decisions 0x444c50..0x44e970: PolyMesh::find_path / reachable, goal and path planning, ammu...
+//    6473- 6739  rgl::mesh editing members                    0x44e970..0x44f5d0: add_quad, append_skinned, scale, translate, transform
+//    6740- 7649  ragdoll, blood and carried items             0x44f5d0..0x452c00: Font::draw_glyph, ranged-weapon mesh, placed-object append, Newt...
+//    7650- 8714  message log and damage                       0x452c00..0x4554c0: gui_manager::add, label box, shield_hit, hit_damage, on_removed
+//    8715- 9476  corpse, death and controls                   0x4554c0..0x457b40: spawn_corpse, tick_death, note_blow, update_controls
+//    9477-10586  blow delivery                                0x457b40..0x45c220: process_blow, swing_trace
+//   10587-11778  per-frame update                             0x45c220..0x460160: update_attack, move_step, update, tick
+//
 //-----------------------------------------------------------------------------
 // File: agent_logic.cpp  (0x43a280..0x460160, and the std::logic_error family at 0x40c2c0..0x40c670)
 //
@@ -108,6 +132,9 @@ inline __declspec(noinline) bool ItemKind::is_ranged()
 // vector4::out_length 0x407c50: a header inline in the original, left out of line by cl. fire_check's g_mission survives the call, so the body was visible.
 inline __declspec(noinline) float rgl::vector4::out_length() const { return length(); }
 
+// ================================================================================================================
+// ---- targeting and navigation updates (0x43a280..0x43e190) ----
+// ================================================================================================================
 //=============================================================================
 // 0x43a280..0x43b100, from agent_stats.cpp
 // the weapon class names, the std::vector / std::_Uninit_* instantiations, the level queries, the agent's quiver and the light accumulator
@@ -1460,6 +1487,9 @@ template void std::allocator<PhysRec>::destroy(PhysRec*);
 
 #undef PICK
 
+// ================================================================================================================
+// ---- attack checks, std containers, line of sight (0x43e190..0x441360) ----
+// ================================================================================================================
 //=============================================================================
 // 0x43e190..0x441360 (+ the std::logic_error family, 0x40c2c0..0x40c670), from agent_combat.cpp
 // Desc: the game font's glyph metrics, the std::vector / std::deque instantiations the linker kept from this
@@ -2231,6 +2261,9 @@ int Agent::fire_check(unsigned tid, int* out_blocker)
     return 1;
 }
 
+// ================================================================================================================
+// ---- static collision (Newton set) (0x441360..0x441ff0) ----
+// ================================================================================================================
 //=============================================================================
 // 0x441360..0x441ff0, from phys_set.cpp
 // Desc: the Newton physics set: destroy a world record, add a ragdoll bone, start a static tree-collision
@@ -2419,6 +2452,9 @@ void Agent::build_static_collision()
     }
 }
 
+// ================================================================================================================
+// ---- effects, sounds and target scans (0x441ff0..0x444c50) ----
+// ================================================================================================================
 //=============================================================================
 // 0x441ff0..0x444c50, from agent_fx_sound.cpp
 // Desc: an object that keeps int lists, the 0x38-byte record copy / fill helpers, the world's "entities fully
@@ -3361,6 +3397,9 @@ void Agent::on_wield_changed()
 // @ 0x444bc0 (+ catch-all funclet 0x444c28: destroys [next, first), then `throw;`)
 template void std::_Uninit_fill_n(PhysRec*, unsigned, const PhysRec&, std::allocator<PhysRec>&, std::_Nonscalar_ptr_iterator_tag);
 
+// ================================================================================================================
+// ---- AI: navigation path search, goals and decisions (0x444c50..0x44e970) ----
+// ================================================================================================================
 //=============================================================================
 // 0x444c50..0x460160
 //=============================================================================
@@ -6430,6 +6469,9 @@ void Agent::shoot()
     }
     mrec(&g_mission->poolJ, mid).tumble = 0.0f;
 }
+// ================================================================================================================
+// ---- rgl::mesh editing members (0x44e970..0x44f5d0) ----
+// ================================================================================================================
 
 
 using rgl::mesh;
@@ -6694,6 +6736,9 @@ void rgl::mesh::transform(mat4 m)
     slots[0].f28 = 1;
     compute_bounds();
 }
+// ================================================================================================================
+// ---- ragdoll, blood and carried items (0x44f5d0..0x452c00) ----
+// ================================================================================================================
 // @ 0x44f5d0
 void Font::draw_glyph(int ch, const vector4* pos, const vec2* scale, mesh* m, const unsigned* color)
 {
@@ -7601,6 +7646,9 @@ rgl::vector4* Font::layout_clear(rgl::vector4* out_extent, const tstring* text, 
     layout_text(&out_extent->x, text, pos, scale, m, (const unsigned*)a, b, c, flags);
     return out_extent;
 }
+// ================================================================================================================
+// ---- message log and damage (0x452c00..0x4554c0) ----
+// ================================================================================================================
 // @ 0x452c00
 void gui_manager::add(tstring msg, int color)
 {
@@ -8663,6 +8711,9 @@ void Agent::draw_name()
         }
     }
 }
+// ================================================================================================================
+// ---- corpse, death and controls (0x4554c0..0x457b40) ----
+// ================================================================================================================
 // @ 0x4554c0
 void Agent::spawn_corpse()
 {
@@ -9422,6 +9473,9 @@ inline __declspec(noinline) bool Troop::is_hero()      // 0x435130
     if (flags30 & 0x10) return true;
     return false;
 }
+// ================================================================================================================
+// ---- blow delivery (0x457b40..0x45c220) ----
+// ================================================================================================================
 
 // @ 0x457b40
 void Agent::process_blow(float unused)
@@ -10529,6 +10583,9 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
     }
     return result;
 }
+// ================================================================================================================
+// ---- per-frame update (0x45c220..0x460160) ----
+// ================================================================================================================
 
 // ---- Agent::update_attack: the per-tick attack / reload state machine -------------------------------------------------------------
 #define itp_cant_reload_on_horseback 0x00100000

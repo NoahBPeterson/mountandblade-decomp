@@ -20,7 +20,7 @@
 #include "game/mission/mission.h"
 #include "game/mission/placed_obj.h"
 #include <vector>
-#include "engine/core/std_vec_out_of_line.h"   // vector<int>::_Insert_n 0x43e7b0 (agent4/agent_logic.cpp): out of line
+#include "engine/core/std_vec_out_of_line.h"   // vector<int>::_Insert_n 0x43e7b0 (game/agent/agent_logic.cpp): out of line
 #include "game/input/key_names.h"
 #include "game/ui/window_mgr.h"
 #include "game/input/slot.h"

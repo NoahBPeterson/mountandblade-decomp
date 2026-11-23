@@ -1,6 +1,6 @@
 // renderer.h: the Direct3D 9 render-state cache and matrix stack (global object g_render at 0xa17910). One definition
-// for src/engine/render/renderer.cpp (the state cache: 0x461630..0x461eb0), src/game/terrain_a (state calls), src/game/terrain_b
-// (render_scene's cached flags / textures / lights) and src/rgl/shapes (the debug-draw matrix stack 0x408170..0x40ab10).
+// for src/engine/render/renderer.cpp (the state cache: 0x461630..0x461eb0), src/game/terrain (state calls), src/game/terrain
+// (render_scene's cached flags / textures / lights) and src/engine/physics (the debug-draw matrix stack 0x408170..0x40ab10).
 // Every offset cites the function that reads or writes it. Fields that two modules typed differently share an
 // anonymous union (int sentinel in renderer.cpp's reset_state 0x4617b0 / pointer or index in terrain_b's render_scene).
 // Needs rgl::vector4 / rgl::matrix (rgl_base.h picks the module's own) and the D3D9 headers.

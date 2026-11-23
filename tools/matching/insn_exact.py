@@ -781,7 +781,7 @@ def main():
     img = R.Image()
     db = R.SymbolDB(img)
     res_ = R.Resolver(img, db)
-    annots = R.source_annotations([a.src] + S.sibling_headers(a.src))
+    annots = R.source_annotations(S.annotation_sources(a.src))
     sid = os.path.basename(a.src).rsplit(".", 1)[0]
 
     pop_cache = {}

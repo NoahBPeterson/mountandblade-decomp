@@ -3,7 +3,7 @@
 //
 // Desc: the engine's reporting helpers (warning / error message boxes, text-log flush, file length), the UI layer
 //       (widget wheel / mouse dispatch, the UI root gui_manager: constructor, destructor, reset) and the VC7.1
-//       std::vector<tstring> / <vector4> helpers it instantiates. 0x42d820 starts the TinyXML objects (src/tinyxml).
+//       std::vector<tstring> / <vector4> helpers it instantiates. 0x42d820 starts the TinyXML objects (src/third_party/tinyxml).
 //       Functions in ascending address order. Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include <windows.h>

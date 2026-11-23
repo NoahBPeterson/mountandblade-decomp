@@ -181,7 +181,7 @@ SI_ASSERT(troop_equipment, offsetof(Troop, equipment) == 0x4a4);
 SI_ASSERT(troop_notes, offsetof(Troop, notes) == 0x400);
 
 // ---- quests (0x138 bytes, array at game +0x13a58) ----------------------------------------------------------------
-#include "game/data/game_recs.h"   // QuestRec / FactionRec / PartyTemplate: the shared record classes (one definition for src/game and src/rgl)
+#include "game/data/game_recs.h"   // QuestRec / FactionRec / PartyTemplate: the shared record classes (one definition for src/game and src/engine)
 SI_ASSERT(quest_size, sizeof(QuestRec) == 0x138);
 SI_ASSERT(quest_notes, offsetof(QuestRec, notes) == 0x68);
 

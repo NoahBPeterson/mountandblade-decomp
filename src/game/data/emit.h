@@ -1,6 +1,6 @@
 // emit.h: the emitter definition table (EmitTable, g_emit_defs
-// 0x8ed5090 with its 0xc0-byte EmitDef records). ONE definition for src/game/agent3 (agent_fx_sound.cpp: EmitTable::setup
-// 0x4424c0 fills an emitter from a definition, the sound / fx members) and src/game/terrain_b (scene_container_grid.cpp:
+// 0x8ed5090 with its 0xc0-byte EmitDef records). ONE definition for src/game/agent/combat (agent_fx_sound.cpp: EmitTable::setup
+// 0x4424c0 fills an emitter from a definition, the sound / fx members) and src/game/terrain (scene_container_grid.cpp:
 // EmitTable::spawn 0x479d20 allocates and sets one up, Mission::post_spawn 0x47a0c0 scales and places the fog emitters).
 // Offsets cite the function that reads or writes them. Needs rgl::vector4 (rgl_base.h picks the module's own).
 // Names kept as the manifests mangle them (EmitTable).
@@ -10,7 +10,7 @@
 #include "engine/math/mat4_include.h"
 #include "engine/core/tstring.h"
 #include "engine/render/mesh_rgl_particles.h"   // first: it has the full rgl::emitter, emitter.h only declares the member psys needs
-#include "engine/scene/emitter.h"    // rgl::psys: the particle emitter (0x1bc bytes; one definition for src/rgl and src/game)
+#include "engine/scene/emitter.h"    // rgl::psys: the particle emitter (0x1bc bytes; one definition for src/engine and src/game)
 
 struct tstream3;
 

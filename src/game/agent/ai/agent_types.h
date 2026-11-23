@@ -1,4 +1,4 @@
-// agent_types.h: the classes shared by agent_stats.cpp (0x437830..0x43a280) and agent4/agent_logic.cpp (0x43a280..0x460160): the
+// agent_types.h: the classes shared by agent_stats.cpp (0x437830..0x43a280) and game/agent/agent_logic.cpp (0x43a280..0x460160): the
 // 0x1c8-byte placed-object record (PlacedObj), the mission agent (Agent, 0x5928 bytes) with its combat-stat, aiming,
 // target-picking, input-polling, animation and path-goal members, the mission object, the game data, the level
 // (scene) and the navigation mesh, the animation controller (Skeleton, Channel) and the small std::vector /
@@ -32,7 +32,7 @@ struct shape_base; struct face; struct capsule; struct contact;
 // ---- polymorphic records derived from IfaceB (vtable 0x5908f8 = ??_7IfaceB@@6B@) --------------------------------
 #include "game/mission/placed_obj.h"             // IfaceB, Quad, PlacedObj (shared with src/game/agent)
 // the 0x1c8-byte placed scene object (vtable 0x590b84; PlacedObj of src/game/agent/agent_queries.h, "PlacedObj" in
-// src/game/agent3, "E1c8" in the std helper rows below). Constructor 0x437830, deleting destructor 0x437870
+// src/game/agent/combat, "E1c8" in the std helper rows below). Constructor 0x437830, deleting destructor 0x437870
 // (compiler-generated), copy constructor 0x437bb0, assignment 0x437d60; reset() is 0x4352f0 (src/game/agent).
 
 // ---- item reference: src/game/data/item_ref.h (agent_obj.h includes it) ----

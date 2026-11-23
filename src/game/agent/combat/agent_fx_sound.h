@@ -42,7 +42,7 @@ using rgl::mat4;
 #define itcf_carry_wakizashi                 0x220000000i64
 
 namespace rgl { struct mesh; }
-// (the lod mesh, whose add_mesh 0x441ff0 is defined in agent4/agent_logic.cpp, is engine/render/mesh.h's rgl::lod_mesh)
+// (the lod mesh, whose add_mesh 0x441ff0 is defined in game/agent/agent_logic.cpp, is engine/render/mesh.h's rgl::lod_mesh)
 
 // ---- world grid (0x442180) -----------------------------------------------------------------------------------------------
 namespace rgl { struct entity; }
@@ -50,7 +50,7 @@ typedef std::vector<rgl::entity*>::iterator UIt;
 void __cdecl sort_range(UIt first, UIt last, int ideal);        // 0x426a30 (std::_Sort; the vector of entity pointers the grid collects)
 
 // ---- effect elements / definitions (0x442390..0x4424a0) -----------------------------------------------------------------
-#include "engine/fx/fx.h"        // FxElem, FxDef, EnvRec (shared with src/rgl and entity.cpp)
+#include "engine/fx/fx.h"        // FxElem, FxDef, EnvRec (shared with src/engine and entity.cpp)
 
 // ---- emitter setup from a definition table (0x4424c0) ---------------------------------------------------------------------
 #include "game/data/emit.h"                  // rgl::psys, EmitTable, EmitDef (shared with terrain_b)

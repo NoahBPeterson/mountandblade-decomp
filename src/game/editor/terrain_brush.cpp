@@ -33,23 +33,8 @@
 #include "game/ui/ui_globals.h"      // UI / core globals
 #include "game/campaign/map_flags.h"      // MapFlags::commit 0x513710
 #include "game/config/core.h"     // GameApp g_app_obj (0x8ee3c48): the map editor dialog's members
+#include "game/mission/mission_shared.h"   // the definitions this file shares with its sibling parts
 
-// ---- definitions from the old file's prelude and earlier sections that this part's code uses (copies; each is a static
-// or inline helper, a type or a macro: none of them emits code or data of its own)
-// 0x407d60 (engine/physics/collision_shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
-namespace rgl {
-inline __declspec(noinline) float vector4::normalize()      // 0x407d60
-{
-    float len = length();
-    if (len > 1e-10f) {
-        float inv = 1.0f / len;
-        x *= inv; y *= inv; z *= inv;
-    } else {
-        x = 0.0f; y = 1.0f; z = 0.0f;
-    }
-    return len;
-}
-}
 
 
 

@@ -1,12 +1,12 @@
-// fx.h: the effect definition ("skeleton") and its parts, ONE definition for src/rgl (scene/fx*.cpp, scene_objects.cpp,
-// render_scene.cpp), src/game (entity.cpp, agent3/agent_fx_sound.cpp) and src/game/terrain_a (the envelope record).
+// fx.h: the effect definition ("skeleton") and its parts, ONE definition for src/engine (scene/fx*.cpp, scene_objects.cpp,
+// render_scene.cpp), src/game (entity.cpp, agent3/agent_fx_sound.cpp) and src/game/terrain (the envelope record).
 //   FxElem (0x1dc bytes, vtable 0x54b454 = { 0x420e90 add_to_first, 0x41f250 set_data, 0x41f2a0 find_kid }: three virtual
 //          methods, NO virtual destructor): one bone of the definition with its psys / lod lists.
 //          Constructor 0x428d10 (src/engine/fx/fx_support.cpp), destructor 0x41f1d0 and set_data / find_kid (src/engine/scene/fx_element_pool.cpp).
-//          The two lists at +0x19c / +0x1b0 hold rgl::mesh* / rgl::lod_mesh* (src/rgl); agent_fx_sound.cpp (0x442390 /
+//          The two lists at +0x19c / +0x1b0 hold rgl::mesh* / rgl::lod_mesh* (src/engine); agent_fx_sound.cpp (0x442390 /
 //          0x4423f0) pushes the same pointers as ints (it casts the lists to std::vector<int>).
 //   FxDef  (0x7c bytes): owns an array of FxElem, its own lists and the envelope records (EnvRec). Constructor 0x428820,
-//          destructor 0x421680, init 0x4288c0, update 0x421df0, render 0x428ff0, skin 0x4291c0 (src/rgl/scene);
+//          destructor 0x421680, init 0x4288c0, update 0x421df0, render 0x428ff0, skin 0x4291c0 (src/engine/scene);
 //          attach_psys / attach_group 0x442460 / 0x4424a0 (src/game/agent3/agent_fx_sound.cpp).
 //   EnvRec (0xd8 bytes): one envelope record. alloc 0x428c60 (rgl), the inline constructor / destructor and reset 0x4686a0
 //          (src/game/terrain/terrain_cells.cpp, FxDef::set_env_count 0x46b9d0 allocates the array; the vector deleting
@@ -153,7 +153,7 @@ struct FxDef {                                                  // 0x7c bytes
     ~FxDef();                                                   // 0x421680
     void clear_defs();                                          // 0x420ec0
     void set_env_count(int n);                                  // 0x46b9d0 (ret 4; src/game/terrain/terrain_cells.cpp: allocates the envelope array)
-    // the game's animation controller calls (src/game: engine/fx/env_curve.cpp, game/agent/agent_stats.cpp, agent4/agent_logic.cpp)
+    // the game's animation controller calls (src/game: engine/fx/env_curve.cpp, game/agent/agent_stats.cpp, game/agent/agent_logic.cpp)
     void start_anim(int rec, skel_anim* anim, int a, int b);    // 0x439fc0 (ret 0x10; agent_stats.cpp)
     void reset_rec(int i);                                      // 0x4339d0 (ret 4; engine/fx/env_curve.cpp)
     float rec_shaped_phase(int i);                              // 0x433ac0 (engine/fx/env_curve.cpp)

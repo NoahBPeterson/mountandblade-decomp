@@ -1,6 +1,6 @@
 // dev_buffer.h: the 0x4c-byte device vertex / index buffer record of the render batch and the pair of them that the
 // batch keeps per vertex format (0x4bc540..0x4bd0c0 in src/game/config, 0x4622e0 / 0x4623c0 in src/engine/render/renderer.cpp,
-// the uploader 0x46d060 in src/game/terrain_a). One class each; the constructors and destructors are the compiler's.
+// the uploader 0x46d060 in src/game/terrain). One class each; the constructors and destructors are the compiler's.
 #ifndef GAME_DEV_BUFFER_H
 #define GAME_DEV_BUFFER_H
 #include <windows.h>
@@ -34,7 +34,7 @@ struct dev_buffer {
         name.assign("unknown buffer pair");         // 0x59607c
     }
     HRESULT restore();                              // 0x4622e0
-    int upload(void* scratch, int tag);             // 0x46d060 (src/game/terrain_a; tag: render_batch::frame)
+    int upload(void* scratch, int tag);             // 0x46d060 (src/game/terrain; tag: render_batch::frame)
 };
 
 struct buffer_pair {

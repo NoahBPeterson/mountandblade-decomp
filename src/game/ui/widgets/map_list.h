@@ -1,6 +1,6 @@
 // map_list.h: the game-log / map-text list widget MWidget (vtable 0x5995c0, size 0x1d0, constructor 0x4fd150): a MissionUi that
 // lays its text out with the tag-open rectangles of the map spots and answers clicks on them. ONE definition for
-// src/game/agent5 (the game-log window, agent_hud.cpp) and src/game/inventory_panel (notes_window.cpp: the report and link lists).
+// src/game/agent/hud (the game-log window, agent_hud.cpp) and src/game/inventory_panel (notes_window.cpp: the report and link lists).
 // pages / page_args / rect_links are std::vectors; the two rectangle lists are std::vector<vector4>.
 #ifndef GAME_UI_MAP_LIST_H
 #define GAME_UI_MAP_LIST_H

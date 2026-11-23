@@ -1,6 +1,6 @@
 // nav_data.h: the ground / nav data of the scene (rgl::world::ground, +0xb0): the four-vector container with other element
 // types. The same 0x68-byte object is the ground geometry of the strategic scene (engine/scene/strategic_entity.h Ground), the map store
-// of the world-map path finder (src/game/party2) and the container the terrain tessellator fills (Terrain::tessellate).
+// of the world-map path finder (src/game/mission) and the container the terrain tessellator fills (Terrain::tessellate).
 #ifndef TERRAIN_B_NAV_DATA_H
 #define TERRAIN_B_NAV_DATA_H
 #include "engine/math/rgl_math.h"
@@ -30,7 +30,7 @@ struct NavCell {                // 0x88 bytes (0x479980, 0x472650: the cell's gr
     rgl::vector4 pos;           // +0x74 x, y, z of the record and (w) its keep distance (0x4b6b40 copies them together)
     face* obj;                  // +0x84
     NavCell() { kind = 0; gen = 0; parent = 0; f68 = 0; obj = 0; scale = 1.0f; zone = -1; zone_pair[0] = -1; zone_pair[1] = -1; }   // 0x4246f0
-    // ---- the world map's path finder reads the corner / side block field by field (game/party2) ----
+    // ---- the world map's path finder reads the corner / side block field by field (game/mission) ----
     int* verts() { return vidx; }
     int* edge_ids() { return edges; }
     int& mask() { return kind; }
@@ -74,7 +74,7 @@ struct NavData {                // 0x68 bytes
     void build_chain(int target, int start, int* out, int* count);   // 0x5234e0 (ret 0x10)
     void compute_bounds();      // 0x4704b0 (the bounding box e44 / f54 of the vertices)
     ~NavData();                 // 0x41f5d0 (engine/scene/fx_element_pool.cpp: the member destructors, `open` first)
-    // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, open = its open list) ----
+    // ---- src/game/mission: the world-map path finder (cells = the 0x88-byte formation records, open = its open list) ----
     bool shares(const int& a, const int& b) const;   // 0x48efa0 (game/ui/widgets/container_and_tableau_misc.cpp, ret 8: do the cells a and b touch a common zone (NavCell::zone / zone_pair), the arguments are cell indices)
     bool can_move(int from, float x, float y, int to, const float* p, unsigned flags, int max);   // 0x4b3420 (ret 0x1c)
     void reset();                               // 0x4b33c0 (new search generation: m64)

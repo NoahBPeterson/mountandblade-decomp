@@ -1,5 +1,5 @@
 // game_data.h: the game-data object (GameData, global pointer g_game at 0x5e2930, 0x1a2b0 bytes). ONE definition for
-// src/game and src/rgl: the fields the views over g_game named (GameX of the script interpreter, EditorGameView of the
+// src/game and src/engine: the fields the views over g_game named (GameX of the script interpreter, EditorGameView of the
 // scene editor, GameConfig of the launcher page, SiteKeys, Frame, World3, GDTimer, GameMapView) live here, under the names
 // of the operations that read them; game/campaign/game_state_load.h's Game is the same object as its constructor and loaders see it.
 // Offsets cite the function that reads them. Names that two modules gave to one offset overlay in anonymous unions of
@@ -350,7 +350,7 @@ struct GameData {
     void blend(float* out, float x, float y);   // 0x471040 (wind / sky blend over the anchors)
     bool ground_height(rgl::world* lv, const float* p, float* out);   // 0x470f40 (ignores this: blend loads ecx=this, 0x4ed410 ecx=g_game)
     void save_language_files(bool translated);  // 0x4c8ca0
-    // ---- src/game/party2 (method declarations only; fields at the offsets noted are reached by offset there) ----
+    // ---- src/game/mission (method declarations only; fields at the offsets noted are reached by offset there) ----
     struct face* find_at(const float* p);       // 0x48ea80 (nav-mesh face under a map position; other object)
     void init_event(struct TrackRec* r);             // 0x4b36a0 (ret 4: orient an event record on the map)
     float party_value(unsigned id);             // 0x4b4800 (ret 4)

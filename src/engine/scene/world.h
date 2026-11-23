@@ -2,8 +2,8 @@
 // emitter pool, the ground geometry, lights and meshes. Objects of this class are the owner (+4) of every entity and
 // the owner (+0x1c4) of every render scene. The slices called this one 0x344-byte object CellGrid, NavStore, Scene,
 // World, Ctx, SceneW, SunCtx, LightCtx, Level, objgrp, mesh_pool and grid; the grid part (0x00..0x64, destructor
-// 0x475c60) is its base class cell_grid. Offsets are the ones read or written by a function of src/rgl/scene,
-// src/game/terrain_b (scene_container_grid.cpp, terrain_scene_renderer.cpp) or a caller (cited at each field). Member functions of this class in
+// 0x475c60) is its base class cell_grid. Offsets are the ones read or written by a function of src/engine/scene,
+// src/game/terrain (scene_container_grid.cpp, terrain_scene_renderer.cpp) or a caller (cited at each field). Member functions of this class in
 // other objects are declared with their addresses so the equivalence resolver can map them.
 #ifndef SCENE_WORLD_H
 #define SCENE_WORLD_H

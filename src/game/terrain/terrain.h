@@ -4,7 +4,7 @@
 // particle-type tables, the packed bit-field helpers. One layout per class; every offset cites the function that
 // proves it. The slices called the object Terrain, terrain_obj, TerrainX, BitWords, HexWords, DustTerrain, MapScreen ...: they are all this
 // one class. The single definition is g_terrain (game/mission/mission_start_setup.cpp).
-// src/game/terrain_b declares a smaller Terrain/ShadowMap/particle of its own for 0x46e590+ (see MIGRATION.md).
+// src/game/terrain declares a smaller Terrain/ShadowMap/particle of its own for 0x46e590+ (see MIGRATION.md).
 #ifndef TERRAIN_A_TERRAIN_H
 #define TERRAIN_A_TERRAIN_H
 #include <stdlib.h>

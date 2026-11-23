@@ -61,9 +61,9 @@ W / V finding and its suggestion.
 | 5 | D3DDeviceCombo | 0 | 0 | 1 | 0 | 0 | src/platform/dxframework/dxutil.h:99 D3DDeviceCombo from void (return CArrayList::GetPtr) | type the source as D3DDeviceCombo (or the real class) |
 | 6 | IDirectInput8A | 0 | 0 | 1 | 0 | 0 | src/game/config/config.cpp:884 IDirectInput8A from void (local di) | type the source as IDirectInput8A (or the real class) |
 | 7 | TiXmlString::Rep | 0 | 0 | 1 | 0 | 0 | src/third_party/tinyxml/tinystr.h:245 TiXmlString::Rep from int | type the source as TiXmlString::Rep (or the real class) |
-| 8 | rgl::vector4 | 0 | 0 | 0 | 0 | 31 | src/game/agent4/agent_logic.cpp:756 vec2 over rgl::vector4 (agrees at 64 bits) | use rgl::vector4's members (fold vec2 into rgl::vector4) |
+| 8 | rgl::vector4 | 0 | 0 | 0 | 0 | 31 | src/game/agent/agent_logic.cpp:756 vec2 over rgl::vector4 (agrees at 64 bits) | use rgl::vector4's members (fold vec2 into rgl::vector4) |
 | 9 | file src/game/editor/poly_mesh_edit_ops.cpp | 0 | 0 | 0 | 0 | 21 | src/game/editor/poly_mesh_edit_ops.cpp:76 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
-| 10 | Troop | 0 | 0 | 0 | 0 | 15 | src/game/agent4/agent_logic.cpp:159 tstring over Troop (agrees at 64 bits) | use Troop's members (fold tstring into Troop) |
+| 10 | Troop | 0 | 0 | 0 | 0 | 15 | src/game/agent/agent_logic.cpp:159 tstring over Troop (agrees at 64 bits) | use Troop's members (fold tstring into Troop) |
 | 11 | char | 0 | 0 | 0 | 0 | 15 | src/game/ui/screens/progress_bar_and_load_screens.cpp:469 -Wcast-align: cast from 'char *' to 'int *' increases required alignment from 1 to 4 |  |
 | 12 | rgl::matrix | 0 | 0 | 0 | 0 | 13 | src/game/campaign/campaign_screen_camera.cpp:160 memcpy(0x40) for rgl::matrix (fits at 64 bits) | sizeof(rgl::matrix) |
 | 13 | file src/game/editor/editor_selection_and_translation.cpp | 0 | 0 | 0 | 0 | 11 | src/game/editor/editor_selection_and_translation.cpp:262 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
@@ -77,7 +77,7 @@ W / V finding and its suggestion.
 | 21 | file src/game/terrain/terrain_render.cpp | 0 | 0 | 0 | 0 | 5 | src/game/terrain/terrain_render.cpp:142 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
 | 22 | file src/engine/physics/collision_shapes.cpp | 0 | 0 | 0 | 0 | 5 | src/engine/physics/collision_shapes.cpp:1082 -Wshorten-64-to-32: implicit conversion loses integer precision: 'size_type' (aka 'unsi... |  |
 | 23 | mat2 | 0 | 0 | 0 | 0 | 5 | src/game/mission/mission_context.cpp:895 Vec2f over mat2::m (+0x0) (agrees at 64 bits) | make mat2::m a Vec2f (or name its members) |
-| 24 | rgl::Obj | 0 | 0 | 0 | 0 | 5 | src/game/agent4/agent_logic.cpp:11348 face over rgl::Obj (agrees at 64 bits) | use rgl::Obj's members (fold face into rgl::Obj) |
+| 24 | rgl::Obj | 0 | 0 | 0 | 0 | 5 | src/game/agent/agent_logic.cpp:11348 face over rgl::Obj (agrees at 64 bits) | use rgl::Obj's members (fold face into rgl::Obj) |
 | 25 | AgentTable | 0 | 0 | 0 | 0 | 4 | src/game/ui/hud/agent_hud.cpp:911 AgentTable+0x0 = Pool<Agent>::count (same at 64 bits) | AgentTable::Pool<Agent>::count |
 | 26 | Terrain | 0 | 0 | 0 | 0 | 4 | src/game/mission/terrain_water_regen.cpp:501 Terrain+0x0 = (anon).bits[0] (same at 64 bits) | Terrain::(anon).bits[0] |
 | 27 | file src/game/config/config.cpp | 0 | 0 | 0 | 0 | 4 | src/game/config/config.cpp:411 -Wshorten-64-to-32: implicit conversion loses integer precision: 'LRESULT' (aka 'long')... |  |
@@ -98,7 +98,7 @@ W / V finding and its suggestion.
 | 42 | mxo | 0 | 0 | 0 | 0 | 3 | src/game/terrain/dust_particles.cpp:133 rgl::matrix over mxo (agrees at 64 bits) | use mxo's members (fold rgl::matrix into mxo) |
 | 43 | rgl::smat | 0 | 0 | 0 | 0 | 3 | src/game/mission/pick_entity.cpp:182 memcpy(0x40) for rgl::smat (fits at 64 bits) | sizeof(rgl::smat) |
 | 44 | ItemKind | 0 | 0 | 0 | 0 | 2 | src/game/ui/screens/inventory/inventory_panel.cpp:700 tstring over ItemKind (agrees at 64 bits) | use ItemKind's members (fold tstring into ItemKind) |
-| 45 | M4 | 0 | 0 | 0 | 0 | 2 | src/game/agent4/agent_logic.cpp:6942 rgl::matrix over M4 (agrees at 64 bits) | use M4's members (fold rgl::matrix into M4) |
+| 45 | M4 | 0 | 0 | 0 | 0 | 2 | src/game/agent/agent_logic.cpp:6942 rgl::matrix over M4 (agrees at 64 bits) | use M4's members (fold rgl::matrix into M4) |
 | 46 | TrackRec | 0 | 0 | 0 | 0 | 2 | src/game/party/party_map.cpp:2044 memcpy(0x10) for TrackRec (fits at 64 bits) | sizeof(TrackRec) |
 | 47 | _D3DLIGHT9 | 0 | 0 | 0 | 0 | 2 | src/game/terrain/terrain_render.cpp:1320 memset(0x68) for _D3DLIGHT9 (fits at 64 bits) | sizeof(_D3DLIGHT9) |
 | 48 | _PROCESS_INFORMATION | 0 | 0 | 0 | 0 | 2 | src/game/app/winmain_and_menu_screens.cpp:147 memset(0x18) for _PROCESS_INFORMATION (fits at 64 bits) | sizeof(_PROCESS_INFORMATION) |

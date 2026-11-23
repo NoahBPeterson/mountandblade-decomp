@@ -46,7 +46,7 @@ struct Missile : IfaceB {                               // vtable 0x590b78 (slot
     float ammo_scale();                                 // 0x467f80 (the carried item's weight * 0.01; game/terrain/poly_mesh.cpp)
     bool settle(const capsule* c);                      // 0x472650 (game/terrain/poly_mesh.cpp: puts the missile on the ground under the swept capsule's end point)
     ItemRef ranged_ref();                               // 0x4351f0 (game/agent/agent_queries.cpp: the thrown launcher, else the ammunition)
-    rgl::mesh* make_ranged_mesh();                      // 0x44f6a0 (agent4/agent_logic.cpp: clones the display mesh of the carried ranged / thrown item)
+    rgl::mesh* make_ranged_mesh();                      // 0x44f6a0 (game/agent/agent_logic.cpp: clones the display mesh of the carried ranged / thrown item)
     void update_ranged_mesh();                          // 0x47d320 (game/mission/scene_entities.cpp)
     void update(float dt);                              // 0x47d3e0 (game/mission/scene_entities.cpp: one integration step)
 };

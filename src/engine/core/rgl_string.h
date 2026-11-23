@@ -1,7 +1,7 @@
 // rgl_string.h: the engine's 16-byte string with a read cursor (rgl::string), and the logging/file helpers
 // that live in the same object (code at 0x42bb50..0x42cc80, not migrated yet: declarations only).
 //
-// Layout verified by byte-exact functions of src/rgl (one layout for every module):
+// Layout verified by byte-exact functions of src/engine (one layout for every module):
 //   +0  pos   read cursor            (stream_base::at_end 0x415250: pos >= len; mem_stream::w_stream 0x417930)
 //   +4  buf   heap buffer or null    (c_str() below; tstring::read_from 0x4151e0 writes buf[got] = 0)
 //   +8  cap

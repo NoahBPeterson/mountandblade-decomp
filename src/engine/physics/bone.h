@@ -1,6 +1,6 @@
 // bone.h: one bone of a skeleton model (engine/resource/resource.h's frame_set::bones) with its ragdoll record, ONE definition for
-// src/rgl (engine/resource/resource_io.cpp w_skeleton, engine/resource/resource_manager.cpp read_frame_set / the constructor, engine/fx/fx_animation.cpp,
-// engine/fx/fx_def_init.cpp) and src/game (agent4/agent_logic.cpp: the ragdoll 0x44fc60 / 0x4543a0 and the capsule hit test 0x43f6d0).
+// src/engine (engine/resource/resource_io.cpp w_skeleton, engine/resource/resource_manager.cpp read_frame_set / the constructor, engine/fx/fx_animation.cpp,
+// engine/fx/fx_def_init.cpp) and src/game (game/agent/agent_logic.cpp: the ragdoll 0x44fc60 / 0x4543a0 and the capsule hit test 0x43f6d0).
 #ifndef RGL_CORE_BONE_H
 #define RGL_CORE_BONE_H
 #include <vector>

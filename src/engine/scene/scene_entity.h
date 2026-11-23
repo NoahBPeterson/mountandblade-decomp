@@ -85,7 +85,7 @@ struct entity {
 
     entity();                   // 0x41fba0
     void add_mesh(mesh* m) { meshes.push_back(m); recalc(); }   // 0x442110 (inline: start_setup 0x484590 expands it; the
-                                                                // out-of-line copy is emitted by game/agent4/agent_logic.cpp)
+                                                                // out-of-line copy is emitted by game/agent/agent_logic.cpp)
     void release_items();       // 0x528470 (game/mission5/mission_5.cpp: flags every attached shape 0x8000, deleted with the entity)
 };
 

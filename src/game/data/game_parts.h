@@ -17,7 +17,7 @@ struct ScriptDebugger {
 };
 
 // The context of the event a sound / particle trigger runs for (+0x1a1f0..+0x1a208): Mission::spawn_prop 0x44c210, the agent
-// sounds (agent4/agent_logic.cpp), the item meshes (game/mission/scene_entities.cpp), the party window (inventory_window.cpp 0x502b80);
+// sounds (game/agent/agent_logic.cpp), the item meshes (game/mission/scene_entities.cpp), the party window (inventory_window.cpp 0x502b80);
 // the trigger lookups 0x48cec0 / 0x48cf40 (stacks_and_loot.cpp) read it.
 struct EventContext {
     int prop;                                   // +0x1a1f0 index of the current prop record, < 0 when none (0x48cec0)

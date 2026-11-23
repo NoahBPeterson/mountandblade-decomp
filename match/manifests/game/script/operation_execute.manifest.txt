@@ -34,3 +34,4 @@
 ../src/game/script/operation_execute.cpp  ?spawn_around@GameData@@QAEHUVec2@@HM@Z  0049f020  /O2 /MT /Gy /TP
 ../src/game/script/operation_execute.cpp  ?enter_trigger@Mission@@QAEHHH@Z  0049f980  /O2 /MT /Gy /TP
 ../src/game/script/operation_execute.cpp  ?exec_trigger@Mission@@QAEHH@Z  0049f9e0  /O2 /MT /Gy /TP
+../src/game/script/operation_execute.cpp  ?run_line@DialogBlock@@QAEDPA_JPAH1@Z  004b0940  /O2 /MT /Gy /TP

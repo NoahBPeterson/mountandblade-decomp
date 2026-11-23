@@ -36,7 +36,7 @@ struct Animator {
     void pack_state(PackedState* out);           // 0x4eb660 (ret 4; mission5 reset calls it as its closing step)
     void reset(PackedState* a, const PackedState* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
     void get_text(int skin, int key, tstring* out);   // 0x4f5d90 (game/editor/editor_widgets.cpp): face key `key` of skin `skin`, translated
-    // the skin table as the agents read it (agent4/agent_logic.cpp): voice sounds and blood effects per skin, by index
+    // the skin table as the agents read it (game/agent/agent_logic.cpp): voice sounds and blood effects per skin, by index
     int voice(unsigned skin, int kind)          // Agent::play_class_sound 0x4459c0 (inline): the skin's sound for the voice kind, -1 past the table
     {
         if (skin < (unsigned)char_count)

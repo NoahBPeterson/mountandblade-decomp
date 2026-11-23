@@ -90,7 +90,7 @@ struct MPoly {
 struct stream_base;
 namespace rgl { struct mesh; }
 
-// ---- the open list of the path search (agent4/agent_logic.cpp 0x444c50, 0x4452f0): face id, cost so far (g), priority (f);
+// ---- the open list of the path search (game/agent/agent_logic.cpp 0x444c50, 0x4452f0): face id, cost so far (g), priority (f);
 // min-heap on f. pop() is expanded inline by the original (cl would not do that for the library member: pop_inl).
 struct PQ : std::priority_queue<hnode, std::vector<hnode>, node_gt> {
     // the comparator copied from a temporary, as PolyMesh's constructor 0x4d1360 leaves it (the library's default constructor
@@ -192,8 +192,8 @@ struct PolyMesh {
     void next_stamp();                                  // 0x439410
     bool trace(int face, vector4 from, int end_face, const float* to, int* max_steps);   // 0x439460 (vector4 by value)
     bool find_path(int from, int to, int* out_faces, vector4* out_pos, int* out_count, int* out_steps,
-                   const float* w0, const float* w1, const float* w2);      // 0x444c50 (agent4/agent_logic.cpp)
-    bool reachable(const int* from, const int* to, const int* max_steps);   // 0x4452f0 (agent4/agent_logic.cpp)
+                   const float* w0, const float* w1, const float* w2);      // 0x444c50 (game/agent/agent_logic.cpp)
+    bool reachable(const int* from, const int* to, const int* max_steps);   // 0x4452f0 (game/agent/agent_logic.cpp)
 };
 
 #endif // TERRAIN_B_POLY_MESH_H

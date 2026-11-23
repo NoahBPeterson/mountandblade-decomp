@@ -48,7 +48,7 @@ using rgl::matrix;
 // ============================================================================================================
 struct E44  { int v[11]; ~E44() {} }; // 0x2c-byte record (empty, user-declared dtor: the original's
                                       // _Destroy loop survives, the call inlines away)
-#include "engine/core/vec_elems.h"   // FaceTexture (shared with game/cls_map)
+#include "engine/core/vec_elems.h"   // FaceTexture (shared with game/ui/screens)
 
 
 #include "game/data/e68.h"           // E68 (shared with game/ui/widgets/mission.h)

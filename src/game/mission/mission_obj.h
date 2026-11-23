@@ -2,7 +2,7 @@
 // (0x5e29dc, count g_propkind_count 0x5e29e0). Constructor 0x4ce2a0 and reader 0x4ce360 (game/editor/poly_mesh_edge_face_ops.cpp); the inline
 // destructor's out-of-line copy is 0x4c65d0 and its vector deleting destructor ??_EMissionObj 0x4c7ee0 (both emitted by
 // `delete[] g_propkinds` in game/app/winmain_and_menu_screens.cpp's FinalCleanup; module_files_loader.cpp's reload deletes the old table the same way).
-// ONE definition for src/game and src/rgl: the name lookup (agent_queries.cpp find_in_table78 0x4352a0), the hit points (troop_inventory.cpp
+// ONE definition for src/game and src/engine: the name lookup (agent_queries.cpp find_in_table78 0x4352a0), the hit points (troop_inventory.cpp
 // 0x4631c0), the spawn rules (terrain_b 0x472050: flag 0x4000), Mission::start_setup 0x484590 (flag 0x1000, the bounds),
 // Mission::spawn_prop 0x44c210 (meshes, shape, triggers), the missile hit (agent_logic.cpp), the scene editor (editor_selection_and_translation.cpp).
 #ifndef MB_MISSION_OBJ_H

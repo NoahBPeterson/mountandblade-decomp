@@ -19,7 +19,7 @@
 #include "engine/resource/resource.h"             // resmgr g_resmgr (0x5d6fa0): get_shadow_skin 0x41c420 builds the shadow-map render target
 
 struct EmptySlot {
-    virtual void slot();   // 0x477b70 (game/terrain_b: the empty slot of the IfaceB-style records)
+    virtual void slot();   // 0x477b70 (game/terrain: the empty slot of the IfaceB-style records)
 };
 #include "game/mission/placed_obj.h"                  // PlacedObj::animate_to 0x4897a0 / set_position 0x489820 (defined in widget_base.cpp)
 

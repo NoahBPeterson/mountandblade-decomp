@@ -209,48 +209,16 @@ def source_path(sid):
     return os.path.join(slice_dir(sid), sid + ".cpp")
 
 
-def sibling_headers(src):
-    """Headers the source includes directly, besides its own directory's: by relative path ('#include
-    "../s00908c00/s00908c00.h"') or src/-rooted ('#include "game/data/troop.h"'): their declarations and annotations
-    count too (the resolution audit reads the annotations of the headers a source lists)."""
-    out = []
-    try:
-        text = open(src, encoding="utf-8", errors="replace").read()
-    except OSError:
-        return out
-    for m in re.finditer(r'^\s*#\s*include\s+"([^"]+)"', text, re.M):
-        name = m.group(1)
-        if name.startswith((".", "/")):
-            p = os.path.normpath(os.path.join(os.path.dirname(src), name))
-        else:
-            p = os.path.normpath(os.path.join(ROOT, "src", name))      # the src/ include root
-        if os.path.exists(p) and p not in out:
-            out.append(p)
-    return out
-
-
-_ANNOT = None
-
-
 def annotation_sources(src):
-    """The files whose `// 0x...` annotations the resolver reads for a src/ TU: the source, the headers its directory had
-    before the 2026-11 restructure (tools/difftest/annotation_headers.json, frozen by tools/migrate/restructure.py; a TU
-    that is not listed gets the headers of its own directory) and the headers it includes directly."""
-    global _ANNOT
-    if _ANNOT is None:
-        try:
-            import json
-            _ANNOT = json.load(open(os.path.join(ROOT, "tools", "difftest", "annotation_headers.json")))
-        except (OSError, ValueError):
-            _ANNOT = {}
-    rel = os.path.relpath(os.path.abspath(src), ROOT).replace(os.sep, "/")
-    hs = _ANNOT.get(rel)
-    if hs is None:
-        hs = glob.glob(os.path.join(os.path.dirname(src), "*.h"))
-    else:
-        hs = [os.path.join(ROOT, h) for h in hs]
-    out = [src] + hs
-    return out + [h for h in sibling_headers(src) if h not in out]
+    """The files whose `// 0x...` annotations the resolver reads for a src/ TU: the source and every header it reaches through
+    its #include graph (quoted includes, resolved as the compiler does: next to the including file, then src/, then match/include;
+    see _quoted_includes). Not the directory it sits in: after the 2026-11 restructure a directory is a subsystem, and what a TU
+    includes is what it can see."""
+    out = [src]
+    for f in _quoted_includes(src):
+        if f != os.path.abspath(src) and f.endswith((".h", ".hpp", ".inl")) and f not in out:
+            out.append(f)
+    return out
 
 
 def resolve_include_flags(flags):

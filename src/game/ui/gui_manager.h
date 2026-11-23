@@ -149,14 +149,14 @@ struct gui_manager {
         draw_string((tstring*)s, y, color, b);
     }
     void build_scene();             // 0x4e6050 (the frame's scene build: two viewports, the widget walk and the log / frame meshes; src/game/ui/screens/progress_bar_and_load_screens.cpp)
-    void rebuild();                 // 0x4da900 (replays the stored lines into a fresh text mesh; src/game/cls_map)
+    void rebuild();                 // 0x4da900 (replays the stored lines into a fresh text mesh; src/game/ui/screens)
     void process(int dt_bits);      // 0x4ebfd0 (one input pass; the dt rides in as its bits; src/game/ui/screens/screen_misc.cpp)
     void set_view(const float* v);  // 0x4c5190 (src/game/editor/editor_selection_and_translation.cpp: the view state pair)
     void wheel_step(int mask);      // 0x4c52f0 (records a key in the hint tables)
     void clear_selection();         // 0x4c5330
     void set_font_mesh(const tstring* text, int arg);   // 0x49b630 (src/game/party2/camera.cpp)
     void push(const tstring& s, int v);                 // 0x4334b0 (src/game/common/game_util.cpp: queue a log message on the ring)
-    void add(tstring msg, int color);                   // 0x452c00 (thiscall, ret 0x14; src/game/agent4/agent_logic.cpp)
+    void add(tstring msg, int color);                   // 0x452c00 (thiscall, ret 0x14; src/game/agent/agent_logic.cpp)
     void reset_geometry();          // 0x4e64b0 (src/game/ui/screens/progress_bar_and_load_screens.cpp: clear the 32+32 meshes, the ages to 1e6, the heights to 0.1)
     void update(float dt);          // 0x4e6510 (flush the pending text, age the lines, fade the total height)
     void flush();                   // 0x4f1390 (game/ui/msg_log_ui.cpp): pops the ring into add()

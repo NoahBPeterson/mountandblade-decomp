@@ -163,7 +163,7 @@ build's map rather than hand-kept.
 1. `port/` directory (new, outside `src/`, `tools/`): `port/include/` shims (`windows.h` minimal types: `DWORD`, `HRESULT`, `RECT`, `POINT`, `CRITICAL_SECTION`
    mapped to `mbp::Mutex`; `d3d9.h` -> temporary shim of the types the renderer headers use until 008 removes them), `port_prelude.h`, and
    `port/*.cpp` implementations (ticket 007).
-2. CMake targets: `mb_game` (src/game, src/rgl, src/tinyxml), `mb_port` (SDL3 platform, audio, physics adapter, renderer), `mb` exe.
+2. CMake targets: `mb_game` (src/game, src/engine, src/third_party/tinyxml), `mb_port` (SDL3 platform, audio, physics adapter, renderer), `mb` exe.
    `d3dapp.cpp` and `launcher_options_dialog.cpp` are replaced by port equivalents (the SDK framework is the window/device owner).
 3. Flags: `-std=gnu++17` (C++03 sources compile as 17 except removed features: `register`, `auto_ptr`, dynamic exception specs; fix in place if
    the MSVC build tolerates it), `-fms-extensions` (accepts `__declspec`, `i64`), `-fno-strict-aliasing` (the code type-puns constantly),

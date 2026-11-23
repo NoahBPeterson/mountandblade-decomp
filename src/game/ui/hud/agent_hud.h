@@ -2,7 +2,7 @@
 // (re)initialisation, the mission HUD (the screen object that owns the status frame, the name overlay, the crosshairs and
 // the free / scripted camera), the sun and flare update of the mission object, the item mesh builder, the game-log and
 // game HUD builders with the map-text list widget and the std::vector instantiations kept from this object.
-// One definition per class: the shared headers of src/game / src/include / src/rgl are included, what exists nowhere
+// One definition per class: the shared headers of src/game / src/include / src/engine are included, what exists nowhere
 // (the HUD screen object, the widget slot view, the three small widget classes) is defined here. Every offset cites the
 // function that proves it. Names provisional.
 #ifndef AGENT5_HUD_H

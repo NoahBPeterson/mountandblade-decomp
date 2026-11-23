@@ -1,7 +1,7 @@
 // game_recs.h: the Module System records of the game data that both the game and the language export read: quests
 // (QuestRec, 0x138 bytes, array behind GameData+0x13a58), factions (FactionRec, 0x300 bytes, GameData+0x13a48) and party
 // templates (PartyTemplate, 0xb0 bytes, table g_party_templates 0x5e29f8). ONE definition for src/game/script,
-// src/game/party, src/game/ui (world.h called the quest record PartyRec) and src/rgl/mesh2 (editor_selection_and_translation.cpp).
+// src/game/party, src/game/ui (world.h called the quest record PartyRec) and src/game/editor (editor_selection_and_translation.cpp).
 // Layout: the names at +0x00 / +0x10 / key (editor_selection_and_translation.cpp save_language_files 0x4c8ca0), the scripted fields
 // (script_interpreter.cpp, cited), the save-game loaders (game_state_load.cpp 0x51e170, 0x51e320, 0x51e410). The slot array and the
 // 64-bit vector share their bytes (anonymous unions of plain members); likewise the flag word and its bit-field view.

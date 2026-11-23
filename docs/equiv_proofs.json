@@ -48,7 +48,7 @@
    "proved": "2026-11-12"
   },
   "0043c9c0": {
-   "src": "src/game/agent4/agent_logic.cpp",
+   "src": "src/game/agent/agent_logic.cpp",
    "symbol": "?poll_input@Agent@@QAEXMPAUInputState@@@Z",
    "layer": "region",
    "level": "L1",
@@ -59,7 +59,7 @@
    "proved": "2026-11-14"
   },
   "0043cc30": {
-   "src": "src/game/agent4/agent_logic.cpp",
+   "src": "src/game/agent/agent_logic.cpp",
    "symbol": "?move_anim@Agent@@QAEHH@Z",
    "layer": "region",
    "level": "L1",
@@ -70,7 +70,7 @@
    "proved": "2026-11-14"
   },
   "0043db90": {
-   "src": "src/game/agent4/agent_logic.cpp",
+   "src": "src/game/agent/agent_logic.cpp",
    "symbol": "?set_goal_agent@Agent@@QAEXI@Z",
    "layer": "angr",
    "level": "L1",
@@ -81,7 +81,7 @@
    "proved": "2026-11-12"
   },
   "0043dcb0": {
-   "src": "src/game/agent4/agent_logic.cpp",
+   "src": "src/game/agent/agent_logic.cpp",
    "symbol": "?set_goal_point@Agent@@QAEXUvector4@rgl@@H@Z",
    "layer": "angr",
    "level": "L1",
@@ -92,7 +92,7 @@
    "proved": "2026-11-20"
   },
   "0043f560": {
-   "src": "src/game/agent4/agent_logic.cpp",
+   "src": "src/game/agent/agent_logic.cpp",
    "symbol": "?aim_point_and_dir@Agent@@QAEXPAUvector4@rgl@@0@Z",
    "layer": "rename",
    "level": "L1",
@@ -103,7 +103,7 @@
    "proved": "2026-11-20"
   },
   "0043f6d0": {
-   "src": "src/game/agent4/agent_logic.cpp",
+   "src": "src/game/agent/agent_logic.cpp",
    "symbol": "?capsule_hit@Agent@@QAE_NPAUshape_base@@PAUvector4@rgl@@1PAH@Z",
    "layer": "rename",
    "level": "L1",
@@ -114,7 +114,7 @@
    "proved": "2026-11-20"
   },
   "0044bc30": {
-   "src": "src/game/agent4/agent_logic.cpp",
+   "src": "src/game/agent/agent_logic.cpp",
    "symbol": "?cycle_slot@Agent@@QAEXH@Z",
    "layer": "region",
    "level": "L1",
@@ -125,7 +125,7 @@
    "proved": "2026-11-14"
   },
   "0044df30": {
-   "src": "src/game/agent4/agent_logic.cpp",
+   "src": "src/game/agent/agent_logic.cpp",
    "symbol": "?ai_idle_tick@Agent@@QAEXPBM@Z",
    "layer": "region",
    "level": "L1",
@@ -136,7 +136,7 @@
    "proved": "2026-11-20"
   },
   "00451c50": {
-   "src": "src/game/agent4/agent_logic.cpp",
+   "src": "src/game/agent/agent_logic.cpp",
    "symbol": "?compute_normals@mesh@rgl@@QAEXXZ",
    "layer": "region",
    "level": "L1",
@@ -147,7 +147,7 @@
    "proved": "2026-11-13"
   },
   "004556d0": {
-   "src": "src/game/agent4/agent_logic.cpp",
+   "src": "src/game/agent/agent_logic.cpp",
    "symbol": "?update_controls@Agent@@QAEXM@Z",
    "layer": "region",
    "level": "L2",

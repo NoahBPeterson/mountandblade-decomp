@@ -12,7 +12,7 @@
 #include "game/data/item_ref_game_ui.h"
 
 // The troop record: a 0x508-byte entry of the table behind GameData+0x13a00 (Troop in src/game/data/troop.h, one definition for
-// src/game and src/rgl). The slices called it `Agent` (0x462b60..0x462da0) and `Inv` (0x462e20..0x463100): both are this record.
+// src/game and src/engine). The slices called it `Agent` (0x462b60..0x462da0) and `Inv` (0x462e20..0x463100): both are this record.
 #include "game/data/troop.h"
 
 // A 0x78-byte record of the sprite table (g_propkinds 0x5e29dc, count 0x5e29e0): src/game/mission/mission_obj.h (MissionObj)

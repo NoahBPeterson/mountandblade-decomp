@@ -8,7 +8,7 @@ retired region by region once the modules pass. This is the shape the relink (PL
 
 | | functions |
 |---|---|
-| Migrated (`src/dxframework`, `src/tinyxml`, `src/game`, `src/rgl` in progress) | ~360 |
+| Migrated (`src/platform/dxframework`, `src/third_party/tinyxml`, `src/game`, `src/engine` in progress) | ~360 |
 | Compilable, still only in slices | ~2,100 |
 | Inferred TUs left (`work/migrate/tu_map.csv`) | 96 |
 | ...with byte-exact share >= 80% / 50-80% / < 50% | 425 / 859 / 1,324 functions |

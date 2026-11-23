@@ -44,7 +44,7 @@ Files with p2i + i2p + raw offsets + F macros > 0: 90. Top of the list:
 | src/game/mission/mission_context.cpp | 5 | 2 | 17 | 0 |
 | src/game/config/config.cpp | 0 | 8 | 13 | 0 |
 | src/game/ui/named_rec.h | 20 | 0 | 0 | 0 |
-| src/game/agent4/agent_logic.cpp | 10 | 1 | 8 | 0 |
+| src/game/agent/agent_logic.cpp | 10 | 1 | 8 | 0 |
 | src/game/mission/agent_appearance.cpp | 16 | 0 | 1 | 0 |
 | src/game/mission/terrain_water_regen.cpp | 2 | 6 | 8 | 0 |
 | src/game/ui/screens/save_panel.cpp | 3 | 0 | 12 | 0 |

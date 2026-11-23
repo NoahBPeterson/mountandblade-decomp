@@ -1,6 +1,6 @@
 // dialog_rec.h: the dialog record read from the module file (DialogRec, 0x64 bytes, Module System `dialogs`) and the
 // script blocks it carries (DialogBlock / Elem: condition and consequence operation lists). ONE definition for
-// src/game/dialog/dialog_manager.cpp (reads and runs them) and src/rgl/mesh2 (editor_selection_and_translation.cpp: the language export; module_option_records.cpp:
+// src/game/dialog/dialog_manager.cpp (reads and runs them) and src/game/editor (editor_selection_and_translation.cpp: the language export; module_option_records.cpp:
 // the vector deleting destructor 0x4609d0 of the table g_dialogs 0x8ed50cc).
 #ifndef MB_DIALOG_REC_H
 #define MB_DIALOG_REC_H
@@ -17,8 +17,8 @@ struct Elem {                                              // 0x98 bytes: one op
     int f90;                                               // +0x90 (-1)
     int pad94;
     Elem() : f90(-1) {}                                    // 0x4607d0
-    __int64 get_operand(__int64* locals, int* i, int* type);       // 0x49d650 (thiscall, ret 0xc; src/game/party2)
-    void set_lvalue(__int64* locals, const __int64& value);        // 0x49d500 (thiscall, ret 8; src/game/party2)
+    __int64 get_operand(__int64* locals, int* i, int* type);       // 0x49d650 (thiscall, ret 0xc; src/game/mission)
+    void set_lvalue(__int64* locals, const __int64& value);        // 0x49d500 (thiscall, ret 8; src/game/mission)
 };
 struct DialogBlock {                                             // 0x1c bytes
     Elem* items;                                           // +0
@@ -31,7 +31,7 @@ struct DialogBlock {                                             // 0x1c bytes
     void read(stream_base* s);                             // 0x4607e0
     __declspec(noinline) void init(int op, int idx);       // 0x524360 (game/campaign/map_builder_and_data_load.cpp, ret 8): the block becomes the one statement op(idx)
     char play(int mode);                                   // 0x4875e0 (thiscall, ret 4)
-    // ---- src/game/party2 (camera.cpp: the script block runner of the mission script interpreter; method declarations only) ----
+    // ---- src/game/mission (camera.cpp: the script block runner of the mission script interpreter; method declarations only) ----
     char run_line(__int64* locals, int* idx, int* script);       // 0x4b0940 (ret 0xc: runs one statement through the interpreter)
     char emit(int script, int depth, int* limit, __int64* vals, unsigned tag);   // 0x4b09e0 (ret 0x14: the block runner)
     bool step_less(__int64* locals, int* stack);           // 0x49d7f0 (ret 8: the loop test of try_for_range / for_parties ...)

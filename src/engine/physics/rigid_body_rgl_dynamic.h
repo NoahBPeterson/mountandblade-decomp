@@ -1,6 +1,6 @@
 // rigid_body.h: the rigid body entity classes, rgl::rigid_base and rgl::dynamic_entity (vtable 0x54b668, 0x1d8 bytes;
-// constructor 0x425370 and the members in rigid_body.cpp). ONE definition for src/rgl/dynamic (rigid_body.h, which
-// adds the contact helpers of that object) and src/game (agent4/agent_logic.cpp: spawn_prop 0x44c210 builds a kind-7 prop's
+// constructor 0x425370 and the members in rigid_body.cpp). ONE definition for src/engine/physics (rigid_body.h, which
+// adds the contact helpers of that object) and src/game (game/agent/agent_logic.cpp: spawn_prop 0x44c210 builds a kind-7 prop's
 // body). Nothing here changes how an includer's own std::vector instances compile (rigid_body.h's explicit
 // specializations would).
 #ifndef RGL_DYNAMIC_RIGID_BODY_H

@@ -27,12 +27,12 @@ src/game/agent/combat/agent_types.h	39	ChanRec	pad8	4	B
 src/game/agent/combat/agent_types.h	41	ChanRec	pad4c	80	A
 src/game/agent/combat/agent_types.h	45	ChanRec	padb8	4	B
 src/game/agent/combat/agent_types.h	50	SkelData	pad0	24	C2
-src/game/agent4/agent_logic.cpp	234	Obj3Place_	pad0	232	C2
-src/game/agent4/agent_logic.cpp	236	Obj3Place_	padec	72	B
-src/game/agent4/agent_logic.cpp	1676	AimRec	pad0	16	C2
-src/game/agent4/agent_logic.cpp	7868	LabelBox	pad0	32	C2
-src/game/agent4/agent_logic.cpp	7871	LabelBox	pad40	32	A
-src/game/agent4/agent_logic.cpp	11207	SceneObjV	pad20	136	A
+src/game/agent/agent_logic.cpp	234	Obj3Place_	pad0	232	C2
+src/game/agent/agent_logic.cpp	236	Obj3Place_	padec	72	B
+src/game/agent/agent_logic.cpp	1676	AimRec	pad0	16	C2
+src/game/agent/agent_logic.cpp	7868	LabelBox	pad0	32	C2
+src/game/agent/agent_logic.cpp	7871	LabelBox	pad40	32	A
+src/game/agent/agent_logic.cpp	11207	SceneObjV	pad20	136	A
 src/game/agent/agent_logic.h	45	VoiceTable	pad0	24	C2
 src/game/agent/agent_logic.h	103	BoneW	pad0	132	C2
 src/game/agent/agent_logic.h	105	BoneW	pad_c4	280	A
@@ -1438,9 +1438,9 @@ src/game/agent/agent_queries.h	87	CamParams	f60		D
 src/engine/fx/env_curve.h	36	Curve	f5c		D
 src/engine/fx/env_curve.h	38	Curve	p68		Dn
 src/engine/fx/env_curve.h	39	Curve	v6c		D
-src/game/agent4/agent_logic.cpp	238	Obj3Place_	v174		D
-src/game/agent4/agent_logic.cpp	239	Obj3Place_	v184		D
-src/game/agent4/agent_logic.cpp	11208	SceneObjV	fa8		D
+src/game/agent/agent_logic.cpp	238	Obj3Place_	v174		D
+src/game/agent/agent_logic.cpp	239	Obj3Place_	v184		D
+src/game/agent/agent_logic.cpp	11208	SceneObjV	fa8		D
 src/game/agent/agent_logic.h	177	AgentBodyV	f294		D
 src/game/agent/agent_logic.h	178	AgentBodyV	f298		D
 src/game/agent/agent_obj.h	56	AnimDef	f2c		D

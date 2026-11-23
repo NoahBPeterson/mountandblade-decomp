@@ -20,7 +20,7 @@ extern unsigned g_stage_arg[6];             // 0x5a9c00 D3DTA_* by 3-bit code
 void mb_error(const char* fmt, ...);        // 0x42cc80
 
 // ---- render-state cache (global object 0xa17910) ----------------------------------------------------------
-#include "engine/render/renderer_include.h"                // renderer (shared: state cache here, debug drawer in src/rgl/shapes)
+#include "engine/render/renderer_include.h"                // renderer (shared: state cache here, debug drawer in src/engine/physics)
 
 // ---- material / mesh part ------------------------------------------------------------------------------
 #include "engine/resource/resource.h"           // material: flags20 (bits 28/29: pixel shader), ps +0xbc, bind_pixel_shader 0x461f20

@@ -61,7 +61,7 @@ vec2 g_5a9f28 = { 1.0f - g_5a9f20, 0.21450001f };       // 0x5a9f28 {x, y} colum
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------
 
 // ---- 0x4d92c0: the glyph hash table's operator[] ------------------------------------------------------------------
-// The lookup (0x43b210, agent4/agent_logic.cpp) and the insert (0x4d3c00, game/app/world_app.cpp) are called out of line.
+// The lookup (0x43b210, game/agent/agent_logic.cpp) and the insert (0x4d3c00, game/app/world_app.cpp) are called out of line.
 // @ 0x4d92c0
 template Glyph& GlyphMap::operator[](const int&);
 

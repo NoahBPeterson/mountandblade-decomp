@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// File: agent_stats.cpp  (0x437830..0x43a280; the rest of this object is in agent4/agent_logic.cpp)
+// File: agent_stats.cpp  (0x437830..0x43a280; the rest of this object is in game/agent/agent_logic.cpp)
 //
 // Desc: the 0x1c8-byte placed-object record (ctor, deleting dtor, copy ctor, assignment), the agent's combat-stat
 //       and order helpers, the skill lookup, the std::vector / std::_Uninit_* instantiations the linker kept,

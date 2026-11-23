@@ -8,7 +8,7 @@
 //                                add_tree, reg_shape); rgl::world::add_item (0x423c00) is declared in world.h
 //   (strategic_entity::add_shape 0x424100, slot 28 of the strategic entity's table, is declared in scene_entity.h)
 //   the ground geometry is NavData (game/terrain/nav_data.h: its vertex / cell vectors, NavData::add 0x424220)
-// The shapes are src/rgl/shapes' shape_base / face / composite (the slices called them Obj, kind() = shape_type()); that
+// The shapes are src/engine/physics' shape_base / face / composite (the slices called them Obj, kind() = shape_type()); that
 // header cannot be included next to resource.h (scene.h pulls it in, both define shape_base), so the grid sees them as
 // views of resource.h's shape_base that add the vtable slots 5..13 and the two fields it reads.
 // The slices' names: World (world_grid), Registry (world_grid::reg_shape), Scene (the strategic entity's add_shape), Cell (rgl::cell),

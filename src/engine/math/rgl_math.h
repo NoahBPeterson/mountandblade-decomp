@@ -1,4 +1,4 @@
-// rgl_math.h: rgl::vector4 / rgl::matrix, shared by src/rgl and src/game (the former match/include/rgl.h
+// rgl_math.h: rgl::vector4 / rgl::matrix, shared by src/engine and src/game (the former match/include/rgl.h
 // declarations of vector4/matrix live here; the inline bodies matter for codegen, keep them as they are).
 // A TU whose original calls the out-of-line copies 0x407ca0 / 0x407cd0 / 0x407d00 defines
 // RGL_VECTOR4_OPS_OUT_OF_LINE before including this header (RGL_VECTOR4_SUB_OUT_OF_LINE: only operator- 0x407ca0).

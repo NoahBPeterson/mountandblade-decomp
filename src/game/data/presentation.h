@@ -46,7 +46,7 @@ struct widget_mgr {
     int create_progress_overlay(int lo, int hi);    // 0x499b80
     int create_combo_button_overlay();          // 0x499d90
     int create_text_box_overlay();              // 0x49a0b0
-    int create_image_button_overlay_with_tableau(int pos, int rec, int key);   // 0x4b14f0 (ret 0xc; src/game/party2)
+    int create_image_button_overlay_with_tableau(int pos, int rec, int key);   // 0x4b14f0 (ret 0xc; src/game/mission)
     void set_size(int idx, const vec2& size);   // 0x49a300 (ret 8)
     void set_area_size(int idx, const vec2& size);  // 0x49ab80 (ret 8)
     // ---- src/game/mission_ui2: the widget setters of the script operations (overlay_set_* / overlay_animate_to_*) ----

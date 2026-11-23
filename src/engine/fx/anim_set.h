@@ -1,4 +1,4 @@
-// anim_set.h: the animations of actions.txt, ONE definition for src/game and src/rgl: AnimSet (g_anim_set 0xa76628, 8 bytes:
+// anim_set.h: the animations of actions.txt, ONE definition for src/game and src/engine: AnimSet (g_anim_set 0xa76628, 8 bytes:
 // the array of AnimDef and its count, the bound of the scripts' check_animation 0x49d4b0), AnimDef (0x30 bytes: one animation,
 // read by read_entry 0x4c2170, vector deleting destructor 0x4315d0) and SubAnim (0x40 bytes: one of its sequences, read by
 // SubAnim::read 0x4bdc00). The mission agents keep a pointer to the set itself (Agent::defs +0x12c).

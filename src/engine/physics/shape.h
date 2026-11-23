@@ -1,4 +1,4 @@
-// shape.h: the engine's collision shapes, one definition for src/rgl (shapes, scene, resources) and src/game.
+// shape.h: the engine's collision shapes, one definition for src/engine (shapes, scene, resources) and src/game.
 // The classes with their own translation unit (src/engine/physics/collision_shapes.cpp, 0x407c10..0x40e940) keep their
 // definitions of the members there; the callers in other objects use the same classes through this header.
 //

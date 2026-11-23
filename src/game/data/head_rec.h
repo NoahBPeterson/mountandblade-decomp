@@ -1,7 +1,7 @@
 // head_rec.h: the base of the "head record" family (editor / module / trigger tables): vtable 0x5947d8, a status int at
 // +4, the constant 0x63 at +8 and a name tstring at +0x1c (ctor 0x4c2c50 inlined; layout evidence in
 // src/game/data/head_rec_rgl_mesh2.h). ONE definition for src/game (game/data/trigger_records.h, game/data/item_head_records.h,
-// game/data/mission_item_records.cpp) and src/rgl (game/data/head_rec_rgl_mesh2.h).
+// game/data/mission_item_records.cpp) and src/engine (game/data/head_rec_rgl_mesh2.h).
 //
 // THE NINE SLOTS ARE THE IMAGE'S OWN, dumped from 0x5947d8 and from every derived table in the family
 // (0x596124 ItemRec, 0x596148 ItemRec2, 0x59616c MissionBlocker, 0x596190 ItemA, 0x5961c0 ItemD, 0x5961e4 ItemB,

@@ -1,6 +1,6 @@
 // e68.h: E68, the 0x68-byte element of the vector at src/game/editor/poly_mesh_edge_face_ops.cpp (vector<E68>, destructor calls the out-of-line
 // free_materials 0x4c8330) and of the table walked by src/game/ui/widgets/widget_base.cpp (Vec68::count 0x48ace0: (end - begin) / 0x68).
-// ONE definition for src/rgl/mesh2 and src/game/ui. The member at +0x38 is the shared DialogBlock (copy constructor 0x4bd7a0); the
+// ONE definition for src/game/editor and src/game/ui. The member at +0x38 is the shared DialogBlock (copy constructor 0x4bd7a0); the
 // vector at +0x54 holds the block's materials (rgl skin*: a scalar element, its operator= is the memmove one at 0x43f0a0).
 #ifndef MB_E68_H
 #define MB_E68_H

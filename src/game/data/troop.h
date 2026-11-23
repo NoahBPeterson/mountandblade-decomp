@@ -1,5 +1,5 @@
 // troop.h: the troop record (Troop, 0x508 bytes; array behind GameData+0x13a00, game_data.h). ONE definition for src/game
-// (agent, agent2, agent3, ui, party, script, terrain_b, dialog_manager) and src/rgl (editor_selection_and_translation.cpp, game_util.cpp). The
+// (agent, agent2, agent3, ui, party, script, terrain_b, dialog_manager) and src/engine (editor_selection_and_translation.cpp, game_util.cpp). The
 // slices and modules called it Troop (agent_queries.h, game/data/troop_inventory.h, game/terrain/game_data.h), Troop (agent2 / agent3 /
 // dialog_manager / gui_edit) and ItemDef (game_util.h); every name is this record. Troop derives from Troop and only adds the
 // members of the language-export side (editor_selection_and_translation.cpp) and display_name (agent2): the layout is Troop's.
@@ -121,7 +121,7 @@ struct Troop {
     void unequip_all();                     // 0x4687a0 (game/terrain/terrain_cells.cpp)
     void auto_equip(int seed, int unused, char civilian, char no_helmet);   // 0x4687e0 (game/terrain/terrain_cells.cpp, ret 0x10: gives a troop the items its flags guarantee, then fills the rest)
     bool equip_best(int seed, int slot, unsigned need, unsigned forbid, unsigned type, unsigned t2, unsigned t3, char cheapest);   // 0x463100
-    float food_factor();                    // 0x4b21f0 (food consumption factor; heroes by +0x4e4, perks 0x18 / 0x19) (src/game/party2)
+    float food_factor();                    // 0x4b21f0 (food consumption factor; heroes by +0x4e4, perks 0x18 / 0x19) (src/game/mission)
     // ---- src/game/mission_ui2 (method declarations only: no layout change) ----
     void set_attr(int idx, int val);        // 0x48be70 (attribute idx 0..3 at +0x58.. clamped to 0..100; then the +0xa0 minimum is raised)
     void add_attr(int idx, int delta);      // 0x48bef0 (ret 8; steps by one through set_attr)

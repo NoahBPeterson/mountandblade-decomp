@@ -1,4 +1,4 @@
-// common.h: types and globals shared by the three modules of src/game/terrain_a (wind_helpers.cpp, scene_paths_and_wind_noise.cpp,
+// common.h: types and globals shared by the three modules of src/game/terrain (wind_helpers.cpp, scene_paths_and_wind_noise.cpp,
 // terrain_cells.cpp): the plain-old-data element types of the std::vector instantiations that sit in
 // the terrain object's translation unit, the engine globals they read, and the noise / random helpers.
 // Names provisional. Every VA comment cites the function (or table) the declaration was verified against.

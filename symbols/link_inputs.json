@@ -208,7 +208,6 @@
   "object_table_spawners",
   "script_support",
   "operation_execute",
-  "dialog_block_runner",
   "gui_manager",
   "noise",
   "resource_io",

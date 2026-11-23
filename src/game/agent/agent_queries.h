@@ -63,7 +63,7 @@ extern ModeRec* g_mission_templates;                         // 0x5e2a00
 
 // ---- key-frame sampling (0x436ae0, 0x436b90)
 void slerp(quaternion* out, const quaternion* a, const quaternion* b, const float* t);      // 0x4238c0
-#include "game/input/key_table.h"   // key_array (one definition for src/game and src/rgl; find 0x423a50, sample 0x436ae0)
+#include "game/input/key_table.h"   // key_array (one definition for src/game and src/engine; find 0x423a50, sample 0x436ae0)
 
 // (0x435990 / 0x4359c0 / 0x4359e0 are std::vector<ArrSet / CapDef / PlacedObj>::size: agent_queries.cpp)
 struct Triple { int a, b, c; };

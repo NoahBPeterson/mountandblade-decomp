@@ -1,5 +1,5 @@
 // glyph_hash.h: the font's glyph table, a stdext::hash_map<int, Glyph> (VC7.1 <hash_map>: Font::map, font.h). The linker folded every
-// int-keyed map's _Hash::lower_bound into the one instance 0x43b210 (agent4/agent_logic.cpp defines it for this table's type).
+// int-keyed map's _Hash::lower_bound into the one instance 0x43b210 (game/agent/agent_logic.cpp defines it for this table's type).
 #ifndef GAME_GLYPH_HASH_H
 #define GAME_GLYPH_HASH_H
 #include <list>
@@ -21,7 +21,7 @@ typedef stdext::_Hash<stdext::_Hmap_traits<int, Glyph, stdext::hash_compare<int,
 typedef GlyphHash::iterator GlyphIt;                 // the element of the bucket vector (vector<GlyphIt>: resize 0x4cd010, _Insert_n 0x4cc430, _Construct_n 0x4cd1c0)
 typedef std::list<std::pair<const int, Glyph> > GlyphList;   // the node list (clear 0x4c4d80, _Buynode 0x4c4dc0 / 0x4c4e50, _Incsize 0x4cb6f0)
 
-// the out-of-line instances: lower_bound is agent4/agent_logic.cpp's (0x43b210), insert is game/app/world_app.cpp's (0x4d3c00)
+// the out-of-line instances: lower_bound is game/agent/agent_logic.cpp's (0x43b210), insert is game/app/world_app.cpp's (0x4d3c00)
 #ifndef INT_HASH_LOWER_BOUND_INSTANTIATED_HERE
 template<> GlyphHash::iterator GlyphHash::lower_bound(const int&);                     // 0x43b210
 #endif

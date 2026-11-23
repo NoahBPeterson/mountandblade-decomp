@@ -1,5 +1,5 @@
 // key_table.h: key_array, the 12-byte key-frame table: n keys (ints) and n 16-byte values (positions, or quaternions
-// stored w x y z and serialised y z w x). ONE definition for src/rgl (engine/resource/resource.h: skel_anim's tracks and tail,
+// stored w x y z and serialised y z w x). ONE definition for src/engine (engine/resource/resource.h: skel_anim's tracks and tail,
 // key_clip; the readers / writers of mem_stream.cpp, operator= 0x417850; find 0x423a50 in engine/fx/fx_key_frames.cpp) and
 // src/game (game/agent/agent_queries.cpp: sample 0x436ae0). The slices called it KeyTable / Elem12 / vec_array.
 #ifndef MB_KEY_TABLE_H

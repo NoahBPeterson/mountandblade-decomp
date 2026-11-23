@@ -16,14 +16,14 @@ findings on the lines the fix changed.
 | operator new(0x7c) FxDef | eea1ceeb | caught | 2 | 17 (7) | W alloc32 `src/game/mission/agent_spawn_and_tick.cpp:203` operator new + placement new(0x7c) for FxDef: sizeof 0x7c at 32 bits, 0xc0 at 64 |
 | GameG::tick FLD offsets / PartyModel / PlaneTrace | 37e960f3 | caught | 133 | 156 (130) | W raw_moved `src/game/campaign/game_tick.cpp:115` GameG+0x94 = GameDataV::GameData::f94: at +0xc4 at 64 bits, the code reads +0x94 [FLD] |
 | hnode / OpenItem by-value ABI (trivial in one TU only) | 37e960f3 | caught | 2 | 158 (131) | W odr64 `src/engine/core/hnode.h:9` hnode passed by value in registers in some TUs and by address in others (src/game/agent/agent_queries.cpp: regs, src/game/agent2 |
-| Level494 / PropKind / Rec78 / geom_elem +0x84 | e277cac4 | caught | 19 | 69 (47) | W raw_moved `src/game/agent4/agent_logic.cpp:5898` Rec78+0x40 = pad18[40]: at +0x48 at 64 bits, the code reads +0x40 |
+| Level494 / PropKind / Rec78 / geom_elem +0x84 | e277cac4 | caught | 19 | 69 (47) | W raw_moved `src/game/agent/agent_logic.cpp:5898` Rec78+0x40 = pad18[40]: at +0x48 at 64 bits, the code reads +0x40 |
 | ScreenOps slot 0 a plain virtual | d1bb14ae | caught | 2 | 121 (69) | W vslot `src/game/ui/hud/agent_hud.cpp:1370` ScreenOps over ItemA: v04() slot 1 -> Itanium 1, ItemA has reset_screen() there (Itanium 2) |
 | make_editor_list Camera size / face generator raw offsets | 6b67945d | caught | 10 | 3 (1) | W raw_moved `src/game/ui/screens/face_generator/face_generator_update.cpp:57` rgl::strategic_entity+0x58 = rgl::entity::local.rgl::matrix::s.x: at +0x68 at 64 bits, the code reads +0x58 |
 | TextSizeView set_text in set_font | 0dc4fe00 | caught | 2 | 6 (3) | W vslot `src/game/ui/widgets/text_editor_widget.cpp:156` TextSizeView over UiE: s01() slot 1 -> Itanium 1, UiE has is_active() there (Itanium 2) |
 | start_map_conversation raw offset / Big view | 0a24f617 | caught | 2 | 185 (162) | W raw_moved `src/game/mission/mission_context.cpp:710` GameData+0x13a3c = start_map_conversation: at +0x13ae0 at 64 bits, the code reads +0x13a3c |
 | PsOps / PsOpsW vtable views | 3ab096a8 | caught | 107 | 80 (77) | W vslot `src/game/ui/screens/party_screen.cpp:117` PsOps over NodeA: f04() slot 1 -> Itanium 1, NodeA has is_active() there (Itanium 2) |
 | E68W::purge (tableau materials) | b45b4fec | caught | 2 | 7 (1) | W raw_moved `src/game/campaign/game_data_party_quest.h:204` E68W+0x54 = E68::v: at +0x68 at 64 bits, the code reads +0x54 [WD_FLD] |
-| AgentBodyV / CamParams | 1eff9275 | caught | 20 | 13 (10) | W vslot `src/game/agent4/agent_logic.cpp:8439` AgentBodyV over rgl::strategic_entity: v1() slot 1 -> Itanium 1, rgl::strategic_entity has type_id() there (Itanium 2) |
+| AgentBodyV / CamParams | 1eff9275 | caught | 20 | 13 (10) | W vslot `src/game/agent/agent_logic.cpp:8439` AgentBodyV over rgl::strategic_entity: v1() slot 1 -> Itanium 1, rgl::strategic_entity has type_id() there (Itanium 2) |
 | compute_normals casted hidden-pointer call | 8c627c09 | caught | 1 | 1 (1) | W sret `src/game/terrain/terrain_render.cpp:867` -Wcast-function-type-mismatch: cast from 'vector4 (*)(const vector4 *)' to 'vector4 *(*)(vector4 *, const vector4 *)' co |
 
 **18 of 18 caught** (caught 18).

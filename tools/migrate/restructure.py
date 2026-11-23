@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """restructure.py: carry out the source-tree restructure planned in docs/source_tree.md.
 
+(2026-11-22: tools/difftest/annotation_headers.json, which write_annotation_headers() below wrote, is deleted: slice.annotation_sources reads the
+real include graph now; running this tool again would recreate an unused file.)
+
 Driven by docs/source_tree_moves.tsv (one row per src file: old path -> new path; split rows carry cut lines, text
 markers and address ranges) plus the user's decisions of docs/source_tree.md section 8, which override the TSV:
 party_2.cpp stays whole (moved 1:1 to game/party/party_map.cpp), agent_ai.cpp stays whole, agent_hud.cpp goes to

@@ -6,7 +6,7 @@
 // "alias"). Every offset is read or written by a function of one of those modules (address cited); the rest is padding.
 // Names provisional. The slices called the class Agent, Rec5928 and MAgent (src/game/terrain/agent_rec.h keeps
 // MAgent for the constructor 0x477a30 and the pool slot view).
-// Needs match/include/rgl.h (src/game) or src/engine/math/rgl_math.h (src/game/terrain_a) included first (rgl_base.h picks the
+// Needs match/include/rgl.h (src/game) or src/engine/math/rgl_math.h (src/game/terrain) included first (rgl_base.h picks the
 // module's own). Skeleton / rgl::lod_mesh / Channel / shape_base are only pointed to here: a module that calls through them
 // includes skeleton.h / channel.h / shape.h itself.
 #ifndef GAME_AGENT_OBJ_H
@@ -231,7 +231,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
         }
         return r;
     }
-    __forceinline ItemRef cur_pair_fi() const        // cur_pair / slot_pair_inl as cl inlined them in agent4/agent_logic.cpp (forced: the in-class versions above are left to the compiler)
+    __forceinline ItemRef cur_pair_fi() const        // cur_pair / slot_pair_inl as cl inlined them in game/agent/agent_logic.cpp (forced: the in-class versions above are left to the compiler)
     {
         const ItemRef* p = 0;
         if (slots[0] >= 0) p = &pairs[slots[0]];
@@ -313,7 +313,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void set_goal_near(const vector4* center, const float* radius);   // 0x43dd70
     void advance_path();                         // 0x43df60
 
-    // ---- members: src/game/agent3 (agent_combat.cpp) ----
+    // ---- members: src/game/agent/combat (agent_combat.cpp) ----
     void aim_point_and_dir(vector4* pos_out, vector4* dir_out);     // 0x43f560
     bool capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, int* out_bone);   // 0x43f6d0
     int pick_attack_dir(unsigned target_id);     // 0x43f970
@@ -323,7 +323,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     bool line_of_sight(unsigned tid, shape_base* ignore);           // 0x440e30
     int fire_check(unsigned tid, int* out_blocker);                 // 0x441020
 
-    // ---- members: src/game/agent3 (agent_fx_sound.cpp) ----
+    // ---- members: src/game/agent/combat (agent_fx_sound.cpp) ----
     bool can_target(unsigned aid, unsigned flags, float maxdist, float* out_dist);   // 0x442ed0 (ret 0x10)
     bool any_hostile_near();                     // 0x443020
     void update_alarm();                         // 0x443140
@@ -337,7 +337,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void update_equipment_display();             // 0x443aa0
     void on_wield_changed();                     // 0x444370
 
-    // ---- members: src/game/agent4 (agent_think.cpp) ----
+    // ---- members: src/game/agent (agent_think.cpp) ----
     void reset_path();                                  // 0x432080 (game/data/record_destructors.cpp: drops the planned path)
     Agent();                                            // 0x477a30 (game/terrain/poly_mesh.cpp)
     void reset();                                       // 0x472f90 (game/terrain/poly_mesh.cpp: the spawn reset)
@@ -357,7 +357,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void ai_idle_tick(const float* dt);          // 0x44df30
     void shoot();                                // 0x44e2b0
 
-    // ---- members: src/game/agent4 (agent_update.cpp) ----
+    // ---- members: src/game/agent (agent_update.cpp) ----
     void start_ragdoll();                        // 0x44fc60
     void hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out_flag, unsigned victim, float* scale);   // 0x453710
     void apply_blood(const float* center, float amount);   // 0x4519f0 (ret 8)
@@ -385,7 +385,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void set_sel(const int* team);              // 0x489a90 (ret 4)
 
 
-    // ---- members: src/game/agent5 (agent_hud.cpp) ----
+    // ---- members: src/game/agent/hud (agent_hud.cpp) ----
     void hide();                                 // 0x4f8bc0 (ret: the held-item meshes get the hidden vis mask)
     void show();                                 // 0x4f8c20
     void set_slot(int idx, int v);         // 0x470d80

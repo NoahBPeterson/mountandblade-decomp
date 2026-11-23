@@ -3,7 +3,7 @@
 // interpolates between times[lo] and times[hi]; operator= 0x4125e0 copies them with memcpy(count * 4)).
 // Assignment 0x4125e0 returns nothing; the destructor is inline (~mesh 0x4127f0 expands it; the ??_E call is 0x40fe10).
 // Users: src/engine/render/mesh.cpp (find, operator=), src/engine/resource/resource_manager.cpp (save_keyframes 0x4194c0,
-// read_keyframes 0x41c340), the mesh headers of src/rgl and src/game/strat.
+// read_keyframes 0x41c340), the mesh headers of src/engine and src/game/strat.
 //
 // NEEDS `frame_t` declared by the includer, in the enclosing scope of namespace rgl: it is included by
 // src/engine/render/mesh_parts.h right after rgl::frame_t (shared by src/engine/render/mesh.h and src/engine/scene/strat_ext.h).

@@ -107,7 +107,7 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (engine
 | EV | game/editor/poly_mesh_edit_ops.cpp:131 | std::vector<MEdge> | v | 6 (poly_mesh_edit_ops.cpp) | no | - | 6/0/0 | medium | fold into std::vector<MEdge> (pads cover the fields) |
 | sel_list | game/ui/widgets/text_box.cpp:81 | std::vector | v | 4 (notes_window.cpp) | likely | doc | 0/4/0 | medium | fold into std::vector (pads cover the fields) |
 | EquipSet | game/mission/agent_appearance.cpp:32 | ItemRef (game/data/item_ref.h:14) | weapon, helmet, body, boots | 3 (agent_hud.cpp, agent_spawn_and_tick.cpp +1) | no | reach:1 | 1/1/1 | high | fold into ItemRef (real type has no offsets there: check) |
-| vec4n | game/agent4/agent_logic.cpp:7229 | vector4 (engine/math/rgl_math.h:15) | 2 methods | 3 (agent_logic.cpp) | no | reach:3 | 0/3/0 | medium | method twin: declare the 2 method(s) on vector4 |
+| vec4n | game/agent/agent_logic.cpp:7229 | vector4 (engine/math/rgl_math.h:15) | 2 methods | 3 (agent_logic.cpp) | no | reach:3 | 0/3/0 | medium | method twin: declare the 2 method(s) on vector4 |
 | Profile | game/ui/screens/character_sheet/character_sheet_update.h:54 | ? | troop | 2 (character_sheet_update.cpp) | likely | - | 2/0/0 | medium | a screen in g_windows.arr[n] (slot_as<T>(n)): fold into that slot's screen class (head_rec family, game/ui/screens/screen_records.h) |
 | Blk2dd0 | game/data/module_record_loaders.h:29 | EnvRow (game/data/env_row.h:13) | 1 methods | 1 (module_record_loaders.cpp) | no | - | 1/0/0 | medium | method twin: declare the 1 method(s) on EnvRow |
 | Team | game/mission/mission_context.h:39 | TeamRec (game/mission/mission.h:59) | f0, leader, cls, relation | 1 (mission_context.cpp) | no | - | 1/0/0 | medium | fold into TeamRec (pads cover the fields) |
@@ -167,8 +167,8 @@ only directly; their pads are the members still to name.
 - `game/inventory_panel` (2): MissionCtx (mission_ctx_rec.h:7) 4/0x150, BigRec (map_panel.cpp:79) 2/0x84
 - `game/ui` (5): MissionUi (widget_base.h:31) 1/0x5, NodeA (container.h:45) 1/0x7, PairStack (widget_base.h:155) 1/0x4, UiA (ui_widgets.h:14) 1/0x2, UiC (ui_widgets.h:58) 1/0x3
 - `game/script` (3): SiteRec (script_interpreter.cpp:2307) 2/0x1cc, EntryPoint (script_interpreter.h:231) 1/0xf0, PickArg (script_interpreter.cpp:2306) 1/0x400
-- `game/terrain_b` (2): SceneFile (scene_file.h:39) 2/0x80, MEdge (poly_mesh.h:36) 1/0x8
-- `game/terrain_a` (2): TerrainParticle (terrain.h:79) 2/0x8, Terrain (terrain.h:129) 1/0x5dd
+- `game/terrain` (2): SceneFile (scene_file.h:39) 2/0x80, MEdge (poly_mesh.h:36) 1/0x8
+- `game/terrain` (2): TerrainParticle (terrain.h:79) 2/0x8, Terrain (terrain.h:129) 1/0x5dd
 - `game/char_sheet` (2): cell_rec (dust_particles.h:62) 2/0x28, SaveCtx (save_game.h:51) 1/0xc
 - `game/triggers` (3): ItemRec (item_head_records.h:27) 1/0x4, ItemRec2 (item_head_records.h:49) 1/0x4, TimedVal (options_dialog_and_module_tables.cpp:1187) 1/0x4
 - `game/agent` (1): Rec20 (agent_queries.h:25) 1/0x10

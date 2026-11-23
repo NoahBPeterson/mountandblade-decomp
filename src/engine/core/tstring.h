@@ -59,7 +59,7 @@ struct tstring {
     void trim();                                // 0x42c7a0
     tstring operator+(const tstring& o) const;  // 0x42c840
     void insert(int at, const tstring& s);      // 0x42c900
-    tstring* split(const char& delim, int& count) const;   // 0x42c9b0 (a new[] array of the pieces, freed by 0x4fd0e0; src/game/agent5)
+    tstring* split(const char& delim, int& count) const;   // 0x42c9b0 (a new[] array of the pieces, freed by 0x4fd0e0; src/game/agent/hud)
     void read_from(struct _iobuf* f, unsigned n);   // 0x4151e0 read n bytes of the file (a FILE*) into the string (src/engine/io/text_stream.cpp; used by src/game/triggers)
     typedef unsigned size_type;                     // the count types of the members above/around (VC7.1 spelled them unsigned)
 };

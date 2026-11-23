@@ -34,8 +34,8 @@ struct E48 { int v[12]; };                           // 0x30 (vector<E48>)
 // ---- id pool: records handed out from pages of 16 (the agent table's allocator) ----------------------------------
 // the 0xb0-byte pool record is Missile (src/include/recj.h; IfaceB: f4 in-use flag, f8 id, fc serial number; ctor 0x4377d0)
 #include "game/agent/missile.h"   // Missile, the record of Pool<Missile> (Mission::poolJ)
-typedef Missile PoolRec;           // the former name (agent4/agent_logic.cpp reads the pool pages through it)
-#include "engine/core/pool.h"     // Pool<Missile>: the mission's record pool at Mission +0x30 (alloc 0x440c90, agent4/agent_logic.cpp)
+typedef Missile PoolRec;           // the former name (game/agent/agent_logic.cpp reads the pool pages through it)
+#include "engine/core/pool.h"     // Pool<Missile>: the mission's record pool at Mission +0x30 (alloc 0x440c90, game/agent/agent_logic.cpp)
 
 // ---- blend / range tables and helpers called by the agent code ------------------------------------------------------
 float __cdecl signed_angle(const rgl::vector4& a, const rgl::vector4& b);   // 0x4381e0 (game/agent/ai/agent_types.h)
