@@ -21,6 +21,9 @@ usage: run_native.py [--time 60] [--out work/port_shots] [--tag run] [--gain 0.1
        main:custom,option:start_game_3#1): the game drives its own menus, no clicks.
 The game's stdout/stderr go to <out>/<tag>.log. --lldb runs it under lldb in batch mode (bt on a crash; the log has it).
 Audio: MBA_OUTPUT_GAIN (port/audio) is set to --gain so the game plays quietly.
+Linux (the OrbStack amd64 machine mb64): run under Xvfb with lavapipe; a shot captures the X root window whole
+(ImageMagick import — the game is the display's only window). click/key/sweep/scroll are macOS-only; --start
+drives the menus without them.
 Recipes: port/INTEGRATION_STATUS.md, "Test runs".
 """
 import argparse, glob, json, os, signal, subprocess, sys, time
@@ -104,9 +107,10 @@ def main():
             seq.append((v[0].split(), v[1:]))
         else:
             seq.append((None, v))
-    sys.path.insert(0, os.path.join(ROOT, 'tools', 'relink'))
-    import screen_lock
-    screen_lock.hold('run_native.py ' + a.tag)
+    if sys.platform == 'darwin':
+        sys.path.insert(0, os.path.join(ROOT, 'tools', 'relink'))
+        import screen_lock
+        screen_lock.hold('run_native.py ' + a.tag)
     # A stopped run (SIGTERM / SIGHUP: an agent's task stop, a closed terminal) still ends its game before the process
     # exits and the screen lock goes. Python's default SIGTERM exit skips the `finally` below, and the game runs in its
     # own session (start_new_session), so it lived on with the lock free: 2026-11-21 a gate smoke that got the lock at
@@ -115,10 +119,11 @@ def main():
         raise SystemExit(128 + sig)
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGHUP, stop)
-    src = os.path.join(ROOT, 'tools', 'port', 'cgev.swift')
-    if not os.path.exists(CGEV) or os.path.getmtime(CGEV) < os.path.getmtime(src):
-        os.makedirs(os.path.dirname(CGEV), exist_ok=True)
-        subprocess.run(['swiftc', '-O', '-o', CGEV, src], check=True)
+    if sys.platform == 'darwin':
+        src = os.path.join(ROOT, 'tools', 'port', 'cgev.swift')
+        if not os.path.exists(CGEV) or os.path.getmtime(CGEV) < os.path.getmtime(src):
+            os.makedirs(os.path.dirname(CGEV), exist_ok=True)
+            subprocess.run(['swiftc', '-O', '-o', CGEV, src], check=True)
     os.makedirs(a.out, exist_ok=True)
     exe = os.path.join(ROOT, 'build', 'port', a.target, 'bin', 'mb')
     env = dict(os.environ, MBA_OUTPUT_GAIN=a.gain)
@@ -174,6 +179,15 @@ def main():
             end = time.time() + float(st[1])
             while time.time() < end and p.poll() is None:
                 time.sleep(0.05)
+            return True
+        if sys.platform != 'darwin':
+            if st[0] == 'shot':
+                # Xvfb: the game is the display's only window; capture the root window whole.
+                f = os.path.join(a.out, '%s_%s.png' % (a.tag, st[1]))
+                subprocess.run(['import', '-window', 'root', f], check=True)
+                print('%.1f s: shot %s (X root window)' % (time.time() - t0, f))
+            else:
+                print('%.1f s: %s: input actions are macOS-only (MB_START drives the menus)' % (time.time() - t0, st[0]))
             return True
         w = cgev('win', 'mb').split()
         if len(w) < 5:
@@ -252,7 +266,7 @@ def main():
             print('killed at %.1f s' % (time.time() - t0))
         else:
             print('exit code %s after %.1f s' % (p.returncode, time.time() - t0))
-            if p.returncode < 0:
+            if p.returncode < 0 and sys.platform == 'darwin':
                 crash_report(t0, log)
     log.close()
     rd.close()

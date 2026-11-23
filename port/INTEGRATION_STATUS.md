@@ -420,5 +420,14 @@ gate on compile + link (0 trapped) + ctest + a run_native / wine smoke run.
   leaked through mb_physics into the test, and Rosetta mistranslated the VEX codegen of its hoisted fmin update
   (pelvisMinZ corrupted to 0). Jolt is now a PRIVATE dep of mb_physics — only newton_jolt.cpp includes Jolt headers;
   details in docs/c2scope_evaluation.md.
-- **Linux x86_64**: native clang inside an OrbStack amd64 machine (deps built there with `deps.py --native`); in progress.
+- **Linux x86_64**: native clang 18 + lld inside an OrbStack ubuntu 24.04 amd64 machine
+  (`port/cmake/linux-x86_64-native.cmake`; the Mac home is mounted at identical paths, so the Mac-side table tools read the
+  same build dir; deps built there with `deps.py --native`). Tables at fixpoint in `port/link/linux-x86_64/` (54 duplicates,
+  12 weakened TUs, 25 aliased, 3 STL instances, 7 -fno-inline TUs, 0 trapped). ctest **5/5**; quick_battle reaches
+  mission_frame 30 and renders the battle (work/port_shots/qlx86_b.png). The run gate first died inside Device::init:
+  ELF's flat namespace bound glslang's out-of-line `std::vector<int>::resize` (libstdc++ does not inline it; libc++ does,
+  so macOS never hit this) to port/stl's implementation, which writes the MSVC 32-byte vector layout into a 24-byte
+  libstdc++ one, leaving `_M_start` null — `memberRemapper[...]` wrote to nil. Exactly one symbol collides (comm of the
+  src/ and dep symbol sets); native_link.cmake now renames it in every src object (`--redefine-sym`, originals untouched),
+  so src/ keeps port/stl's resize and the deps bind to libstdc++'s. Details in docs/c2scope_evaluation.md.
 - **Windows x86_64**: zig/clang cross (`x86_64-windows-gnu`), run under Wine; in progress.

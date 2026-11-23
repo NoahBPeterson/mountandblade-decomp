@@ -57,6 +57,35 @@ foreach(src ${_mb_rest})
   mb_plain_obj("${src}" _o)
   list(APPEND MB_ORDERED "${_o}")
 endforeach()
+
+# ELF's flat namespace binds a reference to the first definition in link order, and the src/ objects precede the
+# dep archives. port/stl (the VC7.1-shaped STL, -nostdinc++) emits members under the same mangled names libstdc++
+# uses; where both a src object and a dep emit one out of line, the dep's call binds to port/stl's implementation,
+# which operates on the MSVC object layout, not libstdc++'s. Exactly one symbol collides on linux-x86_64 (the
+# 2026-11-23 run-gate segfault): std::vector<int>::resize(unsigned long). port/stl's vector is _Alval + 3 pointers
+# (32 bytes, pointers at 8/16/24); libstdc++'s is 3 pointers (24 bytes, at 0/8/16). glslang built against libstdc++
+# emits resize out of line (libc++ inlines it, so macOS never hits this); its call bound to port/stl's resize, which
+# left _M_start null, and memberRemapper[...][i] wrote to nil (GlslangToSpv.cpp:6499, via mbg::compile_shader in
+# Device::init). Rename the symbol in every src object, definitions and references alike: src/ keeps port/stl's
+# implementation under a private name, the deps bind to their own archives' libstdc++ definition. The originals are
+# untouched (link_tables.py / burndown.py read them). Only the one-arg resizeEm: aliases.ld PROVIDEs the two-arg
+# resizeEm<T> and vector<int>::operator=, whose manglings differ and must keep their names.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set(_mb_isolated "")
+  foreach(_o ${MB_ORDERED})
+    string(MAKE_C_IDENTIFIER "${_o}" _oid)
+    set(_iso "${CMAKE_CURRENT_BINARY_DIR}/isolated/${_oid}.o")
+    get_filename_component(_oname "${_o}" NAME)
+    add_custom_command(OUTPUT "${_iso}"
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/isolated"
+      COMMAND ${MB_OBJCOPY} "--redefine-sym=_ZNSt6vectorIiSaIiEE6resizeEm=_ZNSt6vectorIiSaIiEE14mb_port_resizeEm" "${_o}" "${_iso}"
+      DEPENDS "${_o}"
+      COMMENT "isolate port/stl vector<int>::resize: ${_oname}" VERBATIM)
+    list(APPEND _mb_isolated "${_iso}")
+  endforeach()
+  set(MB_ORDERED ${_mb_isolated})
+endif()
+
 set_source_files_properties(${MB_ORDERED} PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
 add_executable(mb_native ${MB_ORDERED})
 add_dependencies(mb_native mb_objs)

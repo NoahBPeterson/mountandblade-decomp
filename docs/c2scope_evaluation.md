@@ -325,3 +325,31 @@ emit is the one row the rejoin moves, and it moves toward the original:
   source is back to its committed state (instrumentation removed).
 - Outcome: ctest macos-x86_64 **5/5**; run_native quick_battle reaches mission_frame 30 and renders the battle
   (work/port_shots/qx86_b.png). Same flag leak would hit the Linux/Windows x86_64 lanes (also Rosetta-hosted); the fix covers them.
+
+#### Linux x86_64 lane: run-gate segfault in Device::init — single-symbol STL interposition (2026-11-23)
+- Question: bin/mb links (0 trapped) and ctest is 5/5, but the run gate dies with signal 11 at nil during
+  Device::init's first shader compile. Static-init order (the macOS lane's earlier suspect) or something else?
+- No c2scope question: c2scope traces the 32-bit MSVC build for byte-exactness; this is the 64-bit Linux port's
+  link/ABI, answered with the port's MB_CRASH_BT backtrace, addr2line, llvm-nm/objdump and a symbol-set comm.
+- Evidence: MB_CRASH_BT=<path> (port/main.cpp; gdb cannot ptrace under Rosetta) captured the fault: a WRITE
+  `mov %ebx,(%rax,%r14,4)` with rax=0 at GlslangToSpv.cpp:6499 (`memberRemapper[glslangMembers][i] = i - memberDelta`),
+  reached via mbg::compile_shader -> Ffp -> Device::init. The resize call feeding that vector (GlslangToSpv.cpp:6077)
+  resolved to port/stl's `_ZNSt6vectorIiSaIiEE6resizeEm`, not libstdc++'s. mb_gfx_test passes ALL scenarios on Linux
+  (incl fx_all's 76 techniques) — glslang is fine in isolation; only the full binary's link order differs.
+- Cause: ELF's flat namespace binds a reference to the first definition in link order; src/ objects precede the dep
+  archives. port/stl (VC7.1-shaped, -nostdinc++) emits vector<int>::resize out of line under the same mangled name
+  libstdc++ uses, and its vector layout is _Alval + 3 pointers (32 bytes, pointers at 8/16/24) vs libstdc++'s 3 pointers
+  (24 bytes, at 0/8/16). glslang constructs a libstdc++-layout vector; port/stl's resize wrote the pointers at the wrong
+  offsets, _M_start stayed null, the indexed write hit nil. macOS survives because libc++ inlines resize (no out-of-line
+  call to interpose); libstdc++ does not. comm of the src-defined and dep-defined mangled symbol sets: exactly ONE
+  collision, this symbol (port/stl's MSVC internal names _Buy/_Insert_n/_Tidy and the two-arg resizeEm<T> differ).
+- Fix: port/cmake/native_link.cmake (Linux branch) runs llvm-objcopy --redefine-sym on every src object, renaming
+  `_ZNSt6vectorIiSaIiEE6resizeEm` to `_ZNSt6vectorIiSaIiEE14mb_port_resizeEm` — definitions and references alike, so
+  src/ keeps port/stl's implementation under a private name while the deps bind to libglslang.a's libstdc++ definition.
+  Originals untouched (link_tables.py / burndown.py read them); aliases.ld's two-arg resize / operator= PROVIDEs keep
+  their names. Rejected: blanket #define resize (would rename the two-arg alias targets too); force-loading the deps
+  (game code would then bind to the wrong-layout libstdc++ resize); layout-compatible port/stl (std::string differs,
+  malloc/new mixing).
+- Outcome: bin/mb links, ctest **5/5**, quick_battle reaches mission_frame 30 and renders the battle
+  (work/port_shots/qlx86_b.png); burndown 188/188 compile, LINKS 0 undefined / 0 duplicates, 0 trapped.
+  macOS x86_64 / arm64 regression: ctest 5/5 each, macOS x86_64 quick_battle renders (work/port_shots/qmac86_b.png).

@@ -1051,6 +1051,146 @@
     }
    },
    "note": "macOS x86_64 lane: deps.py static deps, tables fixpoint 0 traps, ctest 5/5, quick_battle run gate"
+  },
+  {
+   "date": "2026-11-23 08:49",
+   "commit": "826de59e",
+   "dirty": true,
+   "target": "linux-x86_64",
+   "compiler": "",
+   "tus": 188,
+   "compile": 188,
+   "fail": 0,
+   "errors": 0,
+   "error_limit": 100,
+   "categories": {},
+   "top_kinds": [],
+   "top_first_kinds": [],
+   "worst": [],
+   "link": {
+    "objects": 188,
+    "duplicate_strong": 54,
+    "duplicates_sample": [
+     "_Z10rand_belowPKi",
+     "_Z11clamp_indexPKiS0_S0_",
+     "_Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE",
+     "_Z11round_floatPf",
+     "_Z5clampPKfS0_S0_",
+     "_Z7min_intRKiS0_",
+     "_Z8fmin_refPKfS0_",
+     "_Z8imax_refPKiS0_",
+     "_ZN10TableauTbl12spawn_scaledEiPKN3rgl6matrixEPKNS0_7vector4EPKfPKj",
+     "_ZN10TableauTbl13spawn_scaled2EiPKN3rgl6matrixEPKf",
+     "_ZN10TableauTbl21set_camera_parametersEPKcPKfS3_S3_S3_",
+     "_ZN10TableauTbl7currentEv"
+    ],
+    "unresolved": 350,
+    "by_provider": {
+     "platform shims (Win32/D3D9/D3DX/DirectInput/COM/Winsock: 007-009)": 165,
+     "libc/libm": 46,
+     "Newton (ticket 011)": 41,
+     "FMOD (ticket 010)": 26,
+     "src: declared, defined in no TU": 18,
+     "compiler runtime": 16,
+     "c++ runtime": 12,
+     "port runtime": 12,
+     "src: STL instances defined only in the MSVC link": 10,
+     "other": 4
+    }
+   },
+   "exe": {
+    "attempted": true,
+    "links": true,
+    "undefined": 0,
+    "duplicates": 0,
+    "other_errors": 0,
+    "seconds": 112.4,
+    "undefined_sample": [],
+    "duplicates_sample": [],
+    "exe_bytes": 31771368,
+    "tables": {
+     "duplicates": 54,
+     "weakened_tus": 12,
+     "src_unresolved": 35,
+     "aliased": 25,
+     "aliases_abi_mismatch": 1,
+     "stl_instantiated": 3,
+     "emit_inline_tus": 3,
+     "emitted_inline": 7,
+     "trapped": 0
+    }
+   },
+   "note": "run gate passes: port/stl vector<int>::resize renamed in src objects (single-symbol ELF interposition), quick_battle mission renders"
+  },
+  {
+   "date": "2026-11-23 08:56",
+   "commit": "826de59e",
+   "dirty": true,
+   "target": "linux-x86_64",
+   "compiler": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+   "tus": 188,
+   "compile": 188,
+   "fail": 0,
+   "errors": 0,
+   "error_limit": 100,
+   "categories": {},
+   "top_kinds": [],
+   "top_first_kinds": [],
+   "worst": [],
+   "link": {
+    "objects": 188,
+    "duplicate_strong": 54,
+    "duplicates_sample": [
+     "_Z10rand_belowPKi",
+     "_Z11clamp_indexPKiS0_S0_",
+     "_Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE",
+     "_Z11round_floatPf",
+     "_Z5clampPKfS0_S0_",
+     "_Z7min_intRKiS0_",
+     "_Z8fmin_refPKfS0_",
+     "_Z8imax_refPKiS0_",
+     "_ZN10TableauTbl12spawn_scaledEiPKN3rgl6matrixEPKNS0_7vector4EPKfPKj",
+     "_ZN10TableauTbl13spawn_scaled2EiPKN3rgl6matrixEPKf",
+     "_ZN10TableauTbl21set_camera_parametersEPKcPKfS3_S3_S3_",
+     "_ZN10TableauTbl7currentEv"
+    ],
+    "unresolved": 350,
+    "by_provider": {
+     "platform shims (Win32/D3D9/D3DX/DirectInput/COM/Winsock: 007-009)": 165,
+     "libc/libm": 46,
+     "Newton (ticket 011)": 41,
+     "FMOD (ticket 010)": 26,
+     "src: declared, defined in no TU": 18,
+     "compiler runtime": 16,
+     "c++ runtime": 12,
+     "port runtime": 12,
+     "src: STL instances defined only in the MSVC link": 10,
+     "other": 4
+    }
+   },
+   "exe": {
+    "attempted": true,
+    "links": true,
+    "undefined": 0,
+    "duplicates": 0,
+    "other_errors": 0,
+    "seconds": 113.7,
+    "undefined_sample": [],
+    "duplicates_sample": [],
+    "exe_bytes": 31771368,
+    "tables": {
+     "duplicates": 54,
+     "weakened_tus": 12,
+     "src_unresolved": 35,
+     "aliased": 25,
+     "aliases_abi_mismatch": 1,
+     "stl_instantiated": 3,
+     "emit_inline_tus": 3,
+     "emitted_inline": 7,
+     "trapped": 0
+    }
+   },
+   "note": "run gate passes: port/stl vector<int>::resize renamed in src objects (single-symbol ELF interposition), quick_battle mission renders"
   }
  ],
  "latest": {
@@ -2042,6 +2182,901 @@
   },
   "linux-x86_64": {
    "files": {
+    "src/engine/core/tstring.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/fx/env_curve.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/fx/fx_animation.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/fx/fx_def_init.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/fx/fx_def_render.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/fx/fx_def_set_color.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/fx/fx_def_skin.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/fx/fx_key_frames.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/fx/fx_support.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/fx/mesh_list_color.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/fx/strategic_emitters.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/io/mem_stream.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/io/text_stream.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/math/noise.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/physics/collision_shapes.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/physics/rigid_body.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/physics/world_cells.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/physics/world_collide.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/physics/world_grid.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/render/mesh.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/render/particle_system.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/render/renderer.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/resource/resource_io.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/resource/resource_manager.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/resource/resource_manager_init.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/resource/skeleton_load.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/entity.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/entity_recalc.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/entity_render.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/entity_types.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/frustum_grid.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/fx_element_pool.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/render_scene.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/scene_objects.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/shape_load.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/strategic_entity.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/strategic_shadow.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/engine/scene/world_items.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/agent_item_pick.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/agent_logic.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/agent_queries.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/agent_stats.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/hud/hud_vector_instances.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/app/game_app.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/app/loading_screen.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/app/options_dialog_and_module_tables.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/app/winmain_and_menu_screens.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/app/world_app.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/campaign_screen_camera.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/campaign_screen_init.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/game_data_party_quest.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/game_state_load.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/game_tick.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/map_builder_and_data_load.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/map_panel.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/map_tooltip.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/map_widget_render.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/new_game_setup.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/campaign/party_tracks.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/common/game_util.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/config/config.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/config/launcher_config_dialog.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/config/launcher_options_dialog.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/item_head_records.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/item_kind.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/item_ref.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/mission_item_records.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/module_files_loader.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/module_option_records.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/module_record_loaders.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/object_table_spawners.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/ragdoll_models.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/record_destructors.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/record_slots_head_rec.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/record_slots_screen_records.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/record_slots_trigger.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/trigger_records.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/troop_inventory.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/troop_inventory_stats.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/data/troop_proficiency.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/dialog/dialog_manager.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/editor_selection_and_translation.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/editor_widgets.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/map_editor_update.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/poly_mesh_edge_face_ops.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/poly_mesh_edge_ray.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/poly_mesh_edit_ops.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/poly_mesh_pick.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/poly_mesh_poly_ray_edit.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/poly_mesh_vert_ray.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/terrain_brush.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/terrain_brush_dialog.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/terrain_page/terrain_page.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/terrain_page/terrain_page_init.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/terrain_page/terrain_page_input.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/editor/terrain_page/terrain_page_update.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/input/input_device.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/input/key_groups.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/agent_appearance.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/agent_spawn_and_tick.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/character_meshes.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/hero_ammo.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/mesh_vertex_ops.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/mission_context.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/mission_frame_update.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/mission_hud_and_orders.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/mission_start_setup.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/pick_entity.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/render_passes.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/scene_container_grid.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/scene_entities.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission/terrain_water_regen.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/party/party_map.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/party/party_members.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/party/party_track_allocator.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/party/party_tree_ops.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/party/stacks_and_loot.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/save/save_game.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/save/save_records.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/save/save_state.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/script/operation_execute.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/script/script_support.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain/dust_particles.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain/poly_mesh.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain/scene_paths_and_wind_noise.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain/terrain_cells.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain/terrain_particles.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain/terrain_render.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain/terrain_scene_renderer.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain/wind_helpers.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/gui_manager.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/hud/agent_hud.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/hud/mission_hud_buttons.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/hud/mission_item_source.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/msg_log_ui.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/character_sheet/character_sheet_detail.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/character_sheet/character_sheet_helpers.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/character_sheet/character_sheet_init.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/character_sheet/character_sheet_panels.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/character_sheet/character_sheet_troop.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/character_sheet/character_sheet_update.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/character_sheet/character_sheet_view.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/character_sheet/character_sheet_weapons.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/conversation/conversation_init.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/conversation/conversation_refresh.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/face_generator/face_generator_init.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/face_generator/face_generator_refresh.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/face_generator/face_generator_update.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/inventory/inventory_panel.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/inventory/inventory_window.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/inventory/inventory_window_create.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/mission_menu_and_exchange_screens.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/mission_window.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/notes_window.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/options/keys_page.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/options/options_panel.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/options/quest_page.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/options/video_page.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/party_screen.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/progress_bar_and_load_screens.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/quest_log.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/save_panel.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/screen_misc.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/screens/scroll_list_screen.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/container_and_tableau_misc.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/drop_down_list.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/hud_bar_widgets.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/label_and_progress_bar.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/progress_bar_input.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/progress_bar_value.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/slider_input.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/slider_value.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/text_box.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/text_editor_widget.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/toggle_and_text_fit.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/widget_base.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/widget_manager.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/widget_overlay_api.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widgets/widget_virtual_slots.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
     "src/platform/dxframework/d3dapp.cpp": {
      "ok": true,
      "errors": 0,
@@ -2072,896 +3107,6 @@
      "errors": 0,
      "first": ""
     },
-    "src/game/agent/agent_queries.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/fx/env_curve.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/item_kind.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/troop_proficiency.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/agent/agent_stats.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/agent/agent_logic.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/hud/agent_hud.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/agent/hud/hud_vector_instances.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/terrain_brush_dialog.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/inventory/inventory_window_create.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/face_generator/face_generator_update.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/conversation/conversation_init.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/conversation/conversation_refresh.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/character_sheet/character_sheet_detail.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/character_sheet/character_sheet_panels.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/character_sheet/character_sheet_troop.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/character_sheet/character_sheet_update.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/character_sheet/character_sheet_weapons.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/terrain/dust_particles.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/char_sheet/e96_vec.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/editor_widgets.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/face_generator/face_generator_init.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/face_generator/face_generator_refresh.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/terrain_page/terrain_page_init.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/msg_log_ui.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/pick_entity.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/quest_log.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/map_widget_render.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/save/save_game.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/save_panel.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/save/save_records.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/save/save_state.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/screen_misc.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/campaign_screen_camera.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/campaign_screen_init.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/terrain_page/terrain_page.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/terrain_page/terrain_page_input.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/terrain_page/terrain_page_update.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/app/winmain_and_menu_screens.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/mission_window.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/progress_bar_and_load_screens.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/config/config.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/config/launcher_options_dialog.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/text_editor_widget.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/widget_manager.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/drop_down_list.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/dialog/dialog_manager.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/fx_element_pool.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/character_sheet/character_sheet_init.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/character_sheet/character_sheet_helpers.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/app/game_app.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/game_tick.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/hero_ammo.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/inventory/inventory_panel.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/app/loading_screen.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/map_panel.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/map_tooltip.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/mission_context.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/module_files_loader.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/notes_window.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/party_screen.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/party_tracks.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/resource/skeleton_load.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/character_sheet/character_sheet_view.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/text_box.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/mission_menu_and_exchange_screens.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/scroll_list_screen.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/map_editor_update.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/agent_appearance.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/character_meshes.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/agent_spawn_and_tick.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/mesh_vertex_ops.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/render_passes.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/scene_entities.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/mission_start_setup.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/terrain_water_regen.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/input/input_device.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/map_builder_and_data_load.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/poly_mesh_pick.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/poly_mesh_edge_ray.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/poly_mesh_poly_ray_edit.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/poly_mesh_vert_ray.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission5/mission_5.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/new_game_setup.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/party/party_tree_ops.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/party/stacks_and_loot.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/container_and_tableau_misc.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/party/party_members.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/widget_overlay_api.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/troop_inventory_stats.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/progress_bar_input.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/progress_bar_value.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/config/launcher_config_dialog.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/hud/mission_hud_buttons.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/hud/mission_item_source.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/options/keys_page.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/poly_mesh_edit_ops.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/mission_item_records.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/module_record_loaders.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/options/options_panel.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/options/quest_page.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/ragdoll_models.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/record_slots_screen_records.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/record_slots_head_rec.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/record_slots_trigger.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/trigger_records.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/options/video_page.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/app/world_app.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/game_state_load.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/screens/inventory/inventory_window.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/party/party_map.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/party/party_track_allocator.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/render/renderer.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/script/script_interpreter.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/gui_manager.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/strategic_shadow.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/strategic_entity.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/core/tstring.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/terrain/scene_paths_and_wind_noise.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/terrain/terrain_cells.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/terrain/terrain_particles.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/terrain/terrain_render.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/terrain/wind_helpers.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/mission/scene_container_grid.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/terrain/poly_mesh.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/terrain/terrain_scene_renderer.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/triggers/alloc204.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/item_head_records.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/app/options_dialog_and_module_tables.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/item_ref.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/widget_base.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/troop_inventory.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/slider_value.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/slider_input.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/toggle_and_text_fit.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/label_and_progress_bar.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/widget_virtual_slots.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/ui/widgets/hud_bar_widgets.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/object_table_spawners.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/campaign/game_data_party_quest.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/frustum_grid.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/resource/resource_manager.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/resource/resource_io.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/physics/rigid_body.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/fx/fx_animation.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/fx/fx_key_frames.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/physics/world_cells.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/physics/world_collide.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/physics/world_grid.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/io/mem_stream.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/editor_selection_and_translation.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/editor/poly_mesh_edge_face_ops.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/module_option_records.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/math/noise.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/render/mesh.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/render/particle_system.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/resource/resource_manager_init.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/entity.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/entity_recalc.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/entity_render.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/entity_types.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/fx/fx_support.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/fx/fx_def_init.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/fx/fx_def_render.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/fx/fx_def_set_color.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/fx/fx_def_skin.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/fx/mesh_list_color.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/render_scene.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/scene_objects.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/shape_load.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/fx/strategic_emitters.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/scene/world_items.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/physics/collision_shapes.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/engine/io/text_stream.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/agent/agent_item_pick.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/common/game_util.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/input/key_groups.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
-    "src/game/data/record_destructors.cpp": {
-     "ok": true,
-     "errors": 0,
-     "first": ""
-    },
     "src/third_party/tinyxml/tinystr.cpp": {
      "ok": true,
      "errors": 0,
@@ -2979,45 +3124,34 @@
     }
    },
    "src_unresolved": [
-    "Agent::reset()",
-    "E176::E176(E176 const&)",
-    "E50::E50(E50 const&)",
-    "FxAnimQ::qvalue(int, int, int)",
+    "DialogRec::translated()",
+    "FaceKey::translated()",
     "GameData::time_of_day()",
-    "GameW::random_position_around(float, float, float, float*)",
-    "GameWpx::n(float, float, float, float*)",
-    "IntVec::insert_n(int*, unsigned int, int const*)",
-    "ItemKind::ItemKind()",
     "ItemKind::display_name()",
     "ItemKind::find_plural()",
-    "ListObj::~ListObj()",
-    "MeshVec::operator=(std::vector<rgl::mesh*, std::allocator<rgl::mesh*>> const&)",
-    "Meter::set_value(float*)",
-    "Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)",
+    "ItemKind::translated()",
+    "ItemKind::translated_plural()",
     "PartyX::find_or_add(int, int, int)",
     "PartyX::sum_stat(unsigned int)",
-    "RecPoly::~RecPoly()",
-    "Stack::clear()",
+    "QuestRec::set_alpha(int)",
+    "StringTable::Str::translated()",
     "TroopX::set_attr(int, int)",
-    "VecIter::advance(int**, int)",
-    "convv::vector_deleting_delete(unsigned char)",
-    "elem60v::vector_deleting_delete(unsigned int)",
-    "manifold::manifold()",
-    "mb_snprintf(char*, unsigned int, char const*, ...)",
-    "mesh_ptr_vec::push_back(rgl::mesh* const&)",
-    "propv::vector_deleting_delete(unsigned char)",
-    "rgl::frustum::view_matrix()",
+    "item_mod::translated()",
+    "menu_item::translated()",
     "rgl::mesh::get50_()",
     "rgl::mesh::get70_()",
     "rgl::mesh::get90_()",
     "rgl::ptr_list::operator=(rgl::ptr_list const&)",
-    "std::list<int, std::allocator<int>>::_Buynode()",
+    "std::list<shape_base*, std::allocator<shape_base*>>::_Insert(std::list<shape_base*, std::allocator<shape_base*>>::iterator, shape_base* const&)",
+    "std::vector<MEdge, std::allocator<MEdge>>::clear()",
+    "std::vector<MPoly, std::allocator<MPoly>>::clear()",
+    "std::vector<MVert, std::allocator<MVert>>::clear()",
+    "std::vector<long long, std::allocator<long long>>::clear()",
     "std::vector<rgl::entity*, std::allocator<rgl::entity*>>::_Buy(unsigned long)",
-    "std::vector<rgl::entity*, std::allocator<rgl::entity*>>::_Tidy()",
-    "std::vector<rgl::scene*, std::allocator<rgl::scene*>>::push_back(rgl::scene* const&)",
-    "texture::texture()",
-    "uninit_fill_ptrs(MissionUi**, unsigned int, MissionUi* const*, void*)",
-    "void std::_Uninit_fill_n<Skin*, unsigned int, Skin, std::allocator<Skin>>(Skin*, unsigned int, Skin const&, std::allocator<Skin>&, std::_Nonscalar_ptr_iterator_tag)"
+    "std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const",
+    "std::vector<rgl::lod_mesh*, std::allocator<rgl::lod_mesh*>>::push_back(rgl::lod_mesh* const&)",
+    "std::vector<shape_base*, std::allocator<shape_base*>>::push_back(shape_base* const&)",
+    "std::vector<shape_base*, std::allocator<shape_base*>>::resize(unsigned long, shape_base*)"
    ],
    "trapped": []
   },

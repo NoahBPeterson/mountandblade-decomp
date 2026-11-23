@@ -19,15 +19,38 @@ Then it links the `mb` executable (cmake --build --target mb, at most 4 jobs) on
 linked, the linker's undefined / duplicate symbol counts, and from port/link/tables.json (tools/port/link_tables.py)
 how the src/ names were resolved and how many are still only trapped (weak placeholders that abort when reached).
 
-The compiles run locally (clang via zig, port/cmake/zig-c++); nothing touches the MSVC flow.
+The compiles run where the target's toolchain lives: zig cross (port/cmake/zig-c++) for linux-i686 from the Mac,
+native clang for the macOS targets, and linux-x86_64 inside the OrbStack amd64 machine mb64 (run this script there).
+Nothing touches the MSVC flow.
 """
 import argparse, collections, datetime, glob, json, os, re, shlex, shutil, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-TOOLCHAINS = {'linux-i686': 'port/cmake/linux-i686.cmake', 'linux-x86_64': 'port/cmake/linux-x86_64.cmake',
+TOOLCHAINS = {'linux-i686': 'port/cmake/linux-i686.cmake', 'linux-x86_64': 'port/cmake/linux-x86_64-native.cmake',
               'macos-arm64': 'port/cmake/macos-arm64.cmake', 'macos-x86_64': 'port/cmake/macos-x86_64.cmake'}
 ZIG_LIBC = {'linux-i686': 'x86-linux-gnu', 'linux-x86_64': 'x86_64-linux-gnu'}
+
+
+def uses_zig(target):
+    """zig cross (linux-i686) vs native clang (the macOS targets; linux-x86_64 inside the OrbStack amd64 machine,
+    where this script then runs too — the Mac home is mounted at identical paths)."""
+    with open(os.path.join(ROOT, TOOLCHAINS[target])) as f:
+        return 'zig-cc' in f.read()
+
+
+def compiler_version(target, build):
+    if uses_zig(target):
+        return subprocess.run(['zig', 'cc', '--version'], capture_output=True, text=True).stdout.splitlines()[0]
+    m = re.search(r'^CMAKE_CXX_COMPILER:FILEPATH=(.+)$', open(os.path.join(build, 'CMakeCache.txt')).read(), re.M)
+    cxx = m.group(1) if m else None
+    if not cxx:   # a toolchain set() without CACHE keeps the compiler out of the cache; the compile commands have it
+        with open(os.path.join(build, 'compile_commands.json')) as f:
+            entries = json.load(f)
+        cxx = shlex.split(entries[0]['command'])[0] if entries else None
+    return subprocess.run([cxx, '--version'], capture_output=True, text=True).stdout.splitlines()[0] if cxx else ''
+
+
 ERR_RE = re.compile(r'^(?P<file>[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?:fatal )?error: (?P<msg>.*)$', re.M)
 
 
@@ -117,7 +140,7 @@ def link_inventory(target, objs):
     dups = sorted(n for n, o in strong.items() if len(o) > 1)
     unres = sorted(undef - defined)
     dem = dict(zip(unres, subprocess.run([filt], input='\n'.join(unres), capture_output=True, text=True).stdout.splitlines()))
-    zig_lib = re.search(r'\.lib_dir = "([^"]+)"', subprocess.run(['zig', 'env'], capture_output=True, text=True).stdout) if target in ZIG_LIBC else None
+    zig_lib = re.search(r'\.lib_dir = "([^"]+)"', subprocess.run(['zig', 'env'], capture_output=True, text=True).stdout) if uses_zig(target) else None
     libc_dirs = []
     if zig_lib:
         inc = os.path.join(zig_lib.group(1), 'libc', 'include')
@@ -126,6 +149,8 @@ def link_inventory(target, objs):
         sdk = subprocess.run(['xcrun', '--show-sdk-path'], capture_output=True, text=True).stdout.strip()
         if sdk:
             libc_dirs = [os.path.join(sdk, 'usr', 'include')]
+    elif target.startswith('linux'):
+        libc_dirs = ['/usr/include']
     libc, shims = header_tokens(libc_dirs), header_tokens([os.path.join(ROOT, 'port', 'include')])
     groups = collections.defaultdict(list)
     for n in unres:
@@ -290,8 +315,7 @@ def main():
     doc['history'].append({
         'date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M'), 'commit': git('rev-parse', '--short', 'HEAD'),
         'dirty': bool(git('status', '--porcelain', '--', 'port', 'src', 'tools/port')), 'target': a.target,
-        'compiler': subprocess.run(['zig', 'cc', '--version'], capture_output=True, text=True).stdout.splitlines()[0]
-                    if a.target in ZIG_LIBC else '',
+        'compiler': compiler_version(a.target, build),
         'tus': len(results), 'compile': ok, 'fail': len(results) - ok, 'errors': total_errs, 'error_limit': a.error_limit,
         'categories': dict(cats.most_common()), 'top_kinds': kinds.most_common(12), 'top_first_kinds': first_kinds.most_common(8),
         'worst': worst[:10], 'link': {k: v for k, v in (link or {}).items() if k != 'src_unresolved'},
