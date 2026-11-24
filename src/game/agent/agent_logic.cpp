@@ -2013,6 +2013,14 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
     }
 }
 
+// 0x432470 (Agent::f100_is_0x48_and_charged, game/common/game_util.cpp owns the row): the body inline, as in the original
+// object, so can_hit (0x4406a0) and hit_damage (0x453710) expand it instead of calling it (they read anim[1].cur and the
+// second envelope's weight in place).
+inline bool Agent::f100_is_0x48_and_charged() const
+{
+    if (anim[1].cur != 0x48) return false;
+    return body->fx->env[1].weight > 0.1f;
+}
 // 0x4378f0 (Agent::get_dir, game/agent/agent_stats.cpp owns the row): the body visible, so the direction pair passed by address does not escape
 // in Agent::can_hit (0x4406a0) and the slot_pair temporaries share its frame slot.
 inline __declspec(noinline) void Agent::get_dir(vec2* out)
@@ -2575,8 +2583,22 @@ void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
     e->accel_scale = d->accel_scale;
     e->noise_scale = d->noise_scale;
     e->noise_amount = d->noise_amount;
-    for (int k = 0; k < 5; k++)
-        e->curve[k] = d->t[k];
+    {
+        struct float_pair {
+            float u, v;
+            float_pair() {}
+            float_pair(float a, float b) : u(a), v(b) {}
+        };
+        int k = 0;
+        do {
+            ((float_pair*)e->curve)[0 + k] = ((const float_pair(*)[2])d->t)[0][k];
+            ((float_pair*)e->curve)[2 + k] = ((const float_pair(*)[2])d->t)[1][k];
+            ((float_pair*)e->curve)[4 + k] = ((const float_pair(*)[2])d->t)[2][k];
+            ((float_pair*)e->curve)[6 + k] = ((const float_pair(*)[2])d->t)[3][k];
+            ((float_pair*)e->curve)[8 + k] = ((const float_pair(*)[2])d->t)[4][k];
+            k++;
+        } while (k < 2);
+    }
     e->spin_scale = d->rot_speed;
     e->spin_drag = d->rot_damping;
     mat4 m;
@@ -11670,8 +11692,7 @@ void Agent::update(float dt)
                                 d.x = vel_xy.x;
                                 d.y = vel_xy.y;
                                 d.normalize();
-                                m.o.x = s * d.x;
-                                m.o.y = s * d.y;
+                                *(a_v2*)&m.o = a_v2(d.x, d.y) * s;
                                 m.f.x = vel_xy.x;
                                 m.f.y = vel_xy.y;
                                 m.f.z = 0.0f;

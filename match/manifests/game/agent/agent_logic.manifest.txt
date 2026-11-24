@@ -134,3 +134,7 @@
 ../src/game/agent/agent_logic.cpp  $L  004420ea  /O2 /MT /Gy /TP
 ../src/game/agent/agent_logic.cpp  $L  00444c28  /O2 /MT /Gy /TP
 ../src/game/agent/agent_logic.cpp  ?add_placed@Mission@@QAEHPBH00PBUmatrix@rgl@@PAH@Z  0044f870  /O2 /MT /Gy /TP
+../src/game/agent/agent_logic.cpp  ?can_hit@Agent@@QAEHIIHPAUMissile@@PBM@Z  004406a0  /O2 /MT /Gy /TP
+../src/game/agent/agent_logic.cpp  ?hit_damage@Agent@@QAEXHPAUMissile@@PAMPAII1@Z  00453710  /O2 /MT /Gy /TP
+../src/game/agent/agent_logic.cpp  ?update@Agent@@QAEXM@Z  0045f660  /O2 /MT /Gy /TP
+../src/game/agent/agent_logic.cpp  ?setup@EmitTable@@QAEXPAUpsys@rgl@@HPBUvector4@3@@Z  004424c0  /O2 /MT /Gy /TP
