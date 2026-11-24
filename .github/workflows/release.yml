@@ -31,7 +31,7 @@ jobs:
             runner: macos-15
             kind: macos
           - target: windows-x86_64
-            runner: macos-15
+            runner: ubuntu-24.04
             kind: windows
     env:
       T: ${{ matrix.target }}
@@ -48,18 +48,26 @@ jobs:
           echo "VERSION=$v" >> "$GITHUB_ENV"
 
       - name: Packages (Linux)
-        if: matrix.kind == 'linux'
+        if: matrix.kind == 'linux' || matrix.kind == 'windows'
         run: |
           sudo apt-get update
           sudo apt-get install -y clang lld llvm cmake ninja-build pkg-config git python3 xvfb \
             libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxfixes-dev libxss-dev libxtst-dev libxrender-dev \
             libxkbcommon-dev libwayland-dev libasound2-dev libpulse-dev libdbus-1-dev libudev-dev libegl-dev libgl1-mesa-dev
 
+      # The Windows lane is cross-built with zig's clang + mingw-w64 (any host); the Linux packages above also give it
+      # llvm-ar / llvm-ranlib / llvm-nm / llvm-dlltool, which the lane finds on PATH.
+      - name: zig (Windows)
+        if: matrix.kind == 'windows'
+        run: |
+          curl -fsSL -o zig.tar.xz https://ziglang.org/download/0.17.0/zig-x86_64-linux-0.17.0.tar.xz
+          mkdir -p "$HOME/zig" && tar xf zig.tar.xz -C "$HOME/zig" --strip-components=1
+          echo "$HOME/zig" >> "$GITHUB_PATH"
+
       - name: Packages (macOS)
-        if: matrix.kind != 'linux'
+        if: matrix.kind == 'macos'
         run: |
           brew install cmake ninja llvm
-          if [ "${{ matrix.kind }}" = windows ]; then brew install zig; fi
           echo "/opt/homebrew/opt/llvm/bin" >> "$GITHUB_PATH"
 
       - name: Dependency cache
