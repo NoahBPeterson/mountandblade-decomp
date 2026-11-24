@@ -9,6 +9,7 @@
 ../src/game/campaign/map_builder_and_data_load.cpp  ??$_Uninit_copy@Viterator@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@PAUtstring@@V?$allocator@Utstring@@@3@@std@@YAPAUtstring@@Viterator@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@0@0PAU1@AAV?$allocator@Utstring@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00524cd0  /O2 /MT /Gy /TP
 ../src/game/campaign/map_builder_and_data_load.cpp  ?terrain_material@Game@@QAEPAUskin@@H@Z  00523390  /O2 /MT /Gy /TP
 ../src/game/campaign/map_builder_and_data_load.cpp  ?read_file@FactionRec@@QAEXAAUstream_base@@H@Z  00524a70  /O2 /MT /Gy /TP
+../src/game/campaign/map_builder_and_data_load.cpp  ?reserve@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAEXI@Z  00524bc0  /O2 /MT /Gy /TP
 ../src/game/campaign/map_builder_and_data_load.cpp  ?scan_arrays@Game@@QAEXPAX0@Z  00523630  /O2 /MT /Gy /TP
 ../src/game/campaign/map_builder_and_data_load.cpp  ?build_scene@Game@@QAEXXZ  00520d60  /O2 /MT /Gy /TP
 ../src/game/campaign/map_builder_and_data_load.cpp  ?read_file@SceneFile@@QAEXAAUstream_base@@@Z  00524d60  /O2 /MT /Gy /TP
@@ -17,3 +18,4 @@
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
 ../src/game/campaign/map_builder_and_data_load.cpp  _$E1  00548070  /O2 /MT /Gy /TP
 ../src/game/campaign/map_builder_and_data_load.cpp  _$E2  00548270  /O2 /MT /Gy /TP
+../src/game/campaign/map_builder_and_data_load.cpp  ?read_map@@YAPAUstream_base@@PAU1@PAUNavData@@@Z  00520c00  /O2 /MT /Gy /TP

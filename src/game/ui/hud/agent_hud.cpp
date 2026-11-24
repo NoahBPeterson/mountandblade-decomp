@@ -687,13 +687,17 @@ k.o = hv_add(hv_mulv(g_mission->frame_b.o, t), hv_mulv(g_mission->frame_a.o, 1.0
                 int count, i;
                 float t;
                 vector4 q, c;
+                char capbuf[sizeof(capsule)];
+                capsule& cap = *(capsule*)capbuf;
+                {
                 vector4 p0 = k.o;
                 hv_sub_of(q, k.o, (k.u * d));
                 hv_sub_of(c, q, p0);
                 c.normalize();
                 vector4 a = (p0 - (c * 0.4f));
-                capsule cap(1e-5f, &q, &a);
+                cap.capsule::capsule(1e-5f, &q, &a);
                 g_mission->scene->query_segment(&p0, &q, 0x110, list, &count);
+                }
                 float d2 = d;
                 t = 1000.0f;
                 for (i = 0; i < count; i++) {
@@ -951,6 +955,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
 
 
 static __forceinline rgl::mesh* item_mesh_v(const ItemRef* r, const float& s) { return make_item_mesh(r, &s); }
+static __forceinline void offset_v(rgl::mesh* m, const float& v) { m->set_offset(*(const vector4*)&v); }
 // @ 0x4fb350
 void MissionBlocker::update_status()
 {
@@ -1017,9 +1022,7 @@ void MissionBlocker::update_status()
                 float piece_scale = 0.055f; rgl::mesh* piece = make_item_mesh(&res, &piece_scale);
                 if (piece) {
                     matrix frame;
-                    vector4 offset;
-                    offset.x = 0.0005f;
-                    piece->set_offset(offset);
+                    offset_v(piece, 0.0005f);
                     identity3((rgl::mat3*)&frame);
                     rot_u((rgl::matrix&)frame, -1.45f);
                     piece->set_part(frame);

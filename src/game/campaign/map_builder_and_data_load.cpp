@@ -58,6 +58,18 @@ extern const int g_level_xp[64] = {  // 0x5937c8 experience bound per level (rda
 // its vectors' resize 0x424740 / 0x424cc0 and the cell constructor 0x4246f0 are engine/physics/world_grid.cpp's) ---------
 stream_base* read_map(stream_base* s, NavData* map);            // 0x520c00
 
+// FactionRec::read_file 0x524a70 calls the ranks' reserve out of line (0x524bc0): declare the member without a body
+// here so the call stays a call (a visible body would be inlined into read_file); the member's body follows at 0x524bc0.
+namespace std { template<> void vector<tstring>::reserve(size_t); }
+
+// NavData::cells' resize (0x424cc0) takes its fill value (NavCell 0x4246f0) by value and builds it at the call site;
+// nav_data.h's cell constructor is inline, so cl expands its nine stores here. A same-layout cell whose constructor
+// stays a call gives the original's shape: the constructor call, then the 0x88-byte copy to the argument.
+struct NavCellZero : NavCell {
+    __declspec(noinline) NavCellZero() {}
+};
+namespace std { template<> void vector<NavCell>::resize(size_t, NavCell); }
+
 // @ 0x520b20
 void Game::build_map()
 {
@@ -90,7 +102,7 @@ __declspec(noinline) stream_base* read_map(stream_base* s, NavData* map)
     s->r_int(&n2);
     // link[] (+0x28) and the weights (+0x38) stay as the group constructor left them: NavData::build fills link[k]
     // for every k < n, and nothing reads k >= n (score_triggers 0x51dac0 and solve 0x51d3a0 stop at count).
-    map->cells.resize(n2, NavCell());
+    map->cells.resize(n2, NavCellZero());
     for (i = 0; i < n2; i++) {
         s->r_int(&map->cells[i].mask());
         s->r_int(&map->cells[i].f68);
@@ -1383,7 +1395,44 @@ void FactionRec::read_file(stream_base& s, int count)
 }
 
 // @ 0x524bc0
-template void std::vector<tstring>::reserve(size_t);
+// std::vector<tstring>::reserve: the generic <vector> instance of the stock VC7.1 body (<vector>:436), with its _Ucopy
+// level written out as the chain it forwards to: _Ucopy -> _Uninitialized_copy -> _Uninit_copy (0x524cd0, the
+// try/catch loop). _Ptr_cat's by-reference arguments (f, d) are what home the iterator copies on the stack there, and
+// the tag object it returns is the loop's fifth (unused) argument in the original. FactionRec::read_file 0x524a70
+// calls this member out of line because it only sees the declaration at the top of this file (<vector>'s body would
+// otherwise be inlined there).
+typedef std::vector<tstring> tstring_vec;
+typedef tstring_vec::iterator tv_it;
+typedef std::allocator<tstring> tv_alloc;
+static inline std::_Nonscalar_ptr_iterator_tag tv_cat(tv_it& f, tstring*& d) { std::_Nonscalar_ptr_iterator_tag c; return c; }
+static inline tstring* tv_uninit(tv_it f, tv_it l, tstring* d, tv_alloc& al)
+{ return std::_Uninit_copy(f, l, d, al, tv_cat(f, d)); }
+static inline tstring* tv_ucopy(tv_it f, tv_it l, tstring* d, tv_alloc& al) { return tv_uninit(f, l, d, al); }
+template<> void std::vector<tstring>::reserve(size_t _Count)
+{
+    if (max_size() < _Count)
+        _Xlen();    // result too long
+    else if (capacity() < _Count) {    // not enough room, reallocate
+        pointer _Ptr = this->_Alval.allocate(_Count);
+
+        _TRY_BEGIN
+        tv_ucopy(begin(), end(), _Ptr, this->_Alval);
+        _CATCH_ALL
+        this->_Alval.deallocate(_Ptr, _Count);
+        _RERAISE;
+        _CATCH_END
+
+        size_type _Size = size();
+        if (_Myfirst != 0) {    // destroy and deallocate old array
+            _Destroy(_Myfirst, _Mylast);
+            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+        }
+
+        _Myend = _Ptr + _Count;
+        _Mylast = _Ptr + _Size;
+        _Myfirst = _Ptr;
+    }
+}
 
 // tstring's character accessor: falls back to the buf field's own address when empty
 static inline const char* cstr(const tstring& t)
