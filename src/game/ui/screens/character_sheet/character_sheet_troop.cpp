@@ -118,7 +118,9 @@ void item_events(int item, int* a, int* b, int* c)
     *c = -1;
     if (item < 0)
         return;
-    unsigned t = g_items[item].type_flags & 0xff;
+    ItemKind* k = &g_items[item];
+    unsigned t = k->type_flags & 0xff;
+    if (!k) return;
     if (t == 2 || t == 3 || t == 4 || t == 9) {
         *a = 0;
         return;

@@ -1,2 +1,3 @@
 ../src/game/ui/screens/character_sheet/character_sheet_troop.cpp  ?apply_to_troop@CharSheet@@QAEXXZ  004ef420  /O2 /MT /Gy /TP
 ../src/game/ui/screens/character_sheet/character_sheet_troop.cpp  ?steps_to_point@Troop@@QAEHH@Z  004ef6d0  /O2 /MT /Gy /TP
+../src/game/ui/screens/character_sheet/character_sheet_troop.cpp  ?item_events@@YAXHPAH00@Z  004ef730  /O2 /MT /Gy /TP

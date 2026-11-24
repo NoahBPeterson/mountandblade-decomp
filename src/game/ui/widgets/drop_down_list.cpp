@@ -24,17 +24,26 @@
 #include "engine/render/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 #include "game/ui/gui_manager.h"            // g_gui 0x5d7080
+#include "engine/core/crt.h"
 
 // the UI root's widget vector (gui_manager::objs, at the start of the object at 0x5d7080). Its push_back
-// is the out-of-line instance the original calls (0x49b120).
+// is the out-of-line instance the original calls (0x49b120); create() calls it out of line too (noinline).
 // insert is declared as a specialization without a body first: the original's push_back (the library body of
 // <vector>) calls insert instead of inlining _Insert_n, which only happens when no body is visible at the point
-// push_back is instantiated. The specialization is defined below, after push_back.
+// push_back is compiled. The specialization is defined below, after push_back.
 namespace std {
 template<> __declspec(noinline) std::vector<NodeA*>::iterator std::vector<NodeA*>::insert(std::vector<NodeA*>::iterator, NodeA* const&);
+// @ 0x49b120  (the library <vector> body: the size() < capacity() fast path, else insert(end()))
+// A bodiless declaration here would turn the explicit instantiation into a declaration and stop the file
+// from emitting push_back at all, so the library body is spelled as the specialization's definition instead.
+template<> __declspec(noinline) void std::vector<NodeA*, std::allocator<NodeA*> >::push_back(NodeA* const& _Val)
+{
+    if (size() < capacity())
+        _Mylast = _Ufill(_Mylast, 1, _Val);
+    else
+        insert(end(), _Val);
 }
-// @ 0x49b120
-template void std::vector<NodeA*, std::allocator<NodeA*> >::push_back(NodeA* const&);
+}
 // @ 0x49b170 (its _Insert_n is 0x49b1c0, next range)
 template<> std::vector<NodeA*, std::allocator<NodeA*> >::iterator
 std::vector<NodeA*, std::allocator<NodeA*> >::insert(std::vector<NodeA*, std::allocator<NodeA*> >::iterator _Where, NodeA* const& _Val)
@@ -60,9 +69,7 @@ NodeA* DropDown::create()
 
     b->set_xy(V2(wh.x, (float)rows.size() * wh.y));
 
-    NodeA* tmp = b;
-    g_gui.dirty = 1;
-    g_gui.objs.push_back(tmp);
+    { NodeA* tmp = b; g_gui.dirty = 1; g_gui.objs.push_back(tmp); }
     b->set_d0(0x20000);
     b->set_d4(4);
 

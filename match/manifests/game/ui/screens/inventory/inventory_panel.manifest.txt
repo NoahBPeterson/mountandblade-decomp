@@ -14,3 +14,4 @@
 ../src/game/ui/screens/inventory/inventory_panel.cpp  ?place_slot_mesh@PartyWindow@@QAEXPAUItemRef@@PAMHH@Z  00510fa0  /O2 /MT /Gy /TP
 ../src/game/ui/screens/inventory/inventory_panel.cpp  ?frame_update@PartyWindow@@UAEXM@Z  0050fe20  /O2 /MT /Gy /TP
 ../src/game/ui/screens/inventory/inventory_panel.cpp  ?price@GameData@@QAEHPAUItemRef@@HDDD@Z  005129d0  /O2 /MT /Gy /TP
+../src/game/ui/screens/inventory/inventory_panel.cpp  ?refresh_lists@PartyWindow@@QAEXH@Z  005108d0  /O2 /MT /Gy /TP

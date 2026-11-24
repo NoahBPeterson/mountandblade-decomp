@@ -303,8 +303,8 @@ void Rec1bc::refresh()
     }
 
     bool unassigned = false;
-    for (int i = 0; i < 0x25; i++)
-        if (g_game_keys.entry[i][0] == -1) unassigned = true;
+    for (int i = 0; i < 0x128; i += 8)
+        if (*(int*)((char*)g_game_keys.entry + i) == -1) unassigned = true;
     // 0x4d71e0: Done is greyed while any key is unbound (+0xb8), Undo only while nothing changed. Written when ui_widget.h
     // had the two slots swapped and not flipped with it, so Done was greyed with every key bound.
     if (unassigned) f30->flag2_set();

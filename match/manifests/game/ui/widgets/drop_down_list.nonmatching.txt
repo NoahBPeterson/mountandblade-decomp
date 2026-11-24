@@ -1,1 +1,0 @@
-0049ad20	653	DropDown::create: [2026-11-21 lane L-D2: the hand-written / view class is replaced by the real std::vector (its public members, explicit instantiation of the library body)] [equiv: FAIL, 17/19 valid inputs mismatched; first: call #4 (depth 1); figure 89 aligned (chk.py)]

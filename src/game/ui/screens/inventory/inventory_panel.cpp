@@ -295,7 +295,7 @@ static __forceinline void close_tooltip(gui_manager* g)
     g->line_x = -0.03f;
     g->nlines = 0;
     g->overlay = 0;
-    g->sel_ent = 0;
+    *(float*)&g->sel_ent = 0.0f;   // the original's last zero here is a float store: 0.0f never joins the integer zero, so it is an immediate, not the tracked register zero
 }
 
 // @ 0x5108d0

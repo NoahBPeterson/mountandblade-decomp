@@ -177,9 +177,21 @@ template vector<NavVert>::iterator vector<NavVert>::erase(vector<NavVert>::itera
 // @ 0x424830
 template void vector<NavVert>::_Insert_n(vector<NavVert>::iterator, size_t, const NavVert&);
 // @ 0x424cc0
+// The shrink path of resize calls erase out of line (0x424d60): a bodyless specialization declaration keeps the
+// call site from inlining the stock body (cl 13.10 would otherwise inline std::copy's tail into resize).
+template<> __declspec(noinline) vector<NavCell>::iterator vector<NavCell>::erase(vector<NavCell>::iterator _First, vector<NavCell>::iterator _Last);
 template void vector<NavCell>::resize(size_t, NavCell);
 // @ 0x424d60
-template vector<NavCell>::iterator vector<NavCell>::erase(vector<NavCell>::iterator, vector<NavCell>::iterator);
+template<> vector<NavCell>::iterator vector<NavCell>::erase(vector<NavCell>::iterator _First, vector<NavCell>::iterator _Last)
+{   // erase [_First, _Last): the stock <vector> body, defined here as the specialization the declaration above names
+if (_First != _Last)
+    {   // worth doing, copy down over hole
+    vector<NavCell>::pointer _Ptr = copy(_ITER_BASE(_Last), _Mylast, _ITER_BASE(_First));
+    _Destroy(_Ptr, _Mylast);
+    _Mylast = _Ptr;
+    }
+return (_First);
+}
 // @ 0x424db0
 template void vector<NavCell>::_Insert_n(vector<NavCell>::iterator, size_t, const NavCell&);
 }
