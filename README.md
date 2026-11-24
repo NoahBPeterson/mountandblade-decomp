@@ -18,7 +18,7 @@ This is a work in progress, and currently a semi-working replacement for `mount&
 |---|---:|---:|---:|---|
 | Byte-exact | 2,924 | 87.5% | 55.7% | compiled object vs the original, byte for byte, relocations masked (`tools/matching/run_all.py`) |
 | Equivalent only | 122 | 3.7% | 6.9% | both versions executed on 219-589 inputs, all reachable branch edges covered on **both** builds, exit state + call traces + written memory identical (`tools/difftest/equiv.py`) |
-| Not equivalent yet | 856 | 8.8% | 37.4% | 232 weak (some edge never taken), 10 failing (a known mismatch), 3 untestable with random inputs |
+| Not equivalent yet | 279 | 8.8% | 37.4% | 232 weak (some edge never taken), 10 failing (a known mismatch), 3 untestable with random inputs, etc |
 
 Denominator: 3,352 game functions, 1.26 MB of code (the static CRT/STL is linked from the real VC7.1 libraries and
 excluded). "Equivalent" is **empirical evidence, not proof**: it says the two implementations were indistinguishable on the inputs tried, with every branch
