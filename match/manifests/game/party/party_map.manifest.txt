@@ -57,3 +57,6 @@
 ../src/game/party/party_map.cpp  $L  004b566f  /O2 /MT /Gy /TP
 ../src/game/party/party_map.cpp  $L  004b5937  /O2 /MT /Gy /TP
 ../src/game/party/party_map.cpp  ?color_of@GameData@@QAEIMH@Z  004b1930  /O2 /MT /Gy /TP
+../src/game/party/party_map.cpp  ?set_order_agent@Party@@QAEXPAH@Z  004b2ab0  /O2 /MT /Gy /TP
+../src/game/party/party_map.cpp  ?reissue_order@Party@@QAEXXZ  004b3bc0  /O2 /MT /Gy /TP
+../src/game/party/party_map.cpp  ?step_route@Party@@QAEXXZ  004b4320  /O2 /MT /Gy /TP

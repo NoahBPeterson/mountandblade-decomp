@@ -818,7 +818,8 @@ void Party::set_order_agent(int* t)
         if (d.z * d.z + d.y * d.y + d.x * d.x > 10.0f) {
             needs_repath = 1;
         }
-        tgt_seen_pos = party_of(&g_game->parties, tgt_id)->pos.xy();
+        Party* lp = party_of(&g_game->parties, tgt_id);
+        *(__int64*)&tgt_seen_pos = *(__int64*)&lp->pos;
     }
 }
 
@@ -1249,14 +1250,14 @@ void Party::reissue_order()
     if (action == 9) {
         set_order_face(brec(target)->pos2, brec(target)->face2);
     } else if (action == 6) {
-        set_order_pos(order_pos.xy());
+        set_order_pos(*(const Vec2*)&order_pos);
     } else if (action == 4 || action == 1) {
         int t = target;
         if (t >= 0) {
             PartyMgr* m = parties();
             if (m->is_live(t)) {
                 if (party_flag(m->get(t), 0x400))
-                    set_order_face(m->get(t)->pos.xy(), m->get(t)->mesh);
+                    set_order_face(*(const Vec2*)&m->get(t)->pos, m->get(t)->mesh);
                 else
                     set_order_party(&target);
             }
@@ -1510,15 +1511,13 @@ void Party::step_route()
     }
     if (cur >= 0) {
         int i = cursor;
-        vec2 d;
+        Vec2 d;
         int goal;
         if (i + 1 < n) {
-            d.x = detail[i + 1].x;
-            d.y = detail[i + 1].y;
+            d = *(const Vec2*)((const char*)detail + i * 16 + 0x10);
             goal = path[i + 1];
         } else {
-            d.x = this->goal.x;
-            d.y = this->goal.y;
+            d = *(const Vec2*)&this->goal;
             goal = face_id;
         }
         float lim;
@@ -1542,8 +1541,7 @@ void Party::step_route()
         needs_repath = z;
         return;
     }
-    dest.x = detail[cursor].x;
-    dest.y = detail[cursor].y;
+    dest = *(const Vec2*)((const char*)detail + cursor * 16);
 }
 
 

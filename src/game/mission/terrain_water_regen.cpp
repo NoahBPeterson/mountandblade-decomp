@@ -263,9 +263,8 @@ void Terrain::create_water(rgl::mesh** out)
                     uv.y = c->disp.y * 0.125f;
                     c->f10 = add_v(m, pt, uv, argb, vector4(0.0f, 0.0f, 1.0f), 0);
                     vertex60& v = m->vertices[c->f10];
-                    Vec2 u2(c->pos.x * 0.025f, c->pos.y * 0.025f);
-                    v.uv2.x = u2.x;
-                    v.uv2.y = u2.y;
+                    v.uv2.x = c->pos.x * 0.025f;
+                    v.uv2.y = c->pos.y * 0.025f;
                 }
                 int& f2 = at(tri[2][0], tri[2][1]).f10;
                 int& f1 = at(tri[1][0], tri[1][1]).f10;
@@ -404,6 +403,7 @@ void Terrain::tessellate()
                 int vbase = g->cells.size();
                 float acc = 0.0f;
                 NavCell rec;                        // the constructor inlined (0x4246f0)
+                rec.kind = 0;                       // re-cleared here: this store, not the constructor's, is the one that survives (0x4819b3)
                 rec.npts = ncorner;
 
                 for (int k = 0; k < ncorner; k++) {
