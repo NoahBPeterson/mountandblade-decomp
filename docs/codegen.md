@@ -1515,6 +1515,17 @@ merged by discovery; split the extent instead of treating it as one ABI.
   the header got `__declspec(noinline)`. When a FAIL's first difference is "call #N:
   orig f, ours g" and `g` is the *next* call the original makes, look for an
   inlined callee before looking for a logic bug.
+- **Library `push_back` that must call `insert` (not inline `_Insert_n`).** The original's
+  `vector<T>::push_back` calls `insert` out of line; ours inlined `_Insert_n` because `insert`'s body was
+  visible when `push_back` was instantiated. Declare the specialization without a body first
+  (`namespace std { template<> __declspec(noinline) vector<T>::iterator vector<T>::insert(iterator, T const&); }`),
+  let `push_back` instantiate, then define `insert` afterwards. M&B 0x49b120 (`vector<NodeA*>`) and 0x4fdff0
+  (`vector<vector4>`); the `insert` rows 0x49b170 / 0x4fe060 stay byte-exact.
+- **A thiscall-shaped call to a `__stdcall` free function.** The original does `mov ecx, this` and ignores
+  it before the call (callee `ret N`, ecx unused). A direct call to the free function has no ecx load. Route
+  it through a `__declspec(noinline)` member of a local empty struct that forwards to the free function
+  (`((Wrapper*)this)->init(...)`, which tail-jumps), and the call site gets the unused ecx setup.
+  M&B `Mission::add_placed` 0x44f870 (2 aligned bytes, `AddPlacedCall`).
 - `__forceinline` on a value-type copy constructor keeps it from being emitted
   out of line as `push; call ctor`.
 - A call to an **empty function in the same file is dropped** even when it is
@@ -1619,6 +1630,11 @@ one VA can stand for several source functions (vtable `0x54a4b8` uses `0x408030`
 for two slots). Define the one function that lives at the VA; declare the others
 with the same `// 0x...` address. Emit both natural bodies and let the linker
 fold.
+
+**Folded twins differ only in the caller's vtable slot.** `stream::r_int` and `r_uint` are ICF twins: the
+instructions are identical, but the call goes through a different vtable displacement. If a row differs in
+exactly one displacement constant, call the twin the original used (`s->r_int((int*)&x)` instead of
+`s->r_uint(&x)`; M&B `SpriteTable::read` 0x51e840).
 
 ### 14.2 Static initializers and globals
 
