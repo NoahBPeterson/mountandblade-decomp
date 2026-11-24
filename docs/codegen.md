@@ -2411,3 +2411,12 @@ were byte-exact on landing (`f2ad77dd`, `60fb0c7e`). The checks use `chk.py` and
 5. **Stop rule.** If the only difference left is the SIB byte of a `lea` (0x529d80: `8d 3c 01` vs `8d 3c 08`), the
    optimiser's commutative-operand sort decides it (temp keys: offset IV 465 x 64 beats the base slot 231 x 32) and
    no in-scope spelling flips it; record it in §15 and move on.
+
+### 17.8 Two helper scripts (tools/contrib)
+- `regress.py 0x<va> [--depth N] [--all]`: walks the file's recent commits, scores each old version of the file with
+  `chk.py`, and prints the first MATCH, the next commit to touch the file, and the function-text diff to undo.
+  Compile failures against today's headers are reported and skipped; then read that commit's diff by hand.
+  Checked on 0x4d7120 with the pre-fix file: it returned the `i += 8` byte-offset spelling.
+- `modguard.py <src.cpp> [--cpp VARIANT.cpp]`: runs `run_all.py --filter` over every row of the file, with the variant
+  swapped in (always restored). Run it before trusting a MATCH from `chk.py`. Checked on the 0x49ad20 bodiless variant:
+  it reports the two lost rows (17.1 trap).
