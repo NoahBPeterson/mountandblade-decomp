@@ -1,8 +1,9 @@
 {
+  "$schema": "https://recomp.fyi/schema/v1.json",
   "game": "Mount & Blade",
   "wikidata": "Q901362",
   "system": "PC (Windows)",
-  "type": "decomp",
+  "type": "port",
   "status": "in-progress",
   "original": [
     {
@@ -11,36 +12,48 @@
     }
   ],
   "project": "mountandblade-decomp",
-  "targets": [
-    "Windows"
-  ],
+  "targets": ["Windows", "Linux", "macOS"],
   "toolchain": [
     "MSVC 7.1 (cl 13.10)",
     "Ghidra",
-    "Unicorn"
+    "Unicorn",
+    "clang",
+    "zig",
+    "SDL3",
+    "Jolt Physics"
   ],
-  "approach": "Matching decompilation: C++ compiled with the original VC++ .NET 2003 compiler, each function verified byte-exact or by differential emulation against the original",
+  "approach": "Matching decompilation: C++ compiled with the original VC++ .NET 2003 compiler, each function verified byte-exact or by differential emulation against the original. The same src/ also builds as a native 64-bit port (Linux x86_64/arm64, macOS arm64/x86_64, Windows x86_64) behind a Win32/Direct3D 9/DirectInput/FMOD compatibility layer over SDL3 and Vulkan, with Jolt Physics standing in for Newton.",
   "maintainers": [
     {
       "name": "NoahBPeterson",
       "link": "https://github.com/NoahBPeterson"
     }
   ],
-  "notes": "All 3,270 game functions (static CRT excluded) have compilable source, organised as one .cpp per original translation unit. 2,183 are byte-identical to the original (66.8% of functions, 27.3% of code size); the rest are tested for equivalence by running the original and our code on the same inputs under emulation. Hybrid builds splice our non-identical functions into the original exe to playtest them.",
+  "notes": "All 3,270 game functions (static CRT excluded) have compilable source, organised as one .cpp per original translation unit. 2,183 are byte-identical to the original (66.8% of functions, 27.3% of code size); the rest are tested for equivalence by running the original and our code on the same inputs under emulation. Hybrid builds splice our non-identical functions into the original exe to playtest them. Pre-release native binaries for Linux, macOS and Windows are on the Releases page; they contain no game files and need your own copy of Mount & Blade 1.011 (Steam).",
   "help": [
-    "Matching the remaining equivalent functions byte-exact (cl 13.10 codegen: register allocation, scheduling, frame layout)"
+    "Matching the remaining equivalent functions byte-exact (cl 13.10 codegen: register allocation, scheduling, frame layout)",
+    "Playtesting the native port on real hardware, especially Windows and Linux GPUs/drivers beyond the Apple silicon and VMs it was developed on"
   ],
   "tags": [
     "matching",
     "x87",
     "msvc",
     "taleworlds",
-    "differential-testing"
+    "differential-testing",
+    "native-port"
   ],
   "links": [
     {
       "label": "Repository",
       "url": "https://github.com/NoahBPeterson/mountandblade-decomp"
+    },
+    {
+      "label": "Releases",
+      "url": "https://github.com/NoahBPeterson/mountandblade-decomp/releases"
+    },
+    {
+      "label": "Building the native port",
+      "url": "https://github.com/NoahBPeterson/mountandblade-decomp/blob/main/docs/BUILDING_PORT.md"
     },
     {
       "label": "Contributing",
