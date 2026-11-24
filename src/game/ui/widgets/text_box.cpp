@@ -82,11 +82,24 @@ struct sel_list {
     std::vector<int> v;                                       // +0
 };
 
+// push_back as the original expanded it here: the fast path inline, _Insert_n (0x49b1c0) out of line
+struct node_vec : std::vector<NodeA*, std::allocator<NodeA*> > {
+    typedef std::vector<NodeA*, std::allocator<NodeA*> > base;
+    __forceinline void push(NodeA* const& _Val)
+    {
+        if (size() < capacity()) {
+            NodeA** p = _Mylast;
+            *p = _Val;
+            _Mylast = p + 1;
+        } else
+            _Insert_n(base::iterator(_Mylast), 1, _Val);
+    }
+};
 // @ 0x50d0e0 gui_manager::add_window
 void gui_manager::add_window(NodeA* w)
 {
     dirty = 1;
-    objs.push_back(w);   // inline: the fast path here, the shared _Insert_n 0x49b1c0 out of line
+    ((node_vec&)objs).push(w);
 }
 
 // ------------------------------------------------------------------ name lookups used by the sorter --------

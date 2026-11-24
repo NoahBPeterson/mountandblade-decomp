@@ -716,9 +716,7 @@ void GameData::set_pos(Vec2 at, int id, float radius) {
     if (i < 0) return;
     if (m->atu((unsigned)i)->type != 1) return;
     i = m->lookup(id);
-    Party* p = m->at(i);
-    p->pos.x = at.x;
-    p->pos.y = at.y;
+    *(Vec2*)&m->at(i)->pos = at;       // the pair is written through a Vec2 view of the party's vector4 position
     i = m->lookup(id);
     m->at(i)->place_on_map();
 }

@@ -80,3 +80,4 @@
 ../src/game/campaign/game_data_party_quest.cpp  ?reset_tail@DropDown@@UAEXXZ  004933b0  /O2 /MT /Gy /TP
 ../src/game/campaign/game_data_party_quest.cpp  ?stop_all@SoundMgr@@QAEXXZ  00494310  /O2 /MT /Gy /TP
 ../src/game/campaign/game_data_party_quest.cpp  ?open@WindowMgrW@@QAEXH@Z  00494260  /O2 /MT /Gy /TP
+../src/game/campaign/game_data_party_quest.cpp  ?set_pos@GameData@@QAEXUVec2@@HM@Z  00491e50  /O2 /MT /Gy /TP

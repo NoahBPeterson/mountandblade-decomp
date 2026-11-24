@@ -71,3 +71,4 @@
 ../src/game/app/options_dialog_and_module_tables.cpp  ??_ETriggerRec@@QAEPAXI@Z  00431480  /O2 /MT /Gy /TP
 ../src/game/app/options_dialog_and_module_tables.cpp  ??1menu_item@@QAE@XZ  00431660  /O2 /MT /Gy /TP
 ../src/game/app/options_dialog_and_module_tables.cpp  ??_Emenu_item@@QAEPAXI@Z  00431810  /O2 /MT /Gy /TP
+../src/game/app/options_dialog_and_module_tables.cpp  ?read_entry@@YAAAUstream_base@@AAU1@AAUAnimDef@@@Z  004c2170  /O2 /MT /Gy /TP

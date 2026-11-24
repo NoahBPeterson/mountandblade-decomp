@@ -96,6 +96,11 @@ static __forceinline mesh* load_mesh_arg(const tstring& n)
     return (mesh*)((rgl::mesh*)g_resmgr.get_object(&n))->clone();
 }
 
+// A 16-byte scratch buffer per mesh name. The original holds both names in two separate
+// named tstring slots and destroys each right after its load, so the loads cannot be folded
+// into one shared temporary; placement-new into these buffers reproduces that shape.
+struct MeshNameBuf { void* w[sizeof(tstring) / sizeof(void*)]; };
+
 // the original's inlined widget allocator: a named pointer, the allocator's result tested with a plain
 // `if (p)`, and the raw-placement constructor (the base constructor 0x48ae20, the vptr 0x591fb0, the slider fields).
 static __forceinline UiB* new_widget_188()
@@ -112,16 +117,13 @@ UiB* __cdecl make_slider(ContainerBase* parent, const tstring* name)
     {
         w->set_xy(V2(h * 0.25f, h * 0.03f));
     }
-    rgl::mesh* track;
-    {
-        tstring k("slider_hor");
-        track = (rgl::mesh*)load_mesh_arg(k);
-    }
-    rgl::mesh* handle;
-    {
-        tstring k("handle_hor");
-        handle = (rgl::mesh*)load_mesh_arg(k);
-    }
+    MeshNameBuf nb1, nb2;
+    new ((void*)nb1.w) tstring("slider_hor");
+    rgl::mesh* track = (rgl::mesh*)load_mesh_arg(*(tstring*)nb1.w);
+    ((tstring*)nb1.w)->~tstring();
+    new ((void*)nb2.w) tstring("handle_hor");
+    rgl::mesh* handle = (rgl::mesh*)load_mesh_arg(*(tstring*)nb2.w);
+    ((tstring*)nb2.w)->~tstring();
     if (h != 1.0f) {
         ((mesh*)track)->set_color(rgl::vector4(h, h, h));
         ((mesh*)handle)->set_color(rgl::vector4(h, h, h));
