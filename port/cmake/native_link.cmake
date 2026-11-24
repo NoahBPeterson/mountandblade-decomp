@@ -151,11 +151,12 @@ endif()
 # ---- install ---------------------------------------------------------------------------------------------------------
 # `cmake --install <build> --prefix <dir>` (or `ninja install`, DESTDIR honoured). Unix: the executable goes to
 # <prefix>/libexec/mountandblade/mb and <prefix>/bin/mountandblade is a launcher that cd's into the user's own game
-# folder first (the game's paths are relative to it). Windows: mb.exe goes to <prefix>/bin, run it from the game folder.
+# folder first (the game's paths are relative to it). Windows: mb.exe and mountandblade.bat go to <prefix>/bin.
 # No game files are installed.
 include(GNUInstallDirs)
 if(WIN32)
   install(TARGETS mb_native RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(PROGRAMS ${PORT}/install/mountandblade.bat DESTINATION ${CMAKE_INSTALL_BINDIR})
 else()
   install(TARGETS mb_native RUNTIME DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mountandblade)
   file(RELATIVE_PATH MB_LAUNCHER_REL_EXE "${CMAKE_INSTALL_FULL_BINDIR}" "${CMAKE_INSTALL_FULL_LIBEXECDIR}/mountandblade/mb")

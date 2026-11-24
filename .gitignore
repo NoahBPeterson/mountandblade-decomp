@@ -16,3 +16,4 @@ resources/manifest.json
 
 # portable build trees (port/CMakeLists.txt, tools/port/burndown.py)
 /build/
+dist/

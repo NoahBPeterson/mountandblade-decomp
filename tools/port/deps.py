@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """deps.py: the port's third-party dependencies, built static per target into work/port_deps/<target>/install.
 
-The macos-arm64 lane takes SDL3 / SDL3_ttf / glslang / SPIRV-Cross from brew; the cross targets cannot (brew is
-arm64-only), so this builds the same upstream releases from source with the target's toolchain. Jolt is fetched
+The macos-arm64 lane can take SDL3 / SDL3_ttf / glslang / SPIRV-Cross from brew (dynamic, for local development); a portable
+binary (the GitHub release) and the cross targets (brew is arm64-only) use the same upstream releases built from source here,
+with the target's toolchain. Jolt is fetched
 only: the port build compiles it per target (port/physics, MB_JOLT_SOURCE_DIR points at the checkout here).
 
 usage: .venv/bin/python tools/port/deps.py --target macos-x86_64 [--native] [--only sdl3,glslang] [--fetch-only] [--force]
@@ -71,6 +72,7 @@ def cmake_args(name, prefix, toolchain, target):
         # As a CACHE arg, not just the toolchain's normal variable: projects with cmake_minimum_required < 3.21
         # (zlib, SPIRV-Cross) ignore the toolchain variable under CMake >= 3.21 policies and build host-arch.
         a.append('-DCMAKE_OSX_ARCHITECTURES=' + target.split('-', 1)[1])
+        a.append('-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0')       # keep equal to port/cmake/macos-*.cmake
     if name == 'SDL3':
         a += ['-DSDL_TESTS=OFF', '-DSDL_INSTALL_TESTS=OFF']
     elif name == 'SDL3_ttf':

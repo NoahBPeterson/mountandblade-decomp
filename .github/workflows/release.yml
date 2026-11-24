@@ -1,0 +1,155 @@
+name: release
+
+# A `v*` tag push builds every target and publishes a GitHub pre-release with one archive per target (no game files).
+# workflow_dispatch builds and uploads the archives as workflow artifacts only (a dry run). See docs/RELEASING.md.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x86_64
+            runner: ubuntu-24.04
+            kind: linux
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+            kind: linux
+          - target: macos-arm64
+            runner: macos-14
+            kind: macos
+          - target: macos-x86_64
+            runner: macos-14
+            kind: macos
+          - target: windows-x86_64
+            runner: macos-14
+            kind: windows
+    env:
+      T: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Version
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = tag ]; then v="${GITHUB_REF_NAME}"; else v="dev-${GITHUB_SHA::7}"; fi
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+
+      - name: Packages (Linux)
+        if: matrix.kind == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld llvm cmake ninja-build pkg-config git python3 xvfb \
+            libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxfixes-dev libxss-dev libxtst-dev libxrender-dev \
+            libxkbcommon-dev libwayland-dev libasound2-dev libpulse-dev libdbus-1-dev libudev-dev libegl-dev libgl1-mesa-dev
+
+      - name: Packages (macOS)
+        if: matrix.kind != 'linux'
+        run: |
+          brew install cmake ninja llvm
+          if [ "${{ matrix.kind }}" = windows ]; then brew install zig; fi
+          echo "/opt/homebrew/opt/llvm/bin" >> "$GITHUB_PATH"
+
+      - name: Dependency cache
+        uses: actions/cache@v4
+        with:
+          path: work/port_deps
+          key: deps-${{ matrix.target }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tools/port/deps.py', 'port/cmake/macos-*.cmake', 'port/cmake/windows-*.cmake') }}
+
+      - name: Dependencies
+        run: |
+          native=""
+          if [ "${{ matrix.kind }}" = linux ]; then native="--native"; fi
+          python3 tools/port/deps.py --target "$T" $native
+
+      - name: Configure
+        run: |
+          prefix="$PWD/work/port_deps/$T/install"
+          common=(-S port -B "build/port/$T" -G Ninja
+                  -DCMAKE_PREFIX_PATH="$prefix"
+                  -DMB_JOLT_SOURCE_DIR="$PWD/work/port_deps/src/JoltPhysics-v5.5.0"
+                  -DZLIB_ROOT="$prefix" -DZLIB_USE_STATIC_LIBS=ON)
+          case "$T" in
+            linux-*)
+              cmake "${common[@]}" -DCMAKE_TOOLCHAIN_FILE="$PWD/port/cmake/$T-native.cmake" ;;
+            macos-*)
+              cmake "${common[@]}" -DCMAKE_TOOLCHAIN_FILE="$PWD/port/cmake/$T.cmake" ;;
+            windows-x86_64)
+              cmake "${common[@]}" -DCMAKE_TOOLCHAIN_FILE="$PWD/port/cmake/$T.cmake" \
+                -DINTERPROCEDURAL_OPTIMIZATION=OFF \
+                -DCMAKE_C_FLAGS="-target x86_64-windows-gnu -mcpu=x86_64_v3" \
+                -DCMAKE_CXX_FLAGS="-target x86_64-windows-gnu -mcpu=x86_64_v3" ;;
+          esac
+
+      - name: Build
+        run: ninja -C "build/port/$T"
+
+      # mbp_kernel reads the game's files, which CI does not have. Windows is cross-built and its tests need Wine: not run.
+      - name: Test (Linux)
+        if: matrix.kind == 'linux'
+        run: xvfb-run -a -s '-screen 0 1280x800x24' ctest --test-dir "build/port/$T" -E mbp_kernel --output-on-failure
+
+      - name: Test (macOS)
+        if: matrix.kind == 'macos' && matrix.target == 'macos-arm64'
+        continue-on-error: true
+        run: ctest --test-dir "build/port/$T" -E mbp_kernel --output-on-failure
+
+      - name: Package
+        run: python3 tools/port/package_release.py --target "$T" --version "$VERSION"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: |
+            dist/mountandblade-*.tar.gz
+            dist/mountandblade-*.zip
+            dist/SHA256SUMS.*
+          if-no-files-found: error
+
+  publish:
+    name: publish
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: assets
+          merge-multiple: true
+
+      - name: Create the pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd assets
+          cat SHA256SUMS.* | sort -k2 > SHA256SUMS
+          rm SHA256SUMS.*
+          cat > notes.md <<'EOF'
+          Pre-release builds of the native Mount & Blade 1.011 port. **These archives contain no game files:** you need your own
+          copy of Mount & Blade 1.011 (Steam). See `README.txt` inside each archive and
+          [docs/BUILDING_PORT.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/docs/BUILDING_PORT.md).
+
+          - Linux x86_64 / arm64: glibc 2.38 or newer (Ubuntu 24.04+) and a Vulkan driver. Older distributions: build from source.
+          - macOS arm64 / x86_64 (macOS 12+): ad-hoc signed, not notarized. Run `xattr -dr com.apple.quarantine .` once after extracting.
+          - Windows x86_64 (needs AVX2): `bin\mountandblade.bat`, or `mb.exe` from the game folder.
+
+          Licence: GPL-2.0 (`LICENSE`); bundled third-party licences in `THIRD_PARTY_LICENSES.txt`. `SHA256SUMS` lists the checksums.
+          EOF
+          gh release create "${{ github.ref_name }}" --repo "${{ github.repository }}" --prerelease \
+            --title "${{ github.ref_name }}" --notes-file notes.md \
+            mountandblade-*.tar.gz mountandblade-*.zip SHA256SUMS

@@ -80,8 +80,13 @@ ninja -C build/port/$T
 ctest --test-dir build/port/$T          # 5 tests, a few seconds
 ```
 
-macOS arm64: `cmake -S port -B build/port/macos-arm64 -G Ninja -DCMAKE_TOOLCHAIN_FILE=$PWD/port/cmake/macos-arm64.cmake`,
+macOS arm64 (Homebrew dylibs, for development): `cmake -S port -B build/port/macos-arm64 -G Ninja -DCMAKE_TOOLCHAIN_FILE=$PWD/port/cmake/macos-arm64.cmake`,
 then `ninja -C build/port/macos-arm64`.
+
+macOS arm64 or x86_64, portable (static dependencies, macOS 12+; this is what the release ships): run
+`python3 tools/port/deps.py --target macos-arm64`, then configure as above with `T=macos-arm64` but
+`-DCMAKE_TOOLCHAIN_FILE=$PWD/port/cmake/$T.cmake` (not `$T-native.cmake`) and the same `CMAKE_PREFIX_PATH`, `MB_JOLT_SOURCE_DIR`
+and `ZLIB_*` options.
 
 The link tables the build needs (`port/link/<target>/`) are committed. They only need regenerating when `src/` changes
 (`tools/port/link_tables.py --target <target>`; see `port/INTEGRATION_STATUS.md`).
@@ -97,7 +102,9 @@ This installs exactly two files:
 - `<prefix>/libexec/mountandblade/mb`, the executable;
 - `<prefix>/bin/mountandblade`, a launcher that changes into your game folder and starts `mb`.
 
-(`DESTDIR` is honoured, for packaging. On Windows, `mb.exe` goes to `<prefix>/bin`; run it from the game folder.)
+(`DESTDIR` is honoured, for packaging. On Windows, `mb.exe` and `mountandblade.bat` go to `<prefix>/bin`.)
+
+Release archives are made by `tools/port/package_release.py`; see [RELEASING.md](RELEASING.md).
 
 ## 5. Run
 
