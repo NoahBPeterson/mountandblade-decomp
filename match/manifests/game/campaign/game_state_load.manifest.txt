@@ -28,3 +28,5 @@
 ../src/game/campaign/game_state_load.cpp  ?load_tracks@Game@@QAEXPAUstream_base@@@Z  0051e6c0  /O2 /MT /Gy /TP
 ../src/game/campaign/game_state_load.cpp  ?score_triggers@NavData@@QAEXPAH00@Z  0051dac0  /O2 /MT /Gy /TP
 ../src/game/campaign/game_state_load.cpp  ?read@SpriteTable@@QAEXPAUstream_base@@H@Z  0051e840  /O2 /MT /Gy /TP
+../src/game/campaign/game_state_load.cpp  ??0Game@@QAE@XZ  0051cfa0  /O2 /MT /Gy /TP
+../src/game/campaign/game_state_load.cpp  ?_Buy@?$vector@UTrackRec@@V?$allocator@UTrackRec@@@std@@@std@@IAE_NI@Z  0051d1c0  /O2 /MT /Gy /TP
