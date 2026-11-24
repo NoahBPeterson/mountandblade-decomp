@@ -10,16 +10,15 @@ and are produced locally from your own copy of the game.
 Sister project: spore-decomp (Spore), whose tools this project's are ported from. **To contribute, start with
 [`CONTRIBUTING.md`](CONTRIBUTING.md)**; `docs/codegen.md` is the cl 13.10 code-generation reference.
 
-## Status: **unfinished** (2026-10-27)
+## Status: **playable** (2026-11-23)
 
-This is a work in progress, not a working replacement for `mount&blade.exe`. **There is no runnable binary yet**: the
-last trial link of our objects still had ~2,300 unresolved symbols. Do not expect `git clone && make` to produce a game.
+This is a work in progress, and currently a semi-working replacement for `mount&blade.exe`.
 
-| Tier | Functions | Share | How it is verified |
+| Tier | Functions | Share | Share by # of Instructions |  How it is verified |
 |---|---:|---:|---|
-| Byte-exact | 2,254 | 67.2% | compiled object vs the original, byte for byte, relocations masked (`tools/matching/run_all.py`) |
-| Equivalent only | 242 | 7.2% | both versions executed on 219-589 inputs, all reachable branch edges covered on **both** builds, exit state + call traces + written memory identical (`tools/difftest/equiv.py`) |
-| Not equivalent yet | 856 | 25.5% | 425 weak (some edge never taken), 82 failing (a real mismatch), 210 untestable with random inputs, plus 149 symbol-less compiler fragments |
+| Byte-exact | 2,924 | 87.5% | 55.7% | compiled object vs the original, byte for byte, relocations masked (`tools/matching/run_all.py`) |
+| Equivalent only | 122 | 3.7% | 6.9% | both versions executed on 219-589 inputs, all reachable branch edges covered on **both** builds, exit state + call traces + written memory identical (`tools/difftest/equiv.py`) |
+| Not equivalent yet | 856 | 8.8% | 37.4% | 232 weak (some edge never taken), 10 failing (a known mismatch), 3 untestable with random inputs |
 
 Denominator: 3,352 game functions, 1.26 MB of code (the static CRT/STL is linked from the real VC7.1 libraries and
 excluded). "Equivalent" is **empirical evidence, not proof**: it says the two implementations were indistinguishable on the inputs tried, with every branch
