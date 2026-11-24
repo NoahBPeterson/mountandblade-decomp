@@ -29,7 +29,7 @@
       "link": "https://github.com/NoahBPeterson"
     }
   ],
-  "notes": "All 3,270 game functions (static CRT excluded) have compilable source, organised as one .cpp per original translation unit. 2,183 are byte-identical to the original (66.8% of functions, 27.3% of code size); the rest are tested for equivalence by running the original and our code on the same inputs under emulation. Hybrid builds splice our non-identical functions into the original exe to playtest them. Pre-release native binaries for Linux, macOS and Windows are on the Releases page; they contain no game files and need your own copy of Mount & Blade 1.011 (Steam).",
+  "notes": "All 3,342 game functions (static CRT excluded) have compilable source, organised as one .cpp per original translation unit. 2,937 are byte-identical to the original (87.9% of functions, 52.5% of code size); the rest are tested for equivalence by running the original and our code on the same inputs under emulation. Hybrid builds splice our non-identical functions into the original exe to playtest them. Pre-release native binaries for Linux, macOS and Windows are on the Releases page; they contain no game files and need your own copy of Mount & Blade 1.011 (Steam).",
   "help": [
     "Matching the remaining equivalent functions byte-exact (cl 13.10 codegen: register allocation, scheduling, frame layout)",
     "Playtesting the native port on real hardware, especially Windows and Linux GPUs/drivers beyond the Apple silicon and VMs it was developed on"

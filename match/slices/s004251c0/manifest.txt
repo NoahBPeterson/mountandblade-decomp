@@ -9,3 +9,4 @@ slices/s004251c0/s004251c0.cpp  ?commit@dynamic_entity@rgl@@UAEXM@Z  00425730  /
 slices/s004251c0/s004251c0.cpp  ?add_torque@dynamic_entity@rgl@@UAEXPBUvector4@2@@Z  004258e0  /O2 /MT /Gy /TP
 slices/s004251c0/s004251c0.cpp  ?add_torque_at@dynamic_entity@rgl@@UAEXPBUvector4@2@0@Z  00425920  /O2 /MT /Gy /TP
 slices/s004251c0/s004251c0_eh.cpp  ??$uninit_fill_n@UE136@@@@YAXPAUE136@@IABU0@AAV?$allocator@UE136@@@std@@U_Nonscalar_ptr_iterator_tag@2@@Z  004251c0  /O2 /MT /Gy /EHa /TP
+slices/s004251c0/s004251c0_eh.cpp  $L  0042522d  /O2 /MT /Gy /EHa /TP

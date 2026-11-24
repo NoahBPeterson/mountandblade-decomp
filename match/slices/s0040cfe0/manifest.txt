@@ -14,3 +14,5 @@ slices/s0040cfe0/s0040cfe0.cpp  ??4?$vec@Uvector4@rgl@@@@QAEAAU0@ABU0@@Z  0040d3
 slices/s0040cfe0/s0040cfe0.cpp  ??$uninit_copy@Uvector4@rgl@@@@YAPAUvector4@rgl@@PAU01@00AAV?$allocator@Uvector4@rgl@@@std@@U_Nonscalar_ptr_iterator_tag@3@@Z  0040d550  /O2 /MT /Gy /TP
 slices/s0040cfe0/s0040cfe0.cpp  ??4?$vec@Umface@@@@QAEAAU0@ABU0@@Z  0040d5e0  /O2 /MT /Gy /TP
 slices/s0040cfe0/s0040cfe0.cpp  ??$uninit_copy@Umface@@@@YAPAUmface@@PAU0@00AAV?$allocator@Umface@@@std@@U_Nonscalar_ptr_iterator_tag@2@@Z  0040d750  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  $L  0040d5cc  /O2 /MT /Gy /TP
+slices/s0040cfe0/s0040cfe0.cpp  $L  0040d7bd  /O2 /MT /Gy /TP

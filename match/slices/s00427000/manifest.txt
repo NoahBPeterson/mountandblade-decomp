@@ -3,3 +3,6 @@ slices/s00427000/s00427000.cpp  ??$_Uninit_fill_n@PAUContact@@IU1@V?$allocator@U
 slices/s00427000/s00427000.cpp  ?insert@contact_vec@@QAE?AUiterator@1@U21@ABUContact@@@Z  00427540  /O2 /MT /Gy /EHa /TP
 slices/s00427000/s00427000.cpp  ?_Insert_n@contact_vec@@QAEXPAUContact@@IABU2@@Z  00427590  /O2 /MT /Gy /EHa /TP
 slices/s00427000/s00427000.cpp  ??$_Uninit_copy@PAUContact@@PAU1@V?$allocator@UContact@@@std@@@std@@YAPAUContact@@PAU1@00AAV?$allocator@UContact@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00427880  /O2 /MT /Gy /EHa /TP
+slices/s00427000/s00427000.cpp  $L  0042752b  /O2 /MT /Gy /EHa /TP
+slices/s00427000/s00427000.cpp  $L  00427730  /O2 /MT /Gy /EHa /TP
+slices/s00427000/s00427000.cpp  $L  004278ed  /O2 /MT /Gy /EHa /TP
