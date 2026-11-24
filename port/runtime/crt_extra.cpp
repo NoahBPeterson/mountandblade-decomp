@@ -1,5 +1,6 @@
 // port/runtime/crt_extra.cpp: the Microsoft CRT functions src/ calls that glibc lacks (ticket 004 milestone 2), declared by
-// port/include/io.h, mb_crt_extra.h and process.h. Real POSIX implementations.
+// port/include/io.h, mb_crt_extra.h and process.h. Real POSIX implementations. On Windows only rand/srand remain (the VC7.1
+// LCG); mingw-w64 provides the rest natively and the shim headers pass through to it.
 //
 // Compiled WITHOUT the src/ flags (no prelude, no -malign-double: port/CMakeLists.txt mb_runtime), because these call
 // glibc with glibc's own structs (struct stat, struct dirent). The records src/ sees (_finddata_t, struct _stat) have no
@@ -13,20 +14,24 @@
 #include "../platform/mb_paths.h"
 
 #include <ctype.h>
-#include <dirent.h>
 #include <errno.h>
-#include <fnmatch.h>
 #include <limits.h>
-#include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#if !defined(_WIN32)
+#include <dirent.h>
+#include <fnmatch.h>
+#include <pthread.h>
+#endif
 
 // The VC7.1 CRT's rand / srand (rand.c: one linear congruential generator, its state per thread, starting at 1). The reconstruction's
 // seeded generators (terrain: srand(seed) then the heights, rivers, flora) and the authored scene files (props and flora placed at the
 // heights of the original's terrain) depend on this exact sequence; libc's rand gives another one, so the terrain came out different
 // and the scene-file props floated or sank. extern "C": these definitions replace libc's for the whole executable.
+// Windows: mingw declares rand/srand without dllimport, so src/ calls them directly and these definitions replace msvcrt's
+// the same way (kept over msvcrt's identical LCG for one sequence across all ports, thread-local state included).
 namespace {
 thread_local uint32_t t_holdrand = 1;
 }
@@ -36,6 +41,10 @@ extern "C" int rand(void)
     t_holdrand = t_holdrand * 214013u + 2531011u;
     return (int)((t_holdrand >> 16) & 0x7fff);
 }
+
+#if !defined(_WIN32)
+// Everything below is the POSIX emulation of the MSVC CRT extras; on Windows mingw-w64 provides all of it natively
+// (io.h/direct.h/process.h pass through to the real headers, mb_crt_extra.h drops the renames), so it is compiled out.
 
 namespace {
 
@@ -209,3 +218,5 @@ uintptr_t _beginthread(void (__cdecl* start_address)(void*), unsigned stack_size
 void _endthread(void) { pthread_exit(0); }
 
 } // extern "C"
+
+#endif // !_WIN32

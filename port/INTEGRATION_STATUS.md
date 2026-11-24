@@ -430,4 +430,24 @@ gate on compile + link (0 trapped) + ctest + a run_native / wine smoke run.
   libstdc++ one, leaving `_M_start` null — `memberRemapper[...]` wrote to nil. Exactly one symbol collides (comm of the
   src/ and dep symbol sets); native_link.cmake now renames it in every src object (`--redefine-sym`, originals untouched),
   so src/ keeps port/stl's resize and the deps bind to libstdc++'s. Details in docs/c2scope_evaluation.md.
-- **Windows x86_64**: zig/clang cross (`x86_64-windows-gnu`), run under Wine; in progress.
+- **Windows x86_64** (2026-11-23): zig's bundled clang + mingw-w64 sysroot (`port/cmake/windows-x86_64.cmake`,
+  `x86_64-windows-gnu`, Itanium ABI like the other ports — not MSVC), cross-built from the Mac; deps are the same
+  per-target static builds (`tools/port/deps.py --target windows-x86_64`), minus the `.res` members (zig's lld-link
+  rejects them); the game's `.rc` compiles with zig-rc (resinator). Runs under Wine. `-mcpu=x86_64_v3` (zig's spelling
+  of clang's `-march=x86-64-v3`: AVX2/BMI/FMA) is set on this lane only — the OrbStack linux-x86_64 VM exposes no AVX2,
+  and Rosetta miscompiles VEX codegen on macos-x86_64 (826de59e). Tables at fixpoint in
+  `port/link/windows-x86_64/` (54 duplicates, 41 weakened TUs, 24 aliased, 4 STL instances, 7 -fno-inline emissions,
+  0 trapped), via COFF surgery: llvm-objcopy has no `--weaken-symbol` for COFF, so tools/port/coff.py does the
+  equivalent (local copy, references rebound to the owner); lld-link takes whole-archive per archive but refuses
+  `/alternatename` on the command line (aliases.ld's PROVIDEs go in as a `.drectve` object), and SDL3's dllimport
+  `__imp_X` references collide with mb_platform's pseudo-Win32 definitions until tools/port/winimports.py emits
+  partial DATA-only import archives for exactly the symbols mb_platform defines. ctest **5/5**; mb_gfx_test 19/19
+  (incl. fx_all's 76 techniques); quick_battle reaches mission_frame 30 and renders the battle
+  (work/port_shots/qb_b.png; re-verified with `-mcpu=x86_64_v3` as winv3_b.png, ctest 5/5 again). Wine specifics: its
+  64-bit directory-search handles are raw pointers that callers keep
+  in 32-bit longs (port/platform/fs.cpp wraps `_findfirst/_findnext` with a small-handle table), the registry store
+  rewrites need MoveFileExA(MOVEFILE_REPLACE_EXISTING) where msvcrt's rename fails, and d3dapp's narrow-cast window
+  title is detected in CreateWindowExW. The Wine packaging trap (a GCenx `.app`'s Contents/MacOS/wine is an AppKit
+  launcher that eats arguments; the real loader is Contents/Resources/wine/bin/wine) and the loader split — tests on
+  the cask 11.22 loader (the 11.21 loader dies with a fatal Rosetta translation error mid-mbp_kernel), the Vulkan run
+  gate pinned to 11.21 (11.22's vkCreateInstance faults) — are in docs/c2scope_evaluation.md.

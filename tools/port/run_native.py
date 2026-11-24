@@ -24,9 +24,12 @@ Audio: MBA_OUTPUT_GAIN (port/audio) is set to --gain so the game plays quietly.
 Linux (the OrbStack amd64 machine mb64): run under Xvfb with lavapipe; a shot captures the X root window whole
 (ImageMagick import — the game is the display's only window). click/key/sweep/scroll are macOS-only; --start
 drives the menus without them.
+Windows x86_64 (any host with wine on PATH; this Mac): the PE binary runs through wine; cwd game/ is Z:<abs> in the
+default prefix (~/.wine). Wine draws the game window on the Mac desktop, so the macOS shot/click/key actions (cgev)
+apply to it; the window's owner process is wine (cgev matches by title "mb"). MB_START drives the menus like elsewhere.
 Recipes: port/INTEGRATION_STATUS.md, "Test runs".
 """
-import argparse, glob, json, os, signal, subprocess, sys, time
+import argparse, glob, json, os, shutil, signal, subprocess, sys, time
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 CGEV = os.path.join(ROOT, 'work', 'tools', 'cgev')
@@ -125,14 +128,14 @@ def main():
             os.makedirs(os.path.dirname(CGEV), exist_ok=True)
             subprocess.run(['swiftc', '-O', '-o', CGEV, src], check=True)
     os.makedirs(a.out, exist_ok=True)
-    exe = os.path.join(ROOT, 'build', 'port', a.target, 'bin', 'mb')
+    wine = a.target.startswith('windows')           # cross-built PE binaries: the binary director is Wine
+    exe = os.path.join(ROOT, 'build', 'port', a.target, 'bin', 'mb' + ('.exe' if wine else ''))
     env = dict(os.environ, MBA_OUTPUT_GAIN=a.gain)
     if a.start:
         env['MB_START'] = a.start
     if a.user_dir:
         ud = os.path.abspath(a.user_dir)
         if not os.path.isdir(ud):            # port/platform/fs.cpp: Documents -> <dir>/Documents, AppData -> <dir>
-            import shutil
             home = os.path.expanduser('~')
             for src, dst in (('Documents/Mount&Blade Savegames', 'Documents/Mount&Blade Savegames'),
                              ('Library/Application Support/Mount&Blade', 'Mount&Blade')):
@@ -142,6 +145,30 @@ def main():
             print('new sandbox %s (copies of your saves and config)' % ud)
         env['MB_USER_DIR'] = ud
     cmd = [exe] + a.rest
+    if wine:
+        # Wine turns cwd game/ into Z:\<abs path>; the exe's own argv[0] handling and the game's relative paths work
+        # from there. Wine draws the window on the Mac desktop like a native app, so the cgev shots and input (below,
+        # macOS branch) apply to it too; WINEDEBUG=-all keeps the log to the game's own output.
+        # MB_WINE wins; then PATH; then the known prefixes. NB GCenx .app bundles put a launcher at Contents/MacOS/wine
+        # and the real loader at Contents/Resources/wine/bin/wine - the 11.21 tarball's launcher is a compiled AppKit
+        # "document opener" that launches each argument separately, dropping the program's argv (the game directory
+        # never reaches the exe) and spawning explorer.exe windows for the stray items, so anything with arguments must
+        # run the Resources loader (swapped in below). (AGENT=1 / MANPATH=... after the program name in process listings
+        # was a pgrep artifact of wine's ps-title rewrite, not program arguments.)
+        wcmd = (os.environ.get('MB_WINE') or shutil.which('wine')
+                or shutil.which('wine', path='/opt/homebrew/bin:/opt/local/bin:/usr/local/bin')
+                or shutil.which('wine', path=os.path.expanduser('~/wine1121/Wine Devel.app/Contents/Resources/wine/bin'))
+                or shutil.which('wine', path=os.path.expanduser('~/wine1121/Wine Devel.app/Contents/MacOS')))
+        if wcmd is None:
+            print('wine not found (MB_WINE, PATH, or known install paths): the %s run gate needs it' % a.target)
+            return 3
+        d = os.path.dirname(os.path.abspath(wcmd))
+        if os.path.basename(d) == 'MacOS':      # a bundle launcher: swap in the real loader it wraps
+            real = os.path.join(os.path.dirname(d), 'Resources', 'wine', 'bin', 'wine')
+            if os.path.isfile(real):
+                wcmd = real
+        env['WINEDEBUG'] = 'fixme-all,err-unimpl'          # not -all: an unimplemented call is the first crash clue
+        cmd = [wcmd] + cmd
     if a.lldb:
         cmd = ['lldb', '--batch', '-o', 'run', '-k', 'bt 40', '-k', 'register read', '-k', 'quit 1', '--'] + cmd
     logpath = os.path.join(a.out, a.tag + '.log')
@@ -189,7 +216,9 @@ def main():
             else:
                 print('%.1f s: %s: input actions are macOS-only (MB_START drives the menus)' % (time.time() - t0, st[0]))
             return True
-        w = cgev('win', 'mb').split()
+        # cgev matches the owner process name, not the title: a native run's windows belong to mb, a Wine run's to
+        # wine (its "mb"-owned helpers are 54x54 cursor stubs that would otherwise win nothing but exist).
+        w = cgev('win', 'wine' if wine else 'mb').split()
         if len(w) < 5:
             print('%.1f s: no window' % (time.time() - t0))
             return True

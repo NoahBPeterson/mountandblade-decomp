@@ -14,8 +14,8 @@
 #endif
 
 // src/engine/core/tstring.h: raw storage of hand-built tstrings is sized with MB_TSTRING_SIZE (int, char*, int, int);
-// port/main.cpp checks it against sizeof(tstring).
-#if defined(__LP64__)
+// port/main.cpp checks it against sizeof(tstring). __SIZEOF_POINTER__, not __LP64__: Windows x64 is LLP64 (no __LP64__).
+#if __SIZEOF_POINTER__ == 8
 #define MB_TSTRING_SIZE 24
 #else
 #define MB_TSTRING_SIZE 16

@@ -15,12 +15,14 @@ Every run also takes a link inventory of the objects that compiled (llvm-nm, no 
 more than one TU, and the undefined externals no object defines, grouped by who has to provide them (platform shims,
 Newton, FMOD, the C/C++ runtime, port runtime, or src/ itself): the raw inventory of src/ alone.
 
-Then it links the `mb` executable (cmake --build --target mb, at most 4 jobs) on linux-i686 and records whether it
-linked, the linker's undefined / duplicate symbol counts, and from port/link/tables.json (tools/port/link_tables.py)
-how the src/ names were resolved and how many are still only trapped (weak placeholders that abort when reached).
+Then it links the `mb` executable (cmake --build --target mb_native, at most 4 jobs) — except on linux-i686, which is a
+compile check only — and records whether it linked, the linker's undefined / duplicate symbol counts, and from
+port/link/<target>/tables.json (tools/port/link_tables.py) how the src/ names were resolved and how many are still only
+trapped (weak placeholders that abort when reached).
 
-The compiles run where the target's toolchain lives: zig cross (port/cmake/zig-c++) for linux-i686 from the Mac,
-native clang for the macOS targets, and linux-x86_64 inside the OrbStack amd64 machine mb64 (run this script there).
+The compiles run where the target's toolchain lives: zig cross (port/cmake/zig-c++) for linux-i686, zig's clang +
+mingw-w64 sysroot for windows-x86_64 (COFF objects, .obj; bin/mb.exe runs under Wine), native clang for the macOS
+targets, and linux-x86_64 inside the OrbStack amd64 machine mb64 (run this script there).
 Nothing touches the MSVC flow.
 """
 import argparse, collections, datetime, glob, json, os, re, shlex, shutil, subprocess, sys, time
@@ -28,13 +30,15 @@ from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 TOOLCHAINS = {'linux-i686': 'port/cmake/linux-i686.cmake', 'linux-x86_64': 'port/cmake/linux-x86_64-native.cmake',
-              'macos-arm64': 'port/cmake/macos-arm64.cmake', 'macos-x86_64': 'port/cmake/macos-x86_64.cmake'}
-ZIG_LIBC = {'linux-i686': 'x86-linux-gnu', 'linux-x86_64': 'x86_64-linux-gnu'}
+              'macos-arm64': 'port/cmake/macos-arm64.cmake', 'macos-x86_64': 'port/cmake/macos-x86_64.cmake',
+              'windows-x86_64': 'port/cmake/windows-x86_64.cmake'}
+ZIG_LIBC = {'linux-i686': 'x86-linux-gnu', 'linux-x86_64': 'x86_64-linux-gnu', 'windows-x86_64': 'any-windows-any'}
 
 
 def uses_zig(target):
-    """zig cross (linux-i686) vs native clang (the macOS targets; linux-x86_64 inside the OrbStack amd64 machine,
-    where this script then runs too — the Mac home is mounted at identical paths)."""
+    """zig cross (linux-i686; windows-x86_64 — zig's clang + mingw-w64 sysroot, COFF objects) vs native clang (the
+    macOS targets; linux-x86_64 inside the OrbStack amd64 machine, where this script then runs too — the Mac home is
+    mounted at identical paths)."""
     with open(os.path.join(ROOT, TOOLCHAINS[target])) as f:
         return 'zig-cc' in f.read()
 
@@ -127,7 +131,7 @@ def link_inventory(target, objs):
     out = subprocess.run([nm, '-A', '-P', '-g'] + objs, capture_output=True, text=True).stdout
     strong, defined, undef = collections.defaultdict(set), set(), set()
     for line in out.splitlines():
-        m = re.match(r'^(.*?\.o): (\S+) (\w)', line)
+        m = re.match(r'^(.*?\.o(?:bj)?): (\S+) (\w)', line)      # .obj: COFF, the windows-x86_64 objects
         if not m:
             continue
         obj, name, t = m.groups()
@@ -144,7 +148,8 @@ def link_inventory(target, objs):
     libc_dirs = []
     if zig_lib:
         inc = os.path.join(zig_lib.group(1), 'libc', 'include')
-        libc_dirs = [os.path.join(inc, d) for d in ('generic-glibc', ZIG_LIBC[target], 'any-linux-any')]
+        dirs = (ZIG_LIBC[target],) if target == 'windows-x86_64' else ('generic-glibc', ZIG_LIBC[target], 'any-linux-any')
+        libc_dirs = [os.path.join(inc, d) for d in dirs]
     elif target.startswith('macos'):
         sdk = subprocess.run(['xcrun', '--show-sdk-path'], capture_output=True, text=True).stdout.strip()
         if sdk:
@@ -195,14 +200,15 @@ def compile_one(entry, error_limit):
 
 
 def link_exe(target, build, jobs):
-    """Link `mb` through CMake (it also builds the port TUs and the weakened copies). linux-i686 only: the link tables
-    (port/link) describe the 32-bit objects."""
-    if target == 'linux-i686':                   # compile check only: the native executable needs 64-bit SDL3 / Jolt
+    """Link `mb` through CMake (it also builds the port TUs and the weakened copies). linux-i686 is a compile check
+    only (the native executable needs 64-bit SDL3 / Jolt); the 64-bit targets link — windows-x86_64 produces
+    bin/mb.exe (run under Wine) and has its own tables at port/link/windows-x86_64."""
+    if target == 'linux-i686':
         return {'attempted': False}
     t0 = time.time()
     r = subprocess.run(['cmake', '--build', build, '--target', 'mb_native', '-j', str(min(jobs, 4))], capture_output=True, text=True)
     log = r.stdout + r.stderr
-    exe = os.path.join(build, 'bin', 'mb')
+    exe = os.path.join(build, 'bin', 'mb.exe' if target == 'windows-x86_64' else 'mb')
     undef = sorted(set(re.findall(r'undefined symbol: (.+)', log)))
     dup = sorted(set(re.findall(r'duplicate symbol: (.+)', log)))
     res = {'attempted': True, 'links': r.returncode == 0 and os.path.exists(exe), 'undefined': len(undef),

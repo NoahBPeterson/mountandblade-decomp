@@ -55,9 +55,25 @@ find_package(ZLIB REQUIRED)
 add_executable(physics_trace_replay tests/trace_replay.cpp)
 target_compile_features(physics_trace_replay PRIVATE cxx_std_17)
 target_link_libraries(physics_trace_replay PRIVATE mb_physics ZLIB::ZLIB)
-add_test(NAME physics_trace_replay_ref
-         COMMAND physics_trace_replay ${CMAKE_CURRENT_SOURCE_DIR}/trace/ref/attract_2ragdolls.bin.gz --quiet)
-add_test(NAME physics_ragdoll_drop COMMAND physics_ragdoll_drop)
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL CMAKE_SYSTEM_NAME)
+  add_test(NAME physics_trace_replay_ref
+           COMMAND physics_trace_replay ${CMAKE_CURRENT_SOURCE_DIR}/trace/ref/attract_2ragdolls.bin.gz --quiet)
+  add_test(NAME physics_ragdoll_drop COMMAND physics_ragdoll_drop)
+else()
+  # Cross-built from a Unix host: PE binaries run through Wine (the port's Windows lane gate).
+  # Wine for the cross-built PEs (see port/platform/tests/CMakeLists.txt: the .app's Contents/MacOS/wine is an
+  # AppKit launcher wrapper that eats arguments, and the tests run on the cask's 11.22 loader — 11.21 dies with a
+  # fatal Rosetta error in mbp_kernel; the tests share that file's dedicated wine prefix, never the user's ~/.wine).
+  find_program(MB_WINE NAMES wine HINTS /opt/homebrew/bin /opt/local/bin /usr/local/bin
+                             "$ENV{HOME}/wine1121/Wine Devel.app/Contents/Resources/wine/bin"
+                             "$ENV{HOME}/wine1121/Wine Devel.app/Contents/MacOS" REQUIRED)
+  set(MB_TEST_WINEPREFIX "${CMAKE_BINARY_DIR}/wine-prefix" CACHE PATH "Wine prefix for the cross-built tests")
+  add_test(NAME physics_trace_replay_ref COMMAND ${CMAKE_COMMAND} -E env WINEPREFIX=${MB_TEST_WINEPREFIX}
+           ${MB_WINE} $<TARGET_FILE:physics_trace_replay>
+           ${CMAKE_CURRENT_SOURCE_DIR}/trace/ref/attract_2ragdolls.bin.gz --quiet)
+  add_test(NAME physics_ragdoll_drop COMMAND ${CMAKE_COMMAND} -E env WINEPREFIX=${MB_TEST_WINEPREFIX}
+           ${MB_WINE} $<TARGET_FILE:physics_ragdoll_drop>)
+endif()
 
 # The same controlled scenes as trace/probe/newton_experiments.cpp built for Windows against the real Newton.dll
 # (trace/build_experiments.sh): run both, diff the outputs.

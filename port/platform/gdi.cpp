@@ -69,6 +69,26 @@ std::string find_font_file(const std::string& face, bool bold, bool italic)
     else if (bold) { add("Arial Bold.ttf"); add("LiberationSans-Bold.ttf"); add("DejaVuSans-Bold.ttf"); }
     else if (italic) { add("Arial Italic.ttf"); add("LiberationSans-Italic.ttf"); add("DejaVuSans-Oblique.ttf"); }
     add("Arial.ttf"); add("LiberationSans-Regular.ttf"); add("DejaVuSans.ttf"); add("Verdana.ttf"); add("Tahoma.ttf");
+#if defined(_WIN32)
+    // Windows keeps the font files in %WINDIR%\Fonts (the file system is case-insensitive, so the names above match).
+    std::string windir = getenv("WINDIR") ? getenv("WINDIR") : "C:\\Windows";
+    for (const std::string& n : names)
+        if (file_exists(windir + "\\Fonts\\" + n)) return windir + "\\Fonts\\" + n;
+    for (const char* fb : {"arial.ttf", "tahoma.ttf", "segoeui.ttf", "lucon.ttf"})      // Wine's built-in set
+        if (file_exists(windir + "\\Fonts\\" + fb)) return windir + "\\Fonts\\" + fb;
+    // Under Wine a prefix may have no TTFs at all (wineboot copies only bitmap .fon fonts; TTFs arrive with an
+    // installed corefonts package). Wine on macOS/Linux still runs on the host, whose font directories exist —
+    // the same fallback as the POSIX branch (dead paths on real Windows, where /System etc. do not exist).
+    static const char* host_dirs[] = {"/System/Library/Fonts/Supplemental/", "/Library/Fonts/", "/System/Library/Fonts/",
+                                      "/usr/share/fonts/truetype/msttcorefonts/", "/usr/share/fonts/truetype/liberation/",
+                                      "/usr/share/fonts/truetype/liberation2/", "/usr/share/fonts/truetype/dejavu/"};
+    std::string home = getenv("HOME") ? getenv("HOME") : "";
+    for (const std::string& n : names)
+        for (const char* d : host_dirs) if (file_exists(std::string(d) + n)) return std::string(d) + n;
+    for (const char* fb : {"/System/Library/Fonts/Supplemental/Arial.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"})
+        if (file_exists(fb)) return fb;
+    return "";
+#else
     static const char* dirs[] = {"/System/Library/Fonts/Supplemental/", "/Library/Fonts/", "/System/Library/Fonts/",
                                  "/usr/share/fonts/truetype/msttcorefonts/", "/usr/share/fonts/truetype/liberation/",
                                  "/usr/share/fonts/truetype/liberation2/", "/usr/share/fonts/truetype/dejavu/",
@@ -83,6 +103,7 @@ std::string find_font_file(const std::string& face, bool bold, bool italic)
     for (const char* fb : {"/System/Library/Fonts/Helvetica.ttc", "/System/Library/Fonts/SFNS.ttf", "/System/Library/Fonts/Geneva.ttf"})
         if (file_exists(fb)) return fb;
     return "";
+#endif
 }
 
 Bitmap* new_bitmap(int w, int h, int bpp)

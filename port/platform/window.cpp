@@ -7,7 +7,9 @@
 // and the frame / caption / menu metrics are 0 (the OS draws the decorations outside what the game sees). Coordinates
 // are SDL window points (== pixels unless MBP_HIGHDPI=1 asks for a high-density drawable).
 #include "mbp_win.h"
-#include <execinfo.h>
+#if !defined(_WIN32)
+#include <execinfo.h>       // MessageBoxA's MB_CRASH_BT stack (Windows: main.cpp's unhandled-exception filter)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <thread>
@@ -644,10 +646,18 @@ HWND WINAPI CreateWindowExW(DWORD ex, LPCWSTR cls, LPCWSTR title, DWORD style, i
 {
     // src/platform/dxframework/d3dapp.cpp passes its 8-bit title ("Mount&Blade") through this wide entry point (a cast, as in the
     // original, where Windows then shows it misread as UTF-16). A UTF-32 title never has a first unit above U+10FFFF, but
-    // four ASCII bytes read as one always do, so that identifies the narrow string.
+    // four ASCII bytes read as one always do, so that identifies the narrow string. UTF-16 (mingw's 2-byte wchar_t): the
+    // cast packs two ASCII characters per unit (0x6F4D for "Mo"), while a real L"..." ASCII title keeps the high bytes zero,
+    // so any non-ASCII unit before the terminator identifies the narrow string there.
     std::string t;
     if (title) {
-        if ((uint32_t)title[0] > 0x10FFFFu && sizeof(wchar_t) == 4) t = ansi_to_utf8((const char*)title);
+        bool narrow = false;
+        if (sizeof(wchar_t) == 2) {
+            for (const wchar_t* u = title; *u; ++u) if ((unsigned)*u > 0xFFu) { narrow = true; break; }
+        } else {
+            narrow = (uint32_t)title[0] > 0x10FFFFu;
+        }
+        if (narrow) t = ansi_to_utf8((const char*)title);
         else t = wide_to_utf8(title);
     }
     return create_window(ex, class_name_of(cls, true), t, style, X, Y, W, H, parent, menu, inst, param);
@@ -1236,8 +1246,10 @@ int WINAPI MessageBoxA(HWND h, LPCSTR text, LPCSTR cap, UINT type)
 {
     if (getenv("MB_CRASH_BT")) {                // MB_CRASH_BT: a message box (mb_error's "RGL ERROR") also logs its text and caller
         fprintf(stderr, "MessageBoxA [%s]: %s\n", cap ? cap : "", text ? text : "");
+#if !defined(_WIN32)
         void* frames[48];
         backtrace_symbols_fd(frames, backtrace(frames, 48), 2);
+#endif
     }
     return message_box(h, text ? ansi_to_utf8(text) : "", cap ? ansi_to_utf8(cap) : "Error", type);
 }

@@ -1,33 +1,59 @@
 // port/platform/fs.cpp: the game's file layer. Paths written "Data\\x.txt" in any case resolve to host paths
 // (mbp_resolve_path); FindFirstFile / CreateDirectory / SHGetFolderPath / fopen / remove / rename sit on top of it.
+// Windows: backslashes, drive prefixes and case-insensitive lookup are native, so mbp_resolve_path passes through and
+// enumeration / text mode / rename use msvcrt directly; the Win32 definitions here still win over kernel32's import lib.
 #include "mbp_internal.h"
 #include <mmsystem.h>
 #include <shlobj.h>
 #include <shellapi.h>
-#include <dirent.h>
 #include <errno.h>
-#include <fnmatch.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <pwd.h>
 #include <ctype.h>
 #include <algorithm>
 #include <unordered_map>
 #include <chrono>
+#if defined(_WIN32)
+#include <io.h>
+#include <direct.h>
+#else
+#include <dirent.h>
+#include <fnmatch.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <pwd.h>
 #if !defined(__APPLE__)
 #include <stdio_ext.h>
+#endif
 #endif
 
 using namespace mbp;
 
-#if defined(__APPLE__)
+#if defined(_WIN32)
+#define MB_MTIME_NS(sb) ((long long)(sb).st_mtime * 1000000000ll)   // mingw's st_mtime is a scalar (DirIndex is POSIX-only)
+#elif defined(__APPLE__)
 #define MB_MTIME_NS(sb) ((long long)(sb).st_mtimespec.tv_sec * 1000000000ll + (sb).st_mtimespec.tv_nsec)
 #else
 #define MB_MTIME_NS(sb) ((long long)(sb).st_mtim.tv_sec * 1000000000ll + (sb).st_mtim.tv_nsec)
 #endif
 
+// The raw directory / cwd calls the Win32 file API sits on: POSIX names here, msvcrt's _-names on Windows.
+#if defined(_WIN32)
+#define MB_MKDIR(p)      _mkdir(p)
+#define MB_UNLINK(p)     _unlink(p)
+#define MB_RMDIR(p)      _rmdir(p)
+#define MB_GETCWD(b, n)  _getcwd((b), (int)(n))
+#define MB_CHDIR(p)      _chdir(p)
+#else
+#define MB_MKDIR(p)      mkdir((p), 0777)
+#define MB_UNLINK(p)     unlink(p)
+#define MB_RMDIR(p)      rmdir(p)
+#define MB_GETCWD(b, n)  getcwd((b), (n))
+#define MB_CHDIR(p)      chdir(p)
+#endif
+
 namespace {
+#if !defined(_WIN32)
+// The case-insensitive directory index: a case-sensitive file system needs it; Windows resolves names natively.
 struct DirIndex {
     long long mtime_ns = 0;
     std::chrono::steady_clock::time_point built;
@@ -80,6 +106,7 @@ bool lookup(const std::string& dir, const std::string& comp, std::string* real)
     }
     return false;
 }
+#endif // !_WIN32
 bool exists(const std::string& p)
 {
     struct stat sb;
@@ -88,6 +115,7 @@ bool exists(const std::string& p)
 }   // namespace
 
 extern "C" {
+#if !defined(_WIN32)
 void mbp_paths_force_scan(int on) { g_force_scan = on != 0; }
 void mbp_paths_flush_cache(void) { std::lock_guard<std::mutex> g(g_paths_mu); g_dirs().clear(); }
 
@@ -149,8 +177,25 @@ int mbp_resolve_path(const char* in, char* out, size_t cap)
     }
     return ok;
 }
+#else
+void mbp_paths_force_scan(int) {}          // nothing to force: case-insensitive lookup is native
+void mbp_paths_flush_cache(void) {}
+int mbp_resolve_path(const char* in, char* out, size_t cap)
+{
+    // Windows: backslashes, "C:" drive prefixes and case-insensitive components are native — pass through.
+    const char* s = in ? in : "";
+    if (cap) {
+        size_t n = strlen(s);
+        if (n >= cap) n = cap - 1;
+        memcpy(out, s, n);
+        out[n] = 0;
+    }
+    return exists(s);
+}
+#endif // !_WIN32
 
 // ---- stdio ------------------------------------------------------------------------------------------------------------
+#if !defined(_WIN32)
 namespace {
 // MSVC text-mode read: "\r\n" -> "\n". Wraps a binary FILE* in a funopen / fopencookie stream.
 struct CrlfCookie { FILE* in; int pushed; };
@@ -214,11 +259,15 @@ FILE* open_crlf(FILE* in)
 }
 #endif
 }   // namespace
+#endif // !_WIN32
 
 FILE* mb_fopen(const char* path, const char* mode)
 {
     char host[4096];
     mbp_resolve_path(path, host, sizeof host);
+#if defined(_WIN32)
+    return fopen(host, mode ? mode : "r");      // msvcrt's text mode does CRLF <-> LF; 't' and 'b' are native
+#else
     bool text_read = false;
     std::string m = mode ? mode : "r";
     if (!m.empty() && m[0] == 'r' && m.find('+') == std::string::npos && m.find('b') == std::string::npos) text_read = true;
@@ -228,6 +277,7 @@ FILE* mb_fopen(const char* path, const char* mode)
     FILE* f = fopen(host, host_mode.c_str());
     if (f && text_read) f = open_crlf(f);
     return f;
+#endif
 }
 int mb_remove(const char* path)
 {
@@ -247,19 +297,26 @@ int mb_rmdir(const char* path)
 {
     char host[4096];
     mbp_resolve_path(path, host, sizeof host);
-    return rmdir(host);
+    return MB_RMDIR(host);
 }
+#if defined(_WIN32)
+#undef _access        // io.h maps _access to mb_access: the definition here must call the real MSVC export
+#endif
 int mb_access(const char* path, int mode)
 {
     char host[4096];
     mbp_resolve_path(path, host, sizeof host);
+#if defined(_WIN32)
+    return _access(host, mode);      // MSVC's modes (0 exist / 2 write / 4 read) are native
+#else
     return access(host, mode);
+#endif
 }
 int mb_mkdir(const char* path)
 {
     char host[4096];
     mbp_resolve_path(path, host, sizeof host);
-    return mkdir(host, 0777);
+    return MB_MKDIR(host);
 }
 }   // extern "C"
 
@@ -269,15 +326,86 @@ struct Finder {
     std::vector<mbp_dirent> list;
     size_t next = 0;
 };
+#if !defined(_WIN32)
 bool wild_match(const char* pat, const char* name)
 {
     if (strcmp(pat, "*.*") == 0 || strcmp(pat, "*") == 0) return true;
     return fnmatch(pat, name, FNM_CASEFOLD) == 0;
 }
+#endif
 }
 extern "C" {
+#if defined(_WIN32)
+// The _findfirst wrap (io.h maps src/'s and the port's _findfirst/_findnext/_findclose to these): wine's 64-bit
+// kernel32 directory-search handles are raw pointers (kernelbase's FindNextFileW validates the handle by
+// dereferencing a 0xC0FFEE11-tagged struct; that dereference is what crashed on truncated values), and callers
+// store the handles in 32-bit longs — harmless on real Windows, where handles are small, but truncating wine's
+// pointers faults every _findnext (poly_mesh_edge_face_ops.cpp: long h). The real HANDLEs (from msvcrt's
+// _findfirst64i32, which does the FindFirstFileA work and the _finddata_t translation) live in this table; the
+// port hands out 1-based small handles that survive the 32-bit truncation. The game's enumerations are
+// single-threaded. mbp_find_open below uses the real exports directly: its handle never outlives the call.
+#undef _findclose     // io.h maps _findclose to mb_win_findclose — left bare here the wrapper would recurse into itself
+struct mb_win_find_rec { intptr_t real; };
+static mb_win_find_rec mb_win_find_table[64];
+
+intptr_t mb_win_findfirst(const char* filespec, struct _finddata_t* fileinfo)
+{
+    for (mb_win_find_rec& r : mb_win_find_table) {
+        if (r.real)
+            continue;
+        r.real = _findfirst64i32(filespec, fileinfo);
+        if (r.real == -1) {
+            errno = ENOENT;
+            return -1;
+        }
+        return (intptr_t)(&r - mb_win_find_table) + 1;
+    }
+    errno = EMFILE;
+    return -1;
+}
+
+int mb_win_findnext(intptr_t handle, struct _finddata_t* fileinfo)
+{
+    if (handle < 1 || handle > 64 || !mb_win_find_table[handle - 1].real)
+        return -1;
+    if (_findnext64i32(mb_win_find_table[handle - 1].real, fileinfo) != 0) {
+        errno = ENOENT;
+        return -1;
+    }
+    return 0;
+}
+
+int mb_win_findclose(intptr_t handle)
+{
+    if (handle < 1 || handle > 64 || !mb_win_find_table[handle - 1].real)
+        return -1;
+    int rc = _findclose(mb_win_find_table[handle - 1].real);
+    mb_win_find_table[handle - 1].real = 0;
+    return rc;
+}
+#endif // _WIN32
+
 void* mbp_find_open(const char* spec, struct mbp_dirent* first)
 {
+    Finder* f = new Finder;
+#if defined(_WIN32)
+    // msvcrt's _findfirst does the wildcard matching ("*.*" = everything) and returns native FILE_ATTRIBUTE_* attribs.
+    struct _finddata_t fd;
+    intptr_t h = _findfirst64i32(spec ? spec : "", &fd);   // the real export: io.h's macro points at the wrap above
+    if (h == -1) { delete f; errno = ENOENT; return nullptr; }
+    do {
+        mbp_dirent de;
+        memset(&de, 0, sizeof de);
+        strncpy(de.name, fd.name, sizeof de.name - 1);
+        de.attrib = fd.attrib;
+        de.size = (unsigned long long)fd.size;
+        de.ctime = (long long)fd.time_create;
+        de.atime = (long long)fd.time_access;
+        de.mtime = (long long)fd.time_write;
+        f->list.push_back(de);
+    } while (_findnext64i32(h, &fd) == 0);
+    _findclose(h);
+#else
     std::string s = spec ? spec : "";
     for (char& c : s) if (c == '\\') c = '/';
     size_t sl = s.rfind('/');
@@ -286,8 +414,7 @@ void* mbp_find_open(const char* spec, struct mbp_dirent* first)
     char host[4096];
     mbp_resolve_path(dirpart.empty() ? "." : dirpart.c_str(), host, sizeof host);
     DIR* d = opendir(host);
-    if (!d) { errno = ENOENT; return nullptr; }
-    Finder* f = new Finder;
+    if (!d) { delete f; errno = ENOENT; return nullptr; }
     bool has_wild = pat.find_first_of("*?") != std::string::npos;
     while (struct dirent* e = readdir(d)) {
         const char* n = e->d_name;
@@ -307,6 +434,7 @@ void* mbp_find_open(const char* spec, struct mbp_dirent* first)
         f->list.push_back(de);
     }
     closedir(d);
+#endif
     std::sort(f->list.begin(), f->list.end(), [](const mbp_dirent& a, const mbp_dirent& b) {
         bool da = a.name[0] == '.', db = b.name[0] == '.';
         if (da != db) return da;                                   // "." and ".." lead
@@ -363,10 +491,18 @@ int mkdir_p(const std::string& p)
     std::string cur;
     size_t i = 0;
     while (i <= p.size()) {
+#if defined(_WIN32)
+        size_t j = p.find_first_of("/\\", i);
+#else
         size_t j = p.find('/', i);
+#endif
         if (j == std::string::npos) j = p.size();
         cur = p.substr(0, j);
-        if (!cur.empty() && mkdir(cur.c_str(), 0777) != 0 && errno != EEXIST) return -1;
+#if defined(_WIN32)
+        if (!cur.empty() && cur.back() != ':' && MB_MKDIR(cur.c_str()) != 0 && errno != EEXIST) return -1;   // skip "C:"
+#else
+        if (!cur.empty() && MB_MKDIR(cur.c_str()) != 0 && errno != EEXIST) return -1;
+#endif
         i = j + 1;
     }
     return 0;
@@ -407,7 +543,7 @@ BOOL WINAPI CreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES)
 {
     char host[4096];
     mbp_resolve_path(path, host, sizeof host);
-    if (mkdir(host, 0777) == 0) return TRUE;
+    if (MB_MKDIR(host) == 0) return TRUE;
     set_last_error(errno_to_win(errno));
     return FALSE;
 }
@@ -421,7 +557,7 @@ BOOL WINAPI DeleteFileA(LPCSTR path)
 {
     char host[4096];
     mbp_resolve_path(path, host, sizeof host);
-    if (unlink(host) == 0) return TRUE;
+    if (MB_UNLINK(host) == 0) return TRUE;
     set_last_error(errno_to_win(errno));
     return FALSE;
 }
@@ -464,7 +600,7 @@ DWORD WINAPI GetFileAttributesA(LPCSTR path)
 DWORD WINAPI GetCurrentDirectoryA(DWORD n, LPSTR buf)
 {
     char cwd[4096];
-    if (!getcwd(cwd, sizeof cwd)) return 0;
+    if (!MB_GETCWD(cwd, sizeof cwd)) return 0;
     size_t l = strlen(cwd);
     if (l + 1 > n) return (DWORD)(l + 1);
     memcpy(buf, cwd, l + 1);
@@ -474,29 +610,72 @@ BOOL WINAPI SetCurrentDirectoryA(LPCSTR path)
 {
     char host[4096];
     mbp_resolve_path(path, host, sizeof host);
-    if (chdir(host) == 0) return TRUE;
+    if (MB_CHDIR(host) == 0) return TRUE;
     set_last_error(errno_to_win(errno));
     return FALSE;
 }
 DWORD WINAPI GetTempPathA(DWORD n, LPSTR buf)
 {
+#if defined(_WIN32)
+    const char* t = getenv("TEMP");
+    if (!t || !*t) t = getenv("TMP");
+    std::string s = (t && *t) ? t : ".";
+    if (s.back() != '\\' && s.back() != '/') s += '\\';
+#else
     const char* t = getenv("TMPDIR");
     std::string s = (t && *t) ? t : "/tmp";
     if (s.back() != '/') s += '/';
+#endif
     if (s.size() + 1 > n) return (DWORD)(s.size() + 1);
     memcpy(buf, s.c_str(), s.size() + 1);
     return (DWORD)s.size();
 }
 
 // ---- shell: special folders, ShellExecute ---------------------------------------------------------------------------
+// Windows: see mb_crt_extra.h. SDL's SDL_setenv_unsafe writes only the Win32 block, which the CRT getenv never reads,
+// so the port's getenv is redirected here (port/include/mb_crt_extra.h): the CRT value first, then the Win32 block.
+#if defined(_WIN32)
+const char* mbp_getenv(const char* name)
+{
+    if (!name) return nullptr;
+    if (const char* v = (getenv)(name)) return v;   // the real CRT getenv: `(getenv)` stops the macro in mb_crt_extra.h
+    static char buf[32768];                          // SDL_getenv_unsafe's own fallback shape; the value is copied out by callers
+    DWORD n = GetEnvironmentVariableA(name, buf, sizeof buf);
+    return (n > 0 && n < sizeof buf) ? buf : nullptr;
+}
+#endif
 int mbp_user_dir(int csidl, char* out, size_t cap)
 {
     int id = csidl & ~CSIDL_FLAG_CREATE;
     std::string base;
     if (const char* o = getenv("MB_USER_DIR")) {                          // an explicit sandbox for tests / portable installs
         base = o;
+#if defined(_WIN32)
+        base += id == CSIDL_PERSONAL ? "\\Documents" : "";
+#else
         base += id == CSIDL_PERSONAL ? "/Documents" : "";
+#endif
     } else {
+#if defined(_WIN32)
+        const char* up = getenv("USERPROFILE");
+        std::string home = (up && *up) ? up : ".";
+        switch (id) {
+        case CSIDL_PERSONAL: base = home + "\\Documents"; break;
+        case CSIDL_APPDATA:
+        {
+            const char* a = getenv("APPDATA");
+            base = (a && *a) ? std::string(a) : home + "\\Application Data";
+            break;
+        }
+        case CSIDL_LOCAL_APPDATA:
+        {
+            const char* a = getenv("LOCALAPPDATA");
+            base = (a && *a) ? std::string(a) : home + "\\Local Settings\\Application Data";
+            break;
+        }
+        default: return 0;
+        }
+#else
         const char* home = getenv("HOME");
         if (!home || !*home) { struct passwd* pw = getpwuid(getuid()); home = pw ? pw->pw_dir : "/tmp"; }
         switch (id) {
@@ -513,6 +692,7 @@ int mbp_user_dir(int csidl, char* out, size_t cap)
             break;
         default: return 0;
         }
+#endif
     }
     if (base.size() + 1 > cap) return 0;
     if (csidl & CSIDL_FLAG_CREATE) mkdir_p(base);
@@ -546,6 +726,9 @@ HINSTANCE WINAPI ShellExecuteA(HWND, LPCSTR op, LPCSTR file, LPCSTR params, LPCS
     char host[4096];
     if (!mbp_resolve_path(f.c_str(), host, sizeof host)) return (HINSTANCE)(INT_PTR)2;
     std::string u = std::string("file://") + host;
+#if defined(_WIN32)
+    for (char& c : u) if (c == '\\') c = '/';      // a file:// URL takes slashes, even for "C:\..."
+#endif
     if (SDL_OpenURL(u.c_str())) return (HINSTANCE)(INT_PTR)&ok_instance;
     return (HINSTANCE)(INT_PTR)31;
 }

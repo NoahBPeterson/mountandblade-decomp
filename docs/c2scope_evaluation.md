@@ -353,3 +353,79 @@ emit is the one row the rejoin moves, and it moves toward the original:
 - Outcome: bin/mb links, ctest **5/5**, quick_battle reaches mission_frame 30 and renders the battle
   (work/port_shots/qlx86_b.png); burndown 188/188 compile, LINKS 0 undefined / 0 duplicates, 0 trapped.
   macOS x86_64 / arm64 regression: ctest 5/5 each, macOS x86_64 quick_battle renders (work/port_shots/qmac86_b.png).
+
+#### Windows x86_64 lane: the 64-bit PE (2026-11-23)
+
+- Question: the fourth 64-bit target — can the same reconstruction build as a Windows x64 PE and run under Wine with the
+  port's SDL3-based platform, without the 32-bit MSVC flow moving?
+- No c2scope question: again a port-infra lane; answered with zig's toolchain, llvm-nm/objdump on COFF, and probe exes
+  (work/winprobe2/) for every linker-behaviour claim below.
+- Toolchain: zig's bundled clang + mingw-w64 sysroot (`port/cmake/windows-x86_64.cmake`, `x86_64-windows-gnu`) — Itanium
+  ABI like the other ports, NOT MSVC, so the reconstruction and the port/link tables apply unchanged; zig-cc/zig-c++
+  wrappers default `-target` (port/cmake/zig-cc), zig-rc (resinator) compiles the game's `.rc` through a windres→llvm-rc
+  translation shim (CMake emits windres-style rules COFF rc files; `-O coff` is inferred from the .obj extension).
+- COFF weakening: llvm-objcopy has no `--weaken-symbol` for COFF ("option is not supported for COFF"), so
+  tools/port/coff.py does the equivalent surgery: the defined External record becomes Static (aux records stay), one
+  undefined External with the same name is appended, and relocations retarget to it — except in `.debug$*`, `.pdata`,
+  `.xdata`, `.gxdata`, which describe the local body and must keep pointing at it. Renaming definitions and references
+  (`--redefine-sym`, the Linux trick) would NOT do: the object would call its own copy and a function-local static or a
+  duplicated const table silently splits from the shared one (probed: `1 2 1 1` vs `1 2 2 2`). COFF COMDAT: llvm-nm -P
+  prints a COMDAT definition as plain T/B/D, but the linker folds COMDATs by itself (the section symbol's aux
+  section-definition Selection is nonzero) — link_tables.py now treats those as weak, never duplicate-owners.
+- lld-link quirks (all probed): `/WHOLEARCHIVE:<path>` is rejected but `-Wl,--whole-archive` is parsed and applies to the
+  archive that FOLLOWS it — each subsystem archive gets its own flag in place, while dep archives stay selective (the
+  import thunks of kernel32 must not load whole over the platform lane's own Win32 definitions). `/alternatename` is
+  rejected in every command-line spelling but parsed inside a `.drectve` section with exactly PROVIDE semantics —
+  aliases.ld's entries are emitted as one file-scope `__asm__(".section .drectve...")` object; clang's
+  `#pragma comment(linker)` does not emit .drectve on windows-gnu and the IAS rejects single-quoted `.ascii`. Object
+  paths become `.obj` (CMAKE_CXX_OUTPUT_EXTENSION) — the weak outputs and mb_plain_obj had to follow.
+- DATA import archives: SDL3 is compiled against real mingw headers, so it calls Win32 through dllimport (`__imp_X`);
+  zig's synthesized import libraries define `__imp_X` AND a bare `X` thunk in one member, and zig's COFF linker has no
+  first-wins — against mb_platform's strong pseudo-Win32 `X` that is a duplicate-symbol error (~110 per test exe).
+  tools/port/winimports.py emits a PARTIAL archive per import library exporting exactly the symbols mb_platform
+  defines, each as a DATA short import (exposes only `__imp_X`, no thunk — probed): bare `X` binds to mb_platform,
+  SDL3's `__imp_X` binds the real DLL, and zig's member for X never loads. Vestigial `__NULL_IMPORT_DESCRIPTOR`
+  members are dropped (duplicate against zig's own library). Covering a symbol mb_platform does not define would strand
+  a thunk — the intersection with the real definitions is the safety.
+- Dep archives contain compiled `.res` members; zig's lld-link refuses them outright ("unknown file type: ftver.rc.res")
+  — tools/port/deps.py drops .res members from the installed Windows archives (build13's last error).
+- Run-gate page fault: wine's 64-bit kernel32 hands out directory-search handles as raw pointers (FindNextFileW validates
+  by dereferencing a 0xC0FFEE11-tagged struct) while src/ callers store them in 32-bit `long`
+  (poly_mesh_edge_face_ops.cpp) — harmless on real Windows where handles are small, fatal under wine: truncation faults
+  every `_findnext`. Fix: port/platform/fs.cpp wraps `_findfirst/_findnext/_findclose` (io.h's _WIN32 branch maps them)
+  with a table of the real HANDLEs (msvcrt `_findfirst64i32`) handing out small 1-based handles; mbp_find_open uses the
+  real exports directly. The wrap lives in mb_platform, not mb_runtime: the platform's own enumeration needed it too,
+  and the platform/test exes link only mb_platform (the mb_runtime placement was the "phantom" link failure).
+- Registry save: the store is rewritten on every change and msvcrt's `rename` (like src's) fails while the target
+  exists — the _WIN32 branch uses `MoveFileExA(MOVEFILE_REPLACE_EXISTING)`.
+- Window title: d3dapp.cpp passes its 8-bit title ("Mount&Blade") through CreateWindowExW as a cast (as in the original,
+  where Windows then shows it misread). The port detects the narrow string: with mingw's 2-byte `wchar_t` a cast packs
+  two ASCII chars per unit ("Mo" → 0x6F4D) while a real `L"..."` title keeps high bytes zero, so any unit > 0xFF
+  identifies it; with 4-byte `wchar_t` a first unit above U+10FFFF does.
+- Wine loader trap: a GCenx `.app`'s `Contents/MacOS/wine` is a compiled AppKit launcher (his packaging for Finder
+  double-click), not wine — it launches each argument separately: the program path became one launch with its argv
+  dropped (the killed ctest's kernel test never received its game directory) and every extra argument became another
+  (the explorer.exe regedit/ping orphan windows), and it is slow (window test 80.9 s vs 8.8 s through the loader). The
+  `AGENT=1` / `MANPATH=...` strings that kept appearing after the program name in process listings were a red herring:
+  a pgrep artifact of wine's ps-title rewrite (pgrep walks the raw args area past argc; ps shows the clean argv, and
+  AGENT=1 is a variable of this shell's own environment). The real loader is
+  `Contents/Resources/wine/bin/wine`; the 11.22 cask's MacOS/wine happens to be a clean `sh` script
+  (`exec "$HERE/wine" "$@"`), which is why one ctest run passed and a reconfigure to the launcher failed. Tooling now
+  pins the real loader (run_native.py swaps a MacOS-located wine for the sibling Resources path; CMake hints
+  Resources/wine/bin first) — nothing to reinstall.
+- Wine 11.22 vulkan regression: `vkCreateInstance` faults dereferencing `apiVersion` (0x401000) inside PE-side
+  winevulkan, in both 11.22 builds (MacPorts and the cask); the 11.21 real loader is healthy (MoltenVK 1.4.0, no env
+  vars). Loader split, per evidence: the RUN gate pins 11.21 (quick_battle needs Vulkan); the TESTS run on the cask's
+  11.22 loader — under 11.21 mbp_kernel dies mid-test with a fatal Rosetta translation error ("unexpectedly need to
+  EmulateForward on a synchronous exception", 16/121 checks in) that 11.22 does not hit, and no test needs Vulkan.
+- Wine prefixes: the tests run on their OWN prefix (build/port/windows-x86_64/wine-prefix, wineboot-initialized at
+  configure) instead of the user's ~/.wine — the shared /tmp/.wine-<uid> socket tree accumulates stale keep-alive
+  wineservers of mixed versions (a wineserver -p600 outliving the killed wrapper run, an idle MacPorts server), which
+  can bind a client to the wrong server. The 32-minute idle stall was NOT that, though: a fresh-prefix probe
+  reproduced it — the 11.21 loader's Rosetta crash above, after long sleep-heavy test phases (the timing tests spend
+  minutes at 0% CPU; the real work is waits, not computation).
+- Wine fonts: GDI text just works — mb_gfx_test's font_path (CD3DFont's state-block/dynamic-VB text path) passes with
+  the prefix as created; no font installation was needed.
+- Outcome: bin/mb.exe links (0 trapped); mb_gfx_test 19/19 under wine 11.21 incl. fx_all's 76 techniques; ctest 5/5;
+  quick_battle reaches mission_frame 30 and renders the battle (work/port_shots/qb_b.png); burndown recorded for
+  windows-x86_64 (docs/port_burndown.json). Regression: macOS arm64 rebuilds clean (all changes `_WIN32`-guarded).

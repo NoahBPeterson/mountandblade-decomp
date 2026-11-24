@@ -9,7 +9,8 @@ The MSVC link (tools/relink/build.py) resolves by original address what the clan
                     The owner here is the TU whose manifest row (match/manifests/**/*.manifest.txt) or resolve_map defined_at row
                     names the symbol; with no row, the first defining TU in symbols/link_inputs.json's link_order (the
                     copy /FORCE:MULTIPLE keeps). Every other copy is weakened (llvm-objcopy --weaken-symbol, applied by
-                    port/CMakeLists.txt through mb_weaken()).
+                    port/CMakeLists.txt through mb_weaken(); COFF has no --weaken-symbol, so there tools/port/coff.py
+                    does the equivalent surgery: local copy, references rebound to the owner).
   aliases.ld        a name src/ declares and calls but defines under another name at the same original address: glue.py's
                     /alternatename aliases (link_inputs.json "aliases"; resolve_map "names" -> "defined_at" when a
                     work/relink build exists). PROVIDE(alias = target) in a linker script (-Wl,-T: PROVIDE only binds
@@ -36,10 +37,13 @@ import argparse, collections, glob, json, os, re, shlex, subprocess, sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
 import sidecars as SC          # noqa: E402  (where the sidecar files live)
+sys.path.insert(0, os.path.join(ROOT, "tools", "port"))
+import coff                    # noqa: E402  (COFF COMDAT detection; the weaken surgery mb_weaken() runs on Windows)
 LLVM = '/opt/homebrew/opt/llvm/bin/'
 OUT = os.path.join(ROOT, 'port', 'link')   # linux-i686; another target writes port/link/<target>/ (main())
 MACHO = False
 LP64 = False
+COFF = False
 
 
 def tool(name):
@@ -151,14 +155,21 @@ def symbols(objs):
             m = re.match(r'^(.*?\.o): .*\bweak external\b.* (\S+)$', line)
             if m and '(undefined)' not in line:
                 weak_macho.add((m.group(1), m.group(2)))
+    # COFF: llvm-nm prints a COMDAT definition as plain T/B/D, but the linker folds COMDATs by itself (the section's
+    # aux section definition has a nonzero Selection), so a COMDAT copy is weak, never a duplicate needing a weakened owner.
+    comdat = {o: coff.comdat_names(o) for o in objs.values()} if COFF else {}
     strong, defined, undef = collections.defaultdict(set), collections.defaultdict(set), collections.defaultdict(set)
+    comdat_def = collections.defaultdict(set)   # COFF: name -> TUs whose definition of it is COMDAT
     for line in out.splitlines():
-        m = re.match(r'^(.*?\.o): (\S+) (\w)', line)
+        m = re.match(r'^(.*): (\S+) (\w)', line)      # .o on ELF/Mach-O, .obj on COFF
         if not m or m.group(1) not in back:
             continue
         o, n, t = m.groups()
         if (o, n) in weak_macho:
             t = 'W'
+        if t != 'U' and n in comdat.get(o, ()):
+            t = 'W'
+            comdat_def[n].add(back[o])
         if MACHO and n.startswith('_'):
             n = n[1:]                       # Mach-O C-level names carry a leading underscore
         src = back[o]
@@ -168,7 +179,7 @@ def symbols(objs):
             defined[n].add(src)
             if t not in 'WwVv':                 # every other global definition is strong (Mach-O __const data prints as 'S')
                 strong[n].add(src)
-    return strong, defined, undef
+    return strong, defined, undef, comdat_def
 
 
 def manifest_owners():
@@ -218,7 +229,7 @@ def read_map(path):
 # Only for element types a port TU can name without src/ headers (pointers to forward-declared structs, built-in types).
 STL_MEMBER = re.compile(r'^(?:\S+ )?std::(vector|list)<(.+?), std::allocator<.+?>>::(\w+)\((.*)\)( const)?$')
 PTR_ELEM = re.compile(r'^(?:(\w+(?:::\w+)*)\s*\*|int|unsigned int|char|float)$')
-STL_RET = {'_Buy': 'bool', '_Tidy': 'void', 'push_back': 'void'}
+STL_RET = {'_Buy': 'bool', '_Tidy': 'void', 'push_back': 'void', 'resize': 'void'}
 
 
 # the allocator fill of a pointer vector's push_back (src/ declares the specialization; 0x40f8a0 in the original)
@@ -231,6 +242,10 @@ def stl_instance(d):
         return m
     m = STL_MEMBER.match(d)
     if m and PTR_ELEM.match(m.group(2).strip()) and (m.group(3) in STL_RET or m.group(3) in ('_Buynode', 'capacity')):
+        if m.group(3) == 'resize' and not COFF:
+            # ELF/Mach-O (LP64) spell size_type `unsigned long`, which the aliases already bind to another
+            # instance; only COFF's LLP64 `unsigned long long` needs an explicit instantiation here.
+            return None
         return m
     return None
 
@@ -254,6 +269,8 @@ def render_stl(hdr, insts):
             lines.append('template bool %s::_Buy(%s::size_type);' % (sig, sig))
         elif member == 'capacity':
             lines.append('template %s::size_type %s::capacity() const;' % (sig, sig))
+        elif member == 'resize':        # a pointer vector resized to N copies of a value; size_type, not the demangled width
+            lines.append('template void %s::resize(%s::size_type, %s);' % (sig, sig, elem))
         else:
             lines.append('template %s %s::%s(%s)%s;' % (STL_RET[member], sig, member, params, ' const' if const else ''))
         lines[-1] += '   // ' + n
@@ -269,6 +286,20 @@ def render_stl(hdr, insts):
 
 
 def render_traps(hdr, traps, dem):
+    if COFF:
+        # COFF has no linker scripts: aliases.ld's PROVIDE lines become /alternatename (port/cmake/native_link.cmake),
+        # binding each name to its stub only while nothing defines it -- the same "whatever later defines it wins" as
+        # the weak placeholders the ELF / Mach-O targets use.
+        out = ['// port/link/traps.cpp: ' + hdr,
+               '// Names src/ calls that have no definition for this ABI (see tools/port/link_tables.py). Each binds to a stub',
+               '// here only while nothing defines it (aliases.ld -> /alternatename). Reaching one calls port_link_trap(name)',
+               '// (port/runtime/link_trap.cpp), which reports it and aborts. tables.json "trapped" lists them; burndown.py',
+               '// counts them as the link\'s open names.',
+               'extern "C" void port_link_trap(const char* name) __attribute__((noreturn));']
+        for i, n in enumerate(traps):
+            s = dem.get(n, n).replace('\\', '\\\\').replace('"', '\\"')
+            out += ['', 'extern "C" void mb_trap_%d()' % i, '{', '    port_link_trap("%s");' % s, '}']
+        return '\n'.join(out) + '\n'
     out = ['// port/link/traps.cpp: ' + hdr,
            '// Names src/ calls that have no definition for this ABI (see tools/port/link_tables.py). Each is a weak symbol,',
            '// so whatever later defines it wins. Reaching one calls port_link_trap(name) (port/runtime/link_trap.cpp), which',
@@ -299,15 +330,16 @@ def main():
                          'pending names the rebuild defines); without it any trapped name fails the run')
     a = ap.parse_args()
     build = os.path.join(ROOT, 'build', 'port', a.target)
-    global OUT, MACHO, LP64
+    global OUT, MACHO, LP64, COFF
     if a.target != 'linux-i686':
         OUT = os.path.join(ROOT, 'port', 'link', a.target)
     MACHO = a.target.startswith('macos')
     LP64 = a.target != 'linux-i686'
+    COFF = a.target.startswith('windows')
     objs = objects(build)
     if not objs:
         sys.exit('no objects under %s: build port/ first' % build)
-    strong, defined, undef = symbols(objs)
+    strong, defined, undef, comdat_def = symbols(objs)
     inp = json.load(open(os.path.join(ROOT, 'symbols', 'link_inputs.json')))
     stem_rank = {s: i for i, s in enumerate(inp['link_order'])}
     stem = lambda p: os.path.splitext(os.path.basename(p))[0]
@@ -359,6 +391,19 @@ def main():
             if t != o:
                 weaken[t].add(n)
         owner_rows.append((n, o, [t for t in tus if t != o], basis, idem.get(n, n)))
+    # COFF (zig's lld-link): unlike ELF/Mach-O, it does NOT fold a COMDAT definition against a plain strong
+    # definition in another object -- it reports a duplicate (probed work/winprobe2/cwprobe: a -fno-inline inline
+    # copy of a function next to the src TU that defines it out of line). src/'s inline helpers are emitted as
+    # COMDAT copies in every TU -fno-inline touches; where a TU also defines one strongly (the owner above), the
+    # COMDAT copies must be made local too, or the link fails. Weakening keeps the owner's strong copy and rebinds
+    # references, exactly as for a strong duplicate.
+    if COFF:
+        for n in sorted(comdat_def):
+            if n not in strong:                 # no strong definition: the linker folds the COMDATs among themselves
+                continue
+            for t in sorted(comdat_def[n]):
+                if t not in strong[n]:          # a COMDAT copy in a TU that also defines it strongly is already weakened above
+                    weaken[t].add(n)
 
     # ---- unresolved src/ names ----------------------------------------------------------------------------------
     # A TU already in emit_inline.cmake defines its inline functions weakly only BECAUSE of -fno-inline: those weak copies do
@@ -380,6 +425,12 @@ def main():
                 and any(owners.get(m) in tus for m in mkey.get(key(idem.get(n, n)), ())))
     counted = {n for n, tus in defined.items()
                if (tus - emit_now) or (strong.get(n, set()) & emit_now) or row_owned(n, tus & emit_now)}
+    # COFF: lld-link folds a lone COMDAT (no plain strong competitor) to one copy, so a COMDAT definition resolves
+    # its references. src/'s -fno-inline TUs also emit incidental COMDAT copies of inline members (a vector's
+    # operator[] next to the one name that TU is in emit_inline.cmake for); those are real definitions, not the
+    # pending emit_inline names, so they count. The pending ones stay unresolved until the rebuild defines them.
+    if COFF:
+        counted |= {n for n in comdat_def if n not in strong and idem.get(n, n) not in emit_listed}
     unres = sorted(set(undef) - counted)
     runtime = re.compile(r'__cxxabiv1|typeinfo for std::|vtable for std::|std::(exception|bad_alloc|nothrow|terminate|bad_exception)'
                          r'|operator (new|delete)')
@@ -449,7 +500,10 @@ def main():
     files['owners.tsv'] = '\n'.join(lines) + '\n'
 
     lines = ['# port/link/weaken.cmake: ' + hdr,
-             '# mb_weaken(<src TU> <symbol>...): the TU\'s object is linked through llvm-objcopy --weaken-symbol for each name',
+             '# mb_weaken(<src TU> <symbol>...): ' + (
+                 'the TU\'s object goes through tools/port/coff.py weaken, which makes its copy local and rebinds the'
+                 ' references to the owner (COFF has no --weaken-symbol)' if COFF else
+                 'the TU\'s object is linked through llvm-objcopy --weaken-symbol for each name'),
              '# (owners.tsv says who keeps the strong copy and why)']
     for t in sorted(weaken):
         lines.append('mb_weaken(%s\n    %s)' % (t, '\n    '.join(('_' if MACHO else '') + n for n in sorted(weaken[t]))))   # object-file spelling
@@ -475,6 +529,10 @@ def main():
         lines.append('/* %s  ->  %s%s */' % (idem.get(n, n), idem.get(it, it),
                                              '  ABI: %s/%d vs %s/%d' % (a1 + a2) if a1 != a2 else ''))
         lines.append('PROVIDE(%s = %s);' % (n, it))
+    if COFF and traps:
+        lines.append('/* trapped names (nothing defines them for this ABI): each binds to its stub in traps.cpp */')
+        for i, n in enumerate(traps):
+            lines.append('PROVIDE(%s = mb_trap_%d);' % (n, i))
     files['aliases.ld'] = '\n'.join(lines) + '\n'
     files['stl_instances.cpp'] = render_stl(hdr, insts)
     files['traps.cpp'] = render_traps(hdr, traps, idem)

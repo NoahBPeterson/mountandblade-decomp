@@ -47,8 +47,8 @@ static void pump_all(int rounds = 5)
 
 int main()
 {
-    if (!getenv("MBP_TEST_REAL")) setenv("SDL_VIDEODRIVER", "dummy", 1);
-    setenv("MBP_NO_DIALOGS", "1", 1);
+    if (!getenv("MBP_TEST_REAL")) SDL_setenv_unsafe("SDL_VIDEODRIVER", "dummy", 1);   // SDL's portable setenv (mingw has no POSIX one)
+    SDL_setenv_unsafe("MBP_NO_DIALOGS", "1", 1);
 
     // ---- class + window (the call sequence of CD3DApplication::Create) ----
     WNDCLASSEXW wc;

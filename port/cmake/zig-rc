@@ -1,0 +1,16 @@
+#!/bin/sh
+# port/cmake/zig-rc: zig's bundled resource compiler (resinator) for the windows-gnu cross targets.
+# CMake does not recognize `zig rc` as an RC compiler and emits windres-style rules
+# (-D X -I dir -o obj -i file.rc); resinator takes llvm-rc syntax (/fo obj, positional input,
+# and -i means INCLUDE path there). Translate the windres spellings; everything else passes through.
+n=$#
+while [ "$n" -gt 0 ]; do
+  a=$1; shift
+  case "$a" in
+    -o) set -- "$@" /fo "$1"; shift; n=$((n-2)) ;;   # windres output -> /fo
+    -i) set -- "$@" "$1"; shift; n=$((n-2)) ;;       # windres -i is the INPUT file -> positional
+    -O) shift; n=$((n-2)) ;;                         # -O coff: format inferred from .obj extension
+    *)  set -- "$@" "$a"; n=$((n-1)) ;;
+  esac
+done
+exec zig rc "$@"

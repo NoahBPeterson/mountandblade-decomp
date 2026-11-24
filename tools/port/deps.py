@@ -115,7 +115,49 @@ def build(name, target, native, force, jobs):
                     print(''.join(f.readlines()[-30:]))
                 return False
     open(stamp, 'w').write(want)
+    if target.startswith('windows-'):
+        strip_res_archives(prefix)
     return True
+
+
+def strip_res_archives(prefix):
+    """Drop the .res (compiled Win32 resource) members from the installed archives.
+
+    freetype ships src/base/ftver.rc (a version resource). On MSVC that is ordinary input, but this lane links with
+    zig's lld-link, which rejects a .res outright ("unknown file type: ftver.rc.res", the last error in build13).
+    The resource carries only version metadata the port never reads, so removing it is safe. llvm-ar d has no
+    per-member form usable here, so extract everything else and rebuild."""
+    import glob
+    import shutil
+    import tempfile
+    ar = llvm_tool('llvm-ar')
+    libdir = os.path.join(prefix, 'lib')
+    for a in glob.glob(os.path.join(libdir, '*.a')):
+        a = os.path.abspath(a)
+        members = subprocess.run([ar, 't', a], capture_output=True, text=True).stdout.split()
+        res = [m for m in members if m.endswith('.res')]
+        if not res:
+            continue
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run([ar, 'x', a], cwd=tmp, check=True)
+            for m in res:
+                os.remove(os.path.join(tmp, m))
+            kept = sorted(f for f in os.listdir(tmp) if not f.endswith('.res'))
+            os.remove(a)
+            subprocess.run([ar, 'rc', a] + kept, cwd=tmp, check=True)
+        log('%s: dropped %d .res member(s) (%s)' % (os.path.basename(a), len(res), ', '.join(res)))
+
+
+def llvm_tool(name):
+    """llvm-ar/llvm-ranlib/... : the Homebrew keg, else PATH (the same search port/cmake/windows-x86_64.cmake uses)."""
+    import shutil
+    for p in ('/opt/homebrew/opt/llvm/bin/' + name, '/usr/local/opt/llvm/bin/' + name):
+        if os.path.exists(p):
+            return p
+    found = shutil.which(name)
+    if not found:
+        sys.exit('deps.py: cannot find %s (needed to strip .res members from the Windows archives)' % name)
+    return found
 
 
 def main():

@@ -68,24 +68,41 @@ static INT_PTR CALLBACK ignoring_proc(HWND h, UINT m, WPARAM, LPARAM) { return 0
 
 int main(int argc, char** argv)
 {
-    setenv("SDL_VIDEODRIVER", "dummy", 1);
-    setenv("MBP_NO_DIALOGS", "1", 1);
+    SDL_setenv_unsafe("SDL_VIDEODRIVER", "dummy", 1);      // SDL's portable setenv (mingw has no POSIX one)
+    SDL_setenv_unsafe("MBP_NO_DIALOGS", "1", 1);
     std::string game = argc > 1 ? argv[1] : "game";
+#if defined(_WIN32)
+    char tpath[512];
+    GetTempPathA(sizeof tpath, tpath);
+    std::string tmpl = std::string(tpath) + "mbp_test_XXXXXX";
+    std::string tmp = mkdtemp(&tmpl[0]);                   // mingw's mkdtemp takes the Windows template
+#else
     char tmpl[] = "/tmp/mbp_test_XXXXXX";
     std::string tmp = mkdtemp(tmpl);
-    setenv("MB_USER_DIR", tmp.c_str(), 1);
+#endif
+    SDL_setenv_unsafe("MB_USER_DIR", tmp.c_str(), 1);
     CHECK(chdir(game.c_str()) == 0);
 
     // ================= the game's file layer: mixed-case backslash paths ==================
     char out[1024];
     mbp_paths_force_scan(1);                                   // exercise the directory index even on a case-insensitive volume
     int ex = mbp_resolve_path("modules\\NATIVE\\sceneobj", out, sizeof out);
+#if defined(_WIN32)
+    // Windows resolves backslashes, drive prefixes and case natively: mbp_resolve_path passes the path through (fs.cpp)
+    CHECK(ex == 1 && std::string(out) == "modules\\NATIVE\\sceneobj");
+    CHECK(mbp_resolve_path("DATA\\Ground_Specs.TXT", out, sizeof out) == 1 && std::string(out) == "DATA\\Ground_Specs.TXT");
+    CHECK(mbp_resolve_path(".\\Modules\\\\native\\MODULE.INI", out, sizeof out) == 1 && std::string(out) == ".\\Modules\\\\native\\MODULE.INI");
+    CHECK(mbp_resolve_path("DATA\\brand_new_file.txt", out, sizeof out) == 0 && std::string(out) == "DATA\\brand_new_file.txt");
+    CHECK(mbp_resolve_path("nodir\\x\\y.txt", out, sizeof out) == 0 && std::string(out) == "nodir\\x\\y.txt");
+    CHECK(mbp_resolve_path("C:\\Windows\\x", out, sizeof out) == 0 && std::string(out) == "C:\\Windows\\x");
+#else
     CHECK(ex == 1 && std::string(out) == "Modules/Native/SceneObj");
     CHECK(mbp_resolve_path("DATA\\Ground_Specs.TXT", out, sizeof out) == 1 && std::string(out) == "Data/ground_specs.txt");
     CHECK(mbp_resolve_path(".\\Modules\\\\native\\MODULE.INI", out, sizeof out) == 1 && std::string(out) == "Modules/Native/module.ini");
     CHECK(mbp_resolve_path("DATA\\brand_new_file.txt", out, sizeof out) == 0 && std::string(out) == "Data/brand_new_file.txt");   // parent resolved, leaf kept
     CHECK(mbp_resolve_path("nodir\\x\\y.txt", out, sizeof out) == 0 && std::string(out) == "nodir/x/y.txt");
     CHECK(mbp_resolve_path("C:\\Windows\\x", out, sizeof out) == 0 && std::string(out) == "/Windows/x");   // drive-root path
+#endif
     FILE* f = mb_fopen("DATA\\Ground_Specs.TXT", "r");
     CHECK(f != nullptr);
     if (f) { std::string s = slurp(f); CHECK(s.size() > 10); fclose(f); }
@@ -157,7 +174,11 @@ int main(int argc, char** argv)
     char dirp[600];
     sprintf(dirp, "%s\\Mount&Blade", folder);
     CHECK(RemoveDirectoryA(dirp));
+#if defined(_WIN32)
+    CHECK(SHGetFolderPathA(0, CSIDL_PERSONAL, 0, 0, folder) == S_OK && std::string(folder) == tmp + "\\Documents");   // mbp_user_dir's Windows separator
+#else
     CHECK(SHGetFolderPathA(0, CSIDL_PERSONAL, 0, 0, folder) == S_OK && std::string(folder) == tmp + "/Documents");
+#endif
     CHECK(SHGetFolderPathA(0, 0x7777, 0, 0, folder) == E_INVALIDARG);
 
     // registry: the game's calls (world_app.cpp / launcher_options_dialog.cpp)
@@ -240,10 +261,19 @@ int main(int argc, char** argv)
     CHECK(GetExitCodeProcess(pi.hProcess, &code) && code == 0);
     CloseHandle(pi.hProcess);
     memset(&pi, 0, sizeof pi);
+#if defined(_WIN32)
+    // On Windows the platform layer completes every child process at once with code 0 (core.cpp: the game's only child
+    // process is the binkplay.exe intro, which is not shipped); the second call checks that same contract.
+    char cmd[] = "cmd.exe /c exit 3";
+    CHECK(CreateProcessA("cmd.exe", cmd, 0, 0, FALSE, 0, 0, 0, &si, &pi));
+    CHECK(WaitForSingleObject(pi.hProcess, 5000) == WAIT_OBJECT_0);
+    CHECK(GetExitCodeProcess(pi.hProcess, &code) && code == 0);
+#else
     char cmd[] = "/bin/sh -c \"exit 3\"";
     CHECK(CreateProcessA("/bin/sh", cmd, 0, 0, FALSE, 0, 0, 0, &si, &pi));
     CHECK(WaitForSingleObject(pi.hProcess, 5000) == WAIT_OBJECT_0);
     CHECK(GetExitCodeProcess(pi.hProcess, &code) && code == 3);
+#endif
     CloseHandle(pi.hProcess);
 
     // ================= memory, strings, code pages =================
@@ -370,7 +400,11 @@ int main(int argc, char** argv)
     CHECK(!CloseClipboard());
 
     // cleanup of the sandbox
+#if defined(_WIN32)
+    std::string cmdrm = "cmd.exe /c rmdir /s /q \"" + tmp + "\"";
+#else
     std::string cmdrm = "rm -rf '" + tmp + "'";
+#endif
     system(cmdrm.c_str());
     printf("%d checks, %d failed\n", g_checks, g_fails);
     return g_fails;

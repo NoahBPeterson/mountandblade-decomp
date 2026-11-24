@@ -467,6 +467,8 @@ BOOL WINAPI RemoveDirectoryA(LPCSTR lpPathName);
 BOOL WINAPI DeleteFileA(LPCSTR lpFileName);
 BOOL WINAPI CopyFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, BOOL bFailIfExists);
 BOOL WINAPI MoveFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName);
+BOOL WINAPI MoveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags);
+#define MOVEFILE_REPLACE_EXISTING 0x00000001
 DWORD WINAPI GetFileAttributesA(LPCSTR lpFileName);
 HANDLE WINAPI FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
 BOOL WINAPI FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData);
@@ -474,7 +476,9 @@ BOOL WINAPI FindClose(HANDLE hFindFile);
 DWORD WINAPI GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer);
 BOOL WINAPI SetCurrentDirectoryA(LPCSTR lpPathName);
 DWORD WINAPI GetTempPathA(DWORD nBufferLength, LPSTR lpBuffer);
-HGLOBAL WINAPI GlobalAlloc(UINT uFlags, SIZE_T dwBytes);
+// port/platform/fs.cpp's mbp_getenv: SDL_setenv_unsafe writes only the Win32 block on Windows, so the port reads it too
+DWORD WINAPI GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
+BOOL WINAPI SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue);HGLOBAL WINAPI GlobalAlloc(UINT uFlags, SIZE_T dwBytes);
 LPVOID WINAPI GlobalLock(HGLOBAL hMem);
 BOOL WINAPI GlobalUnlock(HGLOBAL hMem);
 HGLOBAL WINAPI GlobalFree(HGLOBAL hMem);

@@ -9,22 +9,60 @@ static_assert(sizeof(tstring) == MB_TSTRING_SIZE, "MB_TSTRING_SIZE (port_prelude
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
+#if defined(_WIN32)
+#include <io.h>
+#include <fcntl.h>
+#else
 #include <unistd.h>
 #include <execinfo.h>
 #include <fcntl.h>
 #include <sys/ucontext.h>
-#include <dlfcn.h>
+#endif
 #if defined(__APPLE__) && defined(__aarch64__)
 #include <mach/mach.h>
+#include <dlfcn.h>
 #endif
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd);
 
 static HINSTANCE__ g_port_instance;    // GetModuleHandle(NULL)'s stand-in: only compared against NULL and passed back
 
-// MB_CRASH_BT=1: on SIGSEGV / SIGBUS / SIGILL / SIGFPE / SIGABRT (malloc errors) / SIGTRAP (traps, brk) write the fault address and a backtrace to stderr (the macOS crash
-// report is not always written, e.g. when ReportCrash is throttled), then die with the signal as before.
+// MB_CRASH_BT=1: on a crash write the fault address and a backtrace to stderr (the macOS crash report is not always written,
+// e.g. when ReportCrash is throttled), then die as before. POSIX: SIGSEGV / SIGBUS / SIGILL / SIGFPE / SIGABRT (malloc
+// errors) / SIGTRAP (traps, brk). Windows: the unhandled-exception filter (mingw's signal() never raises SIGSEGV).
 static int g_bt_fd = 2;   // MB_CRASH_BT=<path>: the backtrace goes to that file instead (stderr may be closed by then)
+#if defined(_WIN32)
+// Declared here: the shim <windows.h> has only the surface src/ names, and kernel32's import thunks resolve plain
+// declarations (the layouts are the documented ones).
+typedef LONG(WINAPI* MB_EXCEPTION_FILTER)(void*);
+struct MB_EXCEPTION_RECORD {
+    DWORD ExceptionCode;
+    DWORD ExceptionFlags;
+    struct MB_EXCEPTION_RECORD* ExceptionRecord;
+    void* ExceptionAddress;
+    DWORD NumberParameters;
+    ULONG_PTR ExceptionInformation[15];
+};
+struct MB_EXCEPTION_POINTERS { MB_EXCEPTION_RECORD* ExceptionRecord; void* ContextRecord; };
+extern "C" MB_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(MB_EXCEPTION_FILTER filter);
+extern "C" USHORT WINAPI RtlCaptureStackBackTrace(DWORD skip, DWORD count, void** frames, DWORD* hash);
+static LONG WINAPI crash_filter(void* info)
+{
+    MB_EXCEPTION_POINTERS* ep = (MB_EXCEPTION_POINTERS*)info;
+    MB_EXCEPTION_RECORD* er = ep ? ep->ExceptionRecord : nullptr;
+    char line[256];
+    int n = snprintf(line, sizeof line, "\n---- exception %08lx at address %p ----\n", (unsigned long)(er ? er->ExceptionCode : 0),
+                     er ? er->ExceptionAddress : nullptr);
+    _write(g_bt_fd, line, n > 0 ? (unsigned)n : 0);
+    void* frames[64];
+    USHORT k = RtlCaptureStackBackTrace(0, 64, frames, nullptr);
+    for (USHORT i = 0; i < k; ++i) {
+        n = snprintf(line, sizeof line, "%p\n", frames[i]);
+        _write(g_bt_fd, line, n > 0 ? (unsigned)n : 0);
+    }
+    return 1;     // EXCEPTION_EXECUTE_HANDLER: logged; the process terminates
+}
+#else
 static void crash_bt(int sig, siginfo_t* si, void* ctx)
 {
     char head[1024];
@@ -51,6 +89,7 @@ static void crash_bt(int sig, siginfo_t* si, void* ctx)
     signal(sig, SIG_DFL);
     raise(sig);
 }
+#endif // _WIN32
 
 // MB_WATCH=<symbol>+<hex offset>: an ARM hardware write watchpoint (8 bytes) on the main thread at that address of a global
 // (dlsym of the executable's own symbol). The first write raises SIGTRAP: the pc and a backtrace go to stderr, the watchpoint
@@ -113,6 +152,11 @@ int main(int argc, char** argv)
 #endif
     if (const char* e = getenv("MB_CRASH_BT")) {
         if (*e && *e != '0') {
+#if defined(_WIN32)
+            if (strcmp(e, "1") != 0)
+                g_bt_fd = _open(e, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
+            SetUnhandledExceptionFilter(crash_filter);
+#else
             if (strcmp(e, "1") != 0)
                 g_bt_fd = open(e, O_WRONLY | O_CREAT | O_TRUNC, 0644);
             struct sigaction sa;
@@ -123,6 +167,7 @@ int main(int argc, char** argv)
             for (int sg : sigs)
                 if (sg != SIGTRAP || !getenv("MB_WATCH"))    // MB_WATCH owns SIGTRAP
                     sigaction(sg, &sa, nullptr);
+#endif
         }
     }
     size_t n = 1;

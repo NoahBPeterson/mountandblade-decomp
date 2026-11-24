@@ -427,10 +427,12 @@ HRESULT Device::CreateVertexBuffer(UINT len, DWORD usage, DWORD fvf, D3DPOOL poo
 
 HRESULT Device::CreateIndexBuffer(UINT len, DWORD usage, D3DFORMAT fmt, D3DPOOL pool, IDirect3DIndexBuffer9** out, HANDLE*)
 {
+    log("CreateIndexBuffer(len=%u usage=%x fmt=%d pool=%d)", len, usage, fmt, pool);
     if (!out || len == 0 || (fmt != D3DFMT_INDEX16 && fmt != D3DFMT_INDEX32)) return D3DERR_INVALIDCALL;
     IndexBuffer* ib = new IndexBuffer();
     ib->format = fmt;
     if (!ib->b.init(this, len, usage, pool, true)) {
+        log("CreateIndexBuffer(%u, usage %x, pool %d) failed", len, usage, pool);
         ib->Release();
         *out = nullptr;
         return D3DERR_OUTOFVIDEOMEMORY;

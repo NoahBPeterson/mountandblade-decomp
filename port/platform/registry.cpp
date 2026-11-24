@@ -27,7 +27,7 @@ std::string store_path()
     char dir[1024];
     if (!mbp_user_dir(CSIDL_APPDATA | CSIDL_FLAG_CREATE, dir, sizeof dir)) return "";
     std::string d = std::string(dir) + "/Mount&Blade";
-    mkdir(d.c_str(), 0777);
+    mb_mkdir(d.c_str());
     return d + "/registry.ini";
 }
 std::string lowerstr(std::string s) { for (char& c : s) c = (char)tolower((unsigned char)c); return s; }
@@ -112,7 +112,13 @@ void save_locked()
         fputc('\n', f);
     }
     fclose(f);
+#if defined(_WIN32)
+    // The store is rewritten on every change, and msvcrt's rename (like src/'s, which relies on that: the CRT does not
+    // replace an existing file) fails while the target exists. Replace explicitly: MoveFileEx is the Win32 atomic swap.
+    MoveFileExA(tmp.c_str(), p.c_str(), MOVEFILE_REPLACE_EXISTING);
+#else
     rename(tmp.c_str(), p.c_str());
+#endif
 }
 // predefined root -> (lowercase prefix, display prefix); false if `h` is a real key
 bool root_of(HKEY h, std::string* low, std::string* disp)

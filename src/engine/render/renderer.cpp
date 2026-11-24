@@ -355,7 +355,15 @@ bool __cdecl rec_less(const rgl::idx_weight& a, const rgl::idx_weight& b)
 // @ 0x4622e0
 HRESULT dev_buffer::restore()
 {
-    HRESULT hr;                     // never assigned on the fall-through path (the original returns garbage)
+    // The original leaves hr unassigned when neither branch runs and returns garbage; leaving it unassigned here is
+    // undefined behaviour that zig's LLVM (the windows-x86_64 lane) exploits at -O2 by dropping the count != 0 tests,
+    // so a zero count reached CreateVertexBuffer/CreateIndexBuffer and the run died at start-up. No caller reads the
+    // return value (buffer_pair::restore_all and init_shaders both ignore it), so a defined zero is the faithful fix.
+#ifdef MB_PORT_PRELUDE_H
+    HRESULT hr = 0;
+#else
+    HRESULT hr;
+#endif
     if (type == 0 && count != 0) {
         hr = g_render.dev->CreateVertexBuffer(elem_size * count, D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, fvf, D3DPOOL_DEFAULT, &vb, 0);
         if (hr < 0) mb_error("Unable to restore vertex buffer.");

@@ -95,7 +95,11 @@ void state(const char* fmt, ...)
     if (n > (int)sizeof buf - 2)
         n = sizeof buf - 2;
     buf[n++] = '\n';
+#if defined(_WIN32)
+    _write(2, buf, (unsigned)n);
+#else
     write(2, buf, n);
+#endif
 }
 
 const char* const k_screen_names[30] = {

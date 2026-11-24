@@ -4,16 +4,22 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
-#include <sys/mman.h>
-#include <sys/wait.h>
 #include <time.h>
-#include <unistd.h>
-#include <dlfcn.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#if defined(_WIN32)
+#include <io.h>                 // _access
+#include <direct.h>             // _chdir
+#include <process.h>            // _exit
+#else
+#include <sys/mman.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <dlfcn.h>
+#endif
 #if defined(__APPLE__)
 #include <mach-o/dyld.h>
 #include <sys/sysctl.h>
@@ -76,13 +82,23 @@ static void fill_systemtime(SYSTEMTIME* st, const struct tm& tm, int ms)
 void WINAPI GetLocalTime(LPSYSTEMTIME st)
 {
     struct timespec ts; clock_gettime(CLOCK_REALTIME, &ts);
-    time_t t = ts.tv_sec; struct tm tm; localtime_r(&t, &tm);
+    time_t t = ts.tv_sec; struct tm tm;
+#if defined(_WIN32)
+    localtime_s(&tm, &t);              // mingw's localtime_r is only declared with _POSIX_C_SOURCE
+#else
+    localtime_r(&t, &tm);
+#endif
     fill_systemtime(st, tm, (int)(ts.tv_nsec / 1000000));
 }
 void WINAPI GetSystemTime(LPSYSTEMTIME st)
 {
     struct timespec ts; clock_gettime(CLOCK_REALTIME, &ts);
-    time_t t = ts.tv_sec; struct tm tm; gmtime_r(&t, &tm);
+    time_t t = ts.tv_sec; struct tm tm;
+#if defined(_WIN32)
+    gmtime_s(&tm, &t);
+#else
+    gmtime_r(&t, &tm);
+#endif
     fill_systemtime(st, tm, (int)(ts.tv_nsec / 1000000));
 }
 
@@ -156,6 +172,10 @@ namespace {
 bool poll_process(Process* p)
 {
     if (p->done) return true;
+#if defined(_WIN32)
+    p->done = true;          // only pseudo-processes exist here: see CreateProcessA
+    return true;
+#else
     int st = 0;
     pid_t r = waitpid(p->pid, &st, WNOHANG);
     if (r == p->pid) {
@@ -165,6 +185,7 @@ bool poll_process(Process* p)
         p->done = true;
     }
     return p->done;
+#endif
 }
 // true if the object is signalled now (and consumes an auto-reset event). Caller holds g_sync_mu.
 bool is_signalled(HANDLE h, bool consume, bool* valid, bool* poll)
@@ -281,7 +302,9 @@ HANDLE WINAPI GetCurrentProcess() { return (HANDLE)(LONG_PTR)-1; }
 HANDLE WINAPI GetCurrentThread() { return (HANDLE)(LONG_PTR)-2; }
 DWORD WINAPI GetCurrentThreadId()
 {
-#if defined(__APPLE__)
+#if defined(_WIN32)
+    return (DWORD)(uintptr_t)pthread_self();       // winpthreads' pthread_t is unique per thread
+#elif defined(__APPLE__)
     uint64_t id = 0; pthread_threadid_np(nullptr, &id); return (DWORD)id;
 #else
     return (DWORD)gettid();
@@ -289,8 +312,13 @@ DWORD WINAPI GetCurrentThreadId()
 }
 static unsigned cpu_count_()
 {
+#if defined(_WIN32)
+    int n = SDL_GetNumLogicalCPUCores();      // SDL3's name (SDL_GetCPUCount is the renamed SDL2 one)
+    return n < 1 ? 1u : (unsigned)n;
+#else
     long n = sysconf(_SC_NPROCESSORS_ONLN);
     return n < 1 ? 1u : (unsigned)n;
+#endif
 }
 BOOL WINAPI GetProcessAffinityMask(HANDLE, DWORD_PTR* proc, DWORD_PTR* sys)
 {
@@ -327,6 +355,13 @@ BOOL WINAPI CreateProcessA(LPCSTR app, LPSTR cmdline, LPSECURITY_ATTRIBUTES, LPS
     Process* p = new Process;
     kobj_add(p);
     p->magic = OBJ_PROCESS; p->pid = 0; p->done = false; p->exit_code = 0; p->pseudo = false;
+#if defined(_WIN32)
+    // The game's only use of a child process is the binkplay.exe intro video; playing one needs a native CreateProcess and
+    // its window (and binkplay.exe is not shipped), so the process "starts" and exits at once with code 0, so the caller
+    // proceeds exactly as it does after a video that has ended.
+    fprintf(stderr, "mb: CreateProcess(%s): not runnable on this platform, completing immediately\n", exe.c_str());
+    p->pseudo = true; p->done = true;
+#else
     char host[4096];
     int exists = mbp_resolve_path(exe.c_str(), host, sizeof host);
     std::string low = exe;
@@ -352,6 +387,7 @@ BOOL WINAPI CreateProcessA(LPCSTR app, LPSTR cmdline, LPSECURITY_ATTRIBUTES, LPS
         }
         p->pid = pid;
     }
+#endif
     if (pi) {
         memset(pi, 0, sizeof *pi);
         pi->hProcess = (HANDLE)p;
@@ -373,7 +409,11 @@ BOOL WINAPI TerminateProcess(HANDLE h, UINT code)
     if (h == GetCurrentProcess()) _exit((int)code);
     Process* p = as<Process>(h, OBJ_PROCESS);
     if (!p) { t_last_error = 6; return FALSE; }
+#if defined(_WIN32)
+    if (!p->done) { p->done = true; p->exit_code = code; }      // pseudo-processes only; nothing to signal
+#else
     if (!p->pseudo && !p->done) kill(p->pid, SIGKILL);
+#endif
     return TRUE;
 }
 void WINAPI ExitProcess(UINT code) { exit((int)code); }
@@ -384,7 +424,11 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR name) { (void)name; return &g_module; }
 DWORD WINAPI GetModuleFileNameA(HMODULE, LPSTR buf, DWORD size)
 {
     char path[4096] = {0};
-#if defined(__APPLE__)
+#if defined(_WIN32)
+    const char* base = SDL_GetBasePath();         // the executable's directory (SDL asks the native GetModuleFileNameW); SDL owns it
+    std::string full = base ? std::string(base) + "mb.exe" : std::string();
+    strncpy(path, full.c_str(), sizeof path - 1);
+#elif defined(__APPLE__)
     uint32_t n = sizeof path;
     if (_NSGetExecutablePath(path, &n) != 0) path[0] = 0;
 #else
@@ -413,27 +457,47 @@ HMODULE WINAPI LoadLibraryA(LPCSTR name)
         t_last_error = 126;
         return nullptr;
     }
+#if defined(_WIN32)
+    // Only the system DLLs above exist for the game (as this process module); a real LoadLibraryA here would name this
+    // very function, and .dll modules are never part of the portable build.
+    t_last_error = 126;
+    return nullptr;
+#else
     void* h = dlopen(n.c_str(), RTLD_NOW);
     if (!h) { t_last_error = 126; return nullptr; }
     return (HMODULE)h;
+#endif
 }
 BOOL WINAPI FreeLibrary(HMODULE h)
 {
+#if defined(_WIN32)
+    (void)h;
+#else
     if (h && h != &g_module) dlclose((void*)h);
+#endif
     return TRUE;
 }
 void* WINAPI GetProcAddress(HMODULE h, LPCSTR name)
 {
+#if defined(_WIN32)
+    (void)h; (void)name;
+    t_last_error = 127;           // no export table behind the portable layer; src/ never calls this
+    return nullptr;
+#else
     void* p = dlsym(h && h != &g_module ? (void*)h : RTLD_DEFAULT, name);
     if (!p) t_last_error = 127;
     return p;
+#endif
 }
 
 // ---- system info --------------------------------------------------------------------------------------------------
 void WINAPI GlobalMemoryStatus(LPMEMORYSTATUS m)
 {
     unsigned long long total = 0, avail = 0;
-#if defined(__APPLE__)
+#if defined(_WIN32)
+    total = (unsigned long long)SDL_GetSystemRAM() * 1024ull * 1024ull;   // SDL reports MiB
+    avail = total / 2;
+#elif defined(__APPLE__)
     int64_t mem = 0; size_t sz = sizeof mem;
     if (sysctlbyname("hw.memsize", &mem, &sz, nullptr, 0) == 0) total = (unsigned long long)mem;
     avail = total / 2;
@@ -470,6 +534,22 @@ LPVOID WINAPI GlobalLock(HGLOBAL h) { return (LPVOID)h; }
 BOOL WINAPI GlobalUnlock(HGLOBAL) { return FALSE; }         // lock count reaches 0 (NO_ERROR in GetLastError)
 HGLOBAL WINAPI GlobalFree(HGLOBAL h) { free((void*)h); return nullptr; }
 
+#if defined(_WIN32)
+// src/ never calls VirtualAlloc, but the definitions must exist for the KERNEL32 surface: a plain allocation backs them.
+LPVOID WINAPI VirtualAlloc(LPVOID addr, SIZE_T size, DWORD type, DWORD protect)
+{
+    (void)addr; (void)type; (void)protect;
+    void* p = calloc(1, size ? size : 1);
+    if (!p) t_last_error = 8;
+    return p;
+}
+BOOL WINAPI VirtualFree(LPVOID addr, SIZE_T size, DWORD type)
+{
+    (void)size; (void)type;
+    free(addr);
+    return TRUE;
+}
+#else
 static std::mutex g_va_mu;
 static std::map<void*, size_t>& g_va() { static std::map<void*, size_t>* v = new std::map<void*, size_t>(); return *v; }   // constructed on first use: src/'s static initializers (GameApp, world_app.cpp) call in before this file's would run
 LPVOID WINAPI VirtualAlloc(LPVOID addr, SIZE_T size, DWORD type, DWORD protect)
@@ -499,6 +579,7 @@ BOOL WINAPI VirtualFree(LPVOID addr, SIZE_T size, DWORD type)
     t_last_error = 87;
     return FALSE;
 }
+#endif // _WIN32
 
 // ---- code pages -------------------------------------------------------------------------------------------------------
 int WINAPI MultiByteToWideChar(UINT cp, DWORD, LPCSTR s, int cb, LPWSTR w, int cch)
