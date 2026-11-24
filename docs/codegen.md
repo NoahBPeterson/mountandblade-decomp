@@ -2304,3 +2304,110 @@ Key numbering (third batch, same night)
 - A raw `pages[...]` member that is really `std::vector<T*>` at that offset: a file-local view returning the real
   vector and its `operator[]`, until the header member is converted (Party::reissue_order 7e9aaef1,
   Terrain::conv_build_scene ee62b4e8).
+
+---
+
+## 17. Levers from the 2026-11-24 subagent waves, and when to reach for each
+
+Each entry: the symptom that says "try this", the edit, the check that it worked, and a counter-signal. All six
+were byte-exact on landing (`f2ad77dd`, `60fb0c7e`). The checks use `chk.py` and `c2.py icount`/`sched`.
+
+### 17.1 The library `push_back`/`erase` as an out-of-line specialization that THIS file defines
+- **Symptom.** The original calls `vector<T>::push_back` (or `erase`) out of line, ours inlines it (our function is
+  larger by the inline body, `icount` shows EXTRA instructions that are the `size() < capacity()` test and the
+  `_Ufill` store), and the same file is what must emit that member as its own manifest row.
+- **Wrong fix.** A bodiless `template<> __declspec(noinline) void vector<T>::push_back(T const&);` puts the call
+  out of line but turns the file's explicit instantiation (`template void vector<T>::push_back(...)`) into a
+  declaration, so the object emits nothing and the member's row fails with "symbol not found". `chk.py` on the caller
+  still improves, which makes this trap look like progress. Always re-run the whole module: `run_all.py --filter <file>`.
+- **Fix.** Define the specialization with the stock `<vector>` body, `noinline`, and delete the explicit
+  instantiation line:
+  ```cpp
+  template<> __declspec(noinline) void std::vector<NodeA*>::push_back(NodeA* const& v)
+  { if (size() < capacity()) _Mylast = _Ufill(_Mylast, 1, v); else insert(end(), v); }
+  ```
+  `insert` stays declared bodiless above and defined after it (§12). For `erase`: declare bodiless before the
+  `resize` instantiation, define it at the position where the original emits it (0x424d60 after 0x424cc0):
+  `if (_First != _Last) { pointer p = copy(_ITER_BASE(_Last), _Mylast, _ITER_BASE(_First)); _Destroy(p, _Mylast); _Mylast = p; } return _First;`
+  M&B 0x49ad20 + 0x49b120 + 0x49b170 (DropDown::create), 0x424cc0 (NavCell resize).
+- **When.** The caller is byte-exact except for an inline expansion (or the shrink path of `resize` calling a
+  `fill`/`copy` thunk instead of a direct call) AND the target member lives in the same file or a header that file
+  instantiates. If another TU owns the member (a `*_instances.h` file, `std_vec_push_back.h`), declare it there and
+  do not redefine it.
+- **Use `inline` + `noinline` together** when two TUs must both see the body without a duplicate symbol
+  (`template<> inline __declspec(noinline) void vector<int>::push_back`, M&B 0x4ea030 PartyMgr::id_remove,
+  callee 0x440b30 owned by agent_logic.cpp): a COMDAT the linker folds, the call still lands on the original address.
+- **Why the callee body matters beyond the call.** A callee that is only declared is assumed to keep `&local`, so the
+  local's home store gets dependences and its spill is scheduled one slot early (§16 first section). Giving cl the
+  body as a noinline specialization removes that effect: the id_remove diff was exactly one swapped
+  `mov edx,eax` / `mov [esp+0xc],eax`, not the call.
+
+### 17.2 Constant-global array scan: byte-offset form beats `arr[i][0]`
+- **Symptom.** Original: `xor eax,eax; or edx,-1; cmp [eax+arr],edx; ... add eax,8; cmp eax,0x128`. Ours:
+  `mov eax,arr` and a final `cmp eax,arr+0x128`, or an index scale that differs.
+- **Fix.** Count in bytes over the base: `for (int i = 0; i < 0x128; i += 8) if (*(int*)((char*)g_game_keys.entry + i) == -1)`.
+  The array subscript form makes cl strength-reduce to a pointer that is materialised; a plain integer `i` that
+  folds into the displacement keeps the absolute address in the operand. M&B 0x4d7120 (Rec1bc::refresh). This was the
+  spelling before a port cleanup rewrote it as `entry[i][0]`, which is how it was found: when a row used to match and
+  stopped, `git log -S` on its lines finds the byte-exact text.
+- **When.** The loop bound in the original is a byte count (a `cmp reg, 0x128`-style constant that is not a multiple of
+  the element count) and the base is a global array whose address cl would otherwise put in a register.
+
+### 17.3 A zero stored next to a live zero register is a FLOAT-typed store
+- **Symptom.** Ours reuses `ebx`/`esi`/the tracked zero for a store `mov [mem], reg`; the original has
+  `mov [mem], 0` with an immediate, and everything after it shifts by 1 to 4 bytes (alignment NOPs and branch targets
+  all differ, hundreds of bytes "different" from a single instruction).
+- **Fix.** Store through a float view: `*(float*)&g->sel_ent = 0.0f;`. A `0.0f` never joins the integer zero that
+  cl hoists for the other `= 0` stores (§4, `int zero = 0` versus `0.0f`). M&B 0x5108d0 (PartyWindow::refresh_lists,
+  136 diff, 16 aligned -> 0 diff from this one line).
+- **When.** `icount` says 1 EXTRA/1 MISSING (the register store vs the immediate) and the function holds a hoisted
+  zero (`xor reg,reg` early, used by several stores). Check the original image for every store to that address
+  (`rg` over a disassembly, or `disasm.py`): if the other writers use an immediate, this one wants a float spelling.
+
+### 17.4 A local pointer plus a dead null test keeps the vector base add out of the AddrModes fold
+- **Symptom.** Original `add eax,[g_items]; mov eax,[eax+0x1c8]`; ours folds the global load into
+  `[eax+esi+0x1c8]` and needs `push esi`/`pop esi` (one register more, 15 aligned of 156).
+- **Fix.** `ItemKind* k = &g_items[item]; unsigned t = k->type_flags & 0xff; if (!k) return;` The test is dead
+  (`&g_items[i]` is never null) and is deleted by the optimiser, but it keeps `k` as a pointer value the folder
+  cannot absorb. M&B 0x4ef730 (item_events). Safe on every build: it changes no behaviour. The named pointer alone
+  (without the test) did nothing. Prefer this only after §6's cheaper spellings fail, and say so in a comment.
+- **When.** `icount` shows the original with one fewer saved register and a separate `add reg,[global]`.
+
+### 17.5 Whole-vec2 stores and byte reads
+- **Vec2 pair written whole.** `*(vec2*)&mouse_dx = gm_vec2(0.0f, 0.0f);` for a pair of adjacent floats the original
+  zeroes as one value (0x42d5c0 gui_manager ctor, 198 diff -> 0). `*(Vec2*)&m->at(i)->pos = at;` for a position
+  that is the first lane pair of a vector4 (0x491e50 GameData::set_pos). **When:** the original has the two stores
+  adjacent and sharing one source register or a single `mov` pair, while ours reloads the container between them.
+- **Byte read through a flags word.** `e.priority = *(const unsigned char*)((const char*)&e.flags + 3);` (0x4c2170
+  read_entry): the original reads the high byte of a dword directly; `(e.flags >> 24)` or a bitfield re-extracts it.
+- **Two tstring temporaries, two slots.** `new ((void*)nb1.w) tstring("..."); ...; ((tstring*)nb1.w)->~tstring();`
+  over two distinct 16-byte buffers when the original's frame has two separate destroyed slots (0x4f5fb0 make_slider;
+  a block-scoped temporary folds into one shared slot).
+
+### 17.6 `push_back` expanded inline through a local derived struct (0x50d0e0 add_window)
+- When the original has the fast path inline and only `_Insert_n` out of line (`call 0x49b1c0`), and ours calls
+  `push_back`: derive a local struct from the vector, `__forceinline` a `push` that spells the fast path with a local
+  pointer (`NodeA** p = _Mylast; *p = v; _Mylast = p + 1;`) and calls `_Insert_n(base::iterator(_Mylast), 1, v)`,
+  and cast: `((node_vec&)objs).push(w)`. Observed (not fully explained): in
+  that TU the stock `push_back` flipped between inline and out-of-line as the last ~20 lines of the file (a
+  `#pragma inline_depth` region) were changed, so inlining decisions can depend on text far from the call; bisect by
+  deleting the file's tail when a call inlines "for no reason". The `node_vec` spelling is independent of that.
+
+### 17.7 How to decide which lever (the heuristic, in order)
+1. **Run `icount` first and read the EXTRA/MISSING lists, not the byte diff.** A byte diff of hundreds is usually one
+   cause. Cases: (a) one pair EXTRA register-store / MISSING immediate-store -> 17.3. (b) a block of EXTRA that is
+   the `size() < capacity()` expansion -> 17.1 or 17.6. (c) EXTRA `mov reg,Global` plus a different final `cmp` ->
+   17.2. (d) one fewer `push/pop` in the original and an `add reg,[mem]` -> 17.4.
+2. **Is the missing/extra thing a library member that has its own manifest row?** If yes, anything that declares
+   it affects that row too: run the module's `run_all.py --filter` before believing a MATCH (§17.1 trap).
+3. **Did the row once match?** `git log -S'<a distinctive token>' -- <file>` and `git log --oneline -- <file>`: all
+   eleven rows fixed in these two waves were byte-exact before the 2026-11-20/21 port cleanup lanes (V10, W1, L-C,
+   L-D2, L-D3, L-G3, L-H3, L-H5) replaced a view or a spelling with the "real" class or the tidier form. The fix was
+   the older spelling, or the real class plus a specialization that restores the old call shape. The sidecar notes
+   that name a lane and a date ("byte-exact until <date> (lane X)", "[<date> lane X: ...]") point at exactly the edit
+   to undo: read the note before the code.
+4. **Aligned small, size equal** means order/colouring (use `sched`/`regmap`). **Size differs** means an inline
+   decision or a folded/unfolded load (this section). **Size differs by exactly an inline body** means 17.1.
+5. **Stop rule.** If the only difference left is the SIB byte of a `lea` (0x529d80: `8d 3c 01` vs `8d 3c 08`), the
+   optimiser's commutative-operand sort decides it (temp keys: offset IV 465 x 64 beats the base slot 231 x 32) and
+   no in-scope spelling flips it; record it in §15 and move on.
