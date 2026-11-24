@@ -105,8 +105,9 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     struct { char scheme[20]; char req[1024]; char host[256]; char buf[512]; char path[1024]; } b;
     long port;
     parse_url(url, b.scheme, 20, b.host, 256, b.path, 1024, &port);
-    const char* proto = "HTTP";
-    if (memcmp(b.scheme, proto, 5) != 0)
+    // strcmp with a literal of four characters: cl folds it to the same 5-byte repe cmpsb as the original
+    // (memcmp with a 5 count puts the length in ecx before the buffer address; strcmp matches the original)
+    if (strcmp(b.scheme, "HTTP") != 0)
         return 1;
     WSADATA wsa;
     if (WSAStartup(0x101, &wsa) != 0)
@@ -118,7 +119,7 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     addr.sin_family = 2;
     addr.sin_port = htons((u_short)port);
     hostent* he = gethostbyname(b.host);
-    DWORD host_addr = 0;                    // the IPv4 address: 4 bytes (a long is 8 at LP64)
+    DWORD host_addr = (DWORD)he;            // the IPv4 address: 4 bytes (a long is 8 at LP64)
     if (he)
         host_addr = *(DWORD*)he->h_addr_list[0];
     addr.sin_addr.s_addr = host_addr;

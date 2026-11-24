@@ -102,9 +102,10 @@ void CharSheet::open_view()
         // ---- 3D portrait: build the body, the world, the wind tracks and the camera ----
         face_body* b = new face_body;
         label_refresh((MissionUi*)b, tstring("char_i_character"));
-        if (scene != 0) {
-            scene->~world();    // 0x475d50 (the CellGrid destructor body), then operator delete (0x535712, call at 0x509b28)
-            ::operator delete(scene);
+        rgl::world* old = scene;
+        if (old != 0) {
+            old->~world();      // 0x475d50 (the CellGrid destructor body), then operator delete (0x535712, call at 0x509b28)
+            ::operator delete(old);
             scene = 0;
         }
         float lo[2];
@@ -118,9 +119,7 @@ void CharSheet::open_view()
         int zero3 = 0;
         rgl::world* w = new rgl::world(lo, hi, &zero, &zero2, &zero3);   // 0x478ad0
         scene = w;
-        w->ambient.x = 0.23f;
-        w->ambient.y = 0.25f;
-        w->ambient.z = 0.27f;
+        w->ambient = rgl::vector4(0.23f, 0.25f, 0.27f);
         w->ambient.w = 1.0f;
         {
             float z2 = 0.0f;
