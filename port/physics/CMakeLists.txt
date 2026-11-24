@@ -60,7 +60,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL CMAKE_SYSTEM_NAME)
   add_test(NAME physics_trace_replay_ref
            COMMAND physics_trace_replay ${CMAKE_CURRENT_SOURCE_DIR}/trace/ref/attract_2ragdolls.bin.gz --quiet)
   add_test(NAME physics_ragdoll_drop COMMAND physics_ragdoll_drop)
-else()
+elseif(NOT MB_SKIP_CROSS_TESTS)   # -DMB_SKIP_CROSS_TESTS=ON: build only (CI has no Wine)
   # Cross-built from a Unix host: PE binaries run through Wine (the port's Windows lane gate).
   # Wine for the cross-built PEs (see port/platform/tests/CMakeLists.txt: the .app's Contents/MacOS/wine is an
   # AppKit launcher wrapper that eats arguments, and the tests run on the cask's 11.22 loader — 11.21 dies with a

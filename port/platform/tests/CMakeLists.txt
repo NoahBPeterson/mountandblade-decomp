@@ -29,7 +29,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL CMAKE_SYSTEM_NAME)
   add_test(NAME mbp_window COMMAND mbp_test_window)
   add_test(NAME mbp_kernel COMMAND mbp_test_kernel ${MB_ROOT}/game)
   add_test(NAME mbp_net COMMAND mbp_test_net)
-else()
+elseif(NOT MB_SKIP_CROSS_TESTS)   # -DMB_SKIP_CROSS_TESTS=ON: build only (CI has no Wine)
   # Cross-built from a Unix host (the port's macOS/Linux lanes): the executables are PE binaries, ctest cannot exec them
   # directly - through Wine, the binary director that runs them on macOS/Linux CI hosts (REGRESSION: matches the lane gate).
   # Wine for the cross-built PEs. NB a Wine .app ships the real loader at Contents/Resources/wine/bin/wine and a
