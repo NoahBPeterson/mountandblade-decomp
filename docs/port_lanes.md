@@ -20,4 +20,5 @@ The surface each lane must cover is exactly what src/ calls: see port/stubs/*.cp
 port/include/*.h, and `rg` over src/. Each lane: library `mb_<lane>` in port/<lane>/CMakeLists.txt (the top-level
 port/CMakeLists.txt adds the directory), tests in port/<lane>/tests, built with
 `cmake -S port -B build/port/macos-arm64 -G Ninja -DCMAKE_TOOLCHAIN_FILE=$PWD/port/cmake/macos-arm64.cmake`.
+Building the result from source and installing it: [`BUILDING_PORT.md`](BUILDING_PORT.md).
 Integration (linking `mb` on macOS, port/main.cpp, removing port/stubs) is the main session's.

@@ -1,0 +1,26 @@
+#!/bin/sh
+# mountandblade: starts the native port with the working directory set to your Mount & Blade 1.011 folder (the game
+# reads Data/, CommonRes/, Modules/ ... relative to it). The port ships no game files; see docs/BUILDING_PORT.md.
+#   MB_GAME_DIR=/path/to/game mountandblade [game arguments]
+# Without MB_GAME_DIR the usual Steam library locations are searched.
+self=$0
+if command -v readlink >/dev/null 2>&1 && target=$(readlink -f "$self" 2>/dev/null) && [ -n "$target" ]; then self=$target; fi
+here=$(cd "$(dirname "$self")" && pwd)
+exe="$here/@MB_LAUNCHER_REL_EXE@"
+if [ ! -x "$exe" ]; then echo "mountandblade: $exe not found" >&2; exit 1; fi
+game=$MB_GAME_DIR
+if [ -z "$game" ]; then
+  for lib in "$HOME/.local/share/Steam" "$HOME/.steam/steam" "$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam" \
+             "$HOME/Library/Application Support/Steam"; do
+    for name in "Mount and Blade" "Mount & Blade" "MountBlade"; do
+      if [ -d "$lib/steamapps/common/$name/Data" ]; then game="$lib/steamapps/common/$name"; break 2; fi
+    done
+  done
+fi
+if [ -z "$game" ] || [ ! -d "$game/Data" ]; then
+  echo "mountandblade: cannot find your Mount & Blade 1.011 folder (the one containing Data/ and Modules/)." >&2
+  echo "Set MB_GAME_DIR=/path/to/it and run again." >&2
+  exit 1
+fi
+cd "$game" || exit 1
+exec "$exe" "$@"

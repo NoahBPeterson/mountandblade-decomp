@@ -451,3 +451,17 @@ gate on compile + link (0 trapped) + ctest + a run_native / wine smoke run.
   launcher that eats arguments; the real loader is Contents/Resources/wine/bin/wine) and the loader split — tests on
   the cask 11.22 loader (the 11.21 loader dies with a fatal Rosetta translation error mid-mbp_kernel), the Vulkan run
   gate pinned to 11.21 (11.22's vkCreateInstance faults) — are in docs/c2scope_evaluation.md.
+- **Linux arm64** (2026-11-23): native clang 18 + lld inside the OrbStack ubuntu 24.04 arm64 machine `mbarm`
+  (`port/cmake/linux-arm64-native.cmake`; baseline armv8-a, no `-mcpu`). Same recipe as linux-x86_64: `deps.py --target
+  linux-arm64 --native` (SDL3's X11 build also needs libxtst-dev), compile, then `link_tables.py --target linux-arm64
+  --allow-traps` + rebuild to a fixpoint in 2 passes (`port/link/linux-arm64/`: 54 duplicates, 12 weakened TUs, 25
+  aliased, 3 STL instances, 7 -fno-inline emissions, 0 trapped). Nothing in port/ or src/ needed an arm64 change.
+  `bin/mb` is an aarch64 PIE needing only libm/libstdc++/libgcc_s/libc (max GLIBC_2.38). ctest **5/5**; quick_battle
+  reaches mission_frame 30/50 under Xvfb + lavapipe and renders the battle (work/port_shots/arm64_qb_b.png). Recipe:
+  `ssh mbarm@orb`, then `xvfb-run -a -s '-screen 0 1280x800x24' python3 tools/port/run_native.py --target linux-arm64
+  --start quick_battle --wait 'mission_frame 30' --do shot a --do end`.
+- **Install rules** (2026-11-23, `port/cmake/native_link.cmake`): `cmake --install <build> --prefix <dir>` puts `mb` in
+  `<prefix>/libexec/mountandblade/` and a launcher (`port/install/mountandblade.in`: `MB_GAME_DIR` or the Steam library
+  paths, then cd + exec) in `<prefix>/bin/`; Windows installs `mb.exe` to `bin/`. Jolt's own install rules are off
+  (`ENABLE_INSTALL=OFF`), so nothing but those two files is installed on any lane. Build-from-source guide for users on
+  distros that are not the latest Ubuntu LTS: docs/BUILDING_PORT.md.

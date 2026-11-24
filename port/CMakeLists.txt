@@ -22,7 +22,7 @@ endif()
 
 get_filename_component(MB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 set(MB_SRC "${MB_ROOT}/src" CACHE PATH "the reconstruction")
-set(MB_TARGET "linux-i686" CACHE STRING "linux-i686 (now) | linux-x86_64 | macos-arm64 | macos-x86_64 (after ticket 006)")
+set(MB_TARGET "linux-i686" CACHE STRING "linux-i686 | linux-x86_64 | linux-arm64 | macos-arm64 | macos-x86_64 | windows-x86_64")
 set(PORT "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Every TU of the MSVC build. d3dapp.cpp (the SDK framework's window/loop) and launcher_options_dialog.cpp (the launcher dialog) are

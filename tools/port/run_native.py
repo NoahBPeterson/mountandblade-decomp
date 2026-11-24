@@ -21,7 +21,7 @@ usage: run_native.py [--time 60] [--out work/port_shots] [--tag run] [--gain 0.1
        main:custom,option:start_game_3#1): the game drives its own menus, no clicks.
 The game's stdout/stderr go to <out>/<tag>.log. --lldb runs it under lldb in batch mode (bt on a crash; the log has it).
 Audio: MBA_OUTPUT_GAIN (port/audio) is set to --gain so the game plays quietly.
-Linux (the OrbStack amd64 machine mb64): run under Xvfb with lavapipe; a shot captures the X root window whole
+Linux (the OrbStack machines mb64 amd64 / mbarm arm64, or any Linux box): run under Xvfb with lavapipe; a shot captures the X root window whole
 (ImageMagick import — the game is the display's only window). click/key/sweep/scroll are macOS-only; --start
 drives the menus without them.
 Windows x86_64 (any host with wine on PATH; this Mac): the PE binary runs through wine; cwd game/ is Z:<abs> in the

@@ -22,7 +22,7 @@ trapped (weak placeholders that abort when reached).
 
 The compiles run where the target's toolchain lives: zig cross (port/cmake/zig-c++) for linux-i686, zig's clang +
 mingw-w64 sysroot for windows-x86_64 (COFF objects, .obj; bin/mb.exe runs under Wine), native clang for the macOS
-targets, and linux-x86_64 inside the OrbStack amd64 machine mb64 (run this script there).
+targets, and linux-x86_64 / linux-arm64 inside the OrbStack machines mb64 / mbarm (run this script there).
 Nothing touches the MSVC flow.
 """
 import argparse, collections, datetime, glob, json, os, re, shlex, shutil, subprocess, sys, time
@@ -30,6 +30,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 TOOLCHAINS = {'linux-i686': 'port/cmake/linux-i686.cmake', 'linux-x86_64': 'port/cmake/linux-x86_64-native.cmake',
+              'linux-arm64': 'port/cmake/linux-arm64-native.cmake',
               'macos-arm64': 'port/cmake/macos-arm64.cmake', 'macos-x86_64': 'port/cmake/macos-x86_64.cmake',
               'windows-x86_64': 'port/cmake/windows-x86_64.cmake'}
 ZIG_LIBC = {'linux-i686': 'x86-linux-gnu', 'linux-x86_64': 'x86_64-linux-gnu', 'windows-x86_64': 'any-windows-any'}
@@ -37,7 +38,7 @@ ZIG_LIBC = {'linux-i686': 'x86-linux-gnu', 'linux-x86_64': 'x86_64-linux-gnu', '
 
 def uses_zig(target):
     """zig cross (linux-i686; windows-x86_64 — zig's clang + mingw-w64 sysroot, COFF objects) vs native clang (the
-    macOS targets; linux-x86_64 inside the OrbStack amd64 machine, where this script then runs too — the Mac home is
+    macOS targets; the Linux 64-bit targets inside the OrbStack machines, where this script then runs too — the Mac home is
     mounted at identical paths)."""
     with open(os.path.join(ROOT, TOOLCHAINS[target])) as f:
         return 'zig-cc' in f.read()

@@ -147,3 +147,18 @@ else()
   target_link_options(mb_native PRIVATE "LINKER:-T,${MB_LINK}/aliases.ld")
   target_link_libraries(mb_native PRIVATE m pthread dl)
 endif()
+
+# ---- install ---------------------------------------------------------------------------------------------------------
+# `cmake --install <build> --prefix <dir>` (or `ninja install`, DESTDIR honoured). Unix: the executable goes to
+# <prefix>/libexec/mountandblade/mb and <prefix>/bin/mountandblade is a launcher that cd's into the user's own game
+# folder first (the game's paths are relative to it). Windows: mb.exe goes to <prefix>/bin, run it from the game folder.
+# No game files are installed.
+include(GNUInstallDirs)
+if(WIN32)
+  install(TARGETS mb_native RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+else()
+  install(TARGETS mb_native RUNTIME DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mountandblade)
+  file(RELATIVE_PATH MB_LAUNCHER_REL_EXE "${CMAKE_INSTALL_FULL_BINDIR}" "${CMAKE_INSTALL_FULL_LIBEXECDIR}/mountandblade/mb")
+  configure_file(${PORT}/install/mountandblade.in "${CMAKE_BINARY_DIR}/mountandblade" @ONLY)
+  install(PROGRAMS "${CMAKE_BINARY_DIR}/mountandblade" DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()

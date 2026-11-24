@@ -17,6 +17,7 @@ set(INTERPROCEDURAL_OVERHEAD OFF CACHE BOOL "" FORCE)
 set(CROSS_PLATFORM_DETERMINISTIC OFF CACHE BOOL "" FORCE)
 set(DOUBLE_PRECISION OFF CACHE BOOL "" FORCE)
 set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF CACHE BOOL "" FORCE)
+set(ENABLE_INSTALL OFF CACHE BOOL "" FORCE)   # Jolt is linked statically into mb: `cmake --install` must not ship its headers and libJolt.a
 
 # Jolt rejects an empty CMAKE_BUILD_TYPE in single-config generators.
 set(_mb_saved_build_type "${CMAKE_BUILD_TYPE}")

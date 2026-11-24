@@ -162,7 +162,7 @@ def llvm_tool(name):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('--target', required=True, help='macos-x86_64 | linux-x86_64 | windows-x86_64 (toolchain file name)')
+    ap.add_argument('--target', required=True, help='macos-x86_64 | linux-x86_64 | linux-arm64 | windows-x86_64 (toolchain file name)')
     ap.add_argument('--native', action='store_true', help='host compiler, no toolchain file (build inside the target machine)')
     ap.add_argument('--only', default='', help='comma list of components')
     ap.add_argument('--fetch-only', action='store_true')

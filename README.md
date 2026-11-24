@@ -2,7 +2,7 @@
 
 A decompilation of `mount&blade.exe` (Mount & Blade 1.011, Steam build, linked 2008-11-04), aiming first
 at a **drop-in Windows binary** built from source that runs under Wine/CrossOver with the game's
-original DLLs (Newton, FMOD 3, D3D9/D3DX9, DirectInput 8, SkinMagic). A native macOS/Linux port comes later.
+original DLLs (Newton, FMOD 3, D3D9/D3DX9, DirectInput 8, SkinMagic). A native Linux / macOS / Windows x64 port also builds from source: see [`docs/BUILDING_PORT.md`](docs/BUILDING_PORT.md).
 
 **This repository contains no game code or data.** Binary-derived artifacts live in `work/` (git-ignored)
 and are produced locally from your own copy of the game.
