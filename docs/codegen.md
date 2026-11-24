@@ -2420,3 +2420,15 @@ were byte-exact on landing (`f2ad77dd`, `60fb0c7e`). The checks use `chk.py` and
 - `modguard.py <src.cpp> [--cpp VARIANT.cpp]`: runs `run_all.py --filter` over every row of the file, with the variant
   swapped in (always restored). Run it before trusting a MATCH from `chk.py`. Checked on the 0x49ad20 bodiless variant:
   it reports the two lost rows (17.1 trap).
+
+### 17.9 A local the callee reads wider than it is declared: declare the narrow type and cast
+- **Symptom.** The frame is 4 or 8 bytes larger than the original's, `frame_solve.py` shows the original's object
+  occupying only its first two lanes and the next local starting inside the third (M&B 0x52bdb0 find_position:
+  `_b$` at -32956 and `_far_pt$` at -32948), and nothing else is out of place.
+- **Fix.** Declare the object as what the original really was (`vec2 b;`) and cast at the call that wants the wider
+  type (`query_segment(&p, (const vector4*)&b, ...)`). The callee reads the third and fourth lanes from whatever the
+  packer put next, which is exactly the original's layout.
+- **When.** `frame_solve.py 0x<va>` prints `frame: -N bytes (orig - ours)` with one element whose "original
+  address" is a sub-object boundary and a neighbour starting inside it. Do not widen a local to the callee's
+  parameter type by default: check the original's slot map first (a vector4 local with only x/y written is still
+  16 bytes when another call writes it whole, as `p` does here).

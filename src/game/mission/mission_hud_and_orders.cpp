@@ -1583,8 +1583,8 @@ void MissionBlocker::find_position(char* ok, vector4* pos)
     matrix m;
     cap.transform((const ::pos*)identity_pos(&m));
 
-    vector4 b;
-    b.x = far_pt.x;
+    vec2 b;                                 // 8 bytes: query_segment reads only the segment's x/y (the original's
+    b.x = far_pt.x;                         // frame has far_pt immediately after it, and no b.z / b.w slot)
     b.y = far_pt.y;
     vector4 p;
     p.x = near_pt.x;
@@ -1595,7 +1595,7 @@ void MissionBlocker::find_position(char* ok, vector4* pos)
     int n;
     {
         int count;
-        g_mission->scene->query_segment(&p, &b, 0x100, shapes, &count);
+        g_mission->scene->query_segment(&p, (const vector4*)&b, 0x100, shapes, &count);
         n = count;
     }
     for (int i = 0; i < n; i++) {
