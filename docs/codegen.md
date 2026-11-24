@@ -2432,3 +2432,45 @@ were byte-exact on landing (`f2ad77dd`, `60fb0c7e`). The checks use `chk.py` and
   address" is a sub-object boundary and a neighbour starting inside it. Do not widen a local to the callee's
   parameter type by default: check the original's slot map first (a vector4 local with only x/y written is still
   16 bytes when another call writes it whole, as `p` does here).
+
+### 17.10 The second batch (2026-11-24, wave 2): nine more symptoms
+Same shape: symptom -> edit -> when. All byte-exact on landing (`4bf271b1`, `ec33f7f4`, `a6265d6f`, `5ca72d03`).
+
+- **x87 operand order from an index local.** Original `fld a; fadd b` with a and b in the other order, everything else
+  aligned. Hoist one index into a named local (`int i1 = ab[1];` then `at(ab[0], i1)`) and the two `fadd`s swap:
+  cl then picks the operand from the shorter live range. M&B 0x46ad50 compute_normals, 20 diff -> 0. **When:** the
+  only diff is an `fadd`/`fmul`/`fsub` operand order (`cmpdis` shows one line pair) and both operands are locals.
+- **A block copy where we copy members.** `*(mat3*)&M = *(const mat3*)&v->fr.m;` makes cl emit the `rep movsd` the
+  original uses; member-by-member copies (`M.s = o.s; M.f = o.f; ...`) become six `mov`s. M&B 0x46d8c0
+  render_batch::draw. **When:** the original has `rep movsd` (or 3+ adjacent 16-byte `mov`s) and ours has the same
+  count of separate stores per row.
+- **Call the device, not the helper.** `g_render.dev->SetTransform(state, (const D3DMATRIX*)&M)` where the original
+  calls the vtable slot directly, and our `set_transform` wrapper is an out-of-line call in the middle of the
+  function. Same for any one-line helper whose only job is a virtual call. M&B 0x46d8c0.
+- **A two-lane pair as one 8-byte move.** `*(__int64*)&tgt_seen_pos = *(__int64*)&lp->pos;` keeps both lanes in one
+  `[base+idx+0x30]` / `[base+idx+0x34]` operand pair; a `Vec2` temporary or two field copies each add an `lea`/`add`.
+  M&B 0x4b2ab0 set_order_agent. **When:** the original's two loads/stores differ only in a 4-byte displacement off one
+  index register.
+- **Pass the vector4 lane as a `Vec2` reference.** `set_order_pos(*(const Vec2*)&order_pos)` instead of
+  `set_order_pos(order_pos.xy())`: the `.xy()` temporary costs a 2-dword stack copy, its `lea`, and 8 bytes of frame.
+  M&B 0x4b3bc0 reissue_order (frame 0x68 -> 0x60). Read the same way out of a `vector4` array:
+  `d = *(const Vec2*)((const char*)detail + i * 16 + 0x10);` (0x4b4320 step_route). **When:** a helper takes `Vec2`
+  by value or by reference and the caller has a vector4.
+- **Re-store a field the inlined constructor already cleared.** `NavCell rec; rec.kind = 0;` before `rec.npts = ...`
+  leaves one `mov [slot], reg` at the original's position; the constructor's own store is dead-store-eliminated and
+  the explicit one survives. M&B 0x481570 tessellate. **When:** the original writes a field that our inlined
+  constructor already zeroed, and the diff is one store, present in the original and absent in ours (or moved).
+- **Split-TU inline: the caller TU inlines the helper, the owner TU keeps the out-of-line definition.** Add
+  `inline bool Agent::f100_is_0x48_and_charged() const { ... }` to the *caller's* .cpp while the header declares it
+  and the owner .cpp (game_util.cpp) defines it out of line. cl emits a COMDAT here and the strong symbol there; the
+  callers expand in place as in the original, and the owner's row still matches. M&B 0x4406a0 can_hit, 0x453710
+  hit_damage (723 and 3079 diff -> 0 from that one change). **When:** a helper with its own manifest row is a call in
+  ours and expanded in the original, and the caller's diff is large but the call site is the only structural
+  difference. Verify BOTH files (`run_all.py --filter` on each): the owner must keep its out-of-line body.
+- **A pair of floats through a two-lane view, times a scalar.** `*(a_v2*)&m.o = a_v2(d.x, d.y) * s;` for
+  `m.o.x = s*d.x; m.o.y = s*d.y;` (0x45f660 Agent::update). Same family as 17.5, different spelling: the multiply
+  stays inside the pair type.
+- **A pairwise loop instead of an element copy.** `for (k...) e->curve[k] = d->t[k]` with `curve4` elements copies
+  64 bytes and shifts the frame; the original copies two floats at a time through a `float_pair { float u, v; }`
+  local and `((float_pair*)e->curve)[2*i+k] = ((const float_pair(*)[2])d->t)[i][k]` (0x4424c0 EmitTable::setup).
+  **When:** the original's loop body has two `mov`s per iteration and our frame is a multiple of 16 larger.
