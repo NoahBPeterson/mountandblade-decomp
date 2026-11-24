@@ -15,8 +15,8 @@ combined `SHA256SUMS`:
 | target | runner | notes |
 | --- | --- | --- |
 | linux-x86_64, linux-arm64 | ubuntu-24.04, ubuntu-24.04-arm | native clang + lld; needs glibc 2.38+ at run time; ctest runs |
-| macos-arm64, macos-x86_64 | macos-14 | static deps from `tools/port/deps.py`, macOS 12+, ad-hoc signed; x86_64 is cross-built |
-| windows-x86_64 | macos-14 | zig + mingw-w64 cross build (Itanium ABI); not tested in CI (ctest needs Wine) |
+| macos-arm64, macos-x86_64 | macos-15 | static deps from `tools/port/deps.py`, macOS 12+, ad-hoc signed; x86_64 is cross-built |
+| windows-x86_64 | macos-15 | zig + mingw-w64 cross build (Itanium ABI); not tested in CI (ctest needs Wine) |
 
 Run the workflow by hand (Actions, "release", Run workflow) for a dry run: it builds and uploads the archives as workflow
 artifacts, and creates no release.

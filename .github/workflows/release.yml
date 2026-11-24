@@ -25,13 +25,13 @@ jobs:
             runner: ubuntu-24.04-arm
             kind: linux
           - target: macos-arm64
-            runner: macos-14
+            runner: macos-15
             kind: macos
           - target: macos-x86_64
-            runner: macos-14
+            runner: macos-15
             kind: macos
           - target: windows-x86_64
-            runner: macos-14
+            runner: macos-15
             kind: windows
     env:
       T: ${{ matrix.target }}
