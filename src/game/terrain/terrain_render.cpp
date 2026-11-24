@@ -850,8 +850,10 @@ void Terrain::compute_normals()
         for (x = 0; x < w; x++) {
             for (int flip = 0; flip < 2; flip++) {
                 triangle_corners(x, y, flip, &ab[0], &ab[2], &ab[4]);
-                add_to(&at(ab[0], ab[1]).nrm, quad(x, y).nrm[flip]);
-                add_to(&at(ab[2], ab[3]).nrm, quad(x, y).nrm[flip]);
+                int i1 = ab[1];
+                add_to(&at(ab[0], i1).nrm, quad(x, y).nrm[flip]);
+                int i2 = ab[3];
+                add_to(&at(ab[2], i2).nrm, quad(x, y).nrm[flip]);
                 add_to(&at(ab[4], ab[5]).nrm, quad(x, y).nrm[flip]);
             }
         }
@@ -1661,7 +1663,7 @@ void render_batch::draw(rgl::scene* v)
     }
 
     matrix M;
-    M.s = v->fr.m.s; M.f = v->fr.m.f; M.u = v->fr.m.u;
+    *(mat3*)&M = *(const mat3*)&v->fr.m;
     M.s.x *= 0.5f; M.s.y *= 0.5f; M.s.z *= 0.5f;
     vector4 half(0.5f, 0.5f, 0.5f);
     M.o = half;
@@ -1745,9 +1747,9 @@ void render_batch::draw(rgl::scene* v)
             p->m->setup_material();
             unsigned k = part->shader->stages[0].d & 0xff;
             if (k == 0x30)
-                set_transform(g_render.dev, (D3DTRANSFORMSTATETYPE)0x10, M);
+                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x10, (const D3DMATRIX*)&M);
             else if (k == 0x20)
-                set_transform(g_render.dev, (D3DTRANSFORMSTATETYPE)0x10, M);
+                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x10, (const D3DMATRIX*)&M);
         } else {
             if (v->mask_pass) {
                 if (g_render.stage_alpha[0] != 0xa2) {
@@ -1827,7 +1829,7 @@ void render_batch::draw(rgl::scene* v)
             if (!(part->flags & 0x20000)) {
                 W = p->m->world_frame;
             } else {
-                W.s = p->m->world_frame.s; W.f = p->m->world_frame.f; W.u = p->m->world_frame.u;
+                *(mat3*)&W = *(const mat3*)&p->m->world_frame;
                 W.o = v->fr.m.o;
                 W.o.z = W.o.z * 0.75f;
             }
@@ -1847,7 +1849,7 @@ void render_batch::draw(rgl::scene* v)
             W = B;
         }
         set_w(W);
-        set_transform(g_render.dev, (D3DTRANSFORMSTATETYPE)0x100, W);
+        g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x100, (const D3DMATRIX*)&W);
 
         std::vector<rgl::face20>& fv = node->local_faces ? node->faces : node->parent->get90();
         int nf = fv.size();
