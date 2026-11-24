@@ -1791,8 +1791,20 @@ V2 Font::layout_map(const tstring* text, const vector4* p3, const float* scale, 
     return V2((widest - *xmin) + 0.0001f, start_y - pos.y);
 }
 
+// insert is declared as a specialization without a body first: the original's push_back (the library body of
+// <vector>) calls insert instead of inlining _Insert_n, which only happens when no body is visible at the point
+// push_back is instantiated. The specialization is defined below, after push_back.
+namespace std {
+template<> __declspec(noinline) std::vector<rgl::vector4>::iterator std::vector<rgl::vector4>::insert(std::vector<rgl::vector4>::iterator, const rgl::vector4&);
+}
 // @ 0x4fdff0
 template void std::vector<vector4>::push_back(const vector4&);
 
 // @ 0x4fe060
-template std::vector<vector4>::iterator std::vector<vector4>::insert(std::vector<vector4>::iterator, const vector4&);
+template<> std::vector<rgl::vector4>::iterator
+std::vector<rgl::vector4>::insert(std::vector<rgl::vector4>::iterator _Where, const rgl::vector4& _Val)
+{
+    size_type _Off = size() == 0 ? 0 : _Where - begin();
+    _Insert_n(_Where, (size_type)1, _Val);
+    return (begin() + _Off);
+}

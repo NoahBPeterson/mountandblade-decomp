@@ -6844,6 +6844,17 @@ mesh* Missile::make_ranged_mesh()
 
 #include "game/mission/placed_obj.h"      // PlacedObj (Mission::props is a std::vector<PlacedObj>)
 
+// The original appends through a thiscall-shaped call: `mov ecx, this` is loaded and ignored before 0x435860
+// (ecx unused, ret 0x14). This member wrapper tail-jumps to the __stdcall initialiser, so the call site keeps
+// that unused ecx load and the behaviour is the same in every build.
+struct AddPlacedCall {
+    __declspec(noinline) void init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m);
+};
+__declspec(noinline) void AddPlacedCall::init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m)
+{
+    ::init_placed(o, kind, id, value, m);
+}
+
 // @ 0x44f870
 int Mission::add_placed(const int* kind, const int* id, const int* value, const matrix* m, int* spawn_id)
 {
@@ -6853,7 +6864,7 @@ int Mission::add_placed(const int* kind, const int* id, const int* value, const 
     {
         PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent_queries.cpp): shared rec1c8.h
         props.push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
-        ::init_placed(&props[idx], kind, id, value, m);
+        ((AddPlacedCall*)this)->init_placed(&props[idx], kind, id, value, m);
         if (*kind == 7 || *kind == 6)
             props[idx].m10 = 2;
         if (*kind == 1) {

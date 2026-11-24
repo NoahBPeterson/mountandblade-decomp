@@ -16,3 +16,4 @@
 ../src/game/ui/hud/agent_hud.cpp  ?key@MWidget@@UAEDI@Z  004fd1d0  /O2 /MT /Gy /TP
 ../src/game/ui/hud/agent_hud.cpp  ?init_screen@ItemA@@UAEXXZ  004fbfa0  /O2 /MT /Gy /TP
 ../src/game/ui/hud/agent_hud.cpp  ?darken_vertices@mesh@rgl@@QAEXXZ  004fbef0  /O2 /MT /Gy /TP
+../src/game/ui/hud/agent_hud.cpp  ?push_back@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@QAEXABUvector4@rgl@@@Z  004fdff0  /O2 /MT /Gy /TP

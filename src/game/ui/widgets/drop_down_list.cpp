@@ -27,10 +27,22 @@
 
 // the UI root's widget vector (gui_manager::objs, at the start of the object at 0x5d7080). Its push_back
 // is the out-of-line instance the original calls (0x49b120).
+// insert is declared as a specialization without a body first: the original's push_back (the library body of
+// <vector>) calls insert instead of inlining _Insert_n, which only happens when no body is visible at the point
+// push_back is instantiated. The specialization is defined below, after push_back.
+namespace std {
+template<> __declspec(noinline) std::vector<NodeA*>::iterator std::vector<NodeA*>::insert(std::vector<NodeA*>::iterator, NodeA* const&);
+}
 // @ 0x49b120
 template void std::vector<NodeA*, std::allocator<NodeA*> >::push_back(NodeA* const&);
 // @ 0x49b170 (its _Insert_n is 0x49b1c0, next range)
-template std::vector<NodeA*, std::allocator<NodeA*> >::iterator std::vector<NodeA*, std::allocator<NodeA*> >::insert(std::vector<NodeA*, std::allocator<NodeA*> >::iterator, NodeA* const&);
+template<> std::vector<NodeA*, std::allocator<NodeA*> >::iterator
+std::vector<NodeA*, std::allocator<NodeA*> >::insert(std::vector<NodeA*, std::allocator<NodeA*> >::iterator _Where, NodeA* const& _Val)
+{
+    size_type _Off = size() == 0 ? 0 : _Where - begin();
+    _Insert_n(_Where, (size_type)1, _Val);
+    return (begin() + _Off);
+}
 
 // the two-float arguments of the d22/d25/d27/d28 calls are 8-byte temporaries; the box position is the widget's
 // position minus a temporary through an inline operator (both lanes stay on the x87 stack)

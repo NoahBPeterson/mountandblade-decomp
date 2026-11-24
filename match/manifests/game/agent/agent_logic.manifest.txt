@@ -133,3 +133,4 @@
 ../src/game/agent/agent_logic.cpp  $L  0043ef97  /O2 /MT /Gy /TP
 ../src/game/agent/agent_logic.cpp  $L  004420ea  /O2 /MT /Gy /TP
 ../src/game/agent/agent_logic.cpp  $L  00444c28  /O2 /MT /Gy /TP
+../src/game/agent/agent_logic.cpp  ?add_placed@Mission@@QAEHPBH00PBUmatrix@rgl@@PAH@Z  0044f870  /O2 /MT /Gy /TP

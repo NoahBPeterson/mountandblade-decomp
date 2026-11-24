@@ -229,7 +229,6 @@ void widget_mgr::set_position(int idx, const vec2& pos)
     }
     float wx = (OW(idx)->f148 & 0x10) ? OW(idx)->rect_max.x * 0.5f : 0.0f;
     float wy = (OW(idx)->f148 & 0x1000) ? OW(idx)->rect_max.y * 0.5f : 0.0f;
-    MissionUi* o = OW(idx);
-    o->move_a(V2(pos.x - wx, pos.y - wy));
+    OW(idx)->move_a(V2(pos.x - wx, pos.y - wy));
     OW(idx)->get_xy();
 }

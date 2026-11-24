@@ -7,3 +7,4 @@
 ../src/game/ui/widgets/container_and_tableau_misc.cpp  ?relayout@Camera@@QAEXPBUtstring@@@Z  0048f020  /O2 /MT /Gy /TP
 ../src/game/ui/widgets/container_and_tableau_misc.cpp  ?resize@Camera@@QAEXABUvec2@@@Z  0048f120  /O2 /MT /Gy /TP
 ../src/game/ui/widgets/container_and_tableau_misc.cpp  ?shares@NavData@@QBE_NABH0@Z  0048efa0  /O2 /MT /Gy /TP
+../src/game/ui/widgets/container_and_tableau_misc.cpp  ?set_position@widget_mgr@@QAEXHABUvec2@@@Z  0048f6b0  /O2 /MT /Gy /TP
