@@ -429,3 +429,29 @@ emit is the one row the rejoin moves, and it moves toward the original:
 - Outcome: bin/mb.exe links (0 trapped); mb_gfx_test 19/19 under wine 11.21 incl. fx_all's 76 techniques; ctest 5/5;
   quick_battle reaches mission_frame 30 and renders the battle (work/port_shots/qb_b.png); burndown recorded for
   windows-x86_64 (docs/port_burndown.json). Regression: macOS arm64 rebuilds clean (all changes `_WIN32`-guarded).
+
+## Feedback for the c2scope suite (2026-11-24, from the wave-2 runs)
+
+Six concrete items, each hit in this wave. Ordered by how much of the wave they would have saved.
+
+1. **`icount` stops when the trace server refuses the compile.** Reproduced on 0x480db0: "the compile server did
+   not take this compile (C2TRACE_REMOTE_DEBUG=1 says why); not compiling under wine (--allow-local does)". The wine
+   fallback exists but is opt-in, and an agent running a wave reads the refusal as a dead end and drops the row (two
+   rows did). Either retry once automatically, or fall back to `run_all.CL` + `INCLUDE` when `MB_RC_ALLOW_LOCAL=1`
+   is set (that is exactly the "local compile is allowed" signal), and print which path ran.
+2. **`frame_solve` should emit the "declare the narrow type" edit.** On 0x52bdb0 its slot map showed `_b$` owning two
+   slots with `_far_pt$` starting inside its third, i.e. the original's object is 8 bytes and the callee reads 16.
+   That pattern is machine-detectable: element declared size > span the original addresses, neighbour starting inside
+   it. Emit `vec2 b;` + cast at the call. One edit took the row from 30 diff to MATCH.
+3. **`chk.py` should be able to keep its object** (`--keep-obj PATH`), or `c2.py dis 0x<va>` should compile once and
+   run `cmpdis`. Right now cmpdis needs an .obj and chk deletes its own at exit, so every instruction-level look
+   needed a hand-written copy of chk's cl invocation.
+4. **`modguard` (and `tsweep` before it) should score the file's non-matching rows too.** `run_all --filter` reports
+   `N/N manifest rows byte-exact`, which cannot see a `.nonmatching` row getting worse. Suggest: record each
+   non-matching row's aligned figure before and after, and fail the guard if any rose.
+5. **`regress.py` works (0x4d7120 found the byte-offset spelling), but only swaps the .cpp.** If the breaking lane
+   also changed a header, every old version fails to compile and there is nothing to print. A fallback that also
+   checks out that commit's headers (the test suite's frozen git-archive tree helper) would close the gap.
+6. **A `stores-to <addr>` helper for the float-zero lever.** 17.3 needs "do the other writers of this address use an
+   immediate or a register?" over the original image; c2scope already has the image. One command instead of a manual
+   disassembly search.
