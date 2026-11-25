@@ -41,6 +41,10 @@ TOOLS = {"regs": ["tools/c2trace.py", "regs"], "regmap": ["tools/c2trace.py", "r
          "schedwant": ["tools/schedwant.py"], "symkeys": ["tools/symkeys.py"]}
 ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine", "schedwant"}      # take --asm-vs
 SLOTS, MAXJOBS = 8, 4
+if os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off")):
+    # every traced compile runs under wine on the 10-core Mac: 2026-11-25 three effectmine runs at --jobs 4 each
+    # (12 traced cl's plus other lanes) pushed the load to 32 and one compile from 40 s to 8 min
+    SLOTS, MAXJOBS = 3, 2
 DOC_ALIAS = {"tsweep": "tracer", "schedwant": "sched", "helpersweep": "tracer", "regs": "regalloc", "regmap": "regalloc"}   # tsweep's manual is a section of tracer.md ("tsweep")
 LOCAL_OK = {"icount"}                                       # tools with --allow-local (compile under wine when the server declines)
 
