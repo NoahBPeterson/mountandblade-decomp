@@ -184,11 +184,15 @@ void TableauTbl::set_camera_parameters(const char* perspective, const float* w, 
     rgl::frustum* f = &c->camera;
     f->perspective = *perspective;
     f->nearz = nz;
-    f->left = left;
-    f->right = right;
+    int right_i = *(int*)&right;
+    int left_i = *(int*)&left;
+    *(int*)&f->left = left_i;
+    *(int*)&f->right = right_i;
     f->farz = fz;
-    f->bottom = bottom;
-    f->top = top;
+    int top_i = *(int*)&top;
+    int bottom_i = *(int*)&bottom;
+    *(int*)&f->bottom = bottom_i;
+    *(int*)&f->top = top_i;
     f->build_planes();
 }
 
