@@ -38,7 +38,7 @@ TOOLS = {"regs": ["tools/c2trace.py", "regs"], "regmap": ["tools/c2trace.py", "r
          "schedwant": ["tools/schedwant.py"]}
 ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine", "schedwant"}      # take --asm-vs
 SLOTS, MAXJOBS = 8, 4
-DOC_ALIAS = {"tsweep": "tracer"}   # tsweep's manual is a section of tracer.md ("tsweep")
+DOC_ALIAS = {"tsweep": "tracer", "schedwant": "sched", "helpersweep": "tracer", "regs": "regalloc", "regmap": "regalloc"}   # tsweep's manual is a section of tracer.md ("tsweep")
 LOCAL_OK = {"icount"}                                       # tools with --allow-local (compile under wine when the server declines)
 
 
@@ -76,6 +76,8 @@ def main():
     if tool in LOCAL_OK and "--allow-local" not in rest and (os.environ.get("MB_RC_ALLOW_LOCAL") == "1"
                                                              or os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off"))):
         rest.append("--allow-local")
+    if tool not in LOCAL_OK and "--allow-local" in rest:   # only icount has the flag; the others would reject it
+        rest.remove("--allow-local")
     if any(x.startswith("--c2") or x == "--" for x in rest):
         die("--c2 and the cl flags are filled in by the wrapper; leave them out")
     for opt in ("--orig", "--export", "--keep"):     # the tools run in ../vs2005-cpp: a relative path would resolve there
