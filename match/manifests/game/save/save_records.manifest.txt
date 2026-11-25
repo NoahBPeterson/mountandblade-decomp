@@ -5,3 +5,5 @@
 ../src/game/save/save_records.cpp  ?flush_ids@PartyMgr@@QAEXXZ  004e9fe0  /O2 /MT /Gy /TP
 ../src/game/save/save_records.cpp  ?write@Party@@QAEXPAUstream_base@@@Z  004e9d10  /O2 /MT /Gy /TP
 ../src/game/save/save_records.cpp  ?id_remove@PartyMgr@@QAEXH@Z  004ea030  /O2 /MT /Gy /TP
+../src/game/save/save_records.cpp  ?write_table@?$Pool@UEvent@@@@QAEXPAUstream_base@@@Z  004e99d0  /O2 /MT /Gy /TP
+../src/game/save/save_records.cpp  ?write_table@PartyMgr@@QAEXPAUstream_base@@@Z  004e9c50  /O2 /MT /Gy /TP

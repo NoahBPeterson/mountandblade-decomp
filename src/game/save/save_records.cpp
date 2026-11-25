@@ -53,7 +53,7 @@ template<> void Pool<Event>::write_table(stream_base* out)
     }
     int w = last + 1;
     out->w_int(&w);
-    out->w_uint(&serial);
+    out->w_int((int*)&serial);
     int k = 0;
     while (k <= last) {
         Event* e = pages[(unsigned)k >> 4] + (k & 0xf);
@@ -125,7 +125,7 @@ void GameData::write_missions(stream_base* out)
 void PartyMgr::write_table(stream_base* out)
 {
     out->w_int(&count);
-    out->w_uint(&serial);
+    out->w_int((int*)&serial);
     int i = 0;
     int* pi = &i;
     while (i < count) {
