@@ -15,3 +15,4 @@
 ../src/game/terrain/scene_paths_and_wind_noise.cpp  _$E2  00548490  /O2  /MT  /Gy  /TP
 ../src/game/terrain/scene_paths_and_wind_noise.cpp  ?pick_size@ShadowMap@@QAEXXZ  00463bc0  /O2 /MT /Gy /TP
 ../src/game/terrain/scene_paths_and_wind_noise.cpp  ?hair_color@FaceTexture@@QAEIPAM@Z  00463790  /O2 /MT /Gy /TP
+../src/game/terrain/scene_paths_and_wind_noise.cpp  ?to_unit@ShadowMap@@QAE?AUvector4@rgl@@ABU23@@Z  00463c20  /O2 /MT /Gy /TP
