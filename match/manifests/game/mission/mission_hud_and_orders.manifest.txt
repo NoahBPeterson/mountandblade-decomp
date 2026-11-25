@@ -10,3 +10,4 @@
 ../src/game/mission/mission_hud_and_orders.cpp  ?draw_order_menu@MissionBlocker@@QAEXXZ  0052b3c0  /O2 /MT /Gy /TP
 ../src/game/mission/mission_hud_and_orders.cpp  ?update_cursor@MissionBlocker@@QAEXXZ  0052bc80  /O2 /MT /Gy /TP
 ../src/game/mission/mission_hud_and_orders.cpp  ?find_position@MissionBlocker@@QAEXPADPAUvector4@rgl@@@Z  0052bdb0  /O2 /MT /Gy /TP
+../src/game/mission/mission_hud_and_orders.cpp  ?sync_scene_props@Mission@@QAEXXZ  00529d80  /O2 /MT /Gy /TP

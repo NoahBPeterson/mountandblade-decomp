@@ -4,3 +4,4 @@
 ../src/game/mission/mesh_vertex_ops.cpp  ?transform@lod_mesh@rgl@@QAEXABUmatrix@2@@Z  0047b610  /O2 /MT /Gy /TP
 ../src/game/mission/mesh_vertex_ops.cpp  ?append@lod_mesh@rgl@@QAEXPAU12@HPBUmatrix@2@PBI@Z  0047b690  /O2 /MT /Gy /TP
 ../src/game/mission/mesh_vertex_ops.cpp  ?multiply_color@mesh@rgl@@QAEXPBUvector4@2@@Z  0047b3b0  /O2 /MT /Gy /TP
+../src/game/mission/mesh_vertex_ops.cpp  ?blend_indexed@Skin@@QAEXPAUmesh@rgl@@PAUArrSet@@PAHPBM@Z  0047c810  /O2 /MT /Gy /TP

@@ -263,8 +263,9 @@ void Terrain::create_water(rgl::mesh** out)
                     uv.y = c->disp.y * 0.125f;
                     c->f10 = add_v(m, pt, uv, argb, vector4(0.0f, 0.0f, 1.0f), 0);
                     vertex60& v = m->vertices[c->f10];
-                    v.uv2.x = c->pos.x * 0.025f;
-                    v.uv2.y = c->pos.y * 0.025f;
+                    Vec2 u2(c->pos.x * 0.025f, c->pos.y * 0.025f);
+                    *(int*)&v.uv2.x = *(int*)&u2.x;
+                    *(int*)&v.uv2.y = *(int*)&u2.y;
                 }
                 int& f2 = at(tri[2][0], tri[2][1]).f10;
                 int& f1 = at(tri[1][0], tri[1][1]).f10;
@@ -788,7 +789,8 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         uv = Vec2(t.x * s, t.y * s);
                     } else {
                         vector4 pu = g_shadow_map.to_unit(*(const vector4*)c);
-                        uv = *(Vec2*)&pu;
+                        const Vec2* q = (const Vec2*)&pu;     // the original keeps the second lane as a pointer, pushing &pu.y
+                        uv = *q;
                     }
                     vector4 rgb(1.0f, 1.0f, 1.0f);     // the constructor, not field stores: rgb.x * tc.x then loads rgb first (0x480553)
                     if (layerno > 0 && layerno < 15) {
@@ -858,7 +860,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     unsigned cw = col;
                     c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, &c->nrm, &f5c);
                     { vertex60& v = m->vertices[c->f10]; v.f58 = col; v.f58 = fg; }     // stand-in: two uses at folding time give add eax,edx at 0x480ad0 (not it: one store, a vertex60& helper, `= col; if (blend >= 0) = fg`)
-                    { vertex60& v = m->vertices[c->f10]; v.uv2.x = uv.x; v.uv2.y = uv.y; }
+                    { vertex60& v = m->vertices[c->f10]; *(int*)&v.uv2.x = *(int*)&uv.x; *(int*)&v.uv2.y = *(int*)&uv.y; }
                 }
                 m->add_face(flat()[tri[0][0] * 251 + tri[0][1]].f10, flat()[tri[1][0] * 251 + tri[1][1]].f10, flat()[tri[2][0] * 251 + tri[2][1]].f10);
             }

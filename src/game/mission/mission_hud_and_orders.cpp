@@ -590,8 +590,8 @@ void Mission::sync_scene_props()
     }
     std::vector<PlacedObj>& recs = sc->props;
     recs.resize(0);
-    for (unsigned i = 0; i < props.size(); i++) {
-        PlacedObj* r = &props[i];
+    for (unsigned i = 0, off = 0; i < props.size(); i++, off += sizeof(PlacedObj)) {
+        PlacedObj* r = (PlacedObj*)((char*)&props[0] + off);
         if (r->m10 == 0) {
             recs.push_back(*r);
             r->m14 = (int)recs.size() - 1;

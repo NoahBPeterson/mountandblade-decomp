@@ -548,7 +548,7 @@ void Skin::blend_indexed(mesh* m, ArrSet* s, int* index, const float* weights)
                 d.x = w * t->x;
                 d.y = w * t->y;
                 d.z = w * t->z;
-                point20* p = &*m->points.begin() + i;
+                point20* p = (point20*)m->points._Myfirst + i;
                 if (p->a.x < 0.0f)
                     d.x = -d.x;
                 vector4 v;

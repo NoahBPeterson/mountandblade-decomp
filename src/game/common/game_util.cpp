@@ -308,7 +308,8 @@ bool ActiveTimer::expired()
 // @ 0x432e30
 void __cdecl bounce(vector4* out, vector4* v, const vector4* n)
 {
-    float d = -n->x * v->x + -n->y * v->y + -n->z * v->z;
+    vector4 nn(vector4(-n->x, -n->y, -n->z));
+    float d = nn.x * v->x + nn.y * v->y + nn.z * v->z;
     if (d < 0.0f) d = 0.0f;
     vector4 t = *n * d;
     float sx = t.x + v->x, sy = t.y + v->y, sz = t.z + v->z;
@@ -317,7 +318,7 @@ void __cdecl bounce(vector4* out, vector4* v, const vector4* n)
         vector4 g(sx * d, sy * d, sz * d);
         vector4 f = g * 0.4f;
         v->x = sx - f.x; v->y = sy - f.y; v->z = sz - f.z;
-        t.x = t.x - f.x; t.y = t.y - f.y; t.z = t.z - f.z;
+        t.x -= f.x; t.y -= f.y; t.z -= f.z;
     }
     out->x = -t.x; out->y = -t.y; out->z = -t.z;
 }
