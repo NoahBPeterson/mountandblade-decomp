@@ -140,8 +140,7 @@ void Animator::collect(char flag, lod_mesh** a, lod_mesh** b, lod_mesh** c)
 
     int v = variant;
     if (flag != 0) {
-        FaceTexture* r = &skin_vec[cur].face_textures[material];
-        unsigned n = (unsigned)r->hair_materials.size();
+        unsigned n = (unsigned)skin_vec[cur].face_textures[material].hair_materials.size();
         v = skin_vec[cur].face_textures[material].hair_materials[(unsigned)variant % n];
     }
 

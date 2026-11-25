@@ -235,11 +235,9 @@ void Event::slot1()
     type = 0;
     name.assign("An Event");
     entity = 0;
-    pos = Vec2(0.0f, 0.0f);
-    EvVec2 heading(0.0f, 1.0f);
-    heading.rotate((float)(rand() % 15817) * 0.00039724255f);
-    f34 = heading.x;
-    f38 = heading.y;
+    *(EvVec2*)&pos = EvVec2(0.0f, 0.0f);   // both vectors are built as a temporary and stored whole: the fields go out in
+    *(EvVec2*)&f34 = EvVec2(0.0f, 1.0f);   // the temporary's order (f24 before f28, f34 / f38 after the entity store), and the
+    ((EvVec2*)&f34)->rotate((float)(rand() % 15817) * 0.00039724255f);   // rotate works on the member pair in place
     f40 = 0.3f;
     f44 = -10000.0f;
     sound = -1;

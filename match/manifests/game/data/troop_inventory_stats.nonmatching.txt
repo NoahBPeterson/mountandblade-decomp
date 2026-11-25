@@ -1,1 +1,1 @@
-0048c260  195  ?slot1@Event@@UAEXXZ: [2026-11-21 lane L-H3: the heading (f34, f38) is rotated as a local EvVec2 and stored by member; pos is a Vec2 assignment; 128 bytes off] [equiv: PASS, 200 valid inputs, all edges covered (orig 0/0; ours 0/0), 100.0% insns; figure 184 aligned (chk.py)]
+

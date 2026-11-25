@@ -5,3 +5,4 @@
 ../src/game/data/troop_inventory_stats.cpp  ?sort_inv@Troop@@QAEXXZ  0048c0c0  /O2 /MT /Gy /TP
 ../src/game/data/troop_inventory_stats.cpp  ?add_attr@Troop@@QAEXHH@Z  0048bef0  /O2 /MT /Gy /TP
 ../src/game/data/troop_inventory_stats.cpp  ?compact@ItemRef@@QAEXH@Z  0048be00  /O2 /MT /Gy /TP
+../src/game/data/troop_inventory_stats.cpp  ?slot1@Event@@UAEXXZ  0048c260  /O2 /MT /Gy /TP
