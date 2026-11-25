@@ -22,6 +22,42 @@
 // constructor and the lookup (0x4eca9b: mov edi,[esi]; mov ebx,[edi] before the call, mov ecx,edi after it)
 static inline MissionUi* label_of(MissionUi* w) { return w; }
 
+// std::vector<MissionUi*>::push_back as the original expands it at 0x4ec824: the fast path fills through the out-of-line
+// std::_Uninitialized_fill_n of the pointer vector (0x40f8a0, ICF-folded: last, 1, &value, allocator; cdecl), the slow
+// path is insert -> _Insert_n (0x4927d0). The fill is defined here, inline + noinline: a COMDAT other units' implicit
+// instances fold with, so the call site keeps the out-of-line call and both builds link.
+namespace std {
+template<> inline __declspec(noinline) void _Uninitialized_fill_n<MissionUi**, vector<MissionUi*>::size_type, MissionUi*, allocator<MissionUi*> >(
+    MissionUi** _First, vector<MissionUi*>::size_type _Count, MissionUi* const& _Val, allocator<MissionUi*>& _Al)
+{
+    _Uninit_fill_n(_First, _Count, _Val, _Al, _Ptr_cat(_First, _First));
+}
+}
+struct kids_vec : std::vector<MissionUi*> {
+    __forceinline void push(MissionUi* const& _Val)
+    {
+        if (size() < capacity()) {
+            MissionUi** p = _Mylast;
+            std::_Uninitialized_fill_n(p, (size_type)1, _Val, this->_Alval);
+            p = p + 1;
+            _Mylast = p;
+        } else
+            insert(end(), _Val);
+    }
+};
+// the same push_back at 0x4ec9b9: the original's fast path there is the plain store, not the fill call
+struct kids_vec2 : std::vector<MissionUi*> {
+    __forceinline void push(MissionUi* const& _Val)
+    {
+        if (size() < capacity()) {
+            MissionUi** p = _Mylast;
+            *p = _Val;
+            _Mylast = p + 1;
+        } else
+            insert(end(), _Val);
+    }
+};
+
 // the party record of dense index idx (pages of 16), as the original indexes it
 static Party* party_bytes(PartyMgr* mgr, int idx)
 {
@@ -91,7 +127,7 @@ void CampaignScreen::init_screen()
     }
     {
         MissionUi* bar_copy = f34;
-        overlay->kids.push_back(bar_copy);
+        ((kids_vec&)overlay->kids).push(bar_copy);
     }   // 0x4ec824: the map-bar overlay takes the button bar
 
     {
@@ -116,7 +152,7 @@ void CampaignScreen::init_screen()
     memcpy(&f30->scene3d.fr, &cam, 0x120);
     f30->move_a(V2(0.0f, 0.04f));
     f30->set_xy(V2(1.0f, 0.71f));
-    overlay->kids.push_back((MissionUi*)f30);            // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
+    ((kids_vec2&)overlay->kids).push((MissionUi*)f30);            // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
     f54 = new MissionUi;
     f54->move_a(V2(0.445f, 0.06f));        // 0x4eca31
     f54->set_xy(V2(0.09f, 0.04f));         // 0x4eca4f
@@ -140,8 +176,7 @@ void CampaignScreen::init_screen()
     }
     {
         target.z = target.z + 1.0f;                           // +0x298 (camera target z; 0x4ecc09), not the zoom at +0x2b8
-        f2bc = 0.0f;                                   // the pan rates
-        f2c0 = 0.0f;
+        *(vec2*)&f2bc = V2(0.0f, 0.0f);                // the pan rates, one pair (0x4ecc01: through the [esp+0x10] temporary)
         (int&)f2c4 = 0;                                // the yaw and zoom rates, stored as integer zeros
         (int&)f2c8 = 0;
     }

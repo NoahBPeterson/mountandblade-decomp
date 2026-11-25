@@ -14,3 +14,4 @@
 ../src/engine/physics/world_collide.cpp  ?insert@?$vector@UContact@rgl@@V?$allocator@UContact@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABUContact@rgl@@@Z  00427540  /O2 /MT /Gy /TP
 ../src/engine/physics/world_collide.cpp  ??$_Uninitialized_fill_n@PAUContact@rgl@@IU12@V?$allocator@UContact@rgl@@@std@@@std@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@0@@Z  00427ca0  /O2 /MT /Gy /TP
 ../src/engine/physics/world_collide.cpp  ?query_entities@world@rgl@@QAEXPAUentity@2@I_NPAV?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@Z  00426750  /O2 /MT /Gy /TP
+../src/engine/physics/world_collide.cpp  ?on_shape@dynamic_entity@rgl@@UAE_NPAUshape_base@@@Z  00427900  /O2 /MT /Gy /TP
