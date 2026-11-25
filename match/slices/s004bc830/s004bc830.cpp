@@ -60,8 +60,15 @@ struct renderer {
     int release_decls();                        // 0x4bd0c0
 };
 
+struct uv_pair {                                // the record's first four floats are two of these
+    float u, v;
+    uv_pair() {}
+    uv_pair(float u_, float v_) : u(u_), v(v_) {}
+};
+
 struct font_details {
-    int a, b, c, d, e, f, g;
+    uv_pair lo, hi;                             // +0x00 / +0x08
+    int e, f, g;
     font_details();                             // 0x4bd120
 };
 
@@ -245,5 +252,8 @@ int renderer::release_decls()
 // @ 0x4bd120
 font_details::font_details()
 {
-    a = 0; b = 0; c = 0; d = 0; e = 0; f = 0; g = 0;
+    // Each pair goes through a uv_pair temporary (the original's two 8-byte stack round trips).
+    lo = uv_pair(0.0f, 0.0f);
+    hi = uv_pair(0.0f, 0.0f);
+    e = 0; f = 0; g = 0;
 }

@@ -820,15 +820,20 @@ void CapDef::load(TiXmlElement* src)
 }
 
 // @ 0x4bc2d0
-// Clears the input state and rebuilds both view matrices with a unit last column.
+// Clears the input state and rebuilds both view matrices with a unit last column. Each matrix is copied whole from the
+// identity (rep movsd), then its w column is set through a pointer taken after the copy (the original's lea edx after
+// each identity_pos call); to_d3d's member-by-member fill gives a smaller body that cl inlines into g_render's _$E1.
 renderer::renderer()
 {
     rgl::matrix tmp;
     dev = 0;
     d3d = 0;
-    to_d3d(&view, *rgl::identity_pos(&tmp));
+    memcpy(&view, rgl::identity_pos(&tmp), sizeof view);
+    D3DMATRIX* v = &view;
+    v->_14 = 0.0f; v->_24 = 0.0f; v->_34 = 0.0f; v->_44 = 1.0f;
     cur = *rgl::identity_pos(&tmp);
-    cur.s.w = 0.0f; cur.f.w = 0.0f; cur.u.w = 0.0f; cur.o.w = 1.0f;
+    rgl::matrix* c = &cur;
+    c->s.w = 0.0f; c->f.w = 0.0f; c->u.w = 0.0f; c->o.w = 1.0f;
 }
 
 // ---- the DirectInput device set -------------------------------------------------------------------------------------

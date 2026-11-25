@@ -64,3 +64,5 @@
 ../src/game/config/config.cpp  ?load_extras@SpawnRec@@QAEXAAUstream_base@@@Z  004bdd50  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load@EmitDef@@QAEXAAUstream_base@@@Z  004bd990  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?read@SubAnim@@SAPAXAAUstream_base@@PAU1@@Z  004bdc00  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  _$E1  00547ba0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ??0renderer@@QAE@XZ  004bc2d0  /O2 /MT /Gy /TP
