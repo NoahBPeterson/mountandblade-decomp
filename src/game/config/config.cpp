@@ -1433,31 +1433,31 @@ void trigger_entry::read(stream_base& s, const char* name, int idx)
 // @ 0x4bd990
 void EmitDef::load(stream_base& s)
 {
-    s.r_tstr(&name);
-    s.r_int(&flags);
-    s.r_tstr(&mesh_name);
-    s.r_float(&spawn_rate);
-    s.r_float(&life);
-    s.r_float(&drag);
-    s.r_float(&accel_scale);
-    s.r_float(&noise_scale);
-    s.r_float(&noise_amount);
-    s.r_float(&t[0].t0).r_float(&t[0].v0);
-    s.r_float(&t[0].t1).r_float(&t[0].v1);
-    s.r_float(&t[1].t0).r_float(&t[1].v0);
-    s.r_float(&t[1].t1).r_float(&t[1].v1);
-    s.r_float(&t[2].t0).r_float(&t[2].v0);
-    s.r_float(&t[2].t1).r_float(&t[2].v1);
-    s.r_float(&t[3].t0).r_float(&t[3].v0);
-    s.r_float(&t[3].t1).r_float(&t[3].v1);
-    s.r_float(&t[4].t0).r_float(&t[4].v0);
-    s.r_float(&t[4].t1).r_float(&t[4].v1);
-    s.r_float(&a.x).r_float(&a.y).r_float(&a.z);   // two x,y,z triples 0x10 apart, w unread
-    s.r_float(&b.x).r_float(&b.y).r_float(&b.z);
-    s.r_float(&c);
-    s.r_float(&rot_speed);
+    RS(s, &name);
+    RI(s, &flags);
+    RS(s, &mesh_name);
+    RF(s, &spawn_rate);
+    RF(s, &life);
+    RF(s, &drag);
+    RF(s, &accel_scale);
+    RF(s, &noise_scale);
+    RF(s, &noise_amount);
+    { float* p = &t[0].t0; RF(RF(s, p), p + 1); }
+    { float* p = &t[0].t1; RF(RF(s, p), p + 1); }
+    { float* p = &t[1].t0; RF(RF(s, p), p + 1); }
+    { float* p = &t[1].t1; RF(RF(s, p), p + 1); }
+    { float* p = &t[2].t0; RF(RF(s, p), p + 1); }
+    { float* p = &t[2].t1; RF(RF(s, p), p + 1); }
+    { float* p = &t[3].t0; RF(RF(s, p), p + 1); }
+    { float* p = &t[3].t1; RF(RF(s, p), p + 1); }
+    { float* p = &t[4].t0; RF(RF(s, p), p + 1); }
+    { float* p = &t[4].t1; RF(RF(s, p), p + 1); }
+    { float* p = &a.x; RF(RF(RF(s, p), p + 1), p + 2); }   // two x,y,z triples 0x10 apart, w unread
+    { float* p = &b.x; RF(RF(RF(s, p), p + 1), p + 2); }
+    RF(s, &c);
+    RF(s, &rot_speed);
     rot_speed *= 0.017453292f;                     // degrees to radians
-    s.r_float(&rot_damping);
+    RF(s, &rot_damping);
 }
 
 // ---- data this module owns (.bss, no initialiser) ----
