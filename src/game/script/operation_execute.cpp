@@ -1991,6 +1991,7 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 // A params[] dword then stays in its callee-saved register across the call instead of being reloaded (or copied to a
 // named local first: the "split web" shape, load into a scratch register, use, copy).
 // rgl::string::c_str 0x407c10 (engine/physics/collision_shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
+inline __declspec(noinline) const char* tstring::c_str_out_of_line() const { return buf ? buf : (const char*)&buf; }
 #define HPMAX(t) ((t)->max_hit_points())     // Troop::max_hit_points 0x468770 (game/terrain/terrain_render.cpp)
 // GameData::count_troops 0x48f790 (game/party/party_members.cpp): party_count_members_of_type keeps params[1] / params[2] in esi / ebx
 // across both calls, store_troop_kind_count and 2180 likewise
@@ -3946,12 +3947,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameData* game = g_game;
             PartyMgr* m = &game->parties;
             int stacks = party((int)params[1])->max_stacks();       // the original's call order
+            int r = 0;
             if (stacks - ((Party*)m->get((int)params[1]))->first_flagged() >= 1) {
                 int p = (int)params[1];
                 int h = party(p)->sum_head();
-                SET_LV((__int64)(((Party*)m->get(p))->max_members() - h));
-            } else
-                SET_LV(0);
+                r = ((Party*)m->get(p))->max_members() - h;
+            }
+            SET_LV((__int64)r);
         }
         break;
     case op::party_get_free_prisoners_capacity:
@@ -3959,12 +3961,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameData* game = g_game;
             PartyMgr* m = &game->parties;
             int stacks = party((int)params[1])->max_stacks();       // the original's call order
+            int r = 0;
             if (stacks - ((Party*)m->get((int)params[1]))->count_tail() >= 1) {
                 int p = (int)params[1];
                 int h = party(p)->sum_flagged();
-                SET_LV((__int64)(((Party*)m->get(p))->max_prisoners() - h));
-            } else
-                SET_LV(0);
+                r = ((Party*)m->get(p))->max_prisoners() - h;
+            }
+            SET_LV((__int64)r);
         }
         break;
     case op::party_set_ai_initiative:
