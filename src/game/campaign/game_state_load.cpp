@@ -416,10 +416,9 @@ void Game::init_map()
     if (g_script.new_game_done != 0)
         return;
     g_script.nav->compute_bounds();   // 0x4704b0
-    t.b = 5;
-    t.c = 5;
-    t.a = 0;
-    g_script.level = new rgl::world(&g_script.nav->e44.x, &g_script.nav->f54.x, &t.c, &t.b, &t.a);   // 0x478ad0
+    // the stores of t sit inside the allocation's null test: the last argument is evaluated first
+    g_script.level = new rgl::world(&g_script.nav->e44.x, &g_script.nav->f54.x, &t.c, &t.b,
+                                    (t.b = 5, t.c = 5, t.a = 0, &t.a));   // 0x478ad0
     t.c = 1;
     t.b = 0;
     t.a = 7;

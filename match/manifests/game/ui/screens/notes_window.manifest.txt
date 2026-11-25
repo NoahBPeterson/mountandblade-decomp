@@ -1,1 +1,1 @@
-# no byte-exact function in this module left (0050a1c0 moved to notes_window.nonmatching.txt: L-D3)
+../src/game/ui/screens/notes_window.cpp  ?build@ItemD@@QAEXHH@Z  0050a1c0  /O2 /MT /Gy /TP

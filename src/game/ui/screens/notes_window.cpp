@@ -190,8 +190,11 @@ static __forceinline tstring* party_name(Party* rec)
 
 // the original's callees take the name by reference (implicit temporaries of the literals, built before the arguments are
 // loaded); the definitions in game/editor/editor_widgets.cpp take a pointer, the same ABI.
-static __forceinline UiD* mk_scrollbar(ContainerBase* parent, const tstring& name) { return make_scrollbar(parent, &name); }
-static __forceinline Camera* mk_editor_list(ContainerBase* parent, const tstring& name, UiD* scroll) { return make_editor_list(parent, &name, scroll); }
+// Only the name goes through an inline helper: a forceinline wrapper that also takes the parent keeps it as an inline
+// local, which Color gives eax where the original has edx / ecx (0x50c5ff, 0x50c629).
+static __forceinline const tstring* name_ptr(const tstring& name) { return &name; }
+#define mk_scrollbar(parent, name) make_scrollbar((parent), name_ptr(name))
+#define mk_editor_list(parent, name, scroll) make_editor_list((parent), name_ptr(name), (scroll))
 static inline float fmin2(const float& a, const float& b) { return a < b ? a : b; }
 
 
@@ -203,9 +206,10 @@ struct sel_list;                                        // the sorter's view of 
 #define SORT_LIST(l, m) this->sort_list(l, m)
 
 
-// The party notes use get_party (raw page read) except the find() in the back-reference scan, which uses get_w
+// The party notes use get_party (raw page read) except the back-reference scan's len test and find(), which use get_w
 // (vector::operator[]: `lea; mov`, 0x50bfe2). get_w costs more inside the compiler even where both emit the same code: with
 // get_w everywhere the troop scan's operand order flips (0x50bca6: `lea ecx,[eax+edi]`, original `lea ecx,[edi+esi]`).
+// With get_party on the len test, the quest scan's address add sorts k before i (0x50c18c: the symbol keys pass a hash wrap).
 // @ 0x50a1c0
 void ItemD::build(int page_, int arg_)
 {
@@ -590,7 +594,7 @@ void ItemD::build(int page_, int arg_)
             int p = WORLDMAP->first_party_id();
             while ((unsigned)p < WORLD->parties.serial) {
                 for (int k = 0; k < 8; k++) {
-                    if (WORLDMAP->get_party(p)->notes.texts[k].len > 0 && WORLDMAP->get_w(p)->notes.texts[k].find(acc, 0) >= 0) {
+                    if (WORLDMAP->get_w(p)->notes.texts[k].len > 0 && WORLDMAP->get_w(p)->notes.texts[k].find(acc, 0) >= 0) {
                         sprintf(buf2, "<p=%d>%s</>", p, party_name(WORLDMAP->get_party(p))->c_str());
                         if (link_text.find(buf2, 0) < 0) {
                             if (other.len > 0)

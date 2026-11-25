@@ -2057,16 +2057,20 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
     memcpy(&r, pos, 4 * sizeof(int));
     r.f10 = *src;                             // the supplied heading
     r.age = 0.0f;
-    int a, b, c, d;     // block scope below: a, c, d share the dead argument homes
-    unsigned size_class, kind, nation;
+    unsigned flags = 0;
+    // the flags word is filled as three bitfield stores (bits 0..7 the size class, 16..19 the kind, 8..15 the
+    // nation), each in cl's bitfield-insert form flags ^= (v ^ flags) & mask. 2 bytes off: the original's last xor
+    // lands in flags' register (xor esi,eax), ours in the mask's (xor eax,esi): there the word was a promoted field
+    // of the record; ours is a local copied in at the end (in-place r.flags stays in memory, likely TrackRec's destructor)
     {
+        int a, b, c, d;     // block scope: a, c, d share the dead argument homes
         d = c = b = a = 0;
         count_units(party, &a, &b, &c, &d);
-        size_class = (a + c) & 0xff;
-        kind = rand() % 16;   // a, c still in scope: read before the call
+        flags ^= ((unsigned)((a + c) & 0xff) ^ flags) & 0xff;
+        flags ^= ((unsigned)(rand() % 16) << 16 ^ flags) & 0xf0000;   // a, c still in scope: read before the call
     }
-    nation = (p->owner == -1) ? 0xff : p->owner;
-    r.flags = size_class | (nation & 0xff) << 8 | kind << 16;
+    flags ^= ((unsigned)((p->owner == -1) ? 0xff : p->owner) << 8 ^ flags) & 0xff00;
+    r.flags = flags;
     init_event(&r);
     tracks.push_back(r);
 }
