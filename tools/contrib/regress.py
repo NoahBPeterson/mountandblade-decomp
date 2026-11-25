@@ -81,7 +81,13 @@ def main():
     note = sidecar_note(va)
     if note:
         print("sidecar: " + note[:300])
-    log = sh(["git", "log", "--format=%H %h %ad %s", "--date=short", "-n", str(a.depth), "--", src]).stdout.splitlines()
+    # --follow: the 2026-11-22 restructure moved every file, so a plain path log stops there; each entry
+    # carries the path the file had at that commit (--name-only prints it after the header line)
+    log, raw = [], sh(["git", "log", "--follow", "--name-only", "--format=\x01%H %h %ad %s", "--date=short",
+                       "-n", str(a.depth), "--", src]).stdout
+    for chunk in raw.split("\x01")[1:]:
+        lines = [l for l in chunk.splitlines() if l.strip()]
+        log.append((lines[0], lines[1] if len(lines) > 1 else src))
     if not log:
         sys.exit("regress: no history for " + src)
     work = os.path.join(ROOT, "work", "match", "regress")
@@ -89,9 +95,11 @@ def main():
     cur = open(os.path.join(ROOT, src), encoding="utf-8", errors="replace").read()
     hit = None
     print("%-9s %-11s %s" % ("commit", "score", "subject"))
-    for ln in log:
+    for ln, path in log:
         full, short, date, subj = ln.split(" ", 3)
-        old = sh(["git", "show", "%s:%s" % (full, src)]).stdout
+        old = sh(["git", "show", "%s:%s" % (full, path)]).stdout
+        if path != src:
+            subj = "[%s] %s" % (path, subj)
         if not old:
             continue
         if old == cur:
