@@ -146,6 +146,7 @@ def main():
     ap.add_argument("--quick", action="store_true", help="for each target that does not MATCH, the quick equivalence "
                     "check (tools/equiv/quick.py: renaming, angr ~15 s, emulator ~10 s): wrong logic or only codegen?")
     ap.add_argument("--quick-no-emu", action="store_true", help="--quick without its emulator step")
+    ap.add_argument("--keep-obj", metavar="PATH", help="also copy the compiled object to PATH (for cmpdis / insn_align)")
     a = ap.parse_args()
     vas = []
     for t in a.targets:
@@ -167,6 +168,10 @@ def main():
                         "/Fo" + winpath(obj), winpath(src)], capture_output=True, text=True)
     if r.returncode or not os.path.exists(obj):
         sys.exit("COMPILE FAIL\n" + (r.stdout + r.stderr)[-3000:])
+    if a.keep_obj:
+        import shutil
+        shutil.copyfile(obj, a.keep_obj)
+        print("object kept: " + os.path.abspath(a.keep_obj))
 
     secs, syms = parse_coff(obj)
     starts = {}
