@@ -114,8 +114,19 @@ def main():
     # the original's size: chk.py's second column ("(size ours vs orig)" is printed only when the two differ)
     size = re.search(r"^\s*[0-9a-f]{8}\s+(\d+)\s", c, re.M)
     orig = os.path.join(ROOT, "work", "match", "c2_orig_%08x.s" % va)
-    if tool in ASM and not os.path.exists(orig):
-        n = int(size.group(1)) if size else 4000
+    def orig_ok():
+        # a cached listing is reused only if it covers exactly this function: one written when chk.py's size was not
+        # read (the 4000-byte fallback) ran thousands of bytes past the end, and every tool that diffs against it
+        # scored the extra code (0x4b9110: tsweep said 886/889 where chk.py says 2/8)
+        try:
+            addrs = [int(l.split()[0], 16) for l in open(orig) if l.strip()]
+        except (OSError, ValueError):
+            return False
+        return bool(addrs) and addrs[0] == va and (not size or addrs[-1] < va + int(size.group(1)))
+    if tool in ASM and not orig_ok():
+        if not size:
+            die("chk.py printed no size for 0x%08x, so the original's listing would be guessed:\n%s" % (va, c[-800:]))
+        n = int(size.group(1))
         lines = run([PY, "tools/matching/disasm.py", "0x%x" % va, str(n)]).splitlines()
         with open(orig, "w") as fh:
             for ln in lines:
