@@ -207,7 +207,7 @@ struct sel_list;                                        // the sorter's view of 
 // (vector::operator[]: `lea; mov`, 0x50bfe2). get_w costs more inside the compiler even where both emit the same code: with
 // get_w everywhere the troop scan's operand order flips (0x50bca6: `lea ecx,[eax+edi]`, original `lea ecx,[edi+esi]`).
 // @ 0x50a1c0
-void ItemD_vt::build(int page_, int arg_)
+void ItemD::build(int page_, int arg_)
 {
     char buf[0x100];
     char buf2[0x100];

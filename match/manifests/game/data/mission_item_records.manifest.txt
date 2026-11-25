@@ -1,8 +1,8 @@
-../src/game/data/mission_item_records.cpp  ??_GItemD_vt@@UAEPAXI@Z  004ceea0  /O2 /MT /Gy /TP
+../src/game/data/mission_item_records.cpp  ??_GItemD@@UAEPAXI@Z  004ceea0  /O2 /MT /Gy /TP
 ../src/game/data/mission_item_records.cpp  ??$fill@PAURagdollBone@@U1@@std@@YAXPAURagdollBone@@0ABU1@@Z  004cf070  /O2 /MT /Gy /TP
 ../src/game/data/mission_item_records.cpp  ??$fill@PAUE68@@U1@@std@@YAXPAUE68@@0ABU1@@Z  004cf0a0  /O2 /MT /Gy /TP
 ../src/game/data/mission_item_records.cpp  ??$fill@PAUFaceTexture@@U1@@std@@YAXPAUFaceTexture@@0ABU1@@Z  004cf0d0  /O2 /MT /Gy /TP
-../src/game/data/mission_item_records.cpp  ??1ItemD_vt@@UAE@XZ  004ceec0  /O2 /MT /Gy /TP
+../src/game/data/mission_item_records.cpp  ??1ItemD@@UAE@XZ  004ceec0  /O2 /MT /Gy /TP
 ../src/game/data/mission_item_records.cpp  ??0ItemA@@QAE@XZ  004ceb30  /O2 /MT /Gy /TP
 ../src/game/data/mission_item_records.cpp  ??0ItemB@@QAE@XZ  004cef20  /O2 /MT /Gy /TP
 ../src/game/data/mission_item_records.cpp  ??0ItemC@@QAE@XZ  004cef80  /O2 /MT /Gy /TP
@@ -10,3 +10,4 @@
 ../src/game/data/mission_item_records.cpp  ??0MissionBlocker@@QAE@XZ  004ce960  /O2 /MT /Gy /TP
 ../src/game/data/mission_item_records.cpp  ?slot_empty_4@MissionBlocker@@UAEXXZ  004cea10  /O2 /MT /Gy /TP
 ../src/game/data/mission_item_records.cpp  ?s_last@ItemA@@UAEXXZ  004ceb90  /O2 /MT /Gy /TP
+../src/game/data/mission_item_records.cpp  ??0ItemD@@QAE@XZ  004cee50  /O2 /MT /Gy /TP

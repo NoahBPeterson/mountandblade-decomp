@@ -199,17 +199,19 @@ struct ItemD_vt : item_base {
     MissionUi* btn_map;                                         // +0x74
     };
     };
+    ItemD_vt() { w04 = 0; w08 = 99; }
+    void sort_list(sel_list* l, int mode);      // 0x50cc70 (game/ui/widgets/text_box.cpp, ret 8: the body never reads this)
+};
+struct ItemD : ItemD_vt {                                       // vtable 0x5961c0
+    // the page lists and build are ItemD's, not ItemD_vt's: 0x4cee50 stores ItemD's own vptr BEFORE the two vector
+    // constructors, and cl constructs a class's own members inside that class's constructor
     std::vector<int> back_pages;                                // +0x78 the back list (page, arg pairs; VC7.1: allocator word, then first / last / end)
     std::vector<int> fwd_pages;                                 // +0x88 the forward list
     int back_sel_a, back_sel_b;                                 // +0x98 the page / argument on top of the back list
     int fwd_sel_a, fwd_sel_b;                                   // +0xa0 the page / argument on top of the forward list
     int page, arg;                                              // +0xa8 / +0xac the page shown (-1 after reset; note_window)
     float scroll_pos;                                           // +0xb0 the scroll ratio (-1.0f after reset)
-    ItemD_vt() { w04 = 0; w08 = 99; }
     void build(int page, int arg);              // 0x50a1c0 (game/ui/screens/notes_window.cpp, ret 8): the page's widgets
-    void sort_list(sel_list* l, int mode);      // 0x50cc70 (game/ui/widgets/text_box.cpp, ret 8: the body never reads this)
-};
-struct ItemD : ItemD_vt {                                       // vtable 0x5961c0
     // overrides go on ItemD only: ItemD_vt's own table (the base vptr store in 0x4ceec0) must keep the head_rec slots
     virtual void reset_screen();                // slot 1  0x4c6e00 reset_gui (editor_selection_and_translation.cpp)
     virtual void init_screen();                // slot 2  0x50a140 ItemD::init_screen (character_sheet_view.cpp)
