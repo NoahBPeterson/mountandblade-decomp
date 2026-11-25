@@ -2474,3 +2474,23 @@ Same shape: symptom -> edit -> when. All byte-exact on landing (`4bf271b1`, `ec3
   64 bytes and shifts the frame; the original copies two floats at a time through a `float_pair { float u, v; }`
   local and `((float_pair*)e->curve)[2*i+k] = ((const float_pair(*)[2])d->t)[i][k]` (0x4424c0 EmitTable::setup).
   **When:** the original's loop body has two `mov`s per iteration and our frame is a multiple of 16 larger.
+
+### 17.11 A mask on a shift-derived byte, and reading the IL before trying spellings
+- **Symptom.** The original reads a byte with a redundant mask and uses the mask's flags instead of a `test`:
+  `xor ecx,ecx; mov cl,[esi+0x1a]; and ecx,0xff; ...; je` (11 bytes, 3 instructions). Ours has
+  `movzx ecx,[esi+0x1a]; test ecx,ecx` (5 bytes, 2) and nothing else in the region differs. Byte-diff counters call
+  this "one instruction", so it looks like an encoder peephole and every spelling of `(x >> k) & 0xff` folds the
+  same way.
+- **Why spellings fail.** `c2.py il 0x<va> --at @dop2_PreLowerGlobalOpts@4` on the working source shows the mask
+  already gone: `GlobalOptimize` (pass 3 prelude) narrows `(dword >> k) & 0xff` into a **signed**-byte load plus
+  `OPCONVERT`, which makes the mask provably redundant, so it is deleted and the `test` has to come back. The IL at
+  pass 2's entry (`@dop2_InitialOptsAndSetup@4`) still has the `OPAND 255` tuple — the tuple is real, the pass eats
+  it.
+- **Fix.** Keep the mask non-redundant by making the load signed: `unsigned b2 = (signed char)(x >> 16) & 0xff;`.
+  The mask then masks off the sign extension, survives `GlobalOptimize` as `OPAND`, and the encoder emits the
+  original's `xor`/`mov cl`/`and` with the `and` supplying the `je` flags. M&B 0x4bdc00 SubAnim::read, 330 -> 335
+  bytes (the original's size), 111 diff -> 0, first spelling tried. The `ebx`/`edi` register mirror that had been
+  reported as a separate blocker went with it.
+- **When.** A byte read differs by an `and`/`test` pair and nothing else, and every `>>`/`&` spelling folds. Read the
+  IL at pass 2 and pass 3 entry first (`c2.py il ... --diff @dop2_InitialOptsAndSetup@4,@dop2_PreLowerGlobalOpts@4`):
+  if the `OPAND` is there before and gone after, the lever is the signedness of the loaded value, not the mask.

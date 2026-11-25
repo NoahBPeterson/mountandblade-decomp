@@ -1569,7 +1569,7 @@ void* SubAnim::read(stream_base& a, SubAnim* o)
         channel_to_float(&f_b1, b1);
         float& f_b2 = o->events[2];
         f_b2 = -1.0f;
-        unsigned b2 = (o->event_bytes >> 16) & 0xff;
+        unsigned b2 = (signed char)(o->event_bytes >> 16) & 0xff;
         channel_to_float(&f_b2, b2);
         float& f_b3 = o->events[3];
         f_b3 = -1.0f;
