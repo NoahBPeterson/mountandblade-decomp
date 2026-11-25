@@ -2781,11 +2781,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::overlay_set_size:
         if (g_presentation && check_register((int)params[1]))
-            g_presentation->set_size((int)params[0], xy(script_pos((int)params[1]).o));
+            g_presentation->set_size((int)params[0], *(const vec2*)&script_pos((int)params[1]).o);
         break;
     case op::overlay_set_position:
         if (g_presentation && check_register((int)params[1]))
-            g_presentation->set_position((int)params[0], xy(script_pos((int)params[1]).o));
+            g_presentation->set_position((int)params[0], *(const vec2*)&script_pos((int)params[1]).o);
         break;
     case op::overlay_set_val:
         if (g_presentation)
@@ -2798,7 +2798,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::overlay_set_area_size:
         // the position register is not validated here
         if (g_presentation)
-            g_presentation->set_area_size((int)params[0], xy(script_pos((int)params[1]).o));
+            g_presentation->set_area_size((int)params[0], *(const vec2*)&script_pos((int)params[1]).o);
         break;
     case op::overlay_set_mesh_rotation:
         if (g_presentation)
@@ -2827,11 +2827,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::overlay_animate_to_size:
         if (g_presentation && check_register((int)params[2]))
-            g_presentation->animate_size((int)params[0], (float)params[1] * 0.001f, xy(script_pos((int)params[2]).o));
+            g_presentation->animate_size((int)params[0], (float)params[1] * 0.001f, *(const vec2*)&script_pos((int)params[2]).o);
         break;
     case op::overlay_animate_to_position:
         if (g_presentation && check_register((int)params[2]))
-            g_presentation->animate_pos((int)params[0], (float)params[1] * 0.001f, xy(script_pos((int)params[2]).o));
+            g_presentation->animate_pos((int)params[0], (float)params[1] * 0.001f, *(const vec2*)&script_pos((int)params[2]).o);
         break;
     case op::create_image_button_overlay_with_tableau_material:
         // mesh -1 = none (not validated)
@@ -3757,10 +3757,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (troop_set_health, <troop_id>, <relative health (0-100)>, [absolute])
         if (check_troop((int)params[0])) {
             if (params[2]) {
-                troop((int)params[0])->hit_points = (float)clamp_index((int)params[1], 0, HPMAX(troop((int)params[0])) + 1);
+                Troop* t = troop((int)params[0]);
+                t->hit_points = (float)clamp_index((int)params[1], 0, HPMAX(t) + 1);
             } else {
-                troop((int)params[0])->hit_points = (float)clamp_index((int)((__int64)HPMAX(troop((int)params[0])) * params[1] / 100), 0,
-                                                   HPMAX(troop((int)params[0])) + 1);
+                Troop* t = troop((int)params[0]);
+                t->hit_points = (float)clamp_index((int)((__int64)HPMAX(t) * params[1] / 100), 0,
+                                                   HPMAX(t) + 1);
             }
         }
         break;
@@ -3897,7 +3899,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_relocate_near_party:
         // (party_relocate_near_party, <party_id>, <target_party_id>, <value_spawn_radius>)
         if (check_party((int)params[0]) && check_party((int)params[1])) {
-            g_game->set_pos(Vec2(party((int)params[1])->pos.x, party((int)params[1])->pos.y), (int)params[0], (float)params[2]);
+            g_game->set_pos(*(Vec2*)&party((int)params[1])->pos, (int)params[0], (float)params[2]);
         }
         break;
     case op::party_get_position:
@@ -3915,35 +3917,17 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::map_get_random_position_around_position:
         // (map_get_random_position_around_position, <dest_position_no>, <position_no>, <radius>)
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-        {
-            Vec2 at(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y);
-            Vec2 out;
-            g_game->random_position_around(at, (float)params[2], &out);
-            script_pos((int)params[0]).o.x = out.x;
-            script_pos((int)params[0]).o.y = out.y;
-        }
+            g_game->random_position_around(*(Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o);
         break;
     case op::map_get_land_position_around_position:
         result = 0;
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-        {
-            Vec2 at(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y);
-            Vec2 out;
-            result = g_game->position_around(at, (float)params[2], &out, 0);
-            script_pos((int)params[0]).o.x = out.x;
-            script_pos((int)params[0]).o.y = out.y;
-        }
+            result = g_game->position_around(*(Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o, 0);
         break;
     case op::map_get_water_position_around_position:
         result = 0;
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-        {
-            Vec2 at(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y);
-            Vec2 out;
-            result = g_game->position_around(at, (float)params[2], &out, 1);
-            script_pos((int)params[0]).o.x = out.x;
-            script_pos((int)params[0]).o.y = out.y;
-        }
+            result = g_game->position_around(*(Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o, 1);
         break;
     case op::party_count_members_of_type:
         // (party_count_members_of_type, <destination>, <party_id>, <troop_id>)
@@ -4008,7 +3992,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_set_ai_target_position:
         if (check_party((int)params[0]) && check_register((int)params[1]))
-            party((int)params[0])->ai_target = Vec2(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y);
+            party((int)params[0])->ai_target = *(Vec2*)&script_pos((int)params[1]).o;
         break;
     case op::party_set_ai_patrol_radius:
         if (check_party((int)params[0])) {
