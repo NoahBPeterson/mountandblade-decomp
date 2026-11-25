@@ -145,7 +145,10 @@ def main():
         else:
             time.sleep(2)
     sys.stdout.flush()
-    sys.exit(subprocess.run(cmd, cwd=VS).returncode)
+    env = dict(os.environ)
+    if os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off")):
+        env["C2S_OFF"] = "1"              # the laptop is off: every traced compile goes to wine at once (no server timeout)
+    sys.exit(subprocess.run(cmd, cwd=VS, env=env).returncode)
 
 
 if __name__ == "__main__":
