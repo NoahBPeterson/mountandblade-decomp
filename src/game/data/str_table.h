@@ -13,14 +13,11 @@
 #include <vector>
 #include "engine/core/tstring.h"
 
-// The two hash tables (0xdf3 buckets each: the keys, then the values). 0x4cda20 emits the 0x42bbd0 calls for the two trailing
-// strings *after* the bucket constructors, so the tables live in a base and the strings stay members of the derived class.
-struct StrTableBase {
+// The two hash tables (0xdf3 buckets each: the keys, then the values), then the two strings: the members construct in that
+// order (0x4cda20 emits the 0x42bbd0 calls for the strings after the bucket loops) and are destroyed in reverse (0x4ca720).
+struct StrTable {
     std::vector<tstring> keys[0xdf3];                           // +0x0000 (hash_string 0x433bb0 picks the bucket)
     std::vector<tstring> vals[0xdf3];                           // +0xdf30 (the translation of keys[h][i] is vals[h][i])
-};
-
-struct StrTable : StrTableBase {
     tstring notfound;                                           // +0x1be60 the shared entry answering a miss ("STR NOT FOUND")
     tstring language;                                           // +0x1be70 (0x5fe888) the language of the skin file name 
     StrTable();                                                 // 0x4cda20

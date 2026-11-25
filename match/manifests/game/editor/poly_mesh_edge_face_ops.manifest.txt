@@ -69,3 +69,7 @@
 ../src/game/editor/poly_mesh_edge_face_ops.cpp  $L  004cc8f8  /O2 /MT /Gy /TP
 ../src/game/editor/poly_mesh_edge_face_ops.cpp  $L  004cd254  /O2 /MT /Gy /TP
 ../src/game/editor/poly_mesh_edge_face_ops.cpp  ?apply@WindowMgrW@@QAEXXZ  004ca600  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_edge_face_ops.cpp  ??1StrTable@@QAE@XZ  004ca720  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_edge_face_ops.cpp  ??0StrTable@@QAE@XZ  004cda20  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_edge_face_ops.cpp  _$E4  00547a80  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_edge_face_ops.cpp  _$E5  00548470  /O2 /MT /Gy /TP

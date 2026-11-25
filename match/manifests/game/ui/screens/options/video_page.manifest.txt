@@ -1,1 +1,1 @@
-../src/game/ui/screens/options/video_page.cpp  ?frame_update@Recf0@@UAEXM@Z  004d63b0  /O2 /MT /Gy /TP
+# no byte-exact function in this module (Recf0::frame_update moved to video_page.nonmatching.txt on 2026-11-25: str_table.h flattened)
