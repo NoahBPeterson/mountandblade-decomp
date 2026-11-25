@@ -17,6 +17,7 @@ TOOL (docs: ../vs2005-cpp/docs/c2/<name>.md; `c2.py doc NAME` prints one):
   helpersweep  inline-helper rewrites that fix a colouring order (--want 'A>B')
   effectmine   mutations mined for a wanted effect (mine; --want drop:N ...)
   --func NAME  use this decorated name instead of chk.py's marker (for rows chk.py binds only "~size")
+  symkeys      symbol keys / sort sites: c2.py symkeys 0x<va> SUB [args] (SUB = keys, sites, events, whatif, levers, compare, export)
   doc NAME     print ../vs2005-cpp/docs/c2/NAME.md (e.g. tracer, regalloc, icount, tsweep, effectmine, x87)
 
 The wrapper fills in what every tool needs: the source (the row's module, or --src: a copy/template you wrote under
@@ -35,7 +36,7 @@ TOOLS = {"regs": ["tools/c2trace.py", "regs"], "regmap": ["tools/c2trace.py", "r
          "icount": ["tools/icount.py"], "sched": ["tools/c2sched.py"], "il": ["tools/c2trace.py", "il"],
          "tsweep": ["tools/tsweep.py"],
          "helpersweep": ["tools/helpersweep.py"], "effectmine": ["tools/effectmine.py", "mine"],
-         "schedwant": ["tools/schedwant.py"]}
+         "schedwant": ["tools/schedwant.py"], "symkeys": ["tools/symkeys.py"]}
 ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine", "schedwant"}      # take --asm-vs
 SLOTS, MAXJOBS = 8, 4
 DOC_ALIAS = {"tsweep": "tracer", "schedwant": "sched", "helpersweep": "tracer", "regs": "regalloc", "regmap": "regalloc"}   # tsweep's manual is a section of tracer.md ("tsweep")
@@ -121,7 +122,12 @@ def main():
                     fh.write("%08x %s\n" % (int(mm.group(1), 16), re.sub(r"\s+;.*$", "", mm.group(2)).strip()))
     inc = ["/I" + os.path.join(ROOT, os.path.dirname(module)), "/I" + os.path.join(ROOT, "match", "include"),
            "/I" + os.path.join(ROOT, "src"), "/I" + os.path.join(ROOT, "work/ext/dxsdk_jun10/DXSDK/Include")]
-    cmd = [os.path.join(VS, ".venv", "bin", "python")] + TOOLS[tool] + [os.path.join(ROOT, src)]
+    sub = []
+    if tool == "symkeys":                     # symkeys.py SUB <src> ...: the subcommand comes before the source
+        if not rest or rest[0].startswith("-"):
+            die("symkeys needs a subcommand: keys, sites, events, whatif, levers, compare, export")
+        sub = [rest.pop(0)]
+    cmd = [os.path.join(VS, ".venv", "bin", "python")] + TOOLS[tool] + sub + [os.path.join(ROOT, src)]
     cmd += ["--func", func, "--c2", "13.10.3052" if tool == "tsweep" else "13.10"]
     if tool in ASM:
         cmd += ["--asm-vs", orig] + (["--asm-func", func] if tool in ("regmap", "tsweep", "schedwant") else [])
