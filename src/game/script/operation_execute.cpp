@@ -6073,7 +6073,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
       {
         if (check_register((int)params[0]) && check_quest((int)params[1])) {
             char link[0x400];
-            int q = (int)params[1];
+            int q = *(int*)&params[1];
             sprintf(link, "<qst=%d>%s</>", q, CS(&quest(q)->text));
             g_script.str[(int)params[0]].assign(link);
         }
