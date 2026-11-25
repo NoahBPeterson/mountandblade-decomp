@@ -12,10 +12,11 @@ TOOL (docs: ../vs2005-cpp/docs/c2/<name>.md; `c2.py doc NAME` prints one):
   sched        what the list scheduler did (instruction order)
   il           the IL at the entry of chosen passes: --at PASS[,PASS..], or --diff A,B to diff one pass's IL
                against another's (what the passes from A up to B did); --plain / --grep RE / --count RE
-  tsweep       compile every alternative of a template (`{{a|b|c}}` choices, see doc tsweep) and rank by bdiff
+  tsweep       compile every alternative of a template (`{{a<|>b<|>c}}` choices: the separator is <|>, not |; see doc tsweep) and rank by bdiff
   schedwant    which DAG changes give the original's instruction order in a scheduling region
   helpersweep  inline-helper rewrites that fix a colouring order (--want 'A>B')
   effectmine   mutations mined for a wanted effect (mine; --want drop:N ...)
+  --func NAME  use this decorated name instead of chk.py's marker (for rows chk.py binds only "~size")
   doc NAME     print ../vs2005-cpp/docs/c2/NAME.md (e.g. tracer, regalloc, icount, tsweep, effectmine, x87)
 
 The wrapper fills in what every tool needs: the source (the row's module, or --src: a copy/template you wrote under
@@ -37,6 +38,8 @@ TOOLS = {"regs": ["tools/c2trace.py", "regs"], "regmap": ["tools/c2trace.py", "r
          "schedwant": ["tools/schedwant.py"]}
 ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine", "schedwant"}      # take --asm-vs
 SLOTS, MAXJOBS = 8, 4
+DOC_ALIAS = {"tsweep": "tracer"}   # tsweep's manual is a section of tracer.md ("tsweep")
+LOCAL_OK = {"icount"}                                       # tools with --allow-local (compile under wine when the server declines)
 
 
 def die(msg):
@@ -53,6 +56,7 @@ def main():
         print(__doc__); return
     if a[0] == "doc":
         name = re.sub(r"[^\w-]", "", a[1] if len(a) > 1 else "")
+        name = DOC_ALIAS.get(name, name)
         p = os.path.join(VS, "docs", "c2", name + ".md")
         if not os.path.isfile(p):
             die("no doc %s; have: %s" % (name, " ".join(sorted(f[:-3] for f in os.listdir(os.path.join(VS, "docs", "c2"))))))
@@ -65,6 +69,13 @@ def main():
     src = None
     if "--src" in rest:
         i = rest.index("--src"); src = rest[i + 1]; del rest[i:i + 2]
+    func = None
+    if "--func" in rest:
+        i = rest.index("--func"); func = rest[i + 1]; del rest[i:i + 2]
+    # the laptop is off (work/locks/laptop_off) or the caller allowed local compiles: let the tool use wine
+    if tool in LOCAL_OK and "--allow-local" not in rest and (os.environ.get("MB_RC_ALLOW_LOCAL") == "1"
+                                                             or os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off"))):
+        rest.append("--allow-local")
     if any(x.startswith("--c2") or x == "--" for x in rest):
         die("--c2 and the cl flags are filled in by the wrapper; leave them out")
     for opt in ("--orig", "--export", "--keep"):     # the tools run in ../vs2005-cpp: a relative path would resolve there
@@ -84,9 +95,10 @@ def main():
     flags = (f.group(1).split() if f else ["/O2", "/MT", "/Gy", "/TP"])
     c = run([PY, "tools/matching/chk.py", module, "0x%x" % va])
     d = re.search(r"marker (\S+)", c)
-    if not d:
-        die("chk.py did not give the decorated name:\n" + c[-800:])
-    func = d.group(1)
+    if not func:
+        if not d:
+            die("chk.py did not give the decorated name (pass --func <decorated name> if chk.py bound it ~size):\n" + c[-800:])
+        func = d.group(1)
     if src:
         rel = os.path.normpath(os.path.relpath(os.path.abspath(src), ROOT))
         if not rel.startswith("work/match/") or not os.path.isfile(os.path.join(ROOT, rel)):

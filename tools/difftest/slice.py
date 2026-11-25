@@ -704,9 +704,20 @@ def slice_symbol_name(sid, va):
     return None
 
 
+# MSVC operator codes after "??" (??A = operator[], ??_0 = operator/=, ...); ??B (conversion) has no fixed name
+_OPS = {"2": " new", "3": " delete", "4": "=", "5": ">>", "6": "<<", "7": "!", "8": "==", "9": "!=", "A": "[]",
+        "C": "->", "D": "*", "E": "++", "F": "--", "G": "-", "H": "+", "I": "&", "J": "->*", "K": "/", "L": "%",
+        "M": "<", "N": "<=", "O": ">", "P": ">=", "Q": ",", "R": "()", "S": "~", "T": "^", "U": "|", "V": "&&",
+        "W": "||", "X": "*=", "Y": "+=", "Z": "-=", "_0": "/=", "_1": "%=", "_2": ">>=", "_3": "<<=", "_4": "&=",
+        "_5": "|=", "_6": "^="}
+
+
 def base_ident(mangled):
     """Leading identifier of a symbol: '?f@C@@..'->'f', '??$f@..'->'f', '??0C@@'->'C', '_f'->'f'."""
     m = mangled
+    op = re.match(r"\?\?(_[0-6]|[2-9A-Z])", m)
+    if op and op.group(1) not in ("0", "1") and op.group(1) in _OPS:
+        return "operator" + _OPS[op.group(1)]
     if m.startswith("??$"):
         m = m[3:]
     elif m.startswith(("??0", "??1")):
@@ -731,6 +742,8 @@ def _name_matches(mangled, nm):
     if not parts:
         return False
     last = parts[-1]
+    if last.startswith("operator"):
+        last = "operator" + last[8:].replace(" ", "") if last[8:].strip() not in ("new", "delete") else "operator " + last[8:].strip()
     b = base_ident(mangled).lstrip("_")
     if last.startswith("~"):
         if not mangled.startswith("??1") or b != last[1:]:
@@ -780,6 +793,13 @@ def find_symbol(coff, sid, va, src, orig_size=None):
     allc = []
     for nm in names:
         named = [f for f in funcs if _name_matches(f, nm)]
+        if not named and "::operator" in nm:
+            # the class may be a typedef of a template (GlyphMap = stdext::hash_map<int, Glyph>): accept the
+            # operator by name alone when exactly one template-class operator of that kind is in the object
+            op = nm.rsplit("::", 1)[1]
+            loose = [f for f in funcs if f.startswith("??") and "?$" in f[:6] and _name_matches(f, op)]
+            if len(loose) == 1:
+                return loose[0], "name %s (template class by operator)" % nm
         if len(named) == 1:
             return named[0], "name %s" % nm
         cands = [f for f in named if plausible(f)]
