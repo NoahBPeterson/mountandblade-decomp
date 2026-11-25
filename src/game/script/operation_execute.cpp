@@ -2761,7 +2761,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::overlay_set_text:
         if (g_presentation && check_string_arg((int)params[1], types[1]))
-            { tstring s = g_script.expand(g_strings.get_string((int)params[1], types[1])); g_presentation->set_text((int)params[0], &s); }
+            g_presentation->set_text((int)params[0], &g_script.expand(g_strings.get_string((int)params[1], types[1])));
         break;
     case op::overlay_set_color:
         if (g_presentation)
@@ -4957,18 +4957,20 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (cur_tableau_add_tableau_mesh, <tableau_material_id>, <value>, <position_register_no>, [scale_fixed_point])
         if (warn_tableau((int)params[0]) && check_register((int)params[2]) && g_tableaus.worlds.size() > 0) {
             // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
-            // temporary itself (C4238), as the original: no copy into a third vector
-            // (the call sits in each branch: the operator* temporary must live until spawn has read it)
+            // temporary itself (C4238), as the original: no copy into a third vector. The branch only picks the
+            // address and spawn is called once after it, so the two branches share the call (the original does).
             rgl::vector4 a, b;
+            rgl::vector4* v;
             if (params[3] == 0) {
                 float z = 1.0f, y = 1.0f, x = 1.0f;
-                g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), &a.set(x, y, z));
+                v = &a.set(x, y, z);
             } else {
                 float s = 1.0f / g_script.fixed_point_multiplier;
                 float x, y, z;
                 z = y = x = (float)params[3];
-                g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), &(b.set(z, y, x) * s));
+                v = &(b.set(z, y, x) * s);
             }
+            g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), v);
         }
         break;
     case op::cur_item_set_tableau_material:
@@ -5084,15 +5086,17 @@ char Operation::execute(__int64* locals, int* context, int* error)
             else
                 alpha = (float)params[3] / g_script.fixed_point_multiplier;
             // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
-            // temporary itself (C4238), as the original: no copy into a third vector
-            // (the call sits in each branch: the operator* temporary must live until spawn_scaled has read it)
+            // temporary itself (C4238), as the original: no copy into a third vector. The branch only picks the
+            // address and spawn_scaled is called once after it, so the two branches share the call.
             rgl::vector4 a, b;
+            rgl::vector4* v;
             if (params[2] == 0) {
-                g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), &a.set(1.0f, 1.0f, 1.0f), &alpha, (const unsigned*)&color);
+                v = &a.set(1.0f, 1.0f, 1.0f);
             } else {
                 float s = 1.0f / g_script.fixed_point_multiplier;
-                g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), &(b.set((float)params[2], (float)params[2], (float)params[2]) * s), &alpha, (const unsigned*)&color);
+                v = &(b.set((float)params[2], (float)params[2], (float)params[2]) * s);
             }
+            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), v, &alpha, (const unsigned*)&color);
         }
         break;
     case op::cur_tableau_add_mesh_with_vertex_color:
@@ -5105,15 +5109,17 @@ char Operation::execute(__int64* locals, int* context, int* error)
             else
                 alpha = (float)params[3] / g_script.fixed_point_multiplier;
             // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
-            // temporary itself (C4238), as the original: no copy into a third vector
-            // (the call sits in each branch: the operator* temporary must live until spawn_scaled has read it)
+            // temporary itself (C4238), as the original: no copy into a third vector. The branch only picks the
+            // address and spawn_scaled is called once after it, so the two branches share the call.
             rgl::vector4 a, b;
+            rgl::vector4* v;
             if (params[2] == 0) {
-                g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), &a.set(1.0f, 1.0f, 1.0f), &alpha, (const unsigned*)&color);
+                v = &a.set(1.0f, 1.0f, 1.0f);
             } else {
                 float s = 1.0f / g_script.fixed_point_multiplier;
-                g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), &(b.set((float)params[2], (float)params[2], (float)params[2]) * s), &alpha, (const unsigned*)&color);
+                v = &(b.set((float)params[2], (float)params[2], (float)params[2]) * s);
             }
+            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), v, &alpha, (const unsigned*)&color);
         }
         break;
     case op::cur_tableau_add_map_icon:
