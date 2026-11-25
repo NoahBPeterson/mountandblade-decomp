@@ -531,6 +531,11 @@ void Skin::blend(mesh* m, int unused, const float* weights)
     }
 }
 
+// the point array's first word: the original loads the vector's first element pointer (not begin()'s iterator), which
+// is what orders the length_squared x87 pair in 0x47c810. _Myfirst is protected, so reach it through a derived view
+// (the same route port/stl/vector documents for the other protected helpers)
+struct points_view : std::vector<point20> { point20* first_word() { return _Myfirst; } };
+
 // @ 0x47c810 -- index-driven blend: `set` is an ArrSet, `*index` the slot whose point map selects the offsets
 void Skin::blend_indexed(mesh* m, ArrSet* s, int* index, const float* weights)
 {
@@ -548,7 +553,7 @@ void Skin::blend_indexed(mesh* m, ArrSet* s, int* index, const float* weights)
                 d.x = w * t->x;
                 d.y = w * t->y;
                 d.z = w * t->z;
-                point20* p = (point20*)m->points._Myfirst + i;
+                point20* p = ((points_view&)m->points).first_word() + i;
                 if (p->a.x < 0.0f)
                     d.x = -d.x;
                 vector4 v;
