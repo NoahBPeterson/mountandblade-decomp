@@ -745,16 +745,15 @@ void Event::bind_host()
 // @ 0x4b2880
 void Party::place_on_map()
 {
-    mesh = g_game->find_at(&pos.x);
+    rgl::vector4* p = &pos;
+    mesh = g_game->find_at(&p->x);
     if (!mesh) {
-        mb_error("Unable to position party %s at (%2.2f, %2.2f).", name.c_str(), (double)pos.x, (double)pos.y);
+        mb_error("Unable to position party %s at (%2.2f, %2.2f).", name.c_str(), (double)p->x, (double)p->y);
     }
     face* m = mesh;
-    pos.z = m->w[0].z - ((pos.y - m->w[0].y) * m->normal.y + (pos.x - m->w[0].x) * m->normal.x) / m->normal.z;
+    pos.z = m->w[0].z - ((p->y - m->w[0].y) * m->normal.y + (p->x - m->w[0].x) * m->normal.x) / m->normal.z;
     map_mask = nav_recs()[m->m4].mask();
-    Vec2 at;
-    at.x = pos.x;
-    at.y = pos.y;
+    Vec2 at = *(Vec2*)p;
     dest = at;
     goal = at;
     face_id = -1;
@@ -2438,9 +2437,10 @@ void Event::update_nav_anim(float)
 
     if (type == 1) {
         if (f44 > 0.5f && g_game->reveal_all == 0) {
-            if (anim.elapsed() > 10.5f) {
+            Timer* at = &anim;
+            if (at->elapsed() > 10.5f) {
                 sound = g_sound_mgr.play(g_sound_mgr.slot[99], 0, &entity->local.o, 1.0f, 0);
-                anim.start = g_ticks[anim.clock];
+                at->start = g_ticks[at->clock];
             }
         }
         if (f44 < 0.05f && sound != -1) {
