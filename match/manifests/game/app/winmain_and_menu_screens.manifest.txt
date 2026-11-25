@@ -68,3 +68,4 @@
 ../src/game/app/winmain_and_menu_screens.cpp  ??_EMissionObj@@QAEPAXI@Z  004c7ee0  /O2 /MT /Gy /TP
 ../src/game/app/winmain_and_menu_screens.cpp  ??1MissionObj@@QAE@XZ  004c65d0  /O2 /MT /Gy /TP
 ../src/game/app/winmain_and_menu_screens.cpp  ??0Font@@QAE@XZ  004d99d0  /O2 /MT /Gy /TP
+../src/game/app/winmain_and_menu_screens.cpp  ?init_screen@ResultWindow@@UAEXXZ  004dc630  /O2 /MT /Gy /TP

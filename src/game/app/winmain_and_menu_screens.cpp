@@ -667,7 +667,8 @@ void ResultWindow::init_screen()
             float y = config_float_key(ky, 0.0f);
             tstring kx("yn_tb_name_x");
             float x = config_float_key(kx, 0.0f);
-            box38->move_a(V2(x, y));
+            V2 v(x, y);
+            box38->move_a(v);
         }
         box38->set_offset(V2(0.0f, 0.009f));
         box38->set_size(V2(0.02f, 0.02f));
