@@ -10,6 +10,8 @@ TOOL (docs: ../vs2005-cpp/docs/c2/<name>.md; `c2.py doc NAME` prints one):
   slots        stack-slot packing (--what EDIT.., --search)
   icount       why our function has more/fewer instructions: each extra/missing one traced to the c2 pass
   sched        what the list scheduler did (instruction order)
+  il           the IL at the entry of chosen passes: --at PASS[,PASS..], or --diff A,B to diff one pass's IL
+               against another's (what the passes from A up to B did); --plain / --grep RE / --count RE
   tsweep       compile every alternative of a template (`{{a|b|c}}` choices, see doc tsweep) and rank by bdiff
   schedwant    which DAG changes give the original's instruction order in a scheduling region
   helpersweep  inline-helper rewrites that fix a colouring order (--want 'A>B')
@@ -29,7 +31,8 @@ VS = os.path.join(os.path.dirname(ROOT), "vs2005-cpp")
 PY = os.path.join(ROOT, ".venv", "bin", "python")
 TOOLS = {"regs": ["tools/c2trace.py", "regs"], "regmap": ["tools/c2trace.py", "regmap"],
          "scratch": ["tools/c2trace.py", "scratch"], "slots": ["tools/c2trace.py", "slots"],
-         "icount": ["tools/icount.py"], "sched": ["tools/c2sched.py"], "tsweep": ["tools/tsweep.py"],
+         "icount": ["tools/icount.py"], "sched": ["tools/c2sched.py"], "il": ["tools/c2trace.py", "il"],
+         "tsweep": ["tools/tsweep.py"],
          "helpersweep": ["tools/helpersweep.py"], "effectmine": ["tools/effectmine.py", "mine"],
          "schedwant": ["tools/schedwant.py"]}
 ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine", "schedwant"}      # take --asm-vs
