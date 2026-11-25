@@ -17,7 +17,9 @@ TOOL (docs: ../vs2005-cpp/docs/c2/<name>.md; `c2.py doc NAME` prints one):
   helpersweep  inline-helper rewrites that fix a colouring order (--want 'A>B')
   effectmine   mutations mined for a wanted effect (mine; --want drop:N ...)
   --func NAME  use this decorated name instead of chk.py's marker (for rows chk.py binds only "~size")
-  symkeys      symbol keys / sort sites: c2.py symkeys 0x<va> SUB [args] (SUB = keys, sites, events, whatif, levers, compare, export)
+  symkeys      symbol keys / sort sites: c2.py symkeys 0x<va> SUB [args] (SUB = keys, sites, events, whatif, levers, compare, export).
+               Slow on big rows: `symkeys 0x<va> export --out work/match/X.json` once (background), then
+               `symkeys 0x<va> sites --from work/match/X.json` etc. run in seconds. Site lines are function-relative.
   doc NAME     print ../vs2005-cpp/docs/c2/NAME.md (e.g. tracer, regalloc, icount, tsweep, effectmine, x87)
 
 The wrapper fills in what every tool needs: the source (the row's module, or --src: a copy/template you wrote under
@@ -81,7 +83,7 @@ def main():
         rest.remove("--allow-local")
     if any(x.startswith("--c2") or x == "--" for x in rest):
         die("--c2 and the cl flags are filled in by the wrapper; leave them out")
-    for opt in ("--orig", "--export", "--keep"):     # the tools run in ../vs2005-cpp: a relative path would resolve there
+    for opt in ("--orig", "--export", "--keep", "--from", "--out"):     # the tools run in ../vs2005-cpp: a relative path would resolve there
         if opt in rest:
             i = rest.index(opt) + 1
             rest[i] = os.path.abspath(rest[i])
@@ -127,11 +129,15 @@ def main():
         if not rest or rest[0].startswith("-"):
             die("symkeys needs a subcommand: keys, sites, events, whatif, levers, compare, export")
         sub = [rest.pop(0)]
-    cmd = [os.path.join(VS, ".venv", "bin", "python")] + TOOLS[tool] + sub + [os.path.join(ROOT, src)]
+    # symkeys --from EXPORT reads a saved trace (no compile, seconds): it must not get the source, which it would take
+    # as an edit, nor the cl flags. Export once per source edit (c2.py symkeys 0x<va> export --out X.json, in the
+    # background: the trace takes minutes on a large row), then run sites / levers / whatif / compare with --from.
+    fromx = tool == "symkeys" and "--from" in rest
+    cmd = [os.path.join(VS, ".venv", "bin", "python")] + TOOLS[tool] + sub + ([] if fromx else [os.path.join(ROOT, src)])
     cmd += ["--func", func, "--c2", "13.10.3052" if tool == "tsweep" else "13.10"]
     if tool in ASM:
         cmd += ["--asm-vs", orig] + (["--asm-func", func] if tool in ("regmap", "tsweep", "schedwant") else [])
-    cmd += rest + ["--"] + flags + inc
+    cmd += rest + ([] if fromx else ["--"] + flags + inc)
 
     os.makedirs(os.path.join(ROOT, "work", "match", ".c2slots"), exist_ok=True)
     lock = None
