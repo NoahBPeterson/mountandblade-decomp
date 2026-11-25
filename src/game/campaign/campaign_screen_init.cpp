@@ -21,6 +21,35 @@
 // the widget a member names, as an inline accessor: the object is then evaluated once, between the key string's
 // constructor and the lookup (0x4eca9b: mov edi,[esi]; mov ebx,[edi] before the call, mov ecx,edi after it)
 static inline MissionUi* label_of(MissionUi* w) { return w; }
+// std::vector<MissionUi*>::push_back as the original expands it at 0x4ec824: the fast path fills through the out-of-line
+// 0x40f8a0 (_Uninitialized_fill_n for pointers), the slow path calls insert 0x4927d0
+namespace std {
+template<> MissionUi** vector<MissionUi*, allocator<MissionUi*> >::_Ufill(MissionUi**, size_type, MissionUi* const&);
+}
+struct kids_vec : std::vector<MissionUi*> {
+    __forceinline void push(MissionUi* _Val)
+    {
+        if (size() < capacity()) {
+            MissionUi** p = _Mylast;
+            _Ufill(p, 1, _Val);
+            p = p + 1;
+            _Mylast = p;
+        } else
+            insert(end(), _Val);
+    }
+};
+// the same push_back at 0x4ec9b9: the original's fast path there is the plain store, not the _Ufill call
+struct kids_vec2 : std::vector<MissionUi*> {
+    __forceinline void push(MissionUi* _Val)
+    {
+        if (size() < capacity()) {
+            MissionUi** p = _Mylast;
+            *p = _Val;
+            _Mylast = p + 1;
+        } else
+            insert(end(), _Val);
+    }
+};
 
 // the party record of dense index idx (pages of 16), as the original indexes it
 static Party* party_bytes(PartyMgr* mgr, int idx)
@@ -91,7 +120,7 @@ void CampaignScreen::init_screen()
     }
     {
         MissionUi* bar_copy = f34;
-        overlay->kids.push_back(bar_copy);
+        ((kids_vec&)overlay->kids).push(bar_copy);
     }   // 0x4ec824: the map-bar overlay takes the button bar
 
     {
@@ -116,7 +145,7 @@ void CampaignScreen::init_screen()
     memcpy(&f30->scene3d.fr, &cam, 0x120);
     f30->move_a(V2(0.0f, 0.04f));
     f30->set_xy(V2(1.0f, 0.71f));
-    overlay->kids.push_back((MissionUi*)f30);            // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
+    ((kids_vec2&)overlay->kids).push((MissionUi*)f30);            // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
     f54 = new MissionUi;
     f54->move_a(V2(0.445f, 0.06f));        // 0x4eca31
     f54->set_xy(V2(0.09f, 0.04f));         // 0x4eca4f

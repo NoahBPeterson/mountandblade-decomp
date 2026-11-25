@@ -23,6 +23,45 @@ template<> vector<rgl::point20, allocator<rgl::point20> >::iterator vector<rgl::
 }
 using namespace rgl;
 
+
+// @ 0x427450: bodiless declaration, definition after on_shape: on_shape's call site expands it inline (the original's does
+// too: the size test at 0x4279d0, the fill call 0x427ca0, then the slow path through insert and iterator::operator+)
+// the std::vector<Contact> members expanded inline at on_shape's call site (docs/codegen.md 17.6): the fast path fills
+// through the out-of-line 0x427ca0 and the slow path calls insert, which stays out of line as the original's does
+struct contact_inl : std::vector<rgl::Contact> {
+    __forceinline Contact* _Ufill(Contact* _Ptr, size_type _Count, const Contact& _Val)
+    {   // copy initializing _Count * _Val, using allocator
+        _Uninitialized_fill_n(_Ptr, _Count, _Val, this->_Alval);
+        return (_Ptr + _Count);
+    }
+    __forceinline iterator insert(iterator _Where, const Contact& _Val)
+    {   // insert _Val at _Where
+        size_type _Off = size() == 0 ? 0 : _ITER_BASE(_Where) - _Mylast;
+        _Insert_n(_Where, (size_type)1, _Val);
+        return (iterator(_Mylast + _Off));
+    }
+    __forceinline void push(const Contact& _Val)
+    {   // insert element at end
+        if (size() < capacity()) {
+            Contact* p = _Mylast;
+            *p = _Val;
+            p = p + 1;
+            _Mylast = p;
+        } else
+            insert(end(), _Val);
+    }
+};
+namespace std {
+// @ 0x427450
+template<> void vector<Contact, allocator<Contact> >::push_back(const Contact& _Val)
+{
+    if (size() < capacity())
+        _Mylast = _Ufill(_Mylast, 1, _Val);
+    else
+        insert(end(), _Val);
+}
+}
+
 void sort_range(std::vector<entity*>::iterator first, std::vector<entity*>::iterator last, int ideal);          // 0x426a30
 
 // ---- the world's queries ------------------------------------------------------------------------------------------
@@ -260,7 +299,7 @@ bool dynamic_entity::on_entity(entity* e)
         Contact rec;
         rec.p = pt;
         rec.n = nrm;
-        contacts.push_back(rec);
+        ((contact_inl&)contacts).push(rec);
         vector4 neg(-nrm.x, -nrm.y, -nrm.z);
         Contact rec2;
         rec2.p = pt;
@@ -291,8 +330,6 @@ bool dynamic_entity::on_entity(entity* e)
 }
 
 // ---- std::vector<Contact> (collision_entity::contacts): the members the original keeps out of line ------------------------------
-// @ 0x427450
-template void std::vector<Contact>::push_back(const Contact&);
 // @ 0x4274c0
 template void std::_Uninit_fill_n(Contact*, unsigned, const Contact&, std::allocator<Contact>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x427540
@@ -321,7 +358,7 @@ bool dynamic_entity::on_shape(shape_base* g)
         point_velocity(&v, &pt);
         rec.p = pt;
         rec.n = nrm;
-        contacts.push_back(rec);
+        ((contact_inl&)contacts).push(rec);
         float vn = nrm.x * v.x + nrm.y * v.y + v.z * nrm.z;
         vector4 t = v - nrm * vn;
         if (!(vn >= 0.0f)) {
