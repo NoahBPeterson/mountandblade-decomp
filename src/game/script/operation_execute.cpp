@@ -1145,9 +1145,9 @@ tstring DialogBlock::renumber(__int64* locals, int index, int use_var, int* pvar
 {
     tstring* gs = &g_game->debugger.text;   // the whole script text
     tstring result;
-    tstring* text_ = &text;                           // the block's script id (this+0xc)
     tstring key("\"");
-    key.append(text_->substr(text_->find(' ', 0) + 1, text_->len));
+    int len = text.len;                               // the block's script id (this+0xc)
+    key.append(text.substr(text.find(' ', 0) + 1, len));
     key.append("\"");
     int pos = gs->find(key, 0);
     tstring value;
@@ -1188,14 +1188,17 @@ tstring DialogBlock::renumber(__int64* locals, int index, int use_var, int* pvar
                 value = body;
                 int at = body.find(',', 0);
                 if (at >= 0) {
+                    body = body.substr(at + 1, body.len);
                     int idx = 0;
                     int base = at + 1;
-                    body = body.substr(base, body.len);
                     for (;;) {
                         int n = body.find(',', 0);
-                        if (n <= 0 && body.len <= 0)
-                            break;
-                        int endpos = (0 >= n) ? body.len : n;
+                        if (n <= 0) {
+                            if (body.len <= 0)
+                                break;
+                            n = body.len;
+                        }
+                        int endpos = n;
                         tstring item = body.substr(0, endpos);
                         if (endpos + 1 < body.len)
                             body = body.substr(endpos + 1, body.len);
@@ -1213,12 +1216,14 @@ tstring DialogBlock::renumber(__int64* locals, int index, int use_var, int* pvar
                         }
                         if (named) {
                             int kind;
-                            int v = (int)items[index].get_operand((__int64*)locals, &idx, &kind);
+                            __int64 v = items[index].get_operand((__int64*)locals, &idx, &kind);
                             char tmp[100];
                             sprintf(tmp, " = %d", v);
                             tstring pre(tmp);
-                            tstring num(tmp);
-                            value.insert(base + endpos, num);
+                            {
+                                tstring num(tmp);
+                                value.insert(base + endpos, num);
+                            }
                             base += pre.len;
                         }
                         base += endpos + 1;
