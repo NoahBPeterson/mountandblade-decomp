@@ -7,3 +7,5 @@ slices/s004c46d0/s004c46d0.cpp  ?clear@list_int@@QAEXXZ  004c4d80  /O2 /MT /Gy /
 slices/s004c46d0/s004c46d0.cpp  ??1world_obj@@QAE@XZ  004c4ee0  /O2 /MT /Gy /TP
 slices/s004c46d0/s004c46d0.cpp  ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z  004c4f40  /O2 /MT /Gy /TP
 slices/s004c46d0/s004c46d0.cpp  ?fill_records@@YAXPAXIPBXPAUblock_copier@@@Z  004c5010  /O2 /MT /Gy /TP
+slices/s004c46d0/s004c46d0.cpp  ?_Buynode@?$list@Ulist_elem@@V?$allocator@Ulist_elem@@@std@@@std@@IAEPAU_Node@?$_List_nod@Ulist_elem@@V?$allocator@Ulist_elem@@@std@@@2@XZ  004c4dc0  /O2 /MT /Gy /EHa /TP
+slices/s004c46d0/s004c46d0.cpp  ?_Buynode@?$list@Ulist_elem@@V?$allocator@Ulist_elem@@@std@@@std@@IAEPAU_Node@?$_List_nod@Ulist_elem@@V?$allocator@Ulist_elem@@@std@@@2@PAU342@0ABUlist_elem@@@Z  004c4e50  /O2 /MT /Gy /EHa /TP

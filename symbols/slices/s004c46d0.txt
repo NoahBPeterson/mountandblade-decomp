@@ -8,8 +8,8 @@
 004c4cc0 ??0CharSheet@@QAE@XZ  # ctor, vtable 0x595c20, frustum at +0x2ec, +0x2dc=-1, +0x2e4=0
 004c4d10 ??1Tail2@@QAE@XZ  # dtor: drains +0x10 refcap, frees +4 pointer vector back-to-front, drops the array
 004c4d80 ?clear@list_int@@QAEXXZ  # std::list<int>::clear: walk next from head+4, free every node
-004c4dc0 ?list_int_buynode@@YIPAXPAUlist_int@@@Z  # scalar new of a 0x28-byte self-linking node (EH-framed in the original)
-004c4e50 ?list_int_make_node@@YIPAXPAUlist_int@@PAX111@Z  # scalar new of a node initialised through 0x4be9c0 (ret 0xc)
+004c4dc0 ?_Buynode@?$list@Ulist_elem@@V?$allocator@Ulist_elem@@@std@@@std@@IAEPAU_Node@?$_List_nod@Ulist_elem@@V?$allocator@Ulist_elem@@@std@@@2@XZ  # std::list<0x20-byte T>::_Buynode() (EH-framed, /EHa)
+004c4e50 ?_Buynode@?$list@Ulist_elem@@V?$allocator@Ulist_elem@@@std@@@std@@IAEPAU_Node@?$_List_nod@Ulist_elem@@V?$allocator@Ulist_elem@@@std@@@2@PAU342@0ABUlist_elem@@@Z  # std::list<0x20-byte T>::_Buynode(next, prev, val), ctor 0x4be9c0
 004c4ee0 ??1Terrain@@QAE@XZ  # big object dtor: free +0x845e7bc, clear 3 words, dtor name + 15 0x28-stride strings
 004c4f40 ?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z  # deleting dtor (ret 4) of a 0x60-byte element / its vector
 004c5010 ?fill_records@@YAXPAXIPBXPAUblock_copier@@@Z  # uninitialized fill of n 0x2c-byte records through 0x4c1b20, EH-guarded

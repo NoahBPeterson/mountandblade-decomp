@@ -20,7 +20,13 @@
 // Layouts and names are provisional; field offsets come from this slice's disassembly only.
 #include <stdio.h>
 #include <string.h>
+// The original was built without the placement operator delete that this toolchain's <new> declares next to the
+// placement operator new: an object built by placement new in a try region then carries no extra unwind state.
+#define __PLACEMENT_NEW_INLINE
 #include <new>
+#pragma warning(disable : 4291)
+inline void* __cdecl operator new(size_t, void* where) { return where; }
+#include <list>
 #include <windows.h>
 #include "rgl.h"
 
@@ -95,7 +101,6 @@ struct RecI {
     void* destroy(unsigned flags);                              // 0x431810  ??_ERecI deleting destructor
 };
 void __fastcall rec34_free_array(void* p, void*, unsigned flags); // 0x4318c0  array free for 0x34 records
-void __fastcall list_node_init_4be9c0(void* node, void*, void* a, void* b, void* c);  // 0x4be9c0
 __declspec(noreturn) void __stdcall __CxxThrowException(void* p, void* t);   // 0x5368e6
 
 // =====================================================================================================
@@ -443,47 +448,16 @@ void list_int::clear()
 }
 
 // =====================================================================================================
-// 0x4c4dc0 / 0x4c4e50: the list node allocators and their funclets
+// 0x4c4dc0 / 0x4c4e50: std::list<T>::_Buynode() and _Buynode(next, prev, val) for a 0x20-byte T, with their
+// delete-and-rethrow funclets (0x4c4e2f / 0x4c4ebd). The real <list> instantiated: /EHa keeps the try regions,
+// and the original's <new> has no placement operator delete (see the top of this file), so the placement new
+// of the node adds no unwind state. The node constructor is 0x4be9c0 (_Node(next, prev, const T&), slice s004be310).
 // =====================================================================================================
 
-// @ 0x4c4dc0
-// std::list<int>::_Buynode: allocates a 0x28-byte node and links it to itself on both sides.
-void* __fastcall list_int_buynode(list_int* self)
-{
-    list_node_int* node = (list_node_int*)engine_new(0x28);
-    if (node != 0)
-        node->next = node;
-    if ((list_node_int*)((char*)node + 4) != 0)
-        node->prev = node;
-    return node;
-}
-
-// @ 0x4c4e2f
-// EH funclet of 0x4c4dc0: frees the node under construction and rethrows.
-void list_int_buynode_funclet(list_node_int* node)
-{
-    engine_delete(node);
-    __CxxThrowException(0, 0);
-}
-
-// @ 0x4c4e50
-// std::list<int> node constructor allocator (ret 0xc): allocates a 0x28-byte node and initialises it through
-// 0x4be9c0 with the three arguments of the caller.
-void* __fastcall list_int_make_node(list_int* self, void*, void* a, void* b, void* c)
-{
-    void* node = engine_new(0x28);
-    if (node != 0)
-        list_node_init_4be9c0(node, 0, a, b, c);
-    return node;
-}
-
-// @ 0x4c4ebd
-// EH funclet of 0x4c4e50: frees the node under construction and rethrows.
-void list_int_make_node_funclet(void* node)
-{
-    engine_delete(node);
-    __CxxThrowException(0, 0);
-}
+struct list_elem { int a[8]; };
+// Both _Buynode overloads, instantiated on their own (a whole-class instantiation wants operator== and <).
+template std::list<list_elem>::_Nodeptr std::list<list_elem>::_Buynode();
+template std::list<list_elem>::_Nodeptr std::list<list_elem>::_Buynode(std::list<list_elem>::_Nodeptr, std::list<list_elem>::_Nodeptr, const list_elem&);
 
 // =====================================================================================================
 // 0x4c4ee0: destructor of the big world object

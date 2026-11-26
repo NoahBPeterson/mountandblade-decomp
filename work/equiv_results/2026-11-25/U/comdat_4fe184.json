@@ -1,0 +1,16 @@
+[
+ {
+  "va": "004fe184",
+  "module": "s004fe0b0",
+  "verdict": "BYTE-EXACT-COMDAT",
+  "reason": "parent 0x004fe120 (?cell_fill@@YAXPAUui_cell@@IABU1@AAV?$allocator@Uui_cell@@@std@@U_Nonscalar_ptr_iterator_tag@3@@Z); source match/slices/s004fe0b0/s004fe0b0.cpp; COMDAT 100 bytes; object COMDAT 110 bytes; byte-exact; fragment 0x004fe184 (12 bytes): BYTE-EXACT-FRAGMENT",
+  "comdat_parent": "004fe120",
+  "comdat_len": 100,
+  "fragment_verdict": "BYTE-EXACT-FRAGMENT",
+  "comdat_symbol": "?cell_fill@@YAXPAUui_cell@@IABU1@AAV?$allocator@Uui_cell@@@std@@U_Nonscalar_ptr_iterator_tag@3@@Z",
+  "source": "match/slices/s004fe0b0/s004fe0b0.cpp",
+  "flags": "/O2 /MT /Gy /TP",
+  "diff_bytes": 0,
+  "first_diff": null
+ }
+]

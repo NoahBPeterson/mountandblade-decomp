@@ -1,0 +1,16 @@
+[
+ {
+  "va": "00492c96",
+  "module": "s00492b30",
+  "verdict": "COMDAT-DIFFERS(270 bytes, first at +0x34)",
+  "reason": "parent 0x00492b30 (?_Insert_n@Vec8@@QAEXPAUE8@@IABU2@@Z); source match/slices/s00492b30/s00492b30.cpp; COMDAT 358 bytes; object COMDAT 598 bytes; 270 differing bytes, first at +0x34; fragment 0x00492c96 (234 bytes): UNCLASSIFIED",
+  "comdat_parent": "00492b30",
+  "comdat_len": 358,
+  "fragment_verdict": "UNCLASSIFIED",
+  "comdat_symbol": "?_Insert_n@Vec8@@QAEXPAUE8@@IABU2@@Z",
+  "source": "match/slices/s00492b30/s00492b30.cpp",
+  "flags": "/O2 /MT /Gy /TP",
+  "diff_bytes": 270,
+  "first_diff": 52
+ }
+]
