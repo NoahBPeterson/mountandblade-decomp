@@ -20,7 +20,8 @@ struct InputRec { unsigned bits; char pad[0x14]; __int64 time; };
 // an input snapshot (0x18): the bits, a flag word and the move direction (Agent::in_now is one too)
 struct InputState {
     unsigned bits;                                      // +0x00 movement / action bits
-    unsigned f4;                                        // +0x04
+    bool f4;                                            // +0x04 (a byte flag: 0x4556d0 tests it with test al,al)
+    char pad5[3];
     rgl::vector4 move;                                  // +0x08 the move direction
 };
 
