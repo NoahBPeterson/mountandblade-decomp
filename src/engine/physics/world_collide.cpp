@@ -24,13 +24,40 @@ template<> vector<rgl::point20, allocator<rgl::point20> >::iterator vector<rgl::
 using namespace rgl;
 
 
+namespace std {
+// the original's two element helpers are out-of-line explicit specializations (hand-written try/catch loops: the
+// _Nonscalar_ptr_iterator_tag overloads of the stock <memory>), declared before their first use, defined at their addresses
+template<> void _Uninit_fill_n<Contact*, unsigned int, Contact, allocator<Contact> >(Contact*, unsigned int, const Contact&, allocator<Contact>&, _Nonscalar_ptr_iterator_tag);
+template<> Contact* _Uninit_copy<Contact*, Contact*, allocator<Contact> >(Contact*, Contact*, Contact*, allocator<Contact>&, _Nonscalar_ptr_iterator_tag);
+template<> __declspec(noinline) vector<Contact>::iterator vector<Contact>::insert(vector<Contact>::iterator, const Contact&);   // 0x427540
+}
 // std::_Uninitialized_fill_n for the contact vector is the out-of-line 0x427ca0 (defined at the end of the file): only
 // on_shape's expanded push_back calls it. The vector's own members (push_back 0x427450, _Insert_n 0x427590) fill
 // through std::_Uninit_fill_n directly (0x4274c0), so their _Ufill is the VC7.1 body with the wrapper expanded.
 namespace std {
 template<> __declspec(noinline) void _Uninitialized_fill_n<Contact*, vector<Contact>::size_type, Contact, allocator<Contact> >(
     Contact* _First, vector<Contact>::size_type _Count, const Contact& _Val, allocator<Contact>& _Al);
-template<> inline Contact* vector<Contact, allocator<Contact> >::_Ufill(Contact* _Ptr, size_type _Count, const Contact& _Val)
+template<> __forceinline Contact* _Uninitialized_copy<Contact*, Contact*, allocator<Contact> >(Contact* _First, Contact* _Last, Contact* _Dest, allocator<Contact>& _Al)
+{
+    return _Uninit_copy(_First, _Last, _Dest, _Al, _Ptr_cat(_First, _Dest));
+}
+// the stock fill / copy_backward loops, inline (cl 13.10 keeps the stock templates out of line here; the original has them expanded)
+template<> __forceinline void fill<Contact*, Contact>(Contact* _First, Contact* _Last, const Contact& _Val)
+{
+    for (; _First != _Last; ++_First)
+        *_First = _Val;
+}
+template<> __forceinline Contact* copy_backward<Contact*, Contact*>(Contact* _First, Contact* _Last, Contact* _Dest)
+{
+    while (_First != _Last)
+        *--_Dest = *--_Last;
+    return _Dest;
+}
+template<> template<> __forceinline Contact* vector<Contact, allocator<Contact> >::_Ucopy<Contact*>(Contact* _First, Contact* _Last, Contact* _Ptr)
+{
+    return _Uninitialized_copy(_First, _Last, _Ptr, this->_Alval);
+}
+template<> __forceinline Contact* vector<Contact, allocator<Contact> >::_Ufill(Contact* _Ptr, size_type _Count, const Contact& _Val)
 {
     _Uninit_fill_n(_Ptr, _Count, _Val, this->_Alval, _Ptr_cat(_Ptr, _Ptr));
     return (_Ptr + _Count);
@@ -339,13 +366,48 @@ bool dynamic_entity::on_entity(entity* e)
 
 // ---- std::vector<Contact> (collision_entity::contacts): the members the original keeps out of line ------------------------------
 // @ 0x4274c0
-template void std::_Uninit_fill_n(Contact*, unsigned, const Contact&, std::allocator<Contact>&, std::_Nonscalar_ptr_iterator_tag);
+namespace std {
+template<> void _Uninit_fill_n<Contact*, unsigned int, Contact, allocator<Contact> >(Contact* _First, unsigned int _Count, const Contact& _Val, allocator<Contact>& _Al, _Nonscalar_ptr_iterator_tag)
+{
+    Contact* _Next = _First;
+    try {
+        for (; 0 < _Count; --_Count, ++_First)
+            new ((void*)_First) Contact(_Val);
+    } catch (...) {
+        for (; _Next != _First; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+}
+}
 // @ 0x427540
-template std::vector<Contact>::iterator std::vector<Contact>::insert(std::vector<Contact>::iterator, const Contact&);
+namespace std {
+// the stock body, spelled with the public insert(where, 1, x): out of line (cl 13.10 would inline the stock one into push_back)
+template<> __declspec(noinline) vector<Contact>::iterator vector<Contact>::insert(vector<Contact>::iterator _P, const Contact& _X)
+{
+    size_type _Off = size() == 0 ? 0 : _P - begin();
+    insert(_P, (size_type)1, _X);
+    return (begin() + _Off);
+}
+}
 // @ 0x427590
 template void std::vector<Contact>::_Insert_n(std::vector<Contact>::iterator, size_t, const Contact&);
 // @ 0x427880
-template Contact* std::_Uninit_copy(Contact*, Contact*, Contact*, std::allocator<Contact>&, std::_Nonscalar_ptr_iterator_tag);
+namespace std {
+template<> Contact* _Uninit_copy<Contact*, Contact*, allocator<Contact> >(Contact* _First, Contact* _Last, Contact* _Dest, allocator<Contact>& _Al, _Nonscalar_ptr_iterator_tag)
+{
+    Contact* _Next = _Dest;
+    try {
+        for (; _First != _Last; ++_Dest, ++_First)
+            new ((void*)_Dest) Contact(*_First);
+    } catch (...) {
+        for (; _Next != _Dest; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+    return _Dest;
+}
+}
 
 // @ 0x427900
 bool dynamic_entity::on_shape(shape_base* g)
