@@ -5466,6 +5466,10 @@ class Runner:
             self.note_pool_page(page, d)        # --uninit-mem: this page's baseline for the write flags
             return d
         m.take_dirty()              # DYN/MISC back to baseline (normally already clean)
+        m.take_image_dirty()        # so are the image's writable pages: a run that ended before its own take_image_dirty (an
+                                    # input discarded after the overrides were laid out) left its typed globals in memory, and
+                                    # the NEXT input's original pass reported them as its own final state (build_mesh_name
+                                    # 0x5302f0: orig holds a stale resmgr object at 0x5d6fa0, ours the baseline; no store by either)
         m.lazy = lazy
         if side is self.orig:
             self.reset_writes()     # a new input: the rule needs writes from BOTH passes, so only here
