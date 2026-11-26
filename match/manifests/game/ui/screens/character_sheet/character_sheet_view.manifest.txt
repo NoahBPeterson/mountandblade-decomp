@@ -1,0 +1,2 @@
+
+../src/game/ui/screens/character_sheet/character_sheet_view.cpp  ?init_screen@ItemD@@UAEXXZ  0050a140  /O2 /MT /Gy /TP

@@ -210,7 +210,8 @@ void ItemD::init_screen()
     page = -1;
     arg = -1;
     scroll_pos = -1.0f;
-    std::vector<int>().swap(back_pages);
-    std::vector<int>().swap(fwd_pages);
+    typedef std::vector<int> IntVec;
+    back_pages.~IntVec();                      // the vector's _Tidy: free the storage, zero the three pointers
+    fwd_pages.~IntVec();
     build(g_game->notes_type, g_game->notes_object);
 }

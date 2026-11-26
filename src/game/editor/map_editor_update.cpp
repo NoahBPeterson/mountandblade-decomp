@@ -292,6 +292,7 @@ void pos3::move_forward(const float& k)
     dst.z += d.z;
 }
 
+namespace std { template<> vector<PlacedObj>::iterator vector<PlacedObj>::erase(vector<PlacedObj>::iterator); }
 // @ 0x5313c0
 void MapMission::remove_prop(int index)
 {
@@ -311,8 +312,21 @@ void MapMission::remove_prop(int index)
 #undef pv
 }
 
-// @ 0x531470 (Mission::props.erase(where): the real vector's erase, instantiated here)
-template std::vector<PlacedObj>::iterator std::vector<PlacedObj>::erase(std::vector<PlacedObj>::iterator);
+// @ 0x531470 (Mission::props.erase(where): the library's erase body, with the std::copy of the tail expanded in place as the original did)
+namespace std {
+template<> vector<PlacedObj>::iterator vector<PlacedObj>::erase(vector<PlacedObj>::iterator _Where)
+{
+    PlacedObj* last = _Mylast;
+    if (_Where + 1 != last) {
+        PlacedObj* d = _Where._Myptr;
+        for (PlacedObj* s = d + 1; s != last; ++s, ++d)
+            *d = *s;
+    }
+    _Destroy(_Mylast - 1, _Mylast);
+    --_Mylast;
+    return _Where;
+}
+}
 
 // @ 0x5314e0
 void MissionBlocker::add_selected(rgl::mesh* target, const rgl::matrix* frame, PlacedObj* prop, unsigned color)
