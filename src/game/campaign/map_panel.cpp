@@ -669,7 +669,7 @@ void CampaignScreen::update(int type, int id)
     if (type == 1) {
         pos = *(rgl::vector4*)&g_game->parties.get_w(id)->pos;
     } else if (type == 3) {
-        pos = g_game->tracks[id].pos();
+        pos = *(rgl::vector4*)&g_game->tracks[id];      // x, y, z, w are the record's first four dwords: the whole-vector copy
     } else if (type == 4) {
         pos = *(rgl::vector4*)&g_game->parties.get(id)->pos;
     }

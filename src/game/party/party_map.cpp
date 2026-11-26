@@ -1359,9 +1359,7 @@ void Party::plan_order()
             fwd.y = 1.0f;
             fwd.rotate_a(angle);
             Party* q = m->get(t);
-            vec2 o;
-            o.x = q->pos.x;
-            o.y = q->pos.y;
+            vec2 o = *(const vec2*)&q->pos;
             vec2 d;
             d.x = o.x - pos.x;
             d.y = o.y - pos.y;
@@ -1417,7 +1415,7 @@ void Party::plan_order()
                 if (give_up)
                     return;
             }
-            set_order_face(fwd, a);
+            set_order_face(*(const Vec2*)&fwd, a);
             return;
             }
         }
@@ -1431,11 +1429,9 @@ void Party::plan_order()
         int tgt;
         PartyMgr* m;
         if (action == 3 && (tgt = target) >= 0 && (m = &g_game->parties)->is_live(tgt)) {
-            to.x = m->get(tgt)->pos.x;
-            to.y = m->get(tgt)->pos.y;
+            to = *(const vec2*)&m->get(tgt)->pos;
         } else {
-            to.x = order_pos.x;
-            to.y = order_pos.y;
+            to = *(const vec2*)&order_pos;
         }
         bool give_up = false;
         int tries = 0;
@@ -1490,7 +1486,7 @@ void Party::plan_order()
             if (give_up)
                 return;
         }
-        set_order_face(p, a);
+        set_order_face(*(const Vec2*)&p, a);
     }
 }
 
@@ -2995,9 +2991,7 @@ void Party::tick(float dt)
             if (action == 4 && (t = target) >= 0 && (m = &g_game->parties)->is_live(t) &&
                 !party_flag(m->get(t), 0x100) &&
                 m->get(t)->action != 8 && dt > 0.0f) {
-                vec2 o;
-                o.x = m->get(t)->pos.x;
-                o.y = m->get(t)->pos.y;
+                vec2 o = *(const vec2*)&m->get(t)->pos;     // one lookup, an 8-byte copy
                 float d = plane_dist(o, p);
                 if (d < m->get(t)->radius + radius) {
                     int him = t;
@@ -3022,9 +3016,7 @@ void Party::tick(float dt)
             if (act == 9) {
                 t = target;
                 // both lookups read the member again (not t): that is what keeps cl from sharing the page index arithmetic
-                vec2 o;
-                o.x = battle_page(target)->pos2.x;
-                o.y = battle_page(target)->pos2.y;
+                vec2 o = *(const vec2*)&battle_page(target)->pos2;
                 float d = plane_dist(o, p);
                 if (d < battle_page(target)->f40 + radius) {
                     Event* n = battles()->get(t);
@@ -3044,9 +3036,7 @@ void Party::tick(float dt)
             }
             if (act == 1) {
                 if ((t = target) >= 0 && (m = &g_game->parties)->is_live(t)) {
-                    vec2 o;
-                    o.x = m->get(t)->pos.x;
-                    o.y = m->get(t)->pos.y;
+                    vec2 o = *(const vec2*)&m->get(t)->pos;
                     float d = plane_dist(o, p);
                     if (d < m->get(t)->radius + radius) {
                         if (id == g_game->main_party) {

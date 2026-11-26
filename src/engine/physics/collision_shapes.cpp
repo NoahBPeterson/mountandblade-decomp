@@ -932,42 +932,41 @@ void polygon_capsule_contact(face* poly, capsule* cap, int max, contact* out, in
             }
         }
         cur += 1;
-    } while (!done && i < poly->count);
+    } while (!done && ok && i < poly->count);
     if (!ok) return;
     int n = ++*count;
     if (n > max) return;
+    const vector4* q0 = &cap->p0;
+    const vector4* q1 = &cap->p1;
     if (!edge) {
         if (s0 >= 0.0f && s1 > 0.0f) {
             if (s0 < s1) {
                 vector4 tt(s0 * poly->normal.x, s0 * poly->normal.y, s0 * poly->normal.z);
-                ep = vector4(cap->p0.x - tt.x, cap->p0.y - tt.y, cap->p0.z - tt.z);
+                ep = vector4(q0->x - tt.x, q0->y - tt.y, q0->z - tt.z);
             } else {
-                const vector4* q1 = &cap->p1;
                 vector4 tt(s1 * poly->normal.x, s1 * poly->normal.y, s1 * poly->normal.z);
                 ep = vector4(q1->x - tt.x, q1->y - tt.y, q1->z - tt.z);
             }
         } else if (s0 < 0.0f && s1 < 0.0f) {
             if (s0 > s1) {
                 vector4 tt(s0 * poly->normal.x, s0 * poly->normal.y, s0 * poly->normal.z);
-                ep = vector4(cap->p0.x - tt.x, cap->p0.y - tt.y, cap->p0.z - tt.z);
+                ep = vector4(q0->x - tt.x, q0->y - tt.y, q0->z - tt.z);
             } else {
-                const vector4* q1 = &cap->p1;
                 vector4 tt(s1 * poly->normal.x, s1 * poly->normal.y, s1 * poly->normal.z);
                 ep = vector4(q1->x - tt.x, q1->y - tt.y, q1->z - tt.z);
             }
         } else {
-            const vector4* q1 = &cap->p1;
-            vector4 dir(q1->x - cap->p0.x, q1->y - cap->p0.y, q1->z - cap->p0.z);
+            vector4 dir(q1->x - q0->x, q1->y - q0->y, q1->z - q0->z);
             dir.normalize();
-            vector4 dv(poly->w[0].x - cap->p0.x, poly->w[0].y - cap->p0.y, poly->w[0].z - cap->p0.z);
+            vector4 dv(poly->w[0].x - q0->x, poly->w[0].y - q0->y, poly->w[0].z - q0->z);
             float k = dir.x * poly->normal.x + (dir.y * poly->normal.y + dir.z * poly->normal.z);
             if (k == 0.0f) {
-                vector4 sm(q1->x + cap->p0.x, q1->y + cap->p0.y, q1->z + cap->p0.z);
+                vector4 sm(q1->x + q0->x, q1->y + q0->y, q1->z + q0->z);
                 ep = vector4(sm.x * 0.5f, sm.y * 0.5f, sm.z * 0.5f);
             } else {
                 k = (dv.x * poly->normal.x + (dv.y * poly->normal.y + dv.z * poly->normal.z)) / k;
                 vector4 st(dir.x * k, dir.y * k, dir.z * k);
-                ep = vector4(st.x + cap->p0.x, st.y + cap->p0.y, st.z + cap->p0.z);
+                ep = vector4(st.x + q0->x, st.y + q0->y, st.z + q0->z);
             }
         }
     }

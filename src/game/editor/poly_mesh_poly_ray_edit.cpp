@@ -432,8 +432,9 @@ void MissionBlocker::update_placement()
 
         for (unsigned i = 0; i < list.size(); i++) {
             rgl::mesh* c = list[i]->clone();
-            g_mission->edit_obj->meshes.push_back(c);
-            g_mission->edit_obj->recalc();
+            rgl::entity* eo = g_mission->edit_obj;
+            eo->meshes.push_back(c);
+            eo->recalc();
         }
 
         g_game->editor.f1a0c0 = g_game->editor.list_mode;
@@ -451,7 +452,8 @@ void MissionBlocker::update_placement()
         rgl::mat3 m3;
         m3.u = vector4(0.0f, 0.0f, 1.0f);
         vector4 d(-this->k.u.x, -this->k.u.y, -this->k.u.z);
-        vector4 s = cross_inline_s2f250(d, m3.u);
+        vector4 dc = d;
+        vector4 s = cross_inline_s2f250(dc, m3.u);
         m3.s = s;
         normalize_inline_s2f250(m3.s);
         vector4 f = cross_inline_s2f250(m3.u, m3.s);
@@ -464,7 +466,7 @@ void MissionBlocker::update_placement()
         }
         if (g_game->editor.list_mode == 4) {
             int n = g_ptypes[g_game->editor.list_sel].nframes;
-            this->variant = (n > 1) ? rand() % n : 0;
+            this->variant = (n <= 1) ? 0 : rand() % n;
         }
     }
 
@@ -484,9 +486,8 @@ void MissionBlocker::update_placement()
         vector4 old = g_game->editor.rt;
         g_game->editor.rt = col;
         for (unsigned i = 0; i < g_mission->edit_obj->meshes.size(); i++) {
-            rgl::mesh* c = g_mission->edit_obj->meshes[i];
-            c->set_color(vector4(1.0f / old.x, 1.0f / old.y, 1.0f / old.z));
-            c->set_color(g_game->editor.rt);
+            g_mission->edit_obj->meshes[i]->set_color(vector4(1.0f / old.x, 1.0f / old.y, 1.0f / old.z));
+            g_mission->edit_obj->meshes[i]->set_color(g_game->editor.rt);
         }
     }
     if (fC != 0 || fB != 0 || fA != 0)
@@ -550,7 +551,7 @@ place:
                 }
                 if (g_game->editor.list_mode == 4) {
                     int n = g_ptypes[g_game->editor.list_sel].nframes;
-                    this->variant = (n > 1) ? rand() % n : 0;
+                    this->variant = (n <= 1) ? 0 : rand() % n;
                 }
         }
     }
