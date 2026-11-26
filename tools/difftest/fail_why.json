@@ -71,12 +71,6 @@
  "004b3bc0": [
   "Equivalent by reading: set_order_pos receives a Vec2 temporary (order_pos.xy()) where the original passes &order_pos; the callee copies it, so only the argument address differs."
  ],
- "0046e590": [
-  "Equivalent by reading: a call argument is the address of a local copy where the original passes the address of the particle frame member; not a value difference."
- ],
- "00471b30": [
-  "Equivalent by reading: same as 0x47ff60 (unpack_color argument address)."
- ],
  "004e99d0": [
   "Equivalent by reading: w_int(unsigned) / w_bool(bool) pass the address of a local copy; the stream receives the same value."
  ],
@@ -89,17 +83,6 @@
  "0049ad20": [
   "Harness limit: the real std::vector body is inlined where the original calls the out-of-line 0x488930; operator new is reached through another call path."
  ],
- "004fc820": [
-  "Harness limit: the original frees the split() pieces through the out-of-line vector deleting destructor 0x4fd0e0 (push 3; an opaque depth-1 call), ours expands delete[] inline, so the element ~tstring calls (0x42bc40) show up in ours' call stream before the virtual set_text (0x488b50) the original reaches at call #19.",
-  "The work is the same: reverse loop of ~tstring over [arr-4] elements, then operator delete[] on arr-4. cl cannot be made to call the vector deleting destructor of a class without a virtual destructor (the old TStringArray::destroy(3) hand call was dropped for delete[] by lane L-H3).",
-  "Verdict: harness artefact, not a source bug"
- ],
- "004fd700": [
-  "Harness limit: the original keeps vector<vector4>/vector<NotePage> release in 0x41f4b0 and push_back/_Insert_n in 0x4fdff0 / 0x43e7b0 (opaque depth-1 calls, their malloc/free hidden); ours expands or runs local copies of the same std::vector bodies, so engine_new/free appear in ours' call stream only (call #29: engine_new(4) vs engine_new(0x10) is a different visibility level, not a different allocation).",
-  "Allocation checked on the replayed input: the import traces of both sides are identical (free x5, malloc 4, 0x10, 4, ...), i.e. args/links grow by one int (4 bytes) and rects_a by one vector4 (0x10) in the same order. clear() is VC7.1's _Tidy (work/toolchain/vc71tk/include/vector): free the block, zero first/last/end, no allocation, exactly what the original inlines for the int lists and calls 0x41f4b0 for the others.",
-  "Making ours' _Tidy an out-of-line specialization did not change the verdict (local copies stay transparent): the original's call target is not bound to ours.",
-  "Verdict: harness artefact, not a source bug"
- ],
  "004610c2": [
   "Interior VA of DialogMgr::start 0x4610b0, past the 18-byte WinLicense end marker (jmp +0x10 over 'WL  ' data) that the protector put into the image; it has no entry point of its own",
   "comdat_check 2026-11-25: our fragment is BYTE-EXACT (126 bytes); the enclosing COMDAT differs only by that 18-byte marker, which is not source (no C++ spelling emits it)",
@@ -109,5 +92,14 @@
   "Interior VA of meta_mission::init 0x4be730, past the 18-byte WinLicense end marker (jmp +0x10 over 'WL  ' data) that the protector put into the image; it has no entry point of its own",
   "comdat_check 2026-11-25: our fragment is BYTE-EXACT (126 bytes); the enclosing COMDAT differs only by the 16-18 marker bytes, which are not source",
   "Verdict: no differential test possible; the bytes after the marker equal the original"
+ ],
+ "004d3330": [
+  "RagdollBone::load walks a TinyXML element graph (QueryDoubleAttribute, FirstChild handles, virtual ToElement); random graphs fault on read or run past the budget (0/400 valid), so the unstubbed row has no verdict",
+  "With --stub-callees --stub-out 42dff0:1 --stub-out 42dfc0:1 all 200 inputs run: 38 are bit-identical and the call sequence (the 11 attribute reads, normalize, both FirstChild handles) is identical on every input; the 162 others differ only at the last virtual ToElement call, whose vtable word is read from a stub-returned pool object that the two builds do not receive identically",
+  "Equivalent by reading: the original calls ToElement twice (test, then reload) where ours calls it once; the call is pure, the attribute and bodies logic is the same"
+ ],
+ "005302f0": [
+  "Harness limit (1/1322 valid inputs over 4 shards): the one mismatch is shard 2/4 input 27 (steered mutant), a dword in .data (0x5a9fb0 in the 11-20 run, 0x5e29e0 in the 11-25 run) that the original leaves at 1 or 2 and ours at 0; build_mesh_name itself only reads 0x5a9fb0 (g_cfg.enable_edit_mode) and never stores to a global, and the fresh --replay of the saved input agrees on both builds, as do the other three shards (1200 valid, 0 mismatched) and a --no-steer run of shard 2/4.",
+  "The write is not in the function's code, so it is sequence state of the harness (a .data dword left over from an earlier input or a steered pointer aliasing .data), not a behavioural difference; the 11-20 'vector<mesh*>::operator= local copy' audit note is gone (the resolution audit lists 0 local copies now)."
  ]
 }

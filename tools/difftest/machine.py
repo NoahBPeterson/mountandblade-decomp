@@ -1318,11 +1318,15 @@ def install_import_models(m):
         "UpdateWindow": (lambda m_, a, esp: 1, 1),
         "RedrawWindow": (lambda m_, a, esp: 1, 4),
         "SetWindowPos": (lambda m_, a, esp: 1, 7),
+        "SetActiveWindow": (lambda m_, a, esp: 0, 1),            # HWND: no window was active before
+        "SetForegroundWindow": (lambda m_, a, esp: 1, 1),         # BOOL: brought to the foreground
         "SetFocus": (lambda m_, a, esp: 0, 1),                    # HWND: no window had the focus
         "PostMessageA": (lambda m_, a, esp: 1, 4),
         "EndDialog": (lambda m_, a, esp: 1, 2),
         "WSAStartup": (lambda m_, a, esp: 10091, 2),               # WSASYSNOTREADY: no network (get_latest_version 0x4b9aa0 gives up; 0x4d4140 WM_COMMAND 0x41f)
-        "DialogBoxParamA": (lambda m_, a, esp: 0, 5),             # INT_PTR: the modal dialog ended with 0 (Application's about/key dialog 0x4d4140)
+        "DialogBoxParamA": (lambda m_, a, esp: ui_answer(m_, (0, 0x410)), 5),   # INT_PTR: the modal dialog ended with 0 (Application's about/key dialog 0x4d4140) or 0x410 (the launcher dialog WinMain 0x4d9450 waits for)
+        "ord1": (lambda m_, a, esp: 1, 4),                        # SkinMagic InitSkinMagicLib(hinst, skin, 0, 0), stdcall: initialised (WinMain 0x4d94f7 via 0x535452)
+        "ord3": (lambda m_, a, esp: 1, 1),                        # SkinMagic LoadSkinFromFile(path), stdcall: loaded (WinMain 0x4d954a via 0x53544c)
         "ord9": (lambda m_, a, esp: 1, 2),                        # SkinMagic SetSingleDialogSkin(hwnd, name), stdcall: skin applied (0x4d4140)
         "DefWindowProcA": (lambda m_, a, esp: 0, 4),
         "GetWindowRect": (get_rect, 2),

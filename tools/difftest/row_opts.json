@@ -1232,5 +1232,13 @@
       "48ad00"
     ],
     "why": "GameData::add_sprite calls PartyMgr::index_of 0x48ad00 (a pure hash lookup) for every scene.obj() access; ours emits that call once per access where the original schedules a couple together (910 vs 804 bytes), so the depth-1 call order and count differ (rand() comes at call #6 in the original, index_of in ours). --transparent hides the pure lookup from the trace; --stub-callees keeps the other callees (scene setup 0x48f180, golist 0x4c6010, ...) from exhausting the emulated heap in the original's pass (the old UNSUPPORTED), so this verdict covers the function's own logic only."
+  },
+  "winmain_and_menu_screens 004d9450": {
+    "args": [
+      "--typed-share",
+      "0.9",
+      "--stub-callees"
+    ],
+    "why": "WinMain calls dozens of image functions (string table, config load, thread pool, bink intros, application setup) that load files and build windows; --stub-callees keeps them from running. The SkinMagic imports ord1 (InitSkinMagicLib) / ord3 (LoadSkinFromFile) and user32 SetActiveWindow / SetForegroundWindow are now modelled (machine.py), and DialogBoxParamA answers 0 or 0x410 (the launcher dialog result WinMain waits for)."
   }
 }

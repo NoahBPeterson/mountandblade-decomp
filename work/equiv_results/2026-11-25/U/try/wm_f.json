@@ -1,0 +1,276 @@
+[
+ {
+  "slice": "winmain_and_menu_screens",
+  "va": "004d9450",
+  "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+  "flags_from": "manifest(slice)",
+  "symbol": "_WinMain@16",
+  "symbol_from": "symbols/slices/winmain_and_menu_screens.txt",
+  "unresolved": [],
+  "eh_unresolved": [],
+  "modelled": [],
+  "resolution_conflicts": [],
+  "resolution_methods": {
+   "rdata-literal": 12,
+   "annotation": 25,
+   "symbols": 1,
+   "import": 14,
+   "crt": 3
+  },
+  "resolution_audit": {
+   "disagree": [],
+   "unverified": [
+    "__imp__GetCurrentProcess@0"
+   ],
+   "local_copy": [],
+   "same_code": [],
+   "agree": 54,
+   "paired_insns": 249,
+   "insns": [
+    258,
+    260
+   ]
+  },
+  "signature": "Sig(stdcall member=False ret=int params=[('int', 1), ('int', 1), ('int', 1), ('int', 1)])",
+  "stack_args": 4,
+  "reg_args": {},
+  "callee_pop": 16,
+  "ret_kind": "int",
+  "layout_notes": [],
+  "orig_size": 1001,
+  "void_hides_eax": false,
+  "orig_untouched_regs": [
+   "xmm0",
+   "xmm1",
+   "xmm2",
+   "xmm3",
+   "xmm4",
+   "xmm5",
+   "xmm6",
+   "xmm7"
+  ],
+  "plateau": "no new coverage in the 238 inputs after input 6",
+  "repaired_inputs": 79,
+  "steering": {
+   "frontier": 12,
+   "replays": 12,
+   "redqueen": 81,
+   "constants": 14,
+   "queued": 81
+  },
+  "mismatch_sigs": {},
+  "regress_inputs": 0,
+  "cover_inputs": {
+   "replayed": 7,
+   "saved": 0
+  },
+  "typed_inputs": {
+   "inputs": 241,
+   "valid": 199,
+   "types": {
+    "this": null,
+    "args": {},
+    "globals": {
+     "08ee3c48": "obj GameApp",
+     "005e28dc": "obj _RTL_CRITICAL_SECTION"
+    }
+   }
+  },
+  "seed": 1,
+  "inputs_planned": 400,
+  "extra_inputs": 400,
+  "gate": "edges",
+  "require_all": false,
+  "inputs": 244,
+  "valid": 200,
+  "discarded": {
+   "import:SetForegroundWindow": 42,
+   "arg-in-unallocated-heap": 2
+  },
+  "mismatches": 0,
+  "first_mismatch": null,
+  "coverage": {
+   "covered_insns": 84,
+   "total_insns": 258,
+   "pct": 32.6,
+   "all": false,
+   "missed": [
+    "004d956f",
+    "004d9571",
+    "004d9572",
+    "004d9573",
+    "004d9574",
+    "004d9576",
+    "004d9577",
+    "004d95ac",
+    "004d95b1",
+    "004d95b6",
+    "004d95bb",
+    "004d95bd",
+    "004d95c0",
+    "004d95c2",
+    "004d95c4",
+    "004d95c5",
+    "004d95ca",
+    "004d95cf",
+    "004d95d0",
+    "004d95d5",
+    "004d95d8",
+    "004d95dd",
+    "004d95e2",
+    "004d95e4",
+    "004d95e9",
+    "004d95ee",
+    "004d95f3",
+    "004d95f9",
+    "004d95fd",
+    "004d95fe",
+    "004d9602",
+    "004d9603",
+    "004d9604",
+    "004d960a",
+    "004d960f",
+    "004d9611",
+    "004d9613",
+    "004d9618",
+    "004d961a",
+    "004d961f",
+    "004d9626",
+    "004d962c",
+    "004d962e",
+    "004d9630",
+    "004d9632",
+    "004d9634",
+    "004d963a",
+    "004d963c",
+    "004d9641",
+    "004d9646",
+    "004d964b",
+    "004d9650",
+    "004d9653",
+    "004d9659",
+    "004d965e",
+    "004d9660",
+    "004d9663",
+    "004d9669",
+    "004d966b",
+    "004d9670",
+    "004d9677",
+    "004d9679",
+    "004d967d",
+    "004d9681"
+   ]
+  },
+  "tolerated": {
+   "stack-pointer": 0,
+   "inline-calls": 0,
+   "ulp": 0,
+   "const-pointer": 0,
+   "local-copy": 0,
+   "uninit-dword": 0,
+   "stub-scratch": 0,
+   "stale-return-address": 0
+  },
+  "ours_traps": {},
+  "stale_w_slots": 0,
+  "uninit_slots": [],
+  "edges": {
+   "orig": {
+    "total": 34,
+    "covered": 10,
+    "required": 32,
+    "pct": 31.2,
+    "unreachable": [
+     {
+      "edge": "004d9820->004d956f",
+      "reason": "blocked: only reachable past call @004d9800 (never returned: stopped at SetForegroundWindow (unmodelled import) in all 44 runs that reached it)"
+     },
+     {
+      "edge": "004d9820->004d9826",
+      "reason": "blocked: only reachable past call @004d9800 (never returned: stopped at SetForegroundWindow (unmodelled import) in all 44 runs that reached it)"
+     }
+    ],
+    "missed_n": 22,
+    "missed": [
+     "004d956d->004d956f",
+     "004d95a6->004d95ac",
+     "004d95c2->004d95c4",
+     "004d95c2->004d95d8",
+     "004d9611->004d9613",
+     "004d9611->004d9653",
+     "004d9618->004d961a",
+     "004d9618->004d9653",
+     "004d96c3->004d96c5",
+     "004d96c3->004d971a",
+     "004d96f3->004d96f5",
+     "004d96f3->004d971a",
+     "004d9721->004d9727",
+     "004d9721->004d97d7",
+     "004d973d->004d9743",
+     "004d973d->004d97d7",
+     "004d9780->004d9782",
+     "004d9780->004d97d7",
+     "004d97b0->004d97b2",
+     "004d97b0->004d97d7",
+     "004d97e7->004d956f",
+     "004d97e7->004d97ed"
+    ]
+   },
+   "ours": {
+    "total": 34,
+    "covered": 10,
+    "required": 32,
+    "pct": 31.2,
+    "unreachable": [
+     {
+      "edge": "300003d4->3000011f",
+      "reason": "blocked: only reachable past call @300003b4 (never returned: stopped at SetForegroundWindow (unmodelled import) in all 40 runs that reached it)"
+     },
+     {
+      "edge": "300003d4->300003da",
+      "reason": "blocked: only reachable past call @300003b4 (never returned: stopped at SetForegroundWindow (unmodelled import) in all 40 runs that reached it)"
+     }
+    ],
+    "missed_n": 22,
+    "missed": [
+     "3000011d->3000011f",
+     "30000156->3000015c",
+     "30000172->30000174",
+     "30000172->30000188",
+     "300001c1->300001c3",
+     "300001c1->30000203",
+     "300001c8->300001ca",
+     "300001c8->30000203",
+     "30000275->30000277",
+     "30000275->300002cc",
+     "300002a5->300002a7",
+     "300002a5->300002cc",
+     "300002d3->300002d9",
+     "300002d3->3000038b",
+     "300002ef->300002f5",
+     "300002ef->3000038b",
+     "30000334->30000336",
+     "30000334->3000038b",
+     "30000364->30000366",
+     "30000364->3000038b",
+     "3000039b->3000011f",
+     "3000039b->300003a1"
+    ]
+   }
+  },
+  "fp_tol": {
+   "compared": 200,
+   "bit_identical": 200,
+   "fp_tolerable": 0,
+   "fp_floats": 0,
+   "max_ulp": 0.0,
+   "max_err_ratio": 0.0,
+   "out_of_range": 0,
+   "real_mismatches": 0,
+   "uninit_dwords": 0
+  },
+  "verdict": "WEAK",
+  "reason": "orig misses 22 edge(s), ours misses 22 edge(s); edges orig 10/32 (+2 unreachable); ours 10/32 (+2 unreachable); 32.6% insns",
+  "seconds": 6.8
+ }
+]
