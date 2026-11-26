@@ -132,3 +132,5 @@
 ../src/engine/render/mesh.cpp  $L  00411139  /O2 /MT /Gy /TP
 ../src/engine/render/mesh.cpp  $L  00411bea  /O2 /MT /Gy /TP
 ../src/engine/render/mesh.cpp  ?update@psys@rgl@@QAEXPBMABUmatrix@2@@Z  00412150  /O2 /MT /Gy /TP
+../src/engine/render/mesh.cpp  ?spawn@psys@rgl@@QAEXPAUparticle@2@@Z  0040ec90  /O2 /MT /Gy /TP
+../src/engine/render/mesh.cpp  ?setup_material@mesh@rgl@@QAEXXZ  0040f3f0  /O2 /MT /Gy /TP

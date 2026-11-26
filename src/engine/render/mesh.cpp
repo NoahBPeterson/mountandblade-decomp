@@ -132,7 +132,7 @@ void psys::spawn(particle* out)
         local.x = r.x * box.x;
         local.y = r.y * box.y;
         local.z = r.z * box.z;
-        out->frame = world;
+        static_cast<mat3&>(out->frame) = world;   // the rotation rows only (48 bytes); the origin is written next
         out->frame.o = static_cast<const pos&>(world).transform_point(local);
     }
     if (flags & psf_emit_at_water_level)
@@ -658,7 +658,7 @@ void mesh::setup_material()
                     g_render.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
                     g_render.stage_xform[i] = 1;
                 }
-                set_transform(g_render.dev, (D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + i), tex_matrix);
+                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + i), as_d3d(tex_matrix));
             } else if (g_render.stage_xform[i] != 0) {
                 g_render.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
                 g_render.stage_xform[i] = 0;
