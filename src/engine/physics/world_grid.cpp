@@ -167,7 +167,15 @@ void rgl::world::add_shape(shape_base* s)
 // vectors that the original's object holds. cl 13.10.3052's stock <vector> leaves allocator::construct and the
 // _Ucopy / _Ufill wrappers out of line and stops inlining std::copy for elements of >= 128 bytes where the original
 // inlined them, so the _Insert_n / erase / _Uninit_* rows are not byte-exact (the real classes are kept: user ranking).
+// std::copy for the 0x88-byte cells, spelled out: cl 13.10 does not inline the stock copy for elements of >= 128 bytes
+__forceinline NavCell* copy_nonscalar(NavCell* f, NavCell* l, NavCell* d) { for (; f != l; ++d, ++f) *d = *f; return d; }
 namespace std {
+// The original's four element helpers are out-of-line explicit specializations (hand-written try/catch loops: the
+// _Nonscalar_ptr_iterator_tag overloads of the stock <memory>); declared first so _Insert_n calls them, defined in address order.
+template<> NavVert* _Uninit_copy<NavVert*, NavVert*, allocator<NavVert> >(NavVert*, NavVert*, NavVert*, allocator<NavVert>&, _Nonscalar_ptr_iterator_tag);
+template<> void _Uninit_fill_n<NavVert*, unsigned int, NavVert, allocator<NavVert> >(NavVert*, unsigned int, const NavVert&, allocator<NavVert>&, _Nonscalar_ptr_iterator_tag);
+template<> NavCell* _Uninit_copy<NavCell*, NavCell*, allocator<NavCell> >(NavCell*, NavCell*, NavCell*, allocator<NavCell>&, _Nonscalar_ptr_iterator_tag);
+template<> void _Uninit_fill_n<NavCell*, unsigned int, NavCell, allocator<NavCell> >(NavCell*, unsigned int, const NavCell&, allocator<NavCell>&, _Nonscalar_ptr_iterator_tag);
 // @ 0x424720
 template vector<NavCell>::iterator vector<NavCell>::iterator::operator+(vector<NavCell>::difference_type) const;
 // @ 0x424740
@@ -176,6 +184,33 @@ template void vector<NavVert>::resize(size_t, NavVert);
 template vector<NavVert>::iterator vector<NavVert>::erase(vector<NavVert>::iterator, vector<NavVert>::iterator);
 // @ 0x424830
 template void vector<NavVert>::_Insert_n(vector<NavVert>::iterator, size_t, const NavVert&);
+// @ 0x424bc0
+template<> NavVert* _Uninit_copy<NavVert*, NavVert*, allocator<NavVert> >(NavVert* _First, NavVert* _Last, NavVert* _Dest, allocator<NavVert>& _Al, _Nonscalar_ptr_iterator_tag)
+{
+    NavVert* _Next = _Dest;
+    try {
+        for (; _First != _Last; ++_Dest, ++_First)
+            new ((void*)_Dest) NavVert(*_First);
+    } catch (...) {
+        for (; _Next != _Dest; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+    return _Dest;
+}
+// @ 0x424c40
+template<> void _Uninit_fill_n<NavVert*, unsigned int, NavVert, allocator<NavVert> >(NavVert* _First, unsigned int _Count, const NavVert& _Val, allocator<NavVert>& _Al, _Nonscalar_ptr_iterator_tag)
+{
+    NavVert* _Next = _First;
+    try {
+        for (; 0 < _Count; --_Count, ++_First)
+            new ((void*)_First) NavVert(_Val);
+    } catch (...) {
+        for (; _Next != _First; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+}
 // @ 0x424cc0
 // The shrink path of resize calls erase out of line (0x424d60): a bodyless specialization declaration keeps the
 // call site from inlining the stock body (cl 13.10 would otherwise inline std::copy's tail into resize).
@@ -186,7 +221,7 @@ template<> vector<NavCell>::iterator vector<NavCell>::erase(vector<NavCell>::ite
 {   // erase [_First, _Last): the stock <vector> body, defined here as the specialization the declaration above names
 if (_First != _Last)
     {   // worth doing, copy down over hole
-    vector<NavCell>::pointer _Ptr = copy(_ITER_BASE(_Last), _Mylast, _ITER_BASE(_First));
+    NavCell* _Ptr = copy_nonscalar(_ITER_BASE(_Last), _Mylast, _ITER_BASE(_First));
     _Destroy(_Ptr, _Mylast);
     _Mylast = _Ptr;
     }
@@ -194,4 +229,31 @@ return (_First);
 }
 // @ 0x424db0
 template void vector<NavCell>::_Insert_n(vector<NavCell>::iterator, size_t, const NavCell&);
+// @ 0x425140
+template<> NavCell* _Uninit_copy<NavCell*, NavCell*, allocator<NavCell> >(NavCell* _First, NavCell* _Last, NavCell* _Dest, allocator<NavCell>& _Al, _Nonscalar_ptr_iterator_tag)
+{
+    NavCell* _Next = _Dest;
+    try {
+        for (; _First != _Last; ++_Dest, ++_First)
+            new ((void*)_Dest) NavCell(*_First);
+    } catch (...) {
+        for (; _Next != _Dest; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+    return _Dest;
+}
+// @ 0x4251c0
+template<> void _Uninit_fill_n<NavCell*, unsigned int, NavCell, allocator<NavCell> >(NavCell* _First, unsigned int _Count, const NavCell& _Val, allocator<NavCell>& _Al, _Nonscalar_ptr_iterator_tag)
+{
+    NavCell* _Next = _First;
+    try {
+        for (; 0 < _Count; --_Count, ++_First)
+            new ((void*)_First) NavCell(_Val);
+    } catch (...) {
+        for (; _Next != _First; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+}
 }

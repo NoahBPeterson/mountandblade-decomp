@@ -8,3 +8,12 @@
 ../src/engine/physics/world_grid.cpp  ?add_tree@world@rgl@@QAEXPAUshape_base@@@Z  00425240  /O2 /MT /Gy /TP
 ../src/engine/physics/world_grid.cpp  ?reg_shape@world@rgl@@QAEXPAUshape_base@@@Z  00424170  /O2 /MT /Gy /TP
 ../src/engine/physics/world_grid.cpp  ?add_shape@world@rgl@@QAEXPAUshape_base@@@Z  004252c0  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ??$_Uninit_copy@PAUNavVert@@PAU1@V?$allocator@UNavVert@@@std@@@std@@YAPAUNavVert@@PAU1@00AAV?$allocator@UNavVert@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00424bc0  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ??$_Uninit_fill_n@PAUNavVert@@IU1@V?$allocator@UNavVert@@@std@@@std@@YAXPAUNavVert@@IABU1@AAV?$allocator@UNavVert@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00424c40  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ?erase@?$vector@UNavCell@@V?$allocator@UNavCell@@@std@@@std@@QAE?AViterator@12@V312@0@Z  00424d60  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ??$_Uninit_copy@PAUNavCell@@PAU1@V?$allocator@UNavCell@@@std@@@std@@YAPAUNavCell@@PAU1@00AAV?$allocator@UNavCell@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00425140  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ??$_Uninit_fill_n@PAUNavCell@@IU1@V?$allocator@UNavCell@@@std@@@std@@YAXPAUNavCell@@IABU1@AAV?$allocator@UNavCell@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004251c0  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  $L  00424c2d  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  $L  00424cab  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  $L  004251b2  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  $L  0042522d  /O2 /MT /Gy /TP
