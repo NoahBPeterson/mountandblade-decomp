@@ -21,11 +21,12 @@ struct vec2 {
 
 struct int2 { int x, y; };                       // a cell coordinate (engine/physics/world_grid.h; shape_base keeps the cell range it occupies)
 
-struct Vec2 {
-    float x, y;
+// vec2 with constructors, under the name the game-state / agent code binds (manifest symbols carry `Vec2`): a Vec2 IS a
+// vec2, so either is copied to the other as one 8-byte record (GameData::add_sprite 0x49ebd0) without a cast
+struct Vec2 : vec2 {
     Vec2() {}
-    Vec2(float a, float b) : x(a), y(b) {}
-    Vec2(const vec2& v) : x(v.x), y(v.y) {}
+    Vec2(float a, float b) { x = a; y = b; }             // in x, y order (base members cannot be in the init list)
+    Vec2(const vec2& v) { x = v.x; y = v.y; }
 };
 typedef Vec2 vector2;                            // the same record under the name the char_sheet / options_panel / inventory_panel slices gave it
 
