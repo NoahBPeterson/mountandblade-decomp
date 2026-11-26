@@ -69,6 +69,9 @@ def main():
             die("no doc %s; have: %s" % (name, " ".join(sorted(f[:-3] for f in os.listdir(os.path.join(VS, "docs", "c2"))))))
         sys.stdout.write(open(p).read()); return
     tool = a[0]
+    if tool in TOOLS and len(a) >= 2 and a[1] in ("-h", "--help"):
+        # the tool's own help (c2.py TOOL -h parsed -h as the VA and crashed, lane N1-A 2026-11-26)
+        sys.exit(subprocess.call([os.path.join(VS, ".venv", "bin", "python")] + TOOLS[tool] + ["-h"], cwd=VS))
     if tool not in TOOLS or len(a) < 2:
         die("usage: c2.py {%s|doc} 0x<va> [--src work/match/F.cpp] [args]" % "|".join(TOOLS))
     va = int(a[1], 16)
