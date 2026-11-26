@@ -178,6 +178,16 @@ void rgl::cell::remove(shape_base* o)
     }
 }
 
+// @ 0x424010
+// insert is the stock body spelled with the public insert(where, 1, x), out of line (cl 13.10 would inline the stock one into push_back)
+namespace std {
+template<> __declspec(noinline) vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator _P, rgl::Obj* const& _X)
+{
+    size_type _Off = size() == 0 ? 0 : _P - begin();
+    insert(_P, (size_type)1, _X);
+    return (begin() + _Off);
+}
+}
 // @ 0x423fc0 / 0x424010
 template void std::vector<rgl::Obj*>::push_back(rgl::Obj* const&);
 template std::vector<rgl::Obj*>::iterator std::vector<rgl::Obj*>::insert(std::vector<rgl::Obj*>::iterator, rgl::Obj* const&);

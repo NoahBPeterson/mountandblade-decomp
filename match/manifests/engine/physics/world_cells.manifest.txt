@@ -5,3 +5,4 @@
 ../src/engine/physics/world_cells.cpp  ?add@cell@rgl@@QAEXPAUshape_base@@@Z  00423f10  /O2 /MT /Gy /TP
 ../src/engine/physics/world_cells.cpp  ?remove@cell@rgl@@QAEXPAUshape_base@@@Z  00424060  /O2 /MT /Gy /TP
 ../src/engine/physics/world_cells.cpp  ?find@cell@rgl@@QBEHPAUshape_base@@@Z  004240d0  /O2 /MT /Gy /TP
+../src/engine/physics/world_cells.cpp  ?push_back@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAEXABQAUObj@rgl@@@Z  00423fc0  /O2 /MT /Gy /TP
