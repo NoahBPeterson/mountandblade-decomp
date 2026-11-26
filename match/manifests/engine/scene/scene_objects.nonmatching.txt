@@ -1,2 +1,0 @@
-
-00420b40	538	psys::init: [2026-11-21 lane L-G3] psys::curve is curve4[5], half / quad are vec2 (the float_pair stand-in, whose stack temporaries this row's bytes depended on, is gone): the curves are set field by field, run_all 538 bytes. [equiv: PASS, 200 valid inputs, all edges covered (orig 0/0; ours 0/0), 100.0% insns; figure 820 aligned (chk.py)]

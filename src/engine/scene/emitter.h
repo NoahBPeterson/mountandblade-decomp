@@ -21,7 +21,7 @@ struct mesh;
 struct scene;
 
 // piecewise-linear key: value v0 until t0, v1 after t1, linear in between (psys::emit 0x413e50 reads the curves as these)
-struct curve4 { float t0, v0, t1, v1; };
+struct curve4 { V2 k0, k1; };       // the keys (t, value) as (x, y): k0 = (t0, v0), k1 = (t1, v1)
 
 struct psys {
     mesh* cache;                   // 0x00 (zeroed by init 0x420b40)
@@ -32,8 +32,8 @@ struct psys {
     float noise_amount;             // 0x20 (EmitDef turbulence strength)
     float drag;                     // 0x24 (EmitDef damping)
     curve4 curve[5];                     // 0x28 the five (t0,v0,t1,v1) curves (0x420b40; psys::emit 0x413e50): alpha, r, g, b, size
-    vec2 half;                           // 0x78 (x = half width, y = half height; 0x413e50)
-    vec2 quad[4];                        // 0x80 corner uvs (0x413e50)
+    V2 half;                             // 0x78 (x = half width, y = half height; 0x413e50)
+    V2 quad[4];                          // 0x80 corner uvs (0x413e50)
     float lifetime;                 // 0xa0 particle life in seconds (EmitDef::life; mission_start_setup.cpp stores a float)
     vector4 axis_x, axis_z;         // 0xa4 x axis, 0xb4 z axis (the particle axis of 0x414960)   0x420b40
     vector4 accel;                  // 0xc4 gravity (0, 0, -9.8)

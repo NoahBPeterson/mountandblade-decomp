@@ -77,11 +77,11 @@ mesh* world::get_mesh(skin* r)
 
 static __forceinline float eval_curve(float t, const curve4& c)
 {
-    if (t < c.t0)
-        return c.v0;
-    if (t > c.t1)
-        return c.v1;
-    return (c.v1 - c.v0) * ((t - c.t0) / (c.t1 - c.t0)) + c.v0;
+    if (t < c.k0.x)
+        return c.k0.y;
+    if (t > c.k1.x)
+        return c.k1.y;
+    return (c.k1.y - c.k0.y) * ((t - c.k0.x) / (c.k1.x - c.k0.x)) + c.k0.y;
 }
 // the inline vertex append: the colour and f5c arguments travel by address, the uv is the corner's pair
 static __forceinline int add_vtx(mesh* m, int idx, const vec2* uv, unsigned color, const vector4* n, int f5c)
@@ -162,12 +162,12 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const vector4* ref)
     // the opacity ramp: the first curve is anchored at 0 at both ends of the particle's life
     // (it rises from 0 at t=0 to v0 at t0, then falls back to 0 at t=1), unlike the colour and size curves
     float time = p->age;
-    if (time < curves[0].t0)
-        col.w = time / curves[0].t0 * curves[0].v0;
-    else if (time > curves[0].t1)
-        col.w = (1.0f - time) / (1.0f - curves[0].t1) * curves[0].v1;
+    if (time < curves[0].k0.x)
+        col.w = time / curves[0].k0.x * curves[0].k0.y;
+    else if (time > curves[0].k1.x)
+        col.w = (1.0f - time) / (1.0f - curves[0].k1.x) * curves[0].k1.y;
     else
-        col.w = (curves[0].v1 - curves[0].v0) * ((time - curves[0].t0) / (curves[0].t1 - curves[0].t0)) + curves[0].v0;
+        col.w = (curves[0].k1.y - curves[0].k0.y) * ((time - curves[0].k0.x) / (curves[0].k1.x - curves[0].k0.x)) + curves[0].k0.y;
     unsigned color = pack_color(&col);
     float size = eval_curve(p->age, curves[4]);
 
