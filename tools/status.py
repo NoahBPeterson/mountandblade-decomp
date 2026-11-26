@@ -60,7 +60,10 @@ def rows(pattern, col):
 
 src_exact = rows(SC.all_manifests(), 2)
 src_equiv = rows(SC.all_nonmatching(), 0) - src_exact
-exact = rows("match/manifest.txt", 2) | rows("match/slices/*/manifest.txt", 2) | src_exact
+# A src module beats its old slice (as in sweep_nonmatching.rows): a function the module lists as nonmatching is not
+# byte-exact in the build we ship, even when the old slice's manifest still lists the slice source as exact (69 rows
+# were counted exact that way until 2026-11-26).
+exact = ((rows("match/manifest.txt", 2) | rows("match/slices/*/manifest.txt", 2)) - src_equiv) | src_exact
 equiv = (rows("match/slices/*/nonmatching.txt", 0) | src_equiv) - exact
 partial = (rows("match/slices/*/partial.txt", 0) | rows(SC.all_partials(), 0)) - exact - equiv
 migrated = src_exact | src_equiv
