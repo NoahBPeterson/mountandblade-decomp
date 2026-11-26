@@ -52,7 +52,7 @@ def main():
     with tempfile.TemporaryDirectory(dir=os.path.join(ROOT, "work", "match")) as d:
         obj = os.path.join(d, "row.obj")
         r = subprocess.run([PY, os.path.join(ROOT, "tools/matching/chk.py"), "--keep-obj", obj, src, va]
-                           + ["--symbol=%s=%s" % (va, sym[0])] * bool(sym),
+                           + (["--symbol=%s=%s" % (va, sym[0])] if sym else []),
                            cwd=ROOT, env=env, capture_output=True, text=True)
         row = [l for l in r.stdout.splitlines() if re.match(r'^[0-9a-f]{8} ', l)]
         m = re.search(r'(?:marker|manif|~size|other|given)\s+(\S+)', row[0]) if row else None
