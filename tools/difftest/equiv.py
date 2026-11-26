@@ -8265,6 +8265,9 @@ def parse_args(argv=None):
                     help="JSON: every missed edge (not the first 64) and the covered edges of each side")
     ap.add_argument("--alias", type=float, default=0.0, help="probability that a generated pointer aliases an argument object")
     ap.add_argument("--mutate", type=float, default=0.6, help="share of inputs mutated from the coverage corpus")
+    ap.add_argument("--stack-mb", type=int, default=0,
+                    help="emulated stack size in MB (default 2; DIFFTEST_STACK_MB does the same): a function whose own "
+                         "frame exceeds 2 MB through __chkstk (mesh::build_skin 0x411d20: 2 MB of arrays) needs more")
     ap.add_argument("--typed-share", type=float, default=TYPED_SHARE,
                     help="share of fresh inputs whose `this` and pointer-to-class arguments are objects of their "
                          "declared class (CodeView types of a /Z7 compile: the original's vtable pointers, nested "
@@ -8297,6 +8300,8 @@ def parse_args(argv=None):
 
 def main(argv=None):
     opts = parse_args(argv)
+    if opts.stack_mb:
+        M.STACK_SIZE = opts.stack_mb << 20     # before context() maps the machine's stack
     context()["m"].set_fpcw(int(opts.fpcw, 16))
     sid = opts.slice
     if opts.vas:

@@ -1,0 +1,8 @@
+operation_execute 0049ebd0 ...
+  UNSUPPORTED not a verdict: time limit 60s after 3 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON (so far: 0 valid, 0 mismatched; edges orig 0/2, ours 0/2)
+    symbol ?add_sprite@GameData@@QAEHUVec2@@H@Z (name GameData::add_sprite); flags /O2 /MT /Gy /TP /Isrc/game/include (manifest(slice))
+    inputs 3, valid 0, discarded {'fault(read)': 1, 'budget': 2}, coverage 0.0% (0/238 insns), 190.6s
+    edges: orig 0/2; ours 0/2
+      orig missed: 0049ed4b->0049ed4d 0049ed4b->0049ed51
+      ours missed: 3000019a->3000019c 3000019a->300001a0
+    fp-tol: {'compared': 0, 'bit_identical': 0, 'fp_tolerable': 0, 'fp_floats': 0, 'max_ulp': 0.0, 'max_err_ratio': 0.0, 'out_of_range': 0, 'real_mismatches': 0, 'uninit_dwords': 0}

@@ -1,0 +1,183 @@
+[
+ {
+  "slice": "mesh",
+  "va": "00411d20",
+  "flags": "/O2 /MT /Gy /TP",
+  "flags_from": "manifest(slice)",
+  "symbol": "?build_skin@mesh@rgl@@QAEXXZ",
+  "symbol_from": "name mesh::build_skin",
+  "unresolved": [],
+  "eh_unresolved": [],
+  "modelled": [],
+  "resolution_conflicts": [],
+  "resolution_methods": {
+   "crt": 1,
+   "symbols": 1,
+   "rdata-literal": 1
+  },
+  "resolution_audit": {
+   "disagree": [],
+   "unverified": [
+    "__chkstk"
+   ],
+   "local_copy": [],
+   "same_code": [],
+   "agree": 2,
+   "paired_insns": 236,
+   "insns": [
+    245,
+    246
+   ]
+  },
+  "signature": "Sig(thiscall member=True ret=void params=[])",
+  "stack_args": 0,
+  "reg_args": {
+   "ecx": "this"
+  },
+  "callee_pop": 0,
+  "ret_kind": "void",
+  "layout_notes": [],
+  "orig_size": 787,
+  "void_hides_eax": false,
+  "orig_untouched_regs": [
+   "xmm0",
+   "xmm1",
+   "xmm2",
+   "xmm3",
+   "xmm4",
+   "xmm5",
+   "xmm6",
+   "xmm7"
+  ],
+  "transparent_std": [
+   "0040c360",
+   "0040c450",
+   "0040f070",
+   "0040f6a0",
+   "0040f930",
+   "0040fbb0",
+   "0040fc60",
+   "0040fcf0",
+   "004108b0",
+   "004117a0",
+   "0043e2a0"
+  ],
+  "budget_raised": "input 31 needed more than 100000 instructions",
+  "plateau": "no new coverage in the 224 inputs after input 7",
+  "repaired_inputs": 4,
+  "steering": {
+   "frontier": 4,
+   "replays": 4,
+   "redqueen": 96,
+   "constants": 13,
+   "queued": 96
+  },
+  "mismatch_sigs": {},
+  "regress_inputs": 0,
+  "vectors_realigned": 148,
+  "cover_inputs": {
+   "replayed": 8,
+   "saved": 0
+  },
+  "typed_inputs": {
+   "inputs": 228,
+   "valid": 200,
+   "types": {
+    "this": "rgl::mesh",
+    "args": {},
+    "globals": {}
+   }
+  },
+  "seed": 1,
+  "inputs_planned": 400,
+  "extra_inputs": 400,
+  "gate": "edges",
+  "require_all": false,
+  "inputs": 231,
+  "valid": 200,
+  "discarded": {
+   "fault(read)": 28,
+   "fault(write)": 3
+  },
+  "mismatches": 0,
+  "first_mismatch": null,
+  "coverage": {
+   "covered_insns": 245,
+   "total_insns": 245,
+   "pct": 100.0,
+   "all": true,
+   "missed": []
+  },
+  "tolerated": {
+   "stack-pointer": 0,
+   "inline-calls": 0,
+   "ulp": 0,
+   "const-pointer": 0,
+   "local-copy": 0,
+   "uninit-dword": 0,
+   "stub-scratch": 0,
+   "stale-return-address": 0
+  },
+  "ours_traps": {},
+  "stale_w_slots": 0,
+  "uninit_slots": [],
+  "edges": {
+   "orig": {
+    "total": 30,
+    "covered": 29,
+    "required": 29,
+    "pct": 100.0,
+    "unreachable": [
+     {
+      "edge": "00411e2a->00411e43",
+      "reason": "proven-dead: jae taken: flags from cmp ecx, 4 at 411e27 -- condition unsatisfiable on every path to 411e2a (inside loops; invariants: head 411e00: ebp unchanged, ebx unchanged, edi unchanged, esi unchanged, ecx in [0x0, 0x3]; head 411dd6: ebp unchanged, ebx unchanged; head 411d90: ebx unchanged; head 411d40: ebp unchanged, ebx unchanged, edi unchanged, esi unchanged)"
+     }
+    ],
+    "missed_n": 0,
+    "missed": [],
+    "proven_dead": [
+     {
+      "edge": "00411e2a->00411e43",
+      "proof": "jae taken: flags from cmp ecx, 4 at 411e27 -- condition unsatisfiable on every path to 411e2a (inside loops; invariants: head 411e00: ebp unchanged, ebx unchanged, edi unchanged, esi unchanged, ecx in [0x0, 0x3]; head 411dd6: ebp unchanged, ebx unchanged; head 411d90: ebx unchanged; head 411d40: ebp unchanged, ebx unchanged, edi unchanged, esi unchanged)"
+     }
+    ],
+    "prove_unknown": []
+   },
+   "ours": {
+    "total": 30,
+    "covered": 29,
+    "required": 29,
+    "pct": 100.0,
+    "unreachable": [
+     {
+      "edge": "3000010a->30000122",
+      "reason": "proven-dead: jae taken: flags from cmp ecx, 4 at 30000107 -- condition unsatisfiable on every path to 3000010a (inside loops; invariants: head 300000e0: ebp unchanged, ebx unchanged, edi unchanged, edx unchanged, ecx in [0x0, 0x3]; head 300000b5: ebx unchanged, edx unchanged; head 30000070: ebx unchanged; head 30000020: ebp unchanged, ebx unchanged, edi unchanged, esi unchanged)"
+     }
+    ],
+    "missed_n": 0,
+    "missed": [],
+    "proven_dead": [
+     {
+      "edge": "3000010a->30000122",
+      "proof": "jae taken: flags from cmp ecx, 4 at 30000107 -- condition unsatisfiable on every path to 3000010a (inside loops; invariants: head 300000e0: ebp unchanged, ebx unchanged, edi unchanged, edx unchanged, ecx in [0x0, 0x3]; head 300000b5: ebx unchanged, edx unchanged; head 30000070: ebx unchanged; head 30000020: ebp unchanged, ebx unchanged, edi unchanged, esi unchanged)"
+     }
+    ],
+    "prove_unknown": []
+   }
+  },
+  "fp_tol": {
+   "compared": 200,
+   "bit_identical": 200,
+   "fp_tolerable": 0,
+   "fp_floats": 0,
+   "max_ulp": 0.0,
+   "max_err_ratio": 0.0,
+   "out_of_range": 0,
+   "real_mismatches": 0,
+   "uninit_dwords": 0
+  },
+  "verdict": "PASS",
+  "reason": "200 valid inputs, all edges covered (orig 29/29 (+1 unreachable); ours 29/29 (+1 unreachable)), 100.0% insns; 2 edge(s) proven dead by z3 (--prove-dead)",
+  "seconds": 33.2
+ }
+]

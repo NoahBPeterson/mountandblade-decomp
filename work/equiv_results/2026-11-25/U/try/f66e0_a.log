@@ -1,8 +1,8 @@
-Traceback (most recent call last):
-  File "/Users/noahpeterson/Documents/Projects/mountandblade-decomp/tools/difftest/equiv.py", line 8380, in <module>
-    sys.exit(main())
-             ~~~~^^
-  File "/Users/noahpeterson/Documents/Projects/mountandblade-decomp/tools/difftest/equiv.py", line 8303, in main
-    vas = [int(v, 16) for v in opts.vas]
-           ~~~^^^^^^^
-ValueError: invalid literal for int() with base 16: '--time-limit 60 --fp-tol --max-mismatch 200 --stub-callees --typed-share 0.9 --budget 40000000'
+s004f66e0 004f66e0 ...
+  UNSUPPORTED not a verdict: time limit 60s after 23 inputs; the run was cut short by the wall-clock limit, everything measured so far is in this JSON (so far: 0 valid, 0 mismatched; edges orig 0/108, ours 0/62)
+    symbol ?open@ConvScreen@@QAEXHPAH@Z (name ConvScreen::open); flags /O2 /MT /Gy /TP (default)
+    inputs 23, valid 0, discarded {'fault(pool-limit)': 6, 'ours-trap': 11, 'fault(read)': 6}, coverage 0.0% (0/915 insns), 61.6s
+    edges: orig 0/108; ours 0/62
+      orig missed: 004f670f->004f6711 004f670f->004f6728 004f67e1->004f67e3 004f67e1->004f6804 004f67f3->004f67f5 004f67f3->004f67f7 004f681e->004f6820 004f681e->004f682f ...
+      ours missed: 300004d4->300004d6 300004d4->300004e9 30000597->30000599 30000597->300005a3 300005dd->300005df 300005dd->300005e3 300005ed->300005ef 300005ed->30000608 ...
+    fp-tol: {'compared': 0, 'bit_identical': 0, 'fp_tolerable': 0, 'fp_floats': 0, 'max_ulp': 0.0, 'max_err_ratio': 0.0, 'out_of_range': 0, 'real_mismatches': 0, 'uninit_dwords': 0}
