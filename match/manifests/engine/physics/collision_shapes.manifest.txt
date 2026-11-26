@@ -132,3 +132,5 @@
 ../src/engine/physics/collision_shapes.cpp  ?load@manifold@@UAEXPAUstream_base@@@Z  0040d9d0  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  ?_Insert_n@?$vector@Umface@@V?$allocator@Umface@@@std@@@std@@IAEXViterator@12@IABUmface@@@Z  0040e060  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  $L  0040e200  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ??4?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z  0040d3d0  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ??4?$vector@Umface@@V?$allocator@Umface@@@std@@@std@@QAEAAV01@ABV01@@Z  0040d5e0  /O2 /MT /Gy /TP

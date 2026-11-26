@@ -23,6 +23,9 @@ void __fastcall tidy_ext(std::vector<mface>* v);
 // std::copy for manifold's 16- / 32-byte elements, spelled out: cl 13.10 leaves the stock copy a call where the original expands the loop
 static __forceinline vector4* copy_nonscalar(vector4* f, vector4* l, vector4* d) { for (; f != l; ++d, ++f) *d = *f; return d; }
 static __forceinline mface* copy_nonscalar(mface* f, mface* l, mface* d) { for (; f != l; ++d, ++f) *d = *f; return d; }
+// std::copy as the two nested inline levels the stock one has (copy -> _Copy_opt), for operator=
+template<class T> static __forceinline T* copy_opt_in(T* f, T* l, T* d) { for (; f != l; ++d, ++f) *d = *f; return d; }
+template<class T> static __forceinline T* copy_in(T* f, T* l, T* d) { return copy_opt_in(f, l, d); }
 // the library's _Ucopy / _Ufill wrappers, inlined as the original's object has them (cl 13.10 leaves the stock ones a call)
 template<class T> static __forceinline T* ucopy_in(T* f, T* l, T* p, std::allocator<T>& al) { return std::_Uninitialized_copy(f, l, p, al); }
 template<class T> static __forceinline T* ufill_n(T* p, unsigned n, const T& v, std::allocator<T>& al) { std::_Uninitialized_fill_n(p, n, v, al); return p + n; }
@@ -1373,13 +1376,13 @@ if (this != &_Right)
         tidy_ext(this);
     else if (_Right.size() <= size())
         {
-        copy_nonscalar(_Right._Myfirst, _Right._Mylast, _Myfirst);
+        copy_in(_Right._Myfirst, _Right._Mylast, _Myfirst);
         _Mylast = _Myfirst + _Right.size();
         }
     else if (_Right.size() <= capacity())
         {
         vector4* _Ptr = _Right._Myfirst + size();
-        copy_nonscalar(_Right._Myfirst, _Ptr, _Myfirst);
+        copy_in(_Right._Myfirst, _Ptr, _Myfirst);
         _Mylast = ucopy_in(_Ptr, _Right._Mylast, _Mylast, this->_Alval);
         }
     else
@@ -1420,13 +1423,13 @@ if (this != &_Right)
         tidy_ext(this);
     else if (_Right.size() <= size())
         {
-        copy_nonscalar(_Right._Myfirst, _Right._Mylast, _Myfirst);
+        copy_in(_Right._Myfirst, _Right._Mylast, _Myfirst);
         _Mylast = _Myfirst + _Right.size();
         }
     else if (_Right.size() <= capacity())
         {
         mface* _Ptr = _Right._Myfirst + size();
-        copy_nonscalar(_Right._Myfirst, _Ptr, _Myfirst);
+        copy_in(_Right._Myfirst, _Ptr, _Myfirst);
         _Mylast = ucopy_in(_Ptr, _Right._Mylast, _Mylast, this->_Alval);
         }
     else
