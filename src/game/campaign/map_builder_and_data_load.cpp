@@ -1333,9 +1333,8 @@ Troop::Troop()
 }
 
 // @ 0x524860
-QuestRec::QuestRec()
+QuestRec::QuestRec() : notes(-1)    // SoaBlock(int): texts[] through the vector constructor iterator, then tableau = -1
 {
-    notes.tableau = -1;
     f50 = 0;
     flags = 0;
     f11c = 0;
