@@ -2,6 +2,7 @@
 // mission types) and the load subroutine that calls them. All of them drive the engine's text streams
 // (stream_base vtable 0x54a740, tstream2 0x54a890, tstream3 0x54ac88; see mbbin.h) and the item-kind array.
 // Names provisional; class names follow the Module System's record names.
+#include <memory>
 #include <windows.h>
 #include <d3d9.h>
 #include "rgl.h"
@@ -92,53 +93,13 @@ growable_array::growable_array()
     f90 = 1;
 }
 
-// @ 0x4d11a0 (returns the advanced destination, as std::_Uninit_copy does)
-flora_kind* uninitialized_copy_flora(flora_kind* first, flora_kind* last, flora_kind* dst, flora_alloc& al)
-{
-    for (; first != last; first++, dst++)
-        al.construct(dst, *first);
-    return dst;
-}
-
-// @ 0x4d1230 (returns the advanced destination, as std::_Uninit_copy does)
-ground_spec* uninitialized_copy_ground(ground_spec* first, ground_spec* last, ground_spec* dst, ground_alloc& al)
-{
-    for (; first != last; first++, dst++)
-        al.construct(dst, *first);
-    return dst;
-}
-
-// @ 0x4d120a
-// EH catch block: destroys the elements already constructed in [first, last) of a partly built range,
-// then rethrows with `throw;`. (The address also sits inside text_stream's ctor as an EH funclet.)
-void destroy_range_and_rethrow(ground_spec* first, ground_spec* last)
-{
-    for (; first != last; first++)
-        ground_spec_destroy(first);
-    throw;
-}
-
-// @ 0x4d129a
-void destroy_range_ground(ground_spec* first, ground_spec* last)
-{
-    for (; first != last; first++)
-        ground_spec_destroy(first);             // 0x4c8ba0 takes the element as its only argument
-}
-
-// @ 0x4d12c0 (returns the advanced destination, as std::_Uninit_copy does)
-mission_type* uninitialized_copy_mission(mission_type* first, mission_type* last, mission_type* dst, mission_alloc& al)
-{
-    for (; first != last; first++, dst++)
-        al.construct(dst, *first);
-    return dst;
-}
-
-// @ 0x4d1330
-void destroy_range_mission(mission_type* first, mission_type* last)
-{
-    for (; first != last; first++)
-        mission_type_destroy(first);            // 0x4c8ab0 takes the element as its only argument
-}
+// The three std::_Uninit_copy(first, last, dest, allocator&, _Nonscalar_ptr_iterator_tag) instantiations the record
+// vectors' copies use (0x4d11a0 flora, 0x4d1230 ground, 0x4d12c0 mission), each with its catch(...) funclet that
+// destroys the elements already built through the allocator and rethrows (0x4d120a, 0x4d129a, 0x4d1330; the
+// funclets belong to the instantiation's COMDAT, they are no functions of their own). Needs /EHa.
+template flora_kind* std::_Uninit_copy(flora_kind*, flora_kind*, flora_kind*, flora_alloc&, std::_Nonscalar_ptr_iterator_tag);
+template ground_spec* std::_Uninit_copy(ground_spec*, ground_spec*, ground_spec*, ground_alloc&, std::_Nonscalar_ptr_iterator_tag);
+template mission_type* std::_Uninit_copy(mission_type*, mission_type*, mission_type*, mission_alloc&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4d0c20
 void load_module_files()

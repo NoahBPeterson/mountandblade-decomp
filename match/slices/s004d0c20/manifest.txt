@@ -2,3 +2,6 @@ slices/s004d0c20/s004d0c20.cpp  ?construct@flora_alloc@@QAEXPAUflora_kind@@ABU2@
 slices/s004d0c20/s004d0c20.cpp  ?construct@ground_alloc@@QAEXPAUground_spec@@ABU2@@Z  4d1160
 slices/s004d0c20/s004d0c20.cpp  ?construct@mission_alloc@@QAEXPAUmission_type@@ABU2@@Z  4d1180
 # Byte-exact: 4d1140/4d1160/4d1180 only; the others are not yet (see nonmatching.txt; 4d10f0 also in partial.txt). Flags /O2 /MT /Gy /TP.
+slices/s004d0c20/s004d0c20.cpp  ??$_Uninit_copy@PAUflora_kind@@PAU1@Uflora_alloc@@@std@@YAPAUflora_kind@@PAU1@00AAUflora_alloc@@U_Nonscalar_ptr_iterator_tag@0@@Z  004d11a0  /O2 /MT /Gy /EHa /TP
+slices/s004d0c20/s004d0c20.cpp  ??$_Uninit_copy@PAUground_spec@@PAU1@Uground_alloc@@@std@@YAPAUground_spec@@PAU1@00AAUground_alloc@@U_Nonscalar_ptr_iterator_tag@0@@Z  004d1230  /O2 /MT /Gy /EHa /TP
+slices/s004d0c20/s004d0c20.cpp  ??$_Uninit_copy@PAUmission_type@@PAU1@Umission_alloc@@@std@@YAPAUmission_type@@PAU1@00AAUmission_alloc@@U_Nonscalar_ptr_iterator_tag@0@@Z  004d12c0  /O2 /MT /Gy /EHa /TP

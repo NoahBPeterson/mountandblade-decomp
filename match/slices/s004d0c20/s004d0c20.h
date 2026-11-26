@@ -16,27 +16,28 @@ struct item_modifier {
     int* values;        // +0x2c
 };
 
-// flora kind record (0x20 bytes): name, two ints.
+// flora kind record (0x50 bytes): name, two ints.
 struct flora_kind {
     tstring name;       // +0
     int f10;            // +0x10
     int f14;            // +0x14
     int f18;            // +0x18
     int f1c;            // +0x1c
+    char pad20[0x30];   // +0x20  (stride 0x50 in the record vectors' copies, 0x4d11a0)
     void copy_from(const flora_kind* src);  // 0x4cd080
 };
 
-// ground spec record (0x4c bytes): detail in s004bddf0.
+// ground spec record (0x68 bytes): detail in s004bddf0.
 struct ground_spec {
-    char pad0[0x4c];
+    char pad0[0x68];
     void read(text_stream* s);              // 0x4bddf0
     void copy_from(const ground_spec* src); // 0x4cd100
     void destroy();                         // 0x4c8ba0
 };
 
-// mission type record (0x20 bytes): detail in 0x4c2dd0.
+// mission type record (0xb0 bytes): detail in 0x4c2dd0.
 struct mission_type {
-    char pad0[0x20];
+    char pad0[0xb0];
     void read(text_stream* s);              // 0x4c2dd0
     void copy_from(const mission_type* src);    // 0x4cd170
     void destroy();                         // 0x4c8ab0
@@ -44,9 +45,9 @@ struct mission_type {
 
 // The allocators of the three record vectors: construct (0x4d1140/0x4d1160/0x4d1180) copy-constructs one
 // element in place through the record's copy_from.
-struct flora_alloc { void construct(flora_kind* dst, const flora_kind& src); };
-struct ground_alloc { void construct(ground_spec* dst, const ground_spec& src); };
-struct mission_alloc { void construct(mission_type* dst, const mission_type& src); };
+struct flora_alloc { void construct(flora_kind* dst, const flora_kind& src); void destroy(flora_kind* p); /* 0x4cd6a0 */ };
+struct ground_alloc { void construct(ground_spec* dst, const ground_spec& src); void destroy(ground_spec* p) { p->destroy(); } };
+struct mission_alloc { void construct(mission_type* dst, const mission_type& src); void destroy(mission_type* p) { p->destroy(); } };
 
 // "ttype" record (0x20 bytes, array at 0x8ed4df8).
 struct ttype {
