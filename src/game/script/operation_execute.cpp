@@ -1326,8 +1326,11 @@ inline ContainerBase::ContainerBase() {}
 // @ 0x49deb0
 Camera::Camera()
 {
-    shake_x = 0;
-    shake_y = 0;
+    // the pair is stored through a pointer into the object: the scheduler then keeps the shake stores
+    // ahead of the follow stores (c2.py schedwant: "alias"), as in the original
+    float* shake = &shake_x;
+    shake[0] = 0;
+    shake[1] = 0;
     follow[0] = 0;
     follow[1] = 0;
     target = 0;

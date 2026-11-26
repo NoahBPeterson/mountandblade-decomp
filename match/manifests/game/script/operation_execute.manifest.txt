@@ -25,6 +25,7 @@
 ../src/game/script/operation_execute.cpp  ?warn_agent@@YADABH@Z  0049d430  /O2 /MT /Gy /TP
 ../src/game/script/operation_execute.cpp  ?check_animation@@YADABH@Z  0049d4b0  /O2 /MT /Gy /TP
 ../src/game/script/operation_execute.cpp  ?link@DialogBlock@@QAEXXZ  0049dd30  /O2 /MT /Gy /TP
+../src/game/script/operation_execute.cpp  ??0Camera@@QAE@XZ  0049deb0  /O2 /MT /Gy /TP
 ../src/game/script/operation_execute.cpp  ?kind@Camera@@UAEHXZ  0049df30  /O2 /MT /Gy /TP
 ../src/game/script/operation_execute.cpp  ?mask@Camera@@UAEIH@Z  0049df40  /O2 /MT /Gy /TP
 ../src/game/script/operation_execute.cpp  ?on_child_moved@Camera@@UAEXPAUMissionUi@@@Z  0049df60  /O2 /MT /Gy /TP
