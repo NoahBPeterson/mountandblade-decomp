@@ -18,6 +18,24 @@
 #include "engine/physics/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "engine/render/d3d_xform.h"      // (listed directly: the resolution audit scans only the source's own includes)
 using namespace rgl;
+void __fastcall tidy_ext(std::vector<vector4>* v);
+void __fastcall tidy_ext(std::vector<mface>* v);
+// std::copy for manifold's 16- / 32-byte elements, spelled out: cl 13.10 leaves the stock copy a call where the original expands the loop
+static __forceinline vector4* copy_nonscalar(vector4* f, vector4* l, vector4* d) { for (; f != l; ++d, ++f) *d = *f; return d; }
+static __forceinline mface* copy_nonscalar(mface* f, mface* l, mface* d) { for (; f != l; ++d, ++f) *d = *f; return d; }
+// the library's _Ucopy / _Ufill wrappers, inlined as the original's object has them (cl 13.10 leaves the stock ones a call)
+template<class T> static __forceinline T* ucopy_in(T* f, T* l, T* p, std::allocator<T>& al) { return std::_Uninitialized_copy(f, l, p, al); }
+template<class T> static __forceinline T* ufill_n(T* p, unsigned n, const T& v, std::allocator<T>& al) { std::_Uninitialized_fill_n(p, n, v, al); return p + n; }
+template<class T> static __forceinline void fill_range(T* f, T* l, const T& v) { for (; f != l; ++f) *f = v; }
+template<class T> static __forceinline T* copy_backward_range(T* f, T* l, T* d) { while (f != l) *--d = *--l; return d; }
+namespace std {
+// operator= with std::copy spelled out and _Ucopy's call to _Uninitialized_copy direct (cl 13.10 leaves the stock _Ucopy wrapper a call) (defined at 0x40d3d0 / 0x40d5e0 below; declared first because manifold::copy_from uses it)
+template<> __declspec(noinline) vector<vector4>& vector<vector4>::operator=(const vector<vector4>&);
+template<> __declspec(noinline) void vector<mface>::resize(size_t, mface);
+template<> __declspec(noinline) void vector<vector4>::_Insert_n(iterator, size_type, const vector4&);
+template<> __declspec(noinline) void vector<mface>::_Insert_n(iterator, size_type, const mface&);
+template<> __declspec(noinline) vector<mface>& vector<mface>::operator=(const vector<mface>&);
+}
 
 // ---- vector4 / matrix (0x407c30..0x407f70) ---------------------------------------------------------------
 // @ 0x407c10
@@ -1323,6 +1341,14 @@ vector4* composite::get_max(vector4* out)
     *out = m;
     return out;
 }
+// The original's four element helpers are out-of-line explicit specializations (the stock <memory>'s _Nonscalar_ptr_iterator_tag
+// overloads written out); declared first so operator= / _Insert_n call them, defined in address order below.
+namespace std {
+template<> vector4* _Uninit_copy<vector4*, vector4*, allocator<vector4> >(vector4*, vector4*, vector4*, allocator<vector4>&, _Nonscalar_ptr_iterator_tag);
+template<> mface* _Uninit_copy<mface*, mface*, allocator<mface> >(mface*, mface*, mface*, allocator<mface>&, _Nonscalar_ptr_iterator_tag);
+template<> void _Uninit_fill_n<vector4*, unsigned int, vector4, allocator<vector4> >(vector4*, unsigned int, const vector4&, allocator<vector4>&, _Nonscalar_ptr_iterator_tag);
+template<> void _Uninit_fill_n<mface*, unsigned int, mface, allocator<mface> >(mface*, unsigned int, const mface&, allocator<mface>&, _Nonscalar_ptr_iterator_tag);
+}
 // @ 0x40d340
 manifold::~manifold() {}
 // @ 0x40d3a0
@@ -1337,14 +1363,100 @@ void manifold::copy_from(const shape_base* o)
 // ---- std::vector<vector4> / std::vector<mface> (0x40d3d0..0x40e3bb): the members manifold's code calls, emitted here.
 // Their _Buy is out of line in other objects' copies (0x42d570 vector4, 0x4105c0 point20: mface is the same 32-byte
 // shape), as are the mface erase (point20's 0x40fd40) and _Xlen (0x43e2a0); /OPT:ICF folded this object's own.
+namespace std {
 // @ 0x40d3d0
-template std::vector<vector4>& std::vector<vector4>::operator=(const std::vector<vector4>&);
+template<> vector<vector4>& vector<vector4>::operator=(const vector<vector4>& _Right)
+{   // the stock <vector> body with std::copy's loop spelled out (cl 13.10 leaves the stock copy a call, the original expands it)
+if (this != &_Right)
+    {
+    if (_Right.size() == 0)
+        tidy_ext(this);
+    else if (_Right.size() <= size())
+        {
+        copy_nonscalar(_Right._Myfirst, _Right._Mylast, _Myfirst);
+        _Mylast = _Myfirst + _Right.size();
+        }
+    else if (_Right.size() <= capacity())
+        {
+        vector4* _Ptr = _Right._Myfirst + size();
+        copy_nonscalar(_Right._Myfirst, _Ptr, _Myfirst);
+        _Mylast = ucopy_in(_Ptr, _Right._Mylast, _Mylast, this->_Alval);
+        }
+    else
+        {
+        if (_Myfirst != 0)
+            {
+            _Destroy(_Myfirst, _Mylast);
+            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+            }
+        if (_Buy(_Right.size()))
+            _Mylast = ucopy_in(_Right._Myfirst, _Right._Mylast, _Myfirst, this->_Alval);
+        }
+    }
+return (*this);
+}
+}
 // @ 0x40d550
-template vector4* std::_Uninit_copy(vector4*, vector4*, vector4*, std::allocator<vector4>&, std::_Nonscalar_ptr_iterator_tag);
+template<> vector4* std::_Uninit_copy<vector4*, vector4*, std::allocator<vector4> >(vector4* _First, vector4* _Last, vector4* _Dest, std::allocator<vector4>& _Al, std::_Nonscalar_ptr_iterator_tag)
+{
+    vector4* _Next = _Dest;
+    try {
+        for (; _First != _Last; ++_Dest, ++_First)
+            new ((void*)_Dest) vector4(*_First);
+    } catch (...) {
+        for (; _Next != _Dest; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+    return _Dest;
+}
+namespace std {
 // @ 0x40d5e0
-template std::vector<mface>& std::vector<mface>::operator=(const std::vector<mface>&);
+template<> vector<mface>& vector<mface>::operator=(const vector<mface>& _Right)
+{   // the stock <vector> body with std::copy's loop spelled out (cl 13.10 leaves the stock copy a call, the original expands it)
+if (this != &_Right)
+    {
+    if (_Right.size() == 0)
+        tidy_ext(this);
+    else if (_Right.size() <= size())
+        {
+        copy_nonscalar(_Right._Myfirst, _Right._Mylast, _Myfirst);
+        _Mylast = _Myfirst + _Right.size();
+        }
+    else if (_Right.size() <= capacity())
+        {
+        mface* _Ptr = _Right._Myfirst + size();
+        copy_nonscalar(_Right._Myfirst, _Ptr, _Myfirst);
+        _Mylast = ucopy_in(_Ptr, _Right._Mylast, _Mylast, this->_Alval);
+        }
+    else
+        {
+        if (_Myfirst != 0)
+            {
+            _Destroy(_Myfirst, _Mylast);
+            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+            }
+        if (_Buy(_Right.size()))
+            _Mylast = ucopy_in(_Right._Myfirst, _Right._Mylast, _Myfirst, this->_Alval);
+        }
+    }
+return (*this);
+}
+}
 // @ 0x40d750
-template mface* std::_Uninit_copy(mface*, mface*, mface*, std::allocator<mface>&, std::_Nonscalar_ptr_iterator_tag);
+template<> mface* std::_Uninit_copy<mface*, mface*, std::allocator<mface> >(mface* _First, mface* _Last, mface* _Dest, std::allocator<mface>& _Al, std::_Nonscalar_ptr_iterator_tag)
+{
+    mface* _Next = _Dest;
+    try {
+        for (; _First != _Last; ++_Dest, ++_First)
+            new ((void*)_Dest) mface(*_First);
+    } catch (...) {
+        for (; _Next != _Dest; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+    return _Dest;
+}
 
 // @ 0x40d7d0
 void composite::load(stream_base* s)
@@ -1386,19 +1498,163 @@ void manifold::load(stream_base* s)
 }
 
 // @ 0x40db80
+// The shrink path of resize calls erase out of line (0x40dbf0): a bodyless specialization declaration keeps the call site from
+// inlining the stock body.
+namespace std {
+template<> __declspec(noinline) vector<vector4>::iterator vector<vector4>::erase(vector<vector4>::iterator _First, vector<vector4>::iterator _Last);
+}
 template void std::vector<vector4>::resize(size_t, vector4);
 // @ 0x40dbf0
-template std::vector<vector4>::iterator std::vector<vector4>::erase(iterator, iterator);
+// the stock erase with std::copy's loop spelled out (cl 13.10 leaves the stock copy a call here, the original expands it)
+namespace std {
+template<> vector<vector4>::iterator vector<vector4>::erase(vector<vector4>::iterator _First, vector<vector4>::iterator _Last)
+{
+if (_First != _Last)
+    {
+    vector4* _Ptr = copy_nonscalar(_ITER_BASE(_Last), _Mylast, _ITER_BASE(_First));
+    _Destroy(_Ptr, _Mylast);
+    _Mylast = _Ptr;
+    }
+return (_First);
+}
+}
+namespace std {
 // @ 0x40dc50
-template void std::vector<vector4>::_Insert_n(iterator, size_t, const vector4&);
+// the stock _Insert_n with the library's wrappers expanded the way the original's object has them: _Ucopy / _Ufill call
+// _Uninit_copy / _Uninit_fill_n directly, and fill / copy_backward are loops
+template<> void vector<vector4>::_Insert_n(iterator _Where, size_type _Count, const vector4& _Val)
+{
+    vector4 _Tmp = _Val;
+    size_type _Capacity = capacity();
+    vector4* where = _ITER_BASE(_Where);
+    if (_Count == 0)
+        ;
+    else if (max_size() - size() < _Count)
+        _Xlen();
+    else if (_Capacity < size() + _Count) {
+        _Capacity = max_size() - _Capacity / 2 < _Capacity ? 0 : _Capacity + _Capacity / 2;
+        if (_Capacity < size() + _Count)
+            _Capacity = size() + _Count;
+        vector4* _Newvec = this->_Alval.allocate(_Capacity);
+        vector4* _Ptr = _Newvec;
+        try {
+            _Ptr = ucopy_in(_Myfirst, where, _Newvec, this->_Alval);
+            _Ptr = ufill_n(_Ptr, _Count, _Tmp, this->_Alval);
+            ucopy_in(where, _Mylast, _Ptr, this->_Alval);
+        } catch (...) {
+            this->_Alval.deallocate(_Newvec, _Capacity);
+            throw;
+        }
+        _Count += size();
+        if (_Myfirst != 0)
+            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+        _Myend = _Newvec + _Capacity;
+        _Mylast = _Newvec + _Count;
+        _Myfirst = _Newvec;
+    } else if ((size_type)(_Mylast - where) < _Count) {
+        ucopy_in(where, _Mylast, where + _Count, this->_Alval);
+        try {
+            ufill_n(_Mylast, _Count - (_Mylast - where), _Tmp, this->_Alval);
+        } catch (...) {
+            throw;
+        }
+        _Mylast += _Count;
+        fill_range(where, _Mylast - _Count, _Tmp);
+    } else {
+        vector4* _Oldend = _Mylast;
+        _Mylast = ucopy_in(_Oldend - _Count, _Oldend, _Mylast, this->_Alval);
+        copy_backward_range(where, _Oldend - _Count, _Oldend);
+        fill_range(where, where + _Count, _Tmp);
+    }
+}
+}
 // @ 0x40df60
-template void std::_Uninit_fill_n(vector4*, unsigned, const vector4&, std::allocator<vector4>&, std::_Nonscalar_ptr_iterator_tag);
+template<> void std::_Uninit_fill_n<vector4*, unsigned int, vector4, std::allocator<vector4> >(vector4* _First, unsigned int _Count, const vector4& _Val, std::allocator<vector4>& _Al, std::_Nonscalar_ptr_iterator_tag)
+{
+    vector4* _Next = _First;
+    try {
+        for (; 0 < _Count; --_Count, ++_First)
+            new ((void*)_First) vector4(_Val);
+    } catch (...) {
+        for (; _Next != _First; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+}
 // @ 0x40dff0
-template void std::vector<mface>::resize(size_t, mface);
+// the stock resize(n, val), a function of its own (manifold::load calls it; cl 13.10 would inline the expansion)
+namespace std {
+template<> void vector<mface>::resize(size_t _Newsize, mface _Val)
+{
+    if (size() < _Newsize)
+        _Insert_n(end(), _Newsize - size(), _Val);
+    else if (_Newsize < size())
+        erase(begin() + _Newsize, end());
+}
+}
+namespace std {
 // @ 0x40e060
-template void std::vector<mface>::_Insert_n(iterator, size_t, const mface&);
+// the stock _Insert_n with the library's wrappers expanded the way the original's object has them: _Ucopy / _Ufill call
+// _Uninit_copy / _Uninit_fill_n directly, and fill / copy_backward are loops
+template<> void vector<mface>::_Insert_n(iterator _Where, size_type _Count, const mface& _Val)
+{
+    mface _Tmp = _Val;
+    size_type _Capacity = capacity();
+    mface* where = _ITER_BASE(_Where);
+    if (_Count == 0)
+        ;
+    else if (max_size() - size() < _Count)
+        _Xlen();
+    else if (_Capacity < size() + _Count) {
+        _Capacity = max_size() - _Capacity / 2 < _Capacity ? 0 : _Capacity + _Capacity / 2;
+        if (_Capacity < size() + _Count)
+            _Capacity = size() + _Count;
+        mface* _Newvec = this->_Alval.allocate(_Capacity);
+        mface* _Ptr = _Newvec;
+        try {
+            _Ptr = ucopy_in(_Myfirst, where, _Newvec, this->_Alval);
+            _Ptr = ufill_n(_Ptr, _Count, _Tmp, this->_Alval);
+            ucopy_in(where, _Mylast, _Ptr, this->_Alval);
+        } catch (...) {
+            this->_Alval.deallocate(_Newvec, _Capacity);
+            throw;
+        }
+        _Count += size();
+        if (_Myfirst != 0)
+            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+        _Myend = _Newvec + _Capacity;
+        _Mylast = _Newvec + _Count;
+        _Myfirst = _Newvec;
+    } else if ((size_type)(_Mylast - where) < _Count) {
+        ucopy_in(where, _Mylast, where + _Count, this->_Alval);
+        try {
+            ufill_n(_Mylast, _Count - (_Mylast - where), _Tmp, this->_Alval);
+        } catch (...) {
+            throw;
+        }
+        _Mylast += _Count;
+        fill_range(where, _Mylast - _Count, _Tmp);
+    } else {
+        mface* _Oldend = _Mylast;
+        _Mylast = ucopy_in(_Oldend - _Count, _Oldend, _Mylast, this->_Alval);
+        copy_backward_range(where, _Oldend - _Count, _Oldend);
+        fill_range(where, where + _Count, _Tmp);
+    }
+}
+}
 // @ 0x40e350
-template void std::_Uninit_fill_n(mface*, unsigned, const mface&, std::allocator<mface>&, std::_Nonscalar_ptr_iterator_tag);
+template<> void std::_Uninit_fill_n<mface*, unsigned int, mface, std::allocator<mface> >(mface* _First, unsigned int _Count, const mface& _Val, std::allocator<mface>& _Al, std::_Nonscalar_ptr_iterator_tag)
+{
+    mface* _Next = _First;
+    try {
+        for (; 0 < _Count; --_Count, ++_First)
+            new ((void*)_First) mface(_Val);
+    } catch (...) {
+        for (; _Next != _First; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+}
 
 // ---- float / colour helpers (0x40e3d0..0x40e4e0) ---------------------------------------------------------------
 // @ 0x40e3d0
@@ -1488,3 +1744,9 @@ matrix matrix::operator*(const matrix& m) const
 }
 
 } // namespace rgl
+
+// std::vector<T>::_Tidy as the out-of-line function operator= calls (the original's 0x41f4b0, one copy folded for every trivially
+// destructible element type by /OPT:ICF; manifold's own destructor expands _Tidy inline, so this is a function of its own, not the
+// member's specialization). __fastcall = this in ecx, no stack arguments, as the original's thiscall.
+__declspec(noinline) void __fastcall tidy_ext(std::vector<vector4>* v) { v->clear(); }
+__declspec(noinline) void __fastcall tidy_ext(std::vector<mface>* v) { v->clear(); }

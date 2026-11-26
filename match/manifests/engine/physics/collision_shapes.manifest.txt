@@ -119,3 +119,16 @@
 ../src/engine/physics/collision_shapes.cpp  ?apply@renderer@@QAEXPBUmatrix@rgl@@@Z  0040a870  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  ?get_min@face@@UAEPAUvector4@rgl@@PAU23@@Z  0040aef0  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  ?get_max@face@@UAEPAUvector4@rgl@@PAU23@@Z  0040aff0  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ??$_Uninit_copy@PAUvector4@rgl@@PAU12@V?$allocator@Uvector4@rgl@@@std@@@std@@YAPAUvector4@rgl@@PAU12@00AAV?$allocator@Uvector4@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040d550  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ??$_Uninit_copy@PAUmface@@PAU1@V?$allocator@Umface@@@std@@@std@@YAPAUmface@@PAU1@00AAV?$allocator@Umface@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040d750  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ??$_Uninit_fill_n@PAUvector4@rgl@@IU12@V?$allocator@Uvector4@rgl@@@std@@@std@@YAXPAUvector4@rgl@@IABU12@AAV?$allocator@Uvector4@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040df60  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ??$_Uninit_fill_n@PAUmface@@IU1@V?$allocator@Umface@@@std@@@std@@YAXPAUmface@@IABU1@AAV?$allocator@Umface@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040e350  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ?resize@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@QAEXIUvector4@rgl@@@Z  0040db80  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ?erase@?$vector@Uvector4@rgl@@V?$allocator@Uvector4@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  0040dbf0  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  $L  0040d5cc  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  $L  0040d7bd  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  $L  0040dfda  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  $L  0040e3bb  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ?load@manifold@@UAEXPAUstream_base@@@Z  0040d9d0  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ?_Insert_n@?$vector@Umface@@V?$allocator@Umface@@@std@@@std@@IAEXViterator@12@IABUmface@@@Z  0040e060  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  $L  0040e200  /O2 /MT /Gy /TP

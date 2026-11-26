@@ -85,7 +85,12 @@ def manifest_syms(src):
     """{va: symbol} from manifest.txt rows next to the source that name this source file."""
     out = {}
     mf = os.path.join(os.path.dirname(src), "manifest.txt")
-    if os.path.exists(mf):
+    mfs = [mf]
+    rel = os.path.relpath(os.path.abspath(src), os.path.join(ROOT, "src"))
+    if not rel.startswith(".."):      # since the 2026-11 source-tree moves the rows live in match/manifests/<path under src>.manifest.txt
+        mfs.append(os.path.join(ROOT, "match", "manifests", os.path.splitext(rel)[0] + ".manifest.txt"))
+    for mf in mfs:
+      if os.path.exists(mf):
         for l in open(mf):
             p = l.split("#", 1)[0].split()
             if len(p) >= 3 and os.path.basename(p[0]) == os.path.basename(src):

@@ -52,11 +52,11 @@ def main():
         r = subprocess.run([PY, os.path.join(ROOT, "tools/matching/chk.py"), "--keep-obj", obj, src, va],
                            cwd=ROOT, env=env, capture_output=True, text=True)
         row = [l for l in r.stdout.splitlines() if re.match(r'^[0-9a-f]{8} ', l)]
-        m = re.search(r'marker (\S+)', row[0]) if row else None
+        m = re.search(r'(?:marker|manif|~size|other)\s+(\S+)', row[0]) if row else None
         if not m or not os.path.exists(obj):
             sys.exit("insdiff: chk.py gave no row / object:\n" + (r.stdout + r.stderr)[-1500:])
         size = re.search(r'\(size [^)]*\)', row[0])
-        print(row[0].split("  marker")[0] + ("  " + size.group(0) if size else ""))
+        print(re.split(r"  (?:marker|manif|~size|other) ", row[0])[0] + ("  " + size.group(0) if size else ""))
         r2 = subprocess.run([PY, os.path.join(ROOT, "tools/matching/cmpdis.py"), obj, m.group(1),
                              va.lower().replace("0x", "")], cwd=ROOT, env=env, capture_output=True, text=True)
         if r2.returncode:
