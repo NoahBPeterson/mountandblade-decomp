@@ -9599,7 +9599,7 @@ void Agent::process_blow(float unused)
             if (lid >= 0 && m->agents.pages[(unsigned)lid >> 4][lid & 0xf].horse >= 0 &&
                 blow.attacker == m->agents.pages[(unsigned)lid >> 4][lid & 0xf].horse && shown != 0 &&
                 round_float(&dmg) != 0) {
-                char hbuf[256];
+                char hbuf[64];
                 {
                     tstring k("ui_horse_charged_for_number_damage");
                     sprintf(hbuf, g_strtable.lookup(k)->c_str(), round_float(&dmg));
@@ -9621,7 +9621,7 @@ void Agent::process_blow(float unused)
                         key = "ui_horse_received_number_damage";
                 }
                 if (key) {
-                    char hbuf[256];
+                    char hbuf[64];
                     {
                         tstring k(key);
                         sprintf(hbuf, g_strtable.lookup(k)->c_str(), round_float(&dmg));
@@ -10012,7 +10012,7 @@ void Agent::process_blow(float unused)
             float lenA = vA.normalize();
             float cl = rgl::cross(vA, vB).out_length();
             char msgbuf[512];
-            char namebuf[256];
+            char namebuf[128];
             float w;
             if (cls == 3 || cls == 5 || cls == 4 || cls == 6) {
                 float tt = ((cl * lenA + 4.0f) * 0.25f) * ((lenB + 4.0f) * 0.25f) * 0.3f;
