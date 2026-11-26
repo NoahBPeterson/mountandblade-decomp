@@ -56,6 +56,7 @@ struct particle_mesh : mesh {};
 void strategic_entity::load(stream_base* s) { entity::load(s); }
 
 // @ 0x4286e0
+#pragma inline_depth(0)   // vector<mesh*>::push_back is the shared out-of-line copy here, as in the original
 void skeleton_entity::load(stream_base* s)
 {
     entity::load(s);
@@ -75,9 +76,10 @@ void skeleton_entity::load(stream_base* s)
             s->r_tstr((string*)&a);
             if (a.differs("none"))
                 m = ((rgl::mesh*)g_resmgr.get_object((string*)&a))->clone();
-            fx->elems[idx].psys.push_back(m);
+            fx->elems[idx].psys.push_back(&*m);   // an rvalue: push_back takes it by const& through a temporary, as the original does
         }
     }
 }
+#pragma inline_depth()
 
 } // namespace rgl
