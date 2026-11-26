@@ -1634,8 +1634,7 @@ int GameData::add_sprite(Vec2 pos, int tmpl)
     int id = parties.add_slot();         // 0x493960
     parties.get_w(id)->init();                       // 0x48f180
     parties.get_w(id)->template_id = tmpl;
-    parties.get_w(id)->pos.x = pos.x;
-    parties.get_w(id)->pos.y = pos.y;
+    static_cast<vec2&>(parties.get_w(id)->pos) = reinterpret_cast<const vec2&>(pos);
     parties.get_w(id)->dir = Vec2(1.0f, 0);
     float ang = (float)(rand() % 0x3dc9) * 0.00039724255f; // 0x536a9f / 0x54a6e0
     rot2(parties.get_w(id)->dir, ang);
