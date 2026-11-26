@@ -114,11 +114,12 @@ void PartyWindow::init_screen()
     container = new NodeA(0);
     container->move_a(V2(0.0f, 0.0f));
     container->set_xy(V2(1.0f, 0.75f));
+    rgl::mesh* m0;
     {
         tstring n("inventory_window_b");
-        rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&n))->clone();
-        container->set_track(0, m);
+        m0 = ((rgl::mesh*)g_resmgr.get_object(&n))->clone();
     }
+    container->set_track(0, m0);        // the original destroys the name string before this call
 
     if (w04 == 4) {
         equip_bg = new MissionUi;
@@ -173,22 +174,24 @@ void PartyWindow::init_screen()
         Camera* v;
         if (i == 0) {
             UiD* sc = make_scrollbar(container, &tstring("inv_s_inventory1"));
+            tstring outer("inv_sc_inventory1_outer");      // the original builds the name before the Camera and copies it into the by-value argument
             v = new Camera;
             v->f104 |= 0x20;
             if (sc != 0)
                 v->follow[1] = sc;
             v->target = page_widget[i];
             v->add_child(page_widget[i]);
-            label_refresh(v, tstring("inv_sc_inventory1_outer"));
+            label_refresh(v, outer);
         } else {
             UiD* sc = make_scrollbar(container, &tstring("inv_s_inventory2"));
+            tstring outer("inv_sc_inventory2_outer");      // the original builds the name before the Camera and copies it into the by-value argument
             v = new Camera;
             v->f104 |= 0x20;
             if (sc != 0)
                 v->follow[1] = sc;
             v->target = page_widget[i];
             v->add_child(page_widget[i]);
-            label_refresh(v, tstring("inv_sc_inventory2_outer"));
+            label_refresh(v, outer);
         }
         view[i] = v;
 
@@ -233,8 +236,10 @@ void PartyWindow::init_screen()
         make_inventory_menu(i);
 
     {
-        float y = cfg(tstring("inv_b_leave_h"));
-        tstring* label = g_strtable.lookup(tstring("ui_return"));
+        tstring key("inv_b_leave_h");        // both names stay alive until after the button is built (the original destroys them last)
+        float y = cfg(key);
+        tstring ret("ui_return");
+        tstring* label = g_strtable.lookup(ret);
         leave = new_sized_button((MissionUi*)container, *label, 0.0f, 0.0f, y, tstring("short_button"), tstring("short_button_down"), 3.0f, 0.072f, 0.085f);
     }
     label_refresh((MissionUi*)leave, tstring("inv_b_leave"));

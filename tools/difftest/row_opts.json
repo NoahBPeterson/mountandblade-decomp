@@ -1240,5 +1240,39 @@
       "--stub-callees"
     ],
     "why": "WinMain calls dozens of image functions (string table, config load, thread pool, bink intros, application setup) that load files and build windows; --stub-callees keeps them from running. The SkinMagic imports ord1 (InitSkinMagicLib) / ord3 (LoadSkinFromFile) and user32 SetActiveWindow / SetForegroundWindow are now modelled (machine.py), and DialogBoxParamA answers 0 or 0x410 (the launcher dialog result WinMain waits for)."
+  },
+  "mission_context 00514d40": {
+    "args": [
+      "--typed-share",
+      "0.9",
+      "--stub-callees"
+    ],
+    "why": "CampaignScreen::frame_update (4 KB) calls dozens of image functions that load/emit scenes; --stub-callees keeps them from running (the old UNSUPPORTED was 399/400 fault(read) on soup objects). One 60 s run reaches ~90 of 168 edges, so the row is run as 8 shards (--shard K/8, merge_shards.py): 2026-11-25 WEAK, ~2000 valid, 105/168 edges per side, no mismatch; the rest branch on stubbed callee returns."
+  },
+  "map_builder_and_data_load 005213d0": {
+    "args": [
+      "--typed-share",
+      "0.9",
+      "--stub-callees",
+      "--stack-mb",
+      "8"
+    ],
+    "why": "Game::build_map_trees reserves ~2.8 MB of stack through __chkstk (more than the default 2 MB emulated stack, so every run faulted: --stack-mb 8) and calls dozens of image functions that build scenes (--stub-callees). One 60 s run is ~35 valid inputs, so the row is run as 6 shards merged with merge_shards.py (2026-11-25: WEAK, 164 valid, 48/374 edges per side, no mismatch)."
+  },
+  "character_sheet_init 00507400": {
+    "args": [
+      "--typed-share",
+      "0.9",
+      "--stub-callees"
+    ],
+    "why": "CharSheet::init_screen (8 KB) builds the whole character sheet through dozens of image functions; --stub-callees keeps them from running (the old UNSUPPORTED was 0/202 valid on soup objects). One 60 s run is ~45 valid inputs and ~105 of 336 edges, so the row is run as 8 shards merged with merge_shards.py (2026-11-25: WEAK, 175/336 edges per side, no mismatch)."
+  },
+  "conversation_init 004f66e0": {
+    "args": [
+      "--typed-share",
+      "0.9",
+      "--stub-callees"
+    ],
+    "why": "Rec1208::init_screen (3 KB) builds the dialogue screen through ~7300 fake/image calls; --stub-callees keeps the image functions from running (the old not_run/UNSUPPORTED was 0 valid on soup objects). One 60 s run is ~45 valid inputs, so the row is run as 8 shards merged with merge_shards.py (2026-11-25: WEAK, 68/108 edges per side, no mismatch)."
   }
 }

@@ -90,11 +90,12 @@ void Rec1208::init_screen()
     msg_window = new text_box;
     msg_window->move_a(V2(0.03f, 0.3f));
     msg_window->set_xy(V2(0.25f, 0.21f));
+    rgl::mesh* msg_mesh;
     {
         tstring name("message_window");
-        rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&name))->clone();
-        msg_window->set_mesh(0, m);
+        msg_mesh = ((rgl::mesh*)g_resmgr.get_object(&name))->clone();
     }
+    msg_window->set_mesh(0, msg_mesh);       // the original destroys the name string before this call
     msg_window->hide();
 
     relation_bar = widget_base();
@@ -130,8 +131,8 @@ void Rec1208::init_screen()
         // buttons[i] sits (i + 1) slots below the choices box origin: the original's counter is incremented before the offset is taken
     for (int i = 1; i <= 0x400; i++) {
         tstring hello("hello");
+        tstring dlg_down("dlg_button_down");     // the original builds the down name before the plain one
         tstring dlg("dlg_button");
-        tstring dlg_down("dlg_button_down");
         int flag = 4;
         buttons[i - 1] = (MissionUi*)new_sized_button((MissionUi*)choice, hello, sentence_x, -((float)i * sentence_y_a), sentence_size_y,
                                               dlg, dlg_down, width_ratio, button_height, 0.085f);   // 0x4dcc50
@@ -187,7 +188,8 @@ void Rec1208::init_screen()
 
     n_lines = 0;
 
-    refresh(-1, 0);   // Rec1208::refresh 0x4f73c0 (ecx = this)
+    int refreshed;
+    refresh(-1, &refreshed);   // Rec1208::refresh 0x4f73c0 (ecx = this): the original passes the address of a local, not null
 
     if (target >= 0) {
         // the first_used / next_used scans as the original inlines them

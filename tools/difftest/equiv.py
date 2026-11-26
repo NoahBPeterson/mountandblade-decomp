@@ -3723,12 +3723,43 @@ class Runner:
             ins.operands[0].reg == CX.X86_REG_ESP and \
             (ins.operands[1].type != CX.X86_OP_IMM or ins.operands[1].imm > 0x40)
 
-    def _walk_back(self, addrs, insns, k, starts):
+    def _callee_pops(self, call):
+        """Argument dwords the callee of the direct `call` instruction pops itself (`ret N` of a thiscall / stdcall
+        function in the image: N // 4), or None for an indirect call, a cdecl callee (`ret`: the caller cleans up) or
+        code that cannot be read."""
+        if not call.operands or call.operands[0].type != CX.X86_OP_IMM:
+            return None
+        tg = call.operands[0].imm & 0xFFFFFFFF
+        key = ("callee-pops", tg)
+        v = self.targets_cache.get(key, 0)
+        if v == 0:
+            v = None
+            try:
+                for ins in _md.disasm(self.m.read(tg, 256), tg):
+                    if ins.id == CX.X86_INS_RET:
+                        if ins.operands and ins.operands[0].type == CX.X86_OP_IMM:
+                            v = ins.operands[0].imm // 4
+                        break
+                    if ins.id in (CX.X86_INS_JMP, CX.X86_INS_INT3, CX.X86_INS_CALL) and ins.address == tg:
+                        break                   # a thunk, or code that is not a function body
+                    if ins.id in (CX.X86_INS_JMP, CX.X86_INS_INT3):
+                        break                   # control leaves the straight line before any ret: unknown
+            except Exception:                   # noqa: BLE001 - unreadable target: as before, a balance point
+                v = None
+            self.targets_cache[key] = v
+        return v
+
+    def _walk_back(self, addrs, insns, k, starts, ignore=None):
         """The straight-line instructions ending with index k, back to the previous stack-balance point (call,
         pop, `add esp`, branch, ret, other esp write) or the start of k's basic block, in program order; and
-        whether the walk ended at a block start (then the first instruction returned is that start)."""
+        whether the walk ended at a block start (then the first instruction returned is that start).
+        With `ignore` (a set, filled in): the walk goes on past a call and adds the pushes that call consumes
+        itself (the nearest ones before it) to `ignore`. /O2 builds interleave an argument's own temporary
+        (`push imm32; lea ecx,[tmp]; call tstring::tstring; push eax`) with the pushes of the outer call, and the
+        callee (thiscall / stdcall) pops its own, so they are not the outer call's arguments."""
         seq = []
         hit_start = False
+        skip = 0
         j = k
         # no instruction cap short of the block: /O2 schedules argument pushes far ahead of the call; config
         # 0x4bc830 pushes 2 of its 3 COM-call arguments 60 and 30 instructions before `call [edx+158h]`, between
@@ -3737,7 +3768,13 @@ class Runner:
             ins = insns[addrs[j]]
             if j < k and ins.address + ins.size != addrs[j + 1]:
                 break                           # gap: not a straight-line predecessor
-            if ins.id in (CX.X86_INS_PUSH, CX.X86_INS_SUB):
+            pops = self._callee_pops(ins) if ignore is not None and ins.id == CX.X86_INS_CALL else None
+            if pops is not None:
+                skip += pops                    # the callee pops the arguments this call pushed
+            elif ignore is not None and skip and ins.id == CX.X86_INS_PUSH:
+                skip -= 1
+                ignore.add(ins.address)
+            elif ins.id in (CX.X86_INS_PUSH, CX.X86_INS_SUB):
                 pass                            # counted, or judged a frame allocation, by _count_pushes
             elif ins.id in (CX.X86_INS_CALL, CX.X86_INS_RET, CX.X86_INS_POP, CX.X86_INS_ADD) or \
                     ins.group(capstone.CS_GRP_JUMP):
@@ -3828,7 +3865,7 @@ class Runner:
                 a = a + ins.size
         return t
 
-    def _count_pushes(self, seq, prologue, saved=None):
+    def _count_pushes(self, seq, prologue, saved=None, ignore=()):
         """Argument dwords `seq` pushes. A push of a callee-saved register still holding the caller's value
         (`saved`, from entry_saved) saves it. With `prologue` (seq starts at a function's entry) a `sub esp,N` /
         `push ecx` that only prologue instructions precede allocates the frame. A large `sub esp,N` anywhere
@@ -3837,6 +3874,8 @@ class Runner:
         in_prologue = prologue
         bit = {r: 1 << k for k, r in enumerate(_CALLEE_SAVED_REGS)}
         for ins in seq:
+            if ins.address in ignore:
+                continue                        # pushed for a call between it and the one counted
             push_reg = ins.operands[0].reg if ins.id == CX.X86_INS_PUSH and \
                 ins.operands[0].type == CX.X86_OP_REG else None
             if push_reg in bit and saved is not None and ins.address in saved and \
@@ -3863,7 +3902,7 @@ class Runner:
             in_prologue = False
         return n
 
-    def _pushes_ending(self, addrs, insns, k, depth):
+    def _pushes_ending(self, addrs, insns, k, depth, through=False):
         """Argument dwords on the stack, since the last balance point, after the instruction at index k runs
         (k ends a predecessor block when it is a jump)."""
         starts = self.block_starts(addrs, insns)
@@ -3874,13 +3913,15 @@ class Runner:
             k -= 1
             if insns[addrs[k]].address + insns[addrs[k]].size != addrs[k + 1]:
                 return None
-        seq, hit_start = self._walk_back(addrs, insns, k, starts)
+        ign = set() if through else None
+        seq, hit_start = self._walk_back(addrs, insns, k, starts, ign)
+        ign = ign or ()
         saved = self.entry_saved(addrs, insns)
         if not seq or not hit_start:
-            return self._count_pushes(seq, False, saved)
+            return self._count_pushes(seq, False, saved, ign)
         if seq[0].address in self.fn_entries(addrs, insns):
-            return self._count_pushes(seq, True, saved)
-        n = self._count_pushes(seq, False, saved)
+            return self._count_pushes(seq, True, saved, ign)
+        n = self._count_pushes(seq, False, saved, ign)
         if any(self._is_frame_sub(x) for x in seq):
             return n
         return n + self._pushes_from_preds(addrs, insns, seq[0].address, depth)
@@ -3905,7 +3946,25 @@ class Runner:
         prev = insns[addrs[i - 1]]
         if prev.address + prev.size != addrs[i]:
             return 0
-        return self._pushes_ending(addrs, insns, i - 1, 0) or 0
+        n = self._pushes_ending(addrs, insns, i - 1, 0) or 0
+        # /O2 interleaves an argument's own temporary (`push imm32; lea ecx,[tmp]; call tstring::tstring; push eax`)
+        # with the pushes of the call, and the walk stops at that inner call: n then misses the pushes before it.
+        # Pushes pending for an outer call look the same as such arguments, so a larger count is believed only
+        # when the callee says so: a direct callee's `ret N`, or the `add esp,N` right after a cdecl call
+        # (counted through the inner callee-pops calls, whose own pushes are not this call's).
+        call = insns[addrs[i]]
+        p = self._callee_pops(call)
+        if p is not None:
+            return p
+        if i + 1 < len(addrs):
+            nxt = insns[addrs[i + 1]]
+            if nxt.id == CX.X86_INS_ADD and nxt.address == call.address + call.size and len(nxt.operands) == 2 and \
+                    nxt.operands[0].type == CX.X86_OP_REG and nxt.operands[0].reg == CX.X86_REG_ESP and \
+                    nxt.operands[1].type == CX.X86_OP_IMM and nxt.operands[1].imm // 4 > n:
+                through = self._pushes_ending(addrs, insns, i - 1, 0, True) or 0
+                if through == nxt.operands[1].imm // 4:
+                    return through
+        return n
 
     def _call_vtable_base(self, ret):
         """The base register of a `call [reg+disp]` ending at `ret` (capstone reg id), or None."""
