@@ -566,7 +566,7 @@ bool CD3DApplication::FindBestFullscreenMode( bool bRequireHAL, bool bRequireREF
     D3DDeviceCombo* pBestDeviceCombo = NULL;
 
     for (UINT iai = 0; iai < m_d3dEnumeration.m_pAdapterInfoList->Count(); iai++) {
-        D3DAdapterInfo* pAdapterInfo = m_d3dEnumeration.m_pAdapterInfoList->GetPtr(iai);
+        D3DAdapterInfo* pAdapterInfo = static_cast<D3DAdapterInfo*>(m_d3dEnumeration.m_pAdapterInfoList->Array()->GetPtr(iai));
         m_pD3D->GetAdapterDisplayMode(pAdapterInfo->AdapterOrdinal, &adapterDesktopDisplayMode);
         for (UINT idi = 0; idi < pAdapterInfo->pDeviceInfoList->Count(); idi++) {
             D3DDeviceInfo* pDeviceInfo = pAdapterInfo->pDeviceInfoList->GetPtr(idi);

@@ -97,6 +97,7 @@ public:
     CReferenceList( void ) : CArrayList( AL_REFERENCE ) {}
     __forceinline HRESULT Add( T* pEntry ) { return CArrayList::Add( pEntry ); }
     __forceinline T* GetPtr( UINT Entry ) { return static_cast<T*>( CArrayList::GetPtr( Entry ) ); }
+    CArrayList* Array( void ) { return this; }   // the untyped list, for a GetPtr that is a real call (0x407ba0) rather than the inlined typed wrapper
     using CArrayList::Count;
     using CArrayList::Clear;
 };

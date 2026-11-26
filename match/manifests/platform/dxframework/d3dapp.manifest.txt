@@ -24,3 +24,4 @@
 ../src/platform/dxframework/d3dapp.cpp  ?Run@CD3DApplication@@UAEHXZ  00402ee0  /O2 /MT /Gy /TP
 ../src/platform/dxframework/d3dapp.cpp  ?Create3DEnvironment@CD3DApplication@@UAEJPAUHINSTANCE__@@@Z  00403010  /O2 /MT /Gy /TP
 ../src/platform/dxframework/d3dapp.cpp  ?MsgProc@CD3DApplication@@UAEJPAUHWND__@@IIJ@Z  00403120  /O2 /MT /Gy /TP
+../src/platform/dxframework/d3dapp.cpp  ?FindBestFullscreenMode@CD3DApplication@@MAE_N_N0@Z  00401d40  /O2 /MT /Gy /TP

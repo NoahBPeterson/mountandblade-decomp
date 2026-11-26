@@ -772,7 +772,7 @@ INT_PTR CD3DSettingsDialog::DialogProc( HWND hDlg, UINT msg, WPARAM wParam, LPAR
             for( UINT iai = 0; iai < m_pEnumeration->m_pAdapterInfoList->Count(); iai++ )
             {
                 D3DAdapterInfo* pAdapterInfo;
-                pAdapterInfo = m_pEnumeration->m_pAdapterInfoList->GetPtr(iai);
+                pAdapterInfo = static_cast<D3DAdapterInfo*>(m_pEnumeration->m_pAdapterInfoList->Array()->GetPtr(iai));
                 TCHAR strDescription[512];
                 DXUtil_ConvertAnsiStringToGenericCch( strDescription, pAdapterInfo->AdapterIdentifier.Description, 512 );
                 ComboBoxAdd( IDC_ADAPTER_COMBO, pAdapterInfo, strDescription );
