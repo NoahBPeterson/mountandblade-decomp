@@ -172,10 +172,62 @@ __forceinline NavCell* copy_nonscalar(NavCell* f, NavCell* l, NavCell* d) { for 
 namespace std {
 // The original's four element helpers are out-of-line explicit specializations (hand-written try/catch loops: the
 // _Nonscalar_ptr_iterator_tag overloads of the stock <memory>); declared first so _Insert_n calls them, defined in address order.
+// _Xlen is the folded 0x43e2a0, an ordinary call (the epilogue follows it)
+template<> void vector<NavVert, allocator<NavVert> >::_Xlen() const;
+template<> void vector<NavCell, allocator<NavCell> >::_Xlen() const;
 template<> NavVert* _Uninit_copy<NavVert*, NavVert*, allocator<NavVert> >(NavVert*, NavVert*, NavVert*, allocator<NavVert>&, _Nonscalar_ptr_iterator_tag);
 template<> void _Uninit_fill_n<NavVert*, unsigned int, NavVert, allocator<NavVert> >(NavVert*, unsigned int, const NavVert&, allocator<NavVert>&, _Nonscalar_ptr_iterator_tag);
 template<> NavCell* _Uninit_copy<NavCell*, NavCell*, allocator<NavCell> >(NavCell*, NavCell*, NavCell*, allocator<NavCell>&, _Nonscalar_ptr_iterator_tag);
 template<> void _Uninit_fill_n<NavCell*, unsigned int, NavCell, allocator<NavCell> >(NavCell*, unsigned int, const NavCell&, allocator<NavCell>&, _Nonscalar_ptr_iterator_tag);
+// the stock fill / copy_backward / _Ucopy / _Ufill, expanded (cl 13.10 keeps them out of line for these elements; the original has them inline)
+template<> __forceinline void fill<NavVert*, NavVert>(NavVert* _First, NavVert* _Last, const NavVert& _Val)
+{
+    for (; _First != _Last; ++_First)
+        *_First = _Val;
+}
+template<> __forceinline NavVert* copy_backward<NavVert*, NavVert*>(NavVert* _First, NavVert* _Last, NavVert* _Dest)
+{
+    while (_First != _Last)
+        *--_Dest = *--_Last;
+    return _Dest;
+}
+template<> __forceinline NavVert* _Uninitialized_copy<NavVert*, NavVert*, allocator<NavVert> >(NavVert* _First, NavVert* _Last, NavVert* _Dest, allocator<NavVert>& _Al)
+{
+    return _Uninit_copy(_First, _Last, _Dest, _Al, _Ptr_cat(_First, _Dest));
+}
+template<> template<> __forceinline NavVert* vector<NavVert, allocator<NavVert> >::_Ucopy<NavVert*>(NavVert* _First, NavVert* _Last, NavVert* _Ptr)
+{
+    return _Uninitialized_copy(_First, _Last, _Ptr, this->_Alval);
+}
+template<> __forceinline NavVert* vector<NavVert, allocator<NavVert> >::_Ufill(NavVert* _Ptr, size_type _Count, const NavVert& _Val)
+{
+    _Uninit_fill_n(_Ptr, _Count, _Val, this->_Alval, _Ptr_cat(_Ptr, _Ptr));
+    return (_Ptr + _Count);
+}
+template<> __forceinline void fill<NavCell*, NavCell>(NavCell* _First, NavCell* _Last, const NavCell& _Val)
+{
+    for (; _First != _Last; ++_First)
+        *_First = _Val;
+}
+template<> __forceinline NavCell* copy_backward<NavCell*, NavCell*>(NavCell* _First, NavCell* _Last, NavCell* _Dest)
+{
+    while (_First != _Last)
+        *--_Dest = *--_Last;
+    return _Dest;
+}
+template<> __forceinline NavCell* _Uninitialized_copy<NavCell*, NavCell*, allocator<NavCell> >(NavCell* _First, NavCell* _Last, NavCell* _Dest, allocator<NavCell>& _Al)
+{
+    return _Uninit_copy(_First, _Last, _Dest, _Al, _Ptr_cat(_First, _Dest));
+}
+template<> template<> __forceinline NavCell* vector<NavCell, allocator<NavCell> >::_Ucopy<NavCell*>(NavCell* _First, NavCell* _Last, NavCell* _Ptr)
+{
+    return _Uninitialized_copy(_First, _Last, _Ptr, this->_Alval);
+}
+template<> __forceinline NavCell* vector<NavCell, allocator<NavCell> >::_Ufill(NavCell* _Ptr, size_type _Count, const NavCell& _Val)
+{
+    _Uninit_fill_n(_Ptr, _Count, _Val, this->_Alval, _Ptr_cat(_Ptr, _Ptr));
+    return (_Ptr + _Count);
+}
 // @ 0x424720
 template vector<NavCell>::iterator vector<NavCell>::iterator::operator+(vector<NavCell>::difference_type) const;
 // @ 0x424740
