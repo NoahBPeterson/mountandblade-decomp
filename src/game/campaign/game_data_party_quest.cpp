@@ -1040,9 +1040,11 @@ void GameData::world_free()
 
     {
         tstring* p = talk_lines + 5;
-        for (int n = 5; n != 0; --n) {
+        int n = 5;
+        while (n != 0) {
             --p;
             p->~tstring();
+            --n;
         }
     }
     background_mesh.~tstring();
@@ -1054,9 +1056,11 @@ void GameData::world_free()
 
     {
         tstring* p = labels + 50;
-        for (int n = 0x32; n != 0; --n) {
+        int n = 0x32;
+        while (n != 0) {
             --p;
             p->~tstring();
+            --n;
         }
     }
 
@@ -1069,7 +1073,7 @@ void GameData::world_free()
 
     simple.~SimpleTriggerVec();                                // 0x4317b0 (the simple triggers' delete[] of their records)
 
-    delete[] triggers.data;                                         // ??_ETriggerRec 0x431480 (cl inlines it here; the original calls it)
+    delete[] triggers.data;                                         // ??_ETriggerRec 0x431480 (a call: with a `for` loop before it in the function cl inlines it, see the while loops above)
 
     parties.clear();
     events.Pool<Event>::~Pool();                                                  // 0x4c6e30 (Pool<Event>::~Pool)

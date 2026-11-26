@@ -17,6 +17,7 @@
 ../src/game/campaign/game_data_party_quest.cpp  ?free_arrays@GameData@@QAEXXZ  00492a20  /O2 /MT /Gy /TP
 ../src/game/campaign/game_data_party_quest.cpp  ?_Insert_n@?$vector@_JV?$allocator@_J@std@@@std@@IAEXViterator@12@IAB_J@Z  00492b30  /O2 /MT /Gy /TP
 ../src/game/campaign/game_data_party_quest.cpp  ?_Growmap@?$deque@HV?$allocator@H@std@@@std@@IAEXI@Z  00492d80  /O2 /MT /Gy /TP
+../src/game/campaign/game_data_party_quest.cpp  ?world_free@GameData@@QAEXXZ  00492f40  /O2 /MT /Gy /TP
 ../src/game/campaign/game_data_party_quest.cpp  ?resize@?$vector@_JV?$allocator@_J@std@@@std@@QAEXI_J@Z  00493090  /O2 /MT /Gy /TP
 ../src/game/campaign/game_data_party_quest.cpp  ?push_back@?$deque@HV?$allocator@H@std@@@std@@QAEXABH@Z  00493120  /O2 /MT /Gy /TP
 ../src/game/campaign/game_data_party_quest.cpp  ?kind@DropDown@@UAEHXZ  00493300  /O2 /MT /Gy /TP
