@@ -156,6 +156,9 @@ def main():
                     "check (tools/equiv/quick.py: renaming, angr ~15 s, emulator ~10 s): wrong logic or only codegen?")
     ap.add_argument("--quick-no-emu", action="store_true", help="--quick without its emulator step")
     ap.add_argument("--keep-obj", metavar="PATH", help="also copy the compiled object to PATH (for cmpdis / insn_align)")
+    ap.add_argument("--symbol", action="append", default=[], metavar="0xVA=MANGLED",
+                    help="bind this VA to exactly this object symbol (repeatable): for ICF twins and template instances "
+                         "the marker cannot tell apart (vector<NavVert> vs <NavCell>::erase share a marker name)")
     a = ap.parse_args()
     vas = []
     for t in a.targets:
@@ -213,9 +216,18 @@ def main():
     names = [f[0] for f in funcs]
     consts = coff_constants(obj)
     manifest = manifest_syms(src)
+    given = {}
+    for g in a.symbol:
+        k, _, v = g.partition("=")
+        given[int(k, 16)] = v
+    for va, v in given.items():
+        if v not in names:
+            sys.exit("chk: --symbol %08x=%s: no such symbol in the object (%d function symbols)" % (va, v, len(names)))
     for va in vas:
         n0 = len(bounds(va, fstarts))
-        if manifest.get(va) in names:
+        if va in given:
+            bound, how = {given[va]}, "given"
+        elif manifest.get(va) in names:
             bound, how = {manifest[va]}, "manif"
         else:
             bound = set(marker_syms(src, va, names))

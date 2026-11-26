@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """insdiff.py: count the instructions that really differ between our compile of a row and the original.
 
-    MB_RC_ALLOW_LOCAL=1 .venv/bin/python tools/matching/insdiff.py SRC.cpp 0x<va> [--frame] [--show]
+    MB_RC_ALLOW_LOCAL=1 .venv/bin/python tools/matching/insdiff.py SRC.cpp 0x<va> [--frame] [--show] [--symbol=MANGLED]
 
 chk.py's two figures (diff, aligned) are byte counts. On a big row, one 4-byte frame difference changes every
 [esp+N] and swamps both, so an edit that fixes real instructions can look like no change. This compiles the row once
@@ -42,6 +42,8 @@ def norm(x, frame):
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    # --symbol=MANGLED: the object symbol to compare (passed to chk.py), for twins the marker binds wrongly
+    sym = [a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--symbol=")]
     if len(args) != 2:
         sys.exit(__doc__)
     src, va = args
@@ -49,14 +51,15 @@ def main():
     env = dict(os.environ)
     with tempfile.TemporaryDirectory(dir=os.path.join(ROOT, "work", "match")) as d:
         obj = os.path.join(d, "row.obj")
-        r = subprocess.run([PY, os.path.join(ROOT, "tools/matching/chk.py"), "--keep-obj", obj, src, va],
+        r = subprocess.run([PY, os.path.join(ROOT, "tools/matching/chk.py"), "--keep-obj", obj, src, va]
+                           + ["--symbol=%s=%s" % (va, sym[0])] * bool(sym),
                            cwd=ROOT, env=env, capture_output=True, text=True)
         row = [l for l in r.stdout.splitlines() if re.match(r'^[0-9a-f]{8} ', l)]
-        m = re.search(r'(?:marker|manif|~size|other)\s+(\S+)', row[0]) if row else None
+        m = re.search(r'(?:marker|manif|~size|other|given)\s+(\S+)', row[0]) if row else None
         if not m or not os.path.exists(obj):
             sys.exit("insdiff: chk.py gave no row / object:\n" + (r.stdout + r.stderr)[-1500:])
         size = re.search(r'\(size [^)]*\)', row[0])
-        print(re.split(r"  (?:marker|manif|~size|other) ", row[0])[0] + ("  " + size.group(0) if size else ""))
+        print(re.split(r"  (?:marker|manif|~size|other|given) ", row[0])[0] + ("  " + size.group(0) if size else ""))
         r2 = subprocess.run([PY, os.path.join(ROOT, "tools/matching/cmpdis.py"), obj, m.group(1),
                              va.lower().replace("0x", "")], cwd=ROOT, env=env, capture_output=True, text=True)
         if r2.returncode:
