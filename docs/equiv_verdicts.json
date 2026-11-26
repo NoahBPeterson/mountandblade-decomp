@@ -1,6 +1,6 @@
 {
-"when": "2026-11-26T09:07:34-06:00",
-"commit": "f75aaada",
+"when": "2026-11-25T23:04:19-06:00",
+"commit": "e9a379e7",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -90,36 +90,42 @@
 "work/equiv_results/2026-11-22/bm1",
 "work/equiv_results/2026-11-22/rxy",
 "work/equiv_results/2026-11-25/F",
-"work/equiv_results/2026-11-25/U",
-"work/equiv_results/2026-11-26/D"
+"work/equiv_results/2026-11-25/U"
 ],
 "summary": {
-"pass": 84,
+"pass": 99,
 "proven": 27,
 "proven_o": 0,
-"weak": 224,
-"fail": 1,
-"inputs": 7,
+"weak": 239,
+"fail": 7,
+"inputs": 12,
 "harness": 0,
 "comdat": 2,
 "comdatdiff": 0,
-"funclet": 28,
+"funclet": 40,
 "notcode": 0,
 "not_run": 0,
-"pass_sz": 56461,
+"pass_sz": 59490,
 "proven_sz": 14525,
 "proven_o_sz": 0,
-"weak_sz": 472388,
-"fail_sz": 328,
-"inputs_sz": 6723,
+"weak_sz": 477462,
+"fail_sz": 1998,
+"inputs_sz": 7441,
 "harness_sz": 0,
 "comdat_sz": 71,
 "comdatdiff_sz": 0,
-"funclet_sz": 2162,
+"funclet_sz": 2470,
 "notcode_sz": 0,
 "not_run_sz": 0
 },
 "rows": {
+"00401d40": {
+"module": "d3dapp",
+"file": "match/manifests/platform/dxframework/d3dapp.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 955
+},
 "00403c50": {
 "module": "d3denumeration",
 "file": "match/manifests/platform/dxframework/d3denumeration.nonmatching.txt",
@@ -141,6 +147,69 @@
 "category": "inputs",
 "size": 822,
 "reason": "only 0/5 inputs valid (discards: fault(fetch)=5) [merged from 5 shards]"
+},
+"00406e50": {
+"module": "d3dsettings",
+"file": "match/manifests/platform/dxframework/d3dsettings.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 968
+},
+"00408170": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "FAIL",
+"category": "fail",
+"size": 63,
+"reason": "166/166 valid inputs mismatched; first: execution",
+"first_mismatch": {
+"input": 0,
+"profile": "floaty",
+"origin": "fresh",
+"observable": "execution",
+"kind": "value",
+"orig": "returned normally",
+"ours": "fake-arity: no call site before c08a192a",
+"detail": "ours failed where the original succeeded",
+"args": [
+"40020000"
+],
+"regs": {
+"eax": "3f000000",
+"ecx": "40010000",
+"edx": "bf620067"
+},
+"fake_calls": 1,
+"repairs": 1,
+"input_file": "work\\difftest\\fail_inputs\\shapes_00408170.pkl"
+}
+},
+"004081b0": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "FAIL",
+"category": "fail",
+"size": 63,
+"reason": "200/200 valid inputs mismatched; first: execution",
+"first_mismatch": {
+"input": 0,
+"profile": "zeroish",
+"origin": "fresh",
+"observable": "execution",
+"kind": "value",
+"orig": "returned normally",
+"ours": "fake-arity: no call site before 3f000000",
+"detail": "ours failed where the original succeeded",
+"args": [],
+"regs": {
+"eax": "4f3c00b0",
+"ecx": "40010000",
+"edx": "00000000"
+},
+"fake_calls": 1,
+"repairs": 3,
+"input_file": "work\\difftest\\fail_inputs\\shapes_004081b0.pkl"
+}
 },
 "00408bd0": {
 "module": "collision_shapes",
@@ -184,6 +253,49 @@
 "category": "pass",
 "size": 558
 },
+"0040a870": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "FAIL",
+"category": "fail",
+"size": 172,
+"reason": "200/200 valid inputs mismatched; first: execution",
+"first_mismatch": {
+"input": 0,
+"profile": "pointery",
+"origin": "fresh",
+"observable": "execution",
+"kind": "value",
+"orig": "returned normally",
+"ours": "fake-arity: no call site before 4fb98260",
+"detail": "ours failed where the original succeeded",
+"args": [
+"40020000"
+],
+"regs": {
+"eax": "4cc00038",
+"ecx": "40010000",
+"edx": "42f40000"
+},
+"fake_calls": 1,
+"repairs": 1,
+"input_file": "work\\difftest\\fail_inputs\\shapes_0040a870.pkl"
+}
+},
+"0040aef0": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 129
+},
+"0040aff0": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 129
+},
 "0040b0f0": {
 "module": "collision_shapes",
 "file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
@@ -205,6 +317,69 @@
 "category": "funclet",
 "size": 127
 },
+"0040d3d0": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 380
+},
+"0040d550": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 124
+},
+"0040d5cc": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 9
+},
+"0040d5e0": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 355
+},
+"0040d750": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 109
+},
+"0040d7bd": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 9
+},
+"0040d9d0": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 423
+},
+"0040db80": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 107
+},
+"0040dbf0": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 89
+},
 "0040dc50": {
 "module": "collision_shapes",
 "file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
@@ -218,6 +393,89 @@
 "verdict": "UNSUPPORTED",
 "category": "funclet",
 "size": 21
+},
+"0040df60": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 122
+},
+"0040dfda": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 9
+},
+"0040e060": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 416
+},
+"0040e200": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 21
+},
+"0040e350": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 107
+},
+"0040e3bb": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 9
+},
+"0040e870": {
+"module": "collision_shapes",
+"file": "match/manifests/engine/physics/collision_shapes.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 197
+},
+"0040ec90": {
+"module": "mesh",
+"file": "match/manifests/engine/render/mesh.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 890
+},
+"0040f3f0": {
+"module": "mesh",
+"file": "match/manifests/engine/render/mesh.nonmatching.txt",
+"verdict": "FAIL",
+"category": "fail",
+"size": 440,
+"reason": "21/139 valid inputs mismatched; first: import call #0; 1 modelled symbol(s)",
+"first_mismatch": {
+"input": 27,
+"profile": "floaty",
+"origin": "fresh",
+"observable": "import call #0",
+"kind": "value",
+"orig": "(none)",
+"ours": "model:?set_transform@@YAJPAUIDirect3DDevice9@@W4_D3DTRANSFORMSTATETYPE@@ABUmatrix@rgl@@@Z()",
+"detail": "imports called (any depth), args normalised",
+"args": [],
+"regs": {
+"eax": "445beb20",
+"ecx": "40010000",
+"edx": "4bf40000"
+},
+"fake_calls": 8,
+"repairs": 0,
+"input_file": "work/difftest/fail_inputs/mesh_obj_0040f3f0.pkl"
+}
 },
 "00411d20": {
 "module": "mesh",
@@ -362,6 +620,13 @@
 "category": "pass",
 "size": 344
 },
+"00420b40": {
+"module": "scene_objects",
+"file": "match/manifests/engine/scene/scene_objects.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 834
+},
 "00422130": {
 "module": "fx_animation",
 "file": "match/manifests/engine/fx/fx_animation.nonmatching.txt",
@@ -397,6 +662,13 @@
 "category": "weak",
 "size": 488
 },
+"00423fc0": {
+"module": "world_cells",
+"file": "match/manifests/engine/physics/world_cells.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 80
+},
 "00424220": {
 "module": "world_grid",
 "file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
@@ -425,6 +697,42 @@
 "category": "funclet",
 "size": 21
 },
+"00424bc0": {
+"module": "world_grid",
+"file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "inputs",
+"size": 109,
+"reason": "only 0/57 inputs valid (discards: fault(pool-limit)=52, fault(write)=3, arg-in-callee-frame=1) [merged from 2 shards]"
+},
+"00424c2d": {
+"module": "world_grid",
+"file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 9
+},
+"00424c40": {
+"module": "world_grid",
+"file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 107
+},
+"00424cab": {
+"module": "world_grid",
+"file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 9
+},
+"00424d60": {
+"module": "world_grid",
+"file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 79
+},
 "00424db0": {
 "module": "world_grid",
 "file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
@@ -438,6 +746,35 @@
 "verdict": "UNSUPPORTED",
 "category": "funclet",
 "size": 21
+},
+"00425140": {
+"module": "world_grid",
+"file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "inputs",
+"size": 114,
+"reason": "only 0/55 inputs valid (discards: fault(pool-limit)=54, fault(read)=1) [merged from 2 shards]"
+},
+"004251b2": {
+"module": "world_grid",
+"file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 9
+},
+"004251c0": {
+"module": "world_grid",
+"file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 109
+},
+"0042522d": {
+"module": "world_grid",
+"file": "match/manifests/engine/physics/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 9
 },
 "004259a0": {
 "module": "rigid_body",
@@ -474,6 +811,27 @@
 "category": "weak",
 "size": 1096
 },
+"00427450": {
+"module": "world_collide",
+"file": "match/manifests/engine/physics/world_collide.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 100
+},
+"004274c0": {
+"module": "world_collide",
+"file": "match/manifests/engine/physics/world_collide.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 107
+},
+"0042752b": {
+"module": "world_collide",
+"file": "match/manifests/engine/physics/world_collide.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 9
+},
 "00427590": {
 "module": "world_collide",
 "file": "match/manifests/engine/physics/world_collide.nonmatching.txt",
@@ -488,6 +846,41 @@
 "verdict": "UNSUPPORTED",
 "category": "funclet",
 "size": 21
+},
+"00427880": {
+"module": "world_collide",
+"file": "match/manifests/engine/physics/world_collide.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 109
+},
+"004278ed": {
+"module": "world_collide",
+"file": "match/manifests/engine/physics/world_collide.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
+"size": 9
+},
+"00427ea0": {
+"module": "entity_types",
+"file": "match/manifests/engine/scene/entity_types.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 156
+},
+"004286e0": {
+"module": "shape_load",
+"file": "match/manifests/engine/scene/shape_load.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 310
+},
+"00428b10": {
+"module": "fx_support",
+"file": "match/manifests/engine/fx/fx_support.nonmatching.txt",
+"verdict": "WEAK-FP",
+"category": "weak",
+"size": 324
 },
 "004291c0": {
 "module": "fx_def_skin",
@@ -1057,6 +1450,20 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 7733
+},
+"00461630": {
+"module": "renderer",
+"file": "match/manifests/engine/render/renderer.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 381
+},
+"00462170": {
+"module": "renderer",
+"file": "match/manifests/engine/render/renderer.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 119
 },
 "00463610": {
 "module": "troop_inventory",
@@ -1924,6 +2331,14 @@
 "category": "pass",
 "size": 220
 },
+"004bc430": {
+"module": "config",
+"file": "match/manifests/game/config/config.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "inputs",
+"size": 257,
+"reason": "only 0/555 inputs valid (discards: import:DirectInput8Create=412, fake-arity=112, fault(read)=25) [merged from 5 shards]"
+},
 "004bd4d0": {
 "module": "config",
 "file": "match/manifests/game/config/config.nonmatching.txt",
@@ -1937,6 +2352,13 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 2873
+},
+"004c1f70": {
+"module": "options_dialog_and_module_tables",
+"file": "match/manifests/game/app/options_dialog_and_module_tables.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 331
 },
 "004c25e0": {
 "module": "options_dialog_and_module_tables",
@@ -2242,6 +2664,42 @@
 "category": "weak",
 "size": 1640
 },
+"004f46d0": {
+"module": "dust_particles",
+"file": "match/manifests/game/terrain/dust_particles.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 264
+},
+"004f4860": {
+"module": "dust_particles",
+"file": "match/manifests/game/terrain/dust_particles.nonmatching.txt",
+"verdict": "FAIL",
+"category": "fail",
+"size": 231,
+"reason": "137/200 valid inputs mismatched; first: heap size; NOTE resolution audit: 3 agree, 0 same-code, 1 unverified, 0 disagree, 1 local copies [our own copy runs where the original calls: ?_Xlen@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@IBEXXZ -> 0043e2a0]",
+"first_mismatch": {
+"input": 3,
+"profile": "mixed",
+"origin": "fresh",
+"observable": "heap size",
+"kind": "value",
+"orig": "0x80",
+"ours": "0x180",
+"detail": "bytes allocated through malloc-like imports",
+"args": [
+"00000004"
+],
+"regs": {
+"eax": "4ce10000",
+"ecx": "40010000",
+"edx": "bf800000"
+},
+"fake_calls": 0,
+"repairs": 0,
+"input_file": "work\\difftest\\fail_inputs\\dust_004f4860.pkl"
+}
+},
 "004f5fb0": {
 "module": "editor_widgets",
 "file": "match/manifests/game/editor/editor_widgets.nonmatching.txt",
@@ -2407,6 +2865,14 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1981
+},
+"0050a140": {
+"module": "character_sheet_view",
+"file": "match/manifests/game/ui/screens/character_sheet/character_sheet_view.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "inputs",
+"size": 128,
+"reason": "only 0/16 inputs valid (discards: fault(read)=13, fault(pool-limit)=2, heap-exhausted=1) [merged from 5 shards]"
 },
 "0050cc70": {
 "module": "text_box",
@@ -2620,6 +3086,13 @@
 "category": "weak",
 "size": 321
 },
+"005243c0": {
+"module": "map_builder_and_data_load",
+"file": "match/manifests/game/campaign/map_builder_and_data_load.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 91
+},
 "00524420": {
 "module": "map_builder_and_data_load",
 "file": "match/manifests/game/campaign/map_builder_and_data_load.nonmatching.txt",
@@ -2770,9 +3243,32 @@
 "005302f0": {
 "module": "poly_mesh_poly_ray_edit",
 "file": "match/manifests/game/editor/poly_mesh_poly_ray_edit.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 701
+"verdict": "FAIL",
+"category": "fail",
+"size": 701,
+"reason": "shard 2/4: 1/168 valid inputs mismatched; first: memory .data @005a9fb0; NOTE resolution audit: 23 agree, 0 same-code, 1 unverified, 0 disagree, 1 local copies [our own copy runs where the original calls: ??4?$vector@PAUmesh@rgl@@V?$allocator@PAUmesh@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z -> 0043f0a0] [merged from 4 shards]",
+"first_mismatch": {
+"input": 27,
+"profile": "mixed",
+"origin": "mutant",
+"observable": "memory .data @005a9fb0",
+"kind": "float-rounding",
+"orig": "00000001",
+"ours": "00000000",
+"detail": "differing dwords (addr: orig/ours): 005a9fb0: 00000001/00000000 [as float32: 1.401298464324817e-45 vs 0.0, 1 ulp apart]",
+"args": [
+"40020000",
+"40030000"
+],
+"regs": {
+"eax": "3fb92fc7",
+"ecx": "80000000",
+"edx": "8053055d"
+},
+"fake_calls": 0,
+"repairs": 0,
+"input_file": "work\\difftest\\fail_inputs\\mesh_poly_ray_005302f0.pkl"
+}
 },
 "005305b0": {
 "module": "map_editor_update",
@@ -2780,6 +3276,14 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 3529
+},
+"00531470": {
+"module": "map_editor_update",
+"file": "match/manifests/game/editor/map_editor_update.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "inputs",
+"size": 110,
+"reason": "only 0/30 inputs valid (discards: heap-exhausted=15, fault(pool-limit)=11, fault(read)=3) [merged from 3 shards]"
 },
 "00531800": {
 "module": "mission_menu_and_exchange_screens",
