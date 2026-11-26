@@ -1107,8 +1107,7 @@ int Agent::update_nav_face()
         return (mode != 1 ? -16 : 0) + k9; \
     } \
     if (blow.bone == 0 || blow.bone == 7) { \
-        if (mode != 2) return (mode != 1 ? -16 : 0) + k07; \
-        return m07; \
+        return (mode == 2) ? m07 : (mode != 1 ? -16 : 0) + k07; \
     } \
     if (blow.bone == 1 || blow.bone == 4 || blow.bone == 2 || blow.bone == 5 || blow.bone == 3 || blow.bone == 6) { \
         if (mode != 2) return (mode != 1 ? -16 : 0) + k16; \
