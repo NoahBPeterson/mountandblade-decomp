@@ -1426,8 +1426,13 @@ void Rec58::build(bool show)
             }
             log->name.erase(log->name.len - 1, 1);
         }
-        if (arr)
+        if (arr) {
+            // inline_depth(0) is this tree's own device (E1-F): it keeps the compiler-generated vector deleting
+            // destructor (0x4fd0e0, which the original calls with 3) out of line instead of expanding delete[] here.
+#pragma inline_depth(0)
             delete[] arr;
+#pragma inline_depth()
+        }
     } else {
         count = hist_n() * 3;
         for (i = 0; i < count; i += 3) {

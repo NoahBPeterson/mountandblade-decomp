@@ -1,0 +1,276 @@
+[
+ {
+  "slice": "mesh_poly_ray",
+  "va": "005302f0",
+  "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+  "flags_from": "default",
+  "symbol": "?build_mesh_name@@YGXPAUPlacedObj@@PAV?$vector@PAUmesh@rgl@@V?$allocator@PAUmesh@rgl@@@std@@@std@@@Z",
+  "symbol_from": "name build_mesh_name",
+  "unresolved": [],
+  "eh_unresolved": [],
+  "modelled": [],
+  "resolution_conflicts": [],
+  "resolution_methods": {
+   "symbols": 5,
+   "annotation": 19,
+   "rdata-literal": 2
+  },
+  "resolution_audit": {
+   "disagree": [],
+   "unverified": [
+    "?mesh_for@ItemKind@@QAEPAUmesh@rgl@@_KH@Z"
+   ],
+   "local_copy": [],
+   "same_code": [],
+   "agree": 24,
+   "paired_insns": 152,
+   "insns": [
+    212,
+    209
+   ]
+  },
+  "signature": "Sig(stdcall member=False ret=void params=[('ptr', 1), ('ptr', 1)])",
+  "stack_args": 2,
+  "reg_args": {},
+  "callee_pop": 8,
+  "ret_kind": "void",
+  "layout_notes": [],
+  "orig_size": 701,
+  "void_hides_eax": false,
+  "orig_untouched_regs": [
+   "xmm0",
+   "xmm1",
+   "xmm2",
+   "xmm3",
+   "xmm4",
+   "xmm5",
+   "xmm6",
+   "xmm7"
+  ],
+  "transparent_std": [
+   "0040c0c0",
+   "0040c140",
+   "0040c360",
+   "0040c450",
+   "00410610",
+   "004119d0",
+   "0041ef30",
+   "0041f970",
+   "00435a10",
+   "00438c30",
+   "0043e2a0",
+   "0043e760",
+   "0043f0a0",
+   "005354ae",
+   "00535506"
+  ],
+  "shard": "2/4",
+  "heap_exhausted": 2,
+  "plateau": "no new coverage in the 174 inputs after input 30",
+  "repaired_inputs": 51,
+  "shrink_repairs": {
+   "heap:large": 12,
+   "heap:scaled": 3
+  },
+  "mismatch_sigs": {},
+  "regress_inputs": 2,
+  "vectors_realigned": 358,
+  "cover_inputs": {
+   "replayed": 8,
+   "saved": 5
+  },
+  "typed_inputs": {
+   "inputs": 153,
+   "valid": 152,
+   "types": {
+    "this": null,
+    "args": {
+     "0": "PlacedObj",
+     "1": "std::vector<rgl::mesh *,std::allocator<rgl::mesh *> >"
+    },
+    "globals": {
+     "005d6fa0": "obj resmgr",
+     "005e29dc": "ptr MissionObj",
+     "005e28f8": "ptr ptype",
+     "005e29d0": "ptr ItemKind"
+    }
+   }
+  },
+  "seed": 1,
+  "inputs_planned": 400,
+  "extra_inputs": 0,
+  "gate": "edges",
+  "require_all": false,
+  "inputs": 204,
+  "valid": 200,
+  "discarded": {
+   "heap-exhausted": 2,
+   "fault(read)": 1,
+   "fault": 1
+  },
+  "mismatches": 0,
+  "first_mismatch": null,
+  "coverage": {
+   "covered_insns": 154,
+   "total_insns": 212,
+   "pct": 72.6,
+   "all": false,
+   "missed": [
+    "005303cb",
+    "005303ce",
+    "005303cf",
+    "005303d4",
+    "005303d6",
+    "005303db",
+    "0053040d",
+    "00530411",
+    "00530412",
+    "00530414",
+    "00530419",
+    "00530427",
+    "0053042c",
+    "0053042d",
+    "0053042f",
+    "00530431",
+    "00530432",
+    "00530434",
+    "0053043a",
+    "0053043c",
+    "00530440",
+    "00530446",
+    "00530447",
+    "0053044a",
+    "0053044f",
+    "00530451",
+    "00530453",
+    "00530458",
+    "00530459",
+    "0053045c",
+    "0053045e",
+    "00530460",
+    "00530464",
+    "00530466",
+    "0053046c",
+    "0053046f",
+    "00530471",
+    "00530477",
+    "00530478",
+    "0053047c",
+    "00530482",
+    "00530485",
+    "0053048b",
+    "0053048f",
+    "00530492",
+    "00530493",
+    "00530497",
+    "0053049c",
+    "0053049d",
+    "0053049e",
+    "005304a3",
+    "005304a7",
+    "005304a9",
+    "00530556",
+    "0053055b",
+    "00530593",
+    "00530594",
+    "00530599"
+   ]
+  },
+  "tolerated": {
+   "stack-pointer": 0,
+   "inline-calls": 0,
+   "ulp": 0,
+   "const-pointer": 0,
+   "local-copy": 0,
+   "uninit-dword": 0,
+   "stub-scratch": 0,
+   "stale-return-address": 0
+  },
+  "ours_traps": {},
+  "stale_w_slots": 0,
+  "uninit_slots": [],
+  "edges": {
+   "orig": {
+    "total": 56,
+    "covered": 38,
+    "required": 55,
+    "pct": 69.1,
+    "unreachable": [
+     {
+      "edge": "00530432->00530464",
+      "reason": "leads straight to a fault in both builds (every input that took it)"
+     }
+    ],
+    "missed_n": 17,
+    "missed": [
+     "005303a4->005303bf",
+     "005303b3->005303bf",
+     "005303b8->005303bf",
+     "005303bd->005303bf",
+     "005303c1->005303dd",
+     "005303c9->005303cb",
+     "005303e5->0053040d",
+     "00530421->00530427",
+     "00530432->00530434",
+     "00530451->00530453",
+     "00530451->005304a3",
+     "0053045e->00530440",
+     "0053045e->00530460",
+     "00530514->0053051e",
+     "0053051c->00530567",
+     "00530554->00530556",
+     "00530591->00530593"
+    ]
+   },
+   "ours": {
+    "total": 58,
+    "covered": 37,
+    "required": 57,
+    "pct": 64.9,
+    "unreachable": [
+     {
+      "edge": "3000018c->300001ba",
+      "reason": "leads straight to a fault in both builds (every input that took it)"
+     }
+    ],
+    "missed_n": 20,
+    "missed": [
+     "30000104->3000011f",
+     "30000113->3000011f",
+     "30000118->3000011f",
+     "3000011d->3000011f",
+     "30000121->30000153",
+     "30000129->3000012b",
+     "30000140->30000142",
+     "30000140->30000157",
+     "30000180->30000182",
+     "3000018c->3000018e",
+     "300001aa->300001ac",
+     "300001aa->300001b6",
+     "300001b2->30000194",
+     "300001b2->300001b4",
+     "300001b8->300001ba",
+     "300001b8->300001bc",
+     "30000264->3000026e",
+     "3000026c->300002b5",
+     "300002a2->300002a4",
+     "300002e3->300002e5"
+    ]
+   }
+  },
+  "fp_tol": {
+   "compared": 200,
+   "bit_identical": 200,
+   "fp_tolerable": 0,
+   "fp_floats": 0,
+   "max_ulp": 0.0,
+   "max_err_ratio": 0.0,
+   "out_of_range": 0,
+   "real_mismatches": 0,
+   "uninit_dwords": 0
+  },
+  "verdict": "WEAK",
+  "reason": "orig misses 17 edge(s), ours misses 20 edge(s); edges orig 38/55 (+1 unreachable); ours 37/57 (+1 unreachable); 72.6% insns",
+  "seconds": 3.6
+ }
+]

@@ -101,5 +101,15 @@
  "005302f0": [
   "Harness limit (1/1322 valid inputs over 4 shards): the one mismatch is shard 2/4 input 27 (steered mutant), a dword in .data (0x5a9fb0 in the 11-20 run, 0x5e29e0 in the 11-25 run) that the original leaves at 1 or 2 and ours at 0; build_mesh_name itself only reads 0x5a9fb0 (g_cfg.enable_edit_mode) and never stores to a global, and the fresh --replay of the saved input agrees on both builds, as do the other three shards (1200 valid, 0 mismatched) and a --no-steer run of shard 2/4.",
   "The write is not in the function's code, so it is sequence state of the harness (a .data dword left over from an earlier input or a steered pointer aliasing .data), not a behavioural difference; the 11-20 'vector<mesh*>::operator= local copy' audit note is gone (the resolution audit lists 0 local copies now)."
+ ],
+ "0052ba1d": [
+  "Interior VA of Mission::update_ui 0x52ba10: the 601-byte continuation starts at `push esi` with EBX=0 and the ZF of the prologue's `cmp eax,ebx` and returns through the caller's epilogue, so it has no entry point of its own (every run is ret-misaligned)",
+  "The same body is tested as part of 0x52ba10 (our Mission::update_ui emits the prologue and the continuation as one function)",
+  "Verdict: no differential test of its own; covered by the 0x52ba10 row"
+ ],
+ "004eb8e0": [
+  "GameApp::Render's index entry is only the original's 13-byte non-returning prologue (`mov al,[0x5e2938]; sub esp,0x5c; push ebx; xor ebx,ebx; cmp al,bl`); the 645-byte body is the interior continuation 0x4eb8ed that execution falls into, so the harness sees 0 edges on the original side (edges orig 0/0 vs ours 0/22) and no run can reach full coverage",
+  "Each run also takes ~20 s (the stubbed ScreenUi / MsgLog / D3D font callees; 9 inputs in 60 s, all fault(read) or fault(pool-limit) on soup objects): GetWindowRect is modelled now but the row still has no valid input",
+  "Verdict: no differential test possible; the body is reconstructed statement for statement (see the row note)"
  ]
 }

@@ -393,7 +393,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
             mesh*& m = p->meshes[k];
             if (m->res->flags & 0x40) {
                 float light = 1.0f;
-                if ((pt->flags & 0x80000i64) != 0 && (p->f0c == 0 ? world->hf->cols[p->cx][p->cy].id : world->hf->cols[p->cx][p->cy].id2) >= 0) {
+                if ((pt->flags & 0x80000i64) != 0 && (&world->hf->cols[p->cx][p->cy].id)[p->f0c] >= 0) {
                     vector4 n;
                     n.x = -sun_dir[0]; n.y = -sun_dir[1]; n.z = -sun_dir[2];
                     light = dot3(n, p->frame.u);
@@ -442,8 +442,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                         lf = occ * light;
                     }
                     vertex60& v = m->vertices[j];
-                    unsigned argb = (unsigned)v.f58;
-                    vector4 col = rgl::unpack_color(&argb);
+                    vector4 col = rgl::unpack_color((const unsigned*)&v.f58);
                     vector4 t1, t2, t3, r;
                     vscale_to(t1, sun_diffuse, lf);
                     vscale_to(t2, sun_ambient, 1.5f);

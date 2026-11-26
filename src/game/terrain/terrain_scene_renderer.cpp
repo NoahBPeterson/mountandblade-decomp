@@ -285,8 +285,7 @@ void render_batch::render_scene(scene* sc)
     a.rot.s.w = 0.0f; a.rot.f.w = 0.0f; a.rot.u.w = 0.0f; a.o.w = 1.0f;
 
     sc->ambient.w = 1.0f;
-    D3DXVECTOR4 ambient_color(sc->ambient.x, sc->ambient.y, sc->ambient.z, sc->ambient.w);
-    g_effect->SetVector("vAmbientColor", &ambient_color);
+    g_effect->SetVector("vAmbientColor", (D3DXVECTOR4*)&sc->ambient);
     vector4 camp;
     camp = sc->fr.m.o;
     camp.w = 0.0f;
