@@ -40,6 +40,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 CUT_SHORT_MIN_VALID = 20    # a run cut short by its time limit counts as WEAK with this many valid inputs and no mismatch
 sys.path.insert(0, HERE)
+import module_ids  # noqa: E402  (old module ids -> current, for result file names)
 CUR = os.path.join(ROOT, "docs", "equiv_verdicts.json")
 FAILURES = os.path.join(ROOT, "docs", "equiv_failures.md")
 HIST = os.path.join(ROOT, "docs", "equiv_history.json")
@@ -382,7 +383,11 @@ def main():
             # The row's own module file, and the NEWEST measurement across the source directories wins: the dirs hold a
             # mix of sweep generations (after2 is newer than parts of sweep), so neither the argument order nor a
             # single "current" dir is reliable.
-            cands = [os.path.join(sd, name) for sd in src_dirs]
+            # The same module under its id from before the source-tree moves (docs/source_tree_moves.tsv: a file moved
+            # or split by address range, so the old stem defined this VA too) counts as well: results saved as
+            # terrain_b_0046e590.json were otherwise never found (tools/difftest/module_ids.py).
+            names = [name] + ["%s_%s.json" % (o, r["va"]) for o in module_ids.former(r["id"], r["va"])]
+            cands = [os.path.join(sd, n) for sd in src_dirs for n in names]
             cands = [c for c in cands if os.path.exists(c)]
             # A run that hit the sweep's time limit (TIMEOUT), died (CRASH) or was cut short by equiv's own wall-clock
             # limit (UNSUPPORTED "not a verdict: time limit ...", a loaded machine) measured nothing: the newest result

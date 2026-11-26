@@ -1,6 +1,6 @@
 {
-"when": "2026-11-26T07:38:52-06:00",
-"commit": "480dd571",
+"when": "2026-11-25T23:04:19-06:00",
+"commit": "e9a379e7",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -93,7 +93,7 @@
 "work/equiv_results/2026-11-25/U"
 ],
 "summary": {
-"pass": 100,
+"pass": 99,
 "proven": 27,
 "proven_o": 0,
 "weak": 239,
@@ -105,7 +105,7 @@
 "funclet": 40,
 "notcode": 0,
 "not_run": 0,
-"pass_sz": 59658,
+"pass_sz": 59490,
 "proven_sz": 14525,
 "proven_o_sz": 0,
 "weak_sz": 477462,
@@ -1394,13 +1394,6 @@
 "category": "weak",
 "size": 1112
 },
-"004525a0": {
-"module": "agent_logic",
-"file": "match/manifests/game/agent/agent_logic.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 168
-},
 "004532f0": {
 "module": "agent_logic",
 "file": "match/manifests/game/agent/agent_logic.nonmatching.txt",
@@ -2167,14 +2160,7 @@
 "file": "match/manifests/game/script/operation_execute.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
-"size": 69416,
-"cases": {
-"PASS": 115,
-"WEAK": 469,
-"UNREACHED": 6
-},
-"source": "case-sweep",
-"source_changed": true
+"size": 69416
 },
 "004b09e0": {
 "module": "operation_execute",

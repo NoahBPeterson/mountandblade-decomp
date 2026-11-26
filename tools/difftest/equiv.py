@@ -8363,6 +8363,16 @@ def main(argv=None):
         M.STACK_SIZE = opts.stack_mb << 20     # before context() maps the machine's stack
     context()["m"].set_fpcw(int(opts.fpcw, 16))
     sid = opts.slice
+    if opts.vas and not os.path.isdir(S.slice_dir(sid)):
+        # an id from before the source-tree moves (terrain_b, mesh_poly_ray): run and record the result under the
+        # current module, or verdicts.py never finds <old id>_<va>.json (tools/difftest/module_ids.py)
+        import module_ids
+        cur = module_ids.current(sid, opts.vas[0])
+        if cur:
+            print("equiv: module id %s is now %s (%s)" % (sid, cur[0], cur[1]), file=sys.stderr)
+            sid = cur[0]
+            if not opts.src:
+                opts.src = os.path.join(S.ROOT, cur[1])
     if opts.vas:
         vas = [int(v, 16) for v in opts.vas]
     else:
