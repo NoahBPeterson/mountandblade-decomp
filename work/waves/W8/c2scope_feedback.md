@@ -14,3 +14,13 @@ saw: section 2.4 (join reached from a path that used the constant and one that d
 work/waves/W8/trim.py builds a trimmed agent_logic.cpp (2850 lines, keeps types/inlines/templates/update_controls, drops other out-of-line bodies) in one pass; chk.py on it gives byte-identical figures (8252/1813/124) in 7 s instead of minutes. Worth building into c2.py as --trim.
 ## W8 brief  [papercut]
 modguard lives at tools/contrib/modguard.py, not tools/matching/modguard.py.
+## W8-S slotwant  [success]
+saw: --diag + the doc's wants were right; hbuf[64] x2 + namebuf[128] gave frame 1068 -> 1004 and aligned 3881 -> 3793 on the real row. The "why: refused for size" line plus the bridge idea made it a one-shot.
+## W8-S slotwant wrapper  [papercut]
+slotwant is not in tools/contrib/c2.py (TOOLS), so no --src/--func/flags fill-in; I wrote work/waves/W8/sw.sh. It also needs `--c2 13.10` placed before `--` (not an argparse option; c2build takes it from argv), else the cl headers differ and agent_logic.cpp fails with C3190 on vector<int>::_Xlen. Without the dxsdk /I the base compile fails the same way as for c2.py. Suggest: add slotwant to c2.py.
+## W8-S slotwant noise  [papercut]
+--diag on this row prints ~90 derived pair wants, nearly all shift noise ("apart:$T183407,..." etc); a --top / --min-votes default would make it readable.
+## W8-S tsweep  [papercut]
+tsweep (bdiff) ranked changes that chk.py confirmed only when size stayed equal; e.g. imp = vel*-0.6f scored better in bdiff while chk aligned went 3417 -> 3903. Printing both size and aligned in the metric line would help.
+## W8-S blood_burst  [finding]
+insdiff's "sub esp,0x14 + struct copy" vs 5 pushes was the cue: the original's callee takes vector4 by value (the old slice already had it). No c2scope tool says "argument passed as struct copy" directly.

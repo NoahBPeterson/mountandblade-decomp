@@ -9859,9 +9859,7 @@ void Agent::process_blow(float unused)
                 }
                 anim_a = move_anim(1);
             }
-        } else if (this->horse != -1) {
-            anim_b = move_anim(0);
-        } else do {
+        } else if (this->horse == -1) do {
             if (rgl::dot(vel, blow.dir) < 0.0f &&
                 (((blow.flags & 0x10) && blow.dmg_in > 7.0f) || (blow.dmg_in > 24.0f && frand() < 0.4f)) &&
                 blow.kind == 2 && anim[0].cur != 0x125) {
@@ -9896,6 +9894,9 @@ void Agent::process_blow(float unused)
                 PB_IMPULSE()
             }
             } while (0);
+        else {
+            anim_b = move_anim(0);
+        }
     }
 
     cA = false;
