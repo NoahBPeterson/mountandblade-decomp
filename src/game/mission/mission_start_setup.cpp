@@ -774,12 +774,12 @@ void Mission::start_setup()
                     em->lifetime = 11.0f / (float)(10.0 / em->drag);
                     {
                     rgl::curve4* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
-                    cv[1].v0 = scale * cv[1].v0;
-                    cv[1].v1 = scale * cv[1].v1;
-                    cv[2].v0 = scale * cv[2].v0;
-                    cv[2].v1 = scale * cv[2].v1;
-                    cv[3].v0 = scale * cv[3].v0;
-                    cv[3].v1 = scale * cv[3].v1;
+                    cv[1].k0.y = scale * cv[1].k0.y;
+                    cv[1].k1.y = scale * cv[1].k1.y;
+                    cv[2].k0.y = scale * cv[2].k0.y;
+                    cv[2].k1.y = scale * cv[2].k1.y;
+                    cv[3].k0.y = scale * cv[3].k0.y;
+                    cv[3].k1.y = scale * cv[3].k1.y;
                     }
                     static_cast<rgl::strategic_entity*>(precip_fx)->add_emitter(em);   // create_entity(9) makes a strategic_entity
                 }
@@ -795,12 +795,12 @@ void Mission::start_setup()
                     em->accel = t20;
                     {
                     rgl::curve4* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
-                    cv[1].v0 = scale * cv[1].v0;
-                    cv[1].v1 = scale * cv[1].v1;
-                    cv[2].v0 = scale * cv[2].v0;
-                    cv[2].v1 = scale * cv[2].v1;
-                    cv[3].v0 = scale * cv[3].v0;
-                    cv[3].v1 = scale * cv[3].v1;
+                    cv[1].k0.y = scale * cv[1].k0.y;
+                    cv[1].k1.y = scale * cv[1].k1.y;
+                    cv[2].k0.y = scale * cv[2].k0.y;
+                    cv[2].k1.y = scale * cv[2].k1.y;
+                    cv[3].k0.y = scale * cv[3].k0.y;
+                    cv[3].k1.y = scale * cv[3].k1.y;
                     }
                     vector4* vb = &em->axis_z;
                     *vb = t20;

@@ -568,12 +568,12 @@ void Mission::post_spawn(Agent* a)
             if (e) {
                 ((rgl::strategic_entity*)a->body)->add_emitter(e);
                 a->fx1ac = e;
-                e->curve[1].v0 = sc.x * e->curve[1].v0;       // the r / g / b curves' end values (curve4 r 0x38, g 0x48, b 0x58: v0 at +4, v1 at +0xc)
-                e->curve[1].v1 = sc.x * e->curve[1].v1;
-                e->curve[2].v0 = sc.y * e->curve[2].v0;
-                e->curve[2].v1 = sc.y * e->curve[2].v1;
-                e->curve[3].v0 = sc.z * e->curve[3].v0;
-                e->curve[3].v1 = sc.z * e->curve[3].v1;
+                e->curve[1].k0.y = sc.x * e->curve[1].k0.y;       // the r / g / b curves' end values (curve4 r 0x38, g 0x48, b 0x58: v0 at +4, v1 at +0xc)
+                e->curve[1].k1.y = sc.x * e->curve[1].k1.y;
+                e->curve[2].k0.y = sc.y * e->curve[2].k0.y;
+                e->curve[2].k1.y = sc.y * e->curve[2].k1.y;
+                e->curve[3].k0.y = sc.z * e->curve[3].k0.y;
+                e->curve[3].k1.y = sc.z * e->curve[3].k1.y;
             }
         }
     }
