@@ -2591,11 +2591,11 @@ void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
         };
         int k = 0;
         do {
-            ((float_pair*)e->curve)[0 + k] = ((const float_pair(*)[2])d->t)[0][k];
-            ((float_pair*)e->curve)[2 + k] = ((const float_pair(*)[2])d->t)[1][k];
-            ((float_pair*)e->curve)[4 + k] = ((const float_pair(*)[2])d->t)[2][k];
-            ((float_pair*)e->curve)[6 + k] = ((const float_pair(*)[2])d->t)[3][k];
-            ((float_pair*)e->curve)[8 + k] = ((const float_pair(*)[2])d->t)[4][k];
+            ((float_pair*)e->curve)[0 + k] = ((const float_pair*)d->alpha)[k];
+            ((float_pair*)e->curve)[2 + k] = ((const float_pair*)d->red)[k];
+            ((float_pair*)e->curve)[4 + k] = ((const float_pair*)d->green)[k];
+            ((float_pair*)e->curve)[6 + k] = ((const float_pair*)d->blue)[k];
+            ((float_pair*)e->curve)[8 + k] = ((const float_pair*)d->size)[k];
             k++;
         } while (k < 2);
     }

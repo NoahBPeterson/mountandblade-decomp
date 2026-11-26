@@ -19,3 +19,4 @@
 ../src/game/campaign/map_builder_and_data_load.cpp  _$E1  00548070  /O2 /MT /Gy /TP
 ../src/game/campaign/map_builder_and_data_load.cpp  _$E2  00548270  /O2 /MT /Gy /TP
 ../src/game/campaign/map_builder_and_data_load.cpp  ?read_map@@YAPAUstream_base@@PAU1@PAUNavData@@@Z  00520c00  /O2 /MT /Gy /TP
+../src/game/campaign/map_builder_and_data_load.cpp  ?read_skill@@YAAAUstream_base@@AAU1@AAUSkillRec@@@Z  005243c0  /O2 /MT /Gy /TP

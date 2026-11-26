@@ -24,7 +24,7 @@ struct EmitDef {                                        // 0xc0-byte definition 
     char pad28[0x30 - 0x28];                            // (evidence: EmitDef::load 0x4bd990 skips it; every function that holds the defs array is an EmitTable member (the defs pointer is only reached through `mov ecx, g_emit_defs` + call: setup 0x4424c0, spawn 0x479d20, resize 0x4c1f70, load_used 0x4bdb60, ~EmitTable 0x4c1f20) and none of them touches +0x28..0x2f of a def)
     float life;                                         // +0x30 psys::lifetime
     float drag, accel_scale, noise_scale, noise_amount; // +0x34 psys::drag, accel_scale, noise_scale, noise_amount
-    rgl::curve4 t[5];                                   // +0x44 the five (t0,v0,t1,v1) curves of psys::curve
+    V2 alpha[2], red[2], green[2], blue[2], size[2];                                 // +0x44 the five curves of psys::curve, two (time, value) keys each (alpha, r, g, b, size; rgl::curve4 is the same 16 bytes). Separate arrays: the original constructs each on its own (0x4c1f70)
     rgl::vector4 a;                                     // +0x94 (w unread)
     rgl::vector4 b;                                     // +0xa4 (w unread)
     float c;                                            // +0xb4 (psys::vel_scale)

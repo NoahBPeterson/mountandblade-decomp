@@ -884,9 +884,7 @@ int Slot::init_devices(HWND__* hwnd)
     HRESULT hr;
 
     release_input_devices(this);
-    void* di = 0;
-    hr = DirectInput8Create(GetModuleHandleA(0), 0x0800, IID_IDirectInput8A, &di, 0);
-    dinput = (IDirectInput8A*)di;
+    hr = DirectInput8Create(GetModuleHandleA(0), 0x0800, IID_IDirectInput8A, (void**)&dinput, 0);   // the SDK's own spelling
     if (hr >= 0) {
         hr = dinput->CreateDevice(GUID_SysKeyboard, &kb, 0);
         if (hr >= 0) {
@@ -1447,16 +1445,16 @@ void EmitDef::load(stream_base& s)
     RF(s, &accel_scale);
     RF(s, &noise_scale);
     RF(s, &noise_amount);
-    { float* p = &t[0].t0; RF(RF(s, p), p + 1); }
-    { float* p = &t[0].t1; RF(RF(s, p), p + 1); }
-    { float* p = &t[1].t0; RF(RF(s, p), p + 1); }
-    { float* p = &t[1].t1; RF(RF(s, p), p + 1); }
-    { float* p = &t[2].t0; RF(RF(s, p), p + 1); }
-    { float* p = &t[2].t1; RF(RF(s, p), p + 1); }
-    { float* p = &t[3].t0; RF(RF(s, p), p + 1); }
-    { float* p = &t[3].t1; RF(RF(s, p), p + 1); }
-    { float* p = &t[4].t0; RF(RF(s, p), p + 1); }
-    { float* p = &t[4].t1; RF(RF(s, p), p + 1); }
+    { float* p = &alpha[0].x; RF(RF(s, p), p + 1); }
+    { float* p = &alpha[1].x; RF(RF(s, p), p + 1); }
+    { float* p = &red[0].x; RF(RF(s, p), p + 1); }
+    { float* p = &red[1].x; RF(RF(s, p), p + 1); }
+    { float* p = &green[0].x; RF(RF(s, p), p + 1); }
+    { float* p = &green[1].x; RF(RF(s, p), p + 1); }
+    { float* p = &blue[0].x; RF(RF(s, p), p + 1); }
+    { float* p = &blue[1].x; RF(RF(s, p), p + 1); }
+    { float* p = &size[0].x; RF(RF(s, p), p + 1); }
+    { float* p = &size[1].x; RF(RF(s, p), p + 1); }
     { float* p = &a.x; RF(RF(RF(s, p), p + 1), p + 2); }   // two x,y,z triples 0x10 apart, w unread
     { float* p = &b.x; RF(RF(RF(s, p), p + 1), p + 2); }
     RF(s, &c);
