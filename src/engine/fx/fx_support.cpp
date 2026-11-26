@@ -24,38 +24,40 @@
 
 using namespace rgl;
 
+// the rotation entry (row, column) of the frame: its rows s, f, u are consecutive vector4s
+#define R(row, col) ((&(&m.s)[row].x)[col])
 // @ 0x428b10
 void quat_from_matrix(quaternion* out, const matrix& m)
 {
     int nxt[3] = { 1, 2, 0 };
     float q[4];
-    const float r[3][3] = { { m.s.x, m.s.y, m.s.z }, { m.f.x, m.f.y, m.f.z }, { m.u.x, m.u.y, m.u.z } };   // the rotation rows
-    float tr = r[1][1] + r[0][0] + r[2][2];
+    float tr = R(1, 1) + R(0, 0) + R(2, 2);
     if (tr > 0.0f) {
         float root = (float)sqrt(tr + 1.0f);
         out->w = root * 0.5f;
         root = 0.5f / root;
-        out->x = (r[1][2] - r[2][1]) * root;
-        out->y = (r[2][0] - r[0][2]) * root;
-        out->z = (r[0][1] - r[1][0]) * root;
+        out->x = (R(1, 2) - R(2, 1)) * root;
+        out->y = (R(2, 0) - R(0, 2)) * root;
+        out->z = (R(0, 1) - R(1, 0)) * root;
         return;
     }
     int i = 0;
-    if (r[1][1] > r[0][0]) i = 1;
-    if (r[2][2] > r[i][i]) i = 2;
+    if (R(1, 1) > R(0, 0)) i = 1;
+    if (R(2, 2) > R(i, i)) i = 2;
     int j = nxt[i];
     int k = nxt[j];
-    float root = (float)sqrt((r[i][i] - (r[j][j] + r[k][k])) + 1.0f);
+    float root = (float)sqrt((R(i, i) - (R(j, j) + R(k, k))) + 1.0f);
     q[i] = root * 0.5f;
     if (root != 0.0f) root = 0.5f / root;
-    q[3] = (r[j][k] - r[k][j]) * root;
-    q[j] = (r[j][i] + r[i][j]) * root;
-    q[k] = (r[k][i] + r[i][k]) * root;
+    q[3] = (R(j, k) - R(k, j)) * root;
+    q[j] = (R(j, i) + R(i, j)) * root;
+    q[k] = (R(k, i) + R(i, k)) * root;
     out->x = q[0];
     out->y = q[1];
     out->z = q[2];
     out->w = q[3];
 }
+#undef R
 
 // @ 0x428c60
 void EnvRec::alloc(int n)

@@ -3,3 +3,4 @@
 ../src/engine/fx/fx_support.cpp  ?clear_geometry@mesh@rgl@@QAEXXZ  00428e80  /O2 /MT /Gy /TP
 ../src/engine/fx/fx_support.cpp  ?reset@scene@rgl@@QAEXXZ  00428f30  /O2 /MT /Gy /TP
 ../src/engine/fx/fx_support.cpp  ?render_fx@skeleton_entity@rgl@@UAEXPAUscene@2@@Z  00428f80  /O2 /MT /Gy /TP
+../src/engine/fx/fx_support.cpp  ?quat_from_matrix@@YAXPAUquaternion@@ABUmatrix@rgl@@@Z  00428b10  /O2 /MT /Gy /TP
