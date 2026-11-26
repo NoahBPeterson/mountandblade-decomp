@@ -38,14 +38,15 @@ TOOLS = {"regs": ["tools/c2trace.py", "regs"], "regmap": ["tools/c2trace.py", "r
          "icount": ["tools/icount.py"], "sched": ["tools/c2sched.py"], "il": ["tools/c2trace.py", "il"],
          "tsweep": ["tools/tsweep.py"],
          "helpersweep": ["tools/helpersweep.py"], "effectmine": ["tools/effectmine.py", "mine"],
-         "schedwant": ["tools/schedwant.py"], "symkeys": ["tools/symkeys.py"]}
+         "schedwant": ["tools/schedwant.py"], "symkeys": ["tools/symkeys.py"],
+         "slotwant": ["tools/slotwant.py"]}   # frame layout inverse (docs/c2/slotwant.md); gets --image/--va below
 ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine", "schedwant"}      # take --asm-vs
 SLOTS, MAXJOBS = 8, 4
 if os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off")):
     # every traced compile runs under wine on the 10-core Mac: 2026-11-25 three effectmine runs at --jobs 4 each
     # (12 traced cl's plus other lanes) pushed the load to 32 and one compile from 40 s to 8 min
     SLOTS, MAXJOBS = 3, 2
-DOC_ALIAS = {"tsweep": "tracer", "schedwant": "sched", "helpersweep": "tracer", "regs": "regalloc", "regmap": "regalloc"}   # tsweep's manual is a section of tracer.md ("tsweep")
+DOC_ALIAS = {"slotwant": "slotwant", "tsweep": "tracer", "schedwant": "sched", "helpersweep": "tracer", "regs": "regalloc", "regmap": "regalloc"}   # tsweep's manual is a section of tracer.md ("tsweep")
 LOCAL_OK = {"icount"}                                       # tools with --allow-local (compile under wine when the server declines)
 
 
@@ -153,6 +154,9 @@ def main():
     fromx = tool == "symkeys" and "--from" in rest
     cmd = [os.path.join(VS, ".venv", "bin", "python")] + TOOLS[tool] + sub + ([] if fromx else [os.path.join(ROOT, src)])
     cmd += ["--func", func, "--c2", "13.10.3052" if tool == "tsweep" else "13.10"]
+    if tool == "slotwant" and "--image" not in rest and "--asm-vs" not in rest:
+        # the original's slots are read from the image (callee `ret N` for the push depth), as slotwant.md says for M&B
+        cmd += ["--image", os.path.join(ROOT, "work", "mb.analysis.bin"), "--va", "0x%x" % va]
     if tool in ASM:
         cmd += ["--asm-vs", orig] + (["--asm-func", func] if tool in ("regmap", "tsweep", "schedwant") else [])
     cmd += rest + ([] if fromx else ["--"] + flags + inc)
