@@ -1,3 +1,4 @@
 slices/s00492230/s00492230.cpp  ?set_weapon_order_1@Mission3@@QAEXHI@Z  00492230  /O2 /MT /Gy /TP
 slices/s00492230/s00492230.cpp  ?set_weapon_order_2@Mission3@@QAEXHI@Z  00492350  /O2 /MT /Gy /TP
 slices/s00492230/s00492230.cpp  ?free_arrays@World@@QAEXXZ  00492a20  /O2 /MT /Gy /TP
+slices/s00492230/s00492230.cpp  ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z  004927d0  /O2 /MT /Gy /TP

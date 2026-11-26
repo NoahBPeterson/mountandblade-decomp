@@ -1,16 +1,16 @@
 [
  {
   "va": "00492930",
-  "module": "s00492230",
-  "verdict": "COMDAT-DIFFERS(2 bytes, first at +0x1a)",
-  "reason": "parent 0x004927d0 (?_Insert_n@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@IAEXViterator@12@IABUE100@@@Z); source match/slices/s00492230/s00492230.cpp; COMDAT 352 bytes; object COMDAT 590 bytes; 2 differing bytes, first at +0x1a; fragment 0x00492930 (240 bytes): BYTE-EXACT-FRAGMENT",
+  "module": "?",
+  "verdict": "BYTE-EXACT-COMDAT",
+  "reason": "parent 0x004927d0 (?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z); source match/slices/s00492230/s00492230.cpp; COMDAT 352 bytes; object COMDAT 581 bytes; byte-exact; fragment 0x00492930 (240 bytes): BYTE-EXACT-FRAGMENT",
   "comdat_parent": "004927d0",
   "comdat_len": 352,
   "fragment_verdict": "BYTE-EXACT-FRAGMENT",
-  "comdat_symbol": "?_Insert_n@?$vector@UE100@@V?$allocator@UE100@@@std@@@std@@IAEXViterator@12@IABUE100@@@Z",
+  "comdat_symbol": "?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z",
   "source": "match/slices/s00492230/s00492230.cpp",
   "flags": "/O2 /MT /Gy /TP",
-  "diff_bytes": 2,
-  "first_diff": 26
+  "diff_bytes": 0,
+  "first_diff": null
  }
 ]

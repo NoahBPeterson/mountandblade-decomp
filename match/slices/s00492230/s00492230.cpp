@@ -317,7 +317,9 @@ void Battle::select_side(int side)
 }
 
 // ---- std::vector<int> with the engine's leading dword (allocator) at +0 ------------------------------------
-struct E100 { int v; };
+// The element is a plain int: vector<int>::_Insert_n's scalar _Ucopy is the out-of-line memmove forwarder 0x41ef30
+// (a one-int struct is a non-scalar element and gets the inlined _Uninitialized_copy path instead).
+typedef int E100;
 
 // @ 0x4927d0
 template void std::vector<E100>::_Insert_n(std::vector<E100>::iterator, size_t, const E100&);
