@@ -829,6 +829,8 @@ def main():
     if a.what:
         CS.what(CS.load(snap), a.what)
         return 0
+    if a.src:                       # the trace runs in ../vs2005-cpp: a relative path would resolve there
+        a.src = os.path.abspath(a.src)
     m = json.load(open(meta)) if a.cached and os.path.exists(meta) else run_trace(va, a.src)
     if a.pairs:
         show_pairs(m, CS.load(snap))
