@@ -35,6 +35,8 @@ int plane::in_front(const vector4* p, float eps) const
     return 1;
 }
 
+// called as ::vmul / ::vadd: unqualified, argument-dependent lookup (vector4's vec2 base is a global-namespace
+// class) makes them ambiguous with rgl::vmul / rgl::vadd of engine/render/mesh_rgl_particles.h under VC7.1
 static inline vector4 vmul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static inline vector4 smul(const float& s, const vector4& a) { return vector4(s * a.x, s * a.y, s * a.z); }
 static inline vector4 vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
@@ -52,24 +54,24 @@ void frustum::build_planes()
         planes[2].pos = m.o;
         planes[3].pos = m.o;
         planes[0].normal = vsub(smul(nearz, vneg(m.f)), smul(top, m.u));
-        planes[1].normal = vadd(smul(nearz, m.f), smul(bottom, m.u));
-        planes[2].normal = vsub(vmul(vneg(m.s), nearz), vmul(m.u, right));
-        planes[3].normal = vadd(vmul(m.s, nearz), smul(left, m.u));
+        planes[1].normal = ::vadd(smul(nearz, m.f), smul(bottom, m.u));
+        planes[2].normal = vsub(::vmul(vneg(m.s), nearz), ::vmul(m.u, right));
+        planes[3].normal = ::vadd(::vmul(m.s, nearz), smul(left, m.u));
         planes[0].normal.normalize();
         planes[1].normal.normalize();
         planes[2].normal.normalize();
         planes[3].normal.normalize();
-        planes[4].pos = vsub(m.o, vmul(m.u, farz));
+        planes[4].pos = vsub(m.o, ::vmul(m.u, farz));
         planes[5].pos = vsub(m.o, smul(nearz, m.u));
         planes[4].normal = m.u;
         planes[5].normal = vneg(m.u);
     } else {
-        planes[0].pos = vadd(smul(top, m.f), m.o);
-        planes[1].pos = vadd(smul(bottom, m.f), m.o);
-        planes[2].pos = vadd(smul(right, m.s), m.o);
-        planes[3].pos = vadd(smul(left, m.s), m.o);
-        planes[4].pos = vsub(m.o, vmul(m.u, farz));
-        planes[5].pos = vsub(m.o, vmul(m.u, nearz));
+        planes[0].pos = ::vadd(smul(top, m.f), m.o);
+        planes[1].pos = ::vadd(smul(bottom, m.f), m.o);
+        planes[2].pos = ::vadd(smul(right, m.s), m.o);
+        planes[3].pos = ::vadd(smul(left, m.s), m.o);
+        planes[4].pos = vsub(m.o, ::vmul(m.u, farz));
+        planes[5].pos = vsub(m.o, ::vmul(m.u, nearz));
         planes[0].normal = vneg(m.f);
         planes[1].normal = m.f;
         planes[2].normal = vneg(m.s);

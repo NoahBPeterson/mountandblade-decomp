@@ -11,12 +11,14 @@
 
 namespace rgl {
 
-// 16 bytes: x, y, z + an unused 4th lane that whole-struct copies carry along.
-struct vector4 {
-    float x, y, z, w;
+// 16 bytes: x, y, z + an unused 4th lane that whole-struct copies carry along. The plane position (x, y) is its vec2
+// base: the original struct-copies a vec2 out of a vector4's first two lanes (`vec2 v = vel;`, Agent::get_dir 0x4378f0,
+// signed_angle 0x4381e0: two dword moves into a stack vec2), which a member-by-member copy does not reproduce.
+struct vector4 : vec2 {
+    float z, w;
     vector4() {}                                                            // 0x407c20 (empty: ICF folds every empty ctor there)
-    vector4(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
-    vector4(float x_, float y_, float z_, float w_) : x(x_), y(y_), z(z_), w(w_) {}   // wind_noise (scene_paths_and_wind_noise.cpp) returns one built in its return buffer
+    vector4(float x_, float y_, float z_) { x = x_; y = y_; z = z_; }   // in x, y, z order (the base lanes cannot be in the init list)
+    vector4(float x_, float y_, float z_, float w_) { x = x_; y = y_; z = z_; w = w_; }   // wind_noise (scene_paths_and_wind_noise.cpp) returns one built in its return buffer
     vector4& set(const float& x_, const float& y_, const float& z_);        // 0x407c30
     float& operator[](int i) { return (&x)[i]; }                            // by axis (the UI colour fades, hud_bar_widgets.cpp)
     float length() const { return (float)sqrt(x * x + y * y + z * z); }

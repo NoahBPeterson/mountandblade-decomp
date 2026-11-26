@@ -110,9 +110,7 @@ inline bool AnimSlot::set(int id, unsigned prio)
 // @ 0x4378f0
 void Agent::get_dir(vec2* out)
 {
-    vec2 v;
-    v.x = vel.x;
-    v.y = vel.y;
+    vec2 v = vel;
     float l = (float)sqrt(v.x * v.x + v.y * v.y);
     if (l > 0.0f) {
         float inv = 1.0f / l;
@@ -263,9 +261,7 @@ float Agent::stamina_scale()
 // @ 0x4381e0
 float __cdecl signed_angle(const rgl::vector4& a, const rgl::vector4& b)
 {
-    vec2 u;
-    u.x = a.x;
-    u.y = a.y;
+    vec2 u = a;
     float l = (float)sqrt(u.x * u.x + u.y * u.y);
     if (l > 0.0f) {
         float inv = 1.0f / l;
@@ -275,9 +271,7 @@ float __cdecl signed_angle(const rgl::vector4& a, const rgl::vector4& b)
         u.x = 0.0f;
         u.y = 1.0f;
     }
-    vec2 bb;
-    bb.x = b.x;
-    bb.y = b.y;
+    vec2 bb = b;
     vec2 r;
     r.x = bb.x * u.y - bb.y * u.x;
     r.y = bb.y * u.y + bb.x * u.x;
