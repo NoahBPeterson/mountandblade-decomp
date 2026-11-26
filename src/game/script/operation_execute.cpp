@@ -1547,8 +1547,8 @@ int widget_mgr::create_text_overlay(const tstring* text, int flags)
     v.x = 0;
     v.y = 0;
     o->move_a(v);                                        // +0x58
-    unsigned attr = (flags & 0x381c) | 0x700;
-    o->set148(attr);                                     // +0x74
+    flags = (flags & 0x381c) | 0x700;                    // the parameter's own slot is the by-reference argument
+    o->set148(flags);                                    // +0x74
     v.x = 0.9f;
     v.y = 0.75f;
     o->set_xy(v);                                        // +0x64
