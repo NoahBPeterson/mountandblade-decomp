@@ -9854,9 +9854,7 @@ void Agent::process_blow(float unused)
                     anim_a = move_anim(2);
                     float k = frand() * 0.2f + 2.1f;
                     hit_part = 0x82;
-                    imp.x = k * blow.dir.x;
-                    imp.y = k * blow.dir.y;
-                    imp.z = k * blow.dir.z;
+                    imp = k * blow.dir;
                     goto impulse;
                 }
                 anim_a = move_anim(1);
@@ -9874,9 +9872,7 @@ void Agent::process_blow(float unused)
                 imp.z = vel.z * -0.6f;
                 if (blow.flags & 0x10) {
                     float rr = frand() * 0.4f + 1.5f;
-                    imp.x = rr * blow.dir.x + imp.x;
-                    imp.y = rr * blow.dir.y + imp.y;
-                    imp.z = rr * blow.dir.z + imp.z;
+                    imp = rr * blow.dir + imp;
                 }
             } else {
                 anim_b = move_anim(1);
