@@ -140,3 +140,4 @@
 ../src/game/agent/agent_logic.cpp  ?setup@EmitTable@@QAEXPAUpsys@rgl@@HPBUvector4@3@@Z  004424c0  /O2 /MT /Gy /TP
 ../src/game/agent/agent_logic.cpp	?blood_burst@Mission@@QAEXUvector4@rgl@@M@Z	004525a0	/O2 /MT /Gy /TP
 ../src/game/agent/agent_logic.cpp  ?move_anim@Agent@@QAEHH@Z  0043cc30  /O2 /MT /Gy /TP
+../src/game/agent/agent_logic.cpp  ?play@SoundMgr@@QAEHHHPBUvector4@rgl@@MPAM@Z  00442650  /O2 /MT /Gy /TP

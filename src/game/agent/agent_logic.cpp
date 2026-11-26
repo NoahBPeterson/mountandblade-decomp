@@ -2631,15 +2631,15 @@ int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, float* ou
                 k = rand() % *pn;
             int dn = groups[idx].var[k];
             int ch = FSOUND_PlaySoundEx(-1, defs[dn].sample, 0, 1);
+            int& t = ch;                    // N1-A2: the handle pushed for a looping sound; the reference alias (and v0, the clamp bound) give the original's slot colours
             ret = ch;
             if (out_duration)
                 *out_duration = defs[dn].ratio;
-            int t = ch;                     // the handle pushed for a looping sound: address-taken, stored before the calls
             if (ch >= 0) {
                 int hi = 0x100;
-                int vol = 0;
+                int v0 = 0;
                 int r = round_i(groups[idx].volume_scale() * g_options.master_volume * 255.0f);
-                vol = clamp_index(&r, &vol, &hi);
+                int vol = clamp_index(&r, &v0, &hi);
                 int looping = groups[idx].flags & 2;
                 int prio;
                 if (flags & 1) {
@@ -2647,8 +2647,8 @@ int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, float* ou
                     prio = 0xff;
                 } else {
                     FSOUND_3D_SetAttributes(ch, &pos->x, 0);
-                    int lo = 0;
                     int hi2 = 0x100;
+                    int lo = 0;
                     float dist = (frame.o - *pos).out_length();
                     float f = 3.0f / (dist + 3.0f);
                     int pr = round_i(defs[dn].range_scale() * f * 254.0f);
