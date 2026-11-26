@@ -3,14 +3,13 @@
 #ifndef MB_RENDERER_XFORM_H
 #define MB_RENDERER_XFORM_H
 #include "engine/render/renderer_include.h"
+#include "engine/render/d3d_xform.h"
 
 // a frame as a D3D matrix (rows s, f, u, o) with the w column forced to (0, 0, 0, 1)
 static inline void to_d3d(D3DMATRIX* out, const rgl::matrix& m)
 {
-    out->_11 = m.s.x; out->_12 = m.s.y; out->_13 = m.s.z; out->_14 = 0.0f;
-    out->_21 = m.f.x; out->_22 = m.f.y; out->_23 = m.f.z; out->_24 = 0.0f;
-    out->_31 = m.u.x; out->_32 = m.u.y; out->_33 = m.u.z; out->_34 = 0.0f;
-    out->_41 = m.o.x; out->_42 = m.o.y; out->_43 = m.o.z; out->_44 = 1.0f;
+    *out = *as_d3d(m);      // the 16 floats in place (a struct copy), then the w column
+    out->_14 = 0.0f; out->_24 = 0.0f; out->_34 = 0.0f; out->_44 = 1.0f;
 }
 
 #endif // MB_RENDERER_XFORM_H

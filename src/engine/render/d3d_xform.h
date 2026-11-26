@@ -9,5 +9,6 @@ HRESULT set_transform(IDirect3DDevice9* dev, D3DTRANSFORMSTATETYPE state, const 
 
 // the frame in place as the SDK's D3DMATRIX (the same 16 floats: rows s, f, u, o); SetTransform takes it by pointer, no copy
 static inline const D3DMATRIX* as_d3d(const rgl::matrix& m) { return reinterpret_cast<const D3DMATRIX*>(&m); }
+static inline D3DMATRIX* as_d3d(rgl::matrix& m) { return reinterpret_cast<D3DMATRIX*>(&m); }
 
 #endif // MB_D3D_XFORM_H

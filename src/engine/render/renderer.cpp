@@ -18,6 +18,7 @@
 #include "engine/math/mat4.h"
 #include "engine/render/renderer.h"
 #include "engine/render/renderer_xform.h"
+#include "engine/render/d3d_xform.h"   // as_d3d
 #include "game/config/config_block.h"           // Config g_cfg (0x5a9f98)
 struct options;
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -42,8 +43,7 @@ using rgl::mat4;
 void renderer::set_view(const mat4* p)
 {
     to_d3d(&view, IDENTITY_VALUE());
-    cur = IDENTITY_VALUE();
-    cur.s.w = 0.0f; cur.f.w = 0.0f; cur.u.w = 0.0f; cur.o.w = 1.0f;
+    to_d3d(as_d3d(cur), IDENTITY_VALUE());
     sp = 0;
     rgl::mat3 r;
     r.s.x = 1.0f; r.s.y = 0.0f; r.s.z = 0.0f;
@@ -328,9 +328,8 @@ D3DXMATRIX rgl::frustum::view_matrix()
     mat4 rel;
     mat4 id;
     rel = m.relative(*rgl::identity_pos(&id));
-    D3DXMATRIX out;
-    to_d3d(&out, rel);
-    return out;
+    rel.s.w = 0.0f; rel.f.w = 0.0f; rel.u.w = 0.0f; rel.o.w = 1.0f;
+    return D3DXMATRIX(*as_d3d(rel));
 }
 
 // @ 0x4621f0

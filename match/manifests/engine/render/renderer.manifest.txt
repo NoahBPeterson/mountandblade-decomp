@@ -17,3 +17,5 @@
 ../src/engine/render/renderer.cpp  ?alloc@HeightField@@QAEXPBH@Z  00462420  /O2 /MT /Gy /TP
 ../src/engine/render/renderer.cpp  ?set_fade@world@rgl@@QAEXPBMPBH@Z  004624c0  /O2 /MT /Gy /TP
 ../src/engine/render/renderer.cpp  ?set_params@world@rgl@@QAEXMMPBHPBM@Z  00462540  /O2 /MT /Gy /TP
+../src/engine/render/renderer.cpp  ?set_view@renderer@@QAEXPBUmatrix@rgl@@@Z  00461630  /O2 /MT /Gy /TP
+../src/engine/render/renderer.cpp  ?view_matrix@frustum@rgl@@QAE?AUD3DXMATRIX@@XZ  00462170  /O2 /MT /Gy /TP
