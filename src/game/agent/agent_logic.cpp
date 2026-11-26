@@ -7211,10 +7211,11 @@ void dust_vertices(mesh* m, const mat4* xf, const float* center, const float* ra
     std::vector<rgl::point20>& ps = m->get70_rec();
     for (unsigned i = 0; i < vs.size(); i++) {
         rgl::point20* pt = &ps[vs[i].index];
+        const mat4& x = *xf;   // N1-A: a reference per vertex adds the value-numbering temp the original's operand order needs
         vector4 w;
-        w.x = xf->s.x * pt->b.x + xf->f.x * pt->b.y + xf->u.x * pt->b.z + xf->o.x;
-        w.y = xf->s.y * pt->b.x + xf->f.y * pt->b.y + xf->u.y * pt->b.z + xf->o.y;
-        w.z = xf->s.z * pt->b.x + xf->f.z * pt->b.y + xf->u.z * pt->b.z + xf->o.z;
+        w.x = x.s.x * pt->b.x + x.f.x * pt->b.y + x.u.x * pt->b.z + x.o.x;
+        w.y = x.s.y * pt->b.x + x.f.y * pt->b.y + x.u.y * pt->b.z + x.o.y;
+        w.z = x.s.z * pt->b.x + x.f.z * pt->b.y + x.u.z * pt->b.z + x.o.z;
         vector4 d;
         d.x = w.x - center[0];
         d.y = w.y - center[1];
