@@ -107,5 +107,8 @@
   "GameApp::Render's index entry is only the original's 13-byte non-returning prologue (`mov al,[0x5e2938]; sub esp,0x5c; push ebx; xor ebx,ebx; cmp al,bl`); the 645-byte body is the interior continuation 0x4eb8ed that execution falls into, so the harness sees 0 edges on the original side (edges orig 0/0 vs ours 0/22) and no run can reach full coverage",
   "Each run also takes ~20 s (the stubbed ScreenUi / MsgLog / D3D font callees; 9 inputs in 60 s, all fault(read) or fault(pool-limit) on soup objects): GetWindowRect is modelled now but the row still has no valid input",
   "Verdict: no differential test possible; the body is reconstructed statement for statement (see the row note)"
+ ],
+ "00492f40": [
+  "Harness limit (register clobber, no reader): ours writes edx, which the original leaves untouched; edx is caller-saved. The only caller, 0x4da5b0 (call at 0x4da5e1), never reads it: callerdeps.py's three DEPENDS sites are calls it treats conservatively - 0x4c7ee0 (vector deleting dtor) reaches ret without using edx, 0x431960 writes edx before any read, and 0x4da7aa is a virtual thiscall (this in ecx), not a fastcall reading edx. Checked 2026-11-26."
  ]
 }
