@@ -1,7 +1,7 @@
 import re,sys
 src=open('src/game/agent/agent_logic.cpp').read().split('\n')
 out=[];i=0;n=len(src)
-KEEP='Agent::process_blow'
+KEEP='Agent::update_controls'
 while i<n:
     l=src[i]
     if l=='{' and out:
@@ -25,4 +25,4 @@ while i<n:
             out.append(s+';')
         i=k+1;continue
     out.append(l);i+=1
-open('work/match/w8s_trim.cpp','w').write('\n'.join(out))
+open('work/match/w8_trim.cpp','w').write('\n'.join(out))
