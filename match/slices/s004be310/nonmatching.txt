@@ -1,2 +1,2 @@
 004be730 18 WinLicense start/end markers (jmp +0x10 over 16 data bytes 'WL  ') cannot be written without _emit; body 0x4be742 byte-identical (void init, ecx=this), only the end marker + ret differ
-004be742 19 interior VA of the same function as 0x4be730 (after the start marker): body byte-identical, end marker (jmp +0x10 over 'WL  ' data) is not reproducible without _emit
+004be742 19 interior VA of the same function as 0x4be730 (after the start marker): body byte-identical, end marker (jmp +0x10 over 'WL  ' data) is not reproducible without _emit [2026-11-25 E1: comdat_check: fragment BYTE-EXACT (126 bytes); parent COMDAT differs only by the WinLicense end marker (not source). No callable symbol, so no equiv; reason in fail_why.json.]

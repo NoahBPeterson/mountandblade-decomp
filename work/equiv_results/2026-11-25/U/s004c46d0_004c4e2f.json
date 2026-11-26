@@ -1,7 +1,7 @@
 [
  {
   "va": "004c4e2f",
-  "module": "?",
+  "module": "s004c46d0",
   "verdict": "BYTE-EXACT-COMDAT",
   "reason": "parent 0x004c4dc0 (?_Buynode@?$list@Ulist_elem@@V?$allocator@Ulist_elem@@@std@@@std@@IAEPAU_Node@?$_List_nod@Ulist_elem@@V?$allocator@Ulist_elem@@@std@@@2@XZ); source match/slices/s004c46d0/s004c46d0.cpp; COMDAT 111 bytes; object COMDAT 133 bytes; byte-exact; fragment 0x004c4e2f (33 bytes): BYTE-EXACT-FRAGMENT",
   "comdat_parent": "004c4dc0",

@@ -1,0 +1,16 @@
+[
+ {
+  "va": "00472848",
+  "module": "poly_mesh",
+  "verdict": "BYTE-EXACT-COMDAT",
+  "reason": "parent 0x004727e0 (??$_Uninit_fill_n@PAUArrSet@@IU1@V?$allocator@UArrSet@@@std@@@std@@YAXPAUArrSet@@IABU1@AAV?$allocator@UArrSet@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z); source src/game/terrain/poly_mesh.cpp; COMDAT 104 bytes; object COMDAT 138 bytes; byte-exact; fragment 0x00472848 (33 bytes): BYTE-EXACT-FRAGMENT",
+  "comdat_parent": "004727e0",
+  "comdat_len": 104,
+  "fragment_verdict": "BYTE-EXACT-FRAGMENT",
+  "comdat_symbol": "??$_Uninit_fill_n@PAUArrSet@@IU1@V?$allocator@UArrSet@@@std@@@std@@YAXPAUArrSet@@IABU1@AAV?$allocator@UArrSet@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z",
+  "source": "src/game/terrain/poly_mesh.cpp",
+  "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+  "diff_bytes": 0,
+  "first_diff": null
+ }
+]

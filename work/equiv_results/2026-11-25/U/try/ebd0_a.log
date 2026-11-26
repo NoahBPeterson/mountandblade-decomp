@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/noahpeterson/Documents/Projects/mountandblade-decomp/tools/difftest/equiv.py", line 8380, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/Users/noahpeterson/Documents/Projects/mountandblade-decomp/tools/difftest/equiv.py", line 8303, in main
+    vas = [int(v, 16) for v in opts.vas]
+           ~~~^^^^^^^
+ValueError: invalid literal for int() with base 16: '--time-limit 60 --fp-tol --max-mismatch 200 --stub-callees --typed-share 0.9 --budget 40000000'

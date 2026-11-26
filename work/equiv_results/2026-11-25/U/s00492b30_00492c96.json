@@ -1,7 +1,7 @@
 [
  {
   "va": "00492c96",
-  "module": "?",
+  "module": "s00492b30",
   "verdict": "BYTE-EXACT-COMDAT",
   "reason": "parent 0x00492b30 (?_Insert_n@?$vector@_JV?$allocator@_J@std@@@std@@IAEXViterator@12@IAB_J@Z); source match/slices/s00492b30/s00492b30.cpp; COMDAT 358 bytes; object COMDAT 587 bytes; byte-exact; fragment 0x00492c96 (234 bytes): BYTE-EXACT-FRAGMENT",
   "comdat_parent": "00492b30",
