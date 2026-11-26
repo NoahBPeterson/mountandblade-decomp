@@ -178,6 +178,7 @@
   "dxutil",
   "agent_item_pick",
   "collision_shapes",
+  "collision_vminmax",
   "text_stream",
   "resource_manager_init",
   "mem_stream",

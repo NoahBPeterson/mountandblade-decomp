@@ -5,6 +5,7 @@ src/platform/dxframework/d3dsettings.cpp
 src/platform/dxframework/d3dutil.cpp
 src/platform/dxframework/dxutil.cpp
 src/engine/physics/collision_shapes.cpp
+src/engine/physics/collision_vminmax.cpp
 src/game/agent/agent_logic.cpp
 src/game/script/script_support.cpp
 src/engine/render/mesh.cpp

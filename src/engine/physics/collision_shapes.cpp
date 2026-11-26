@@ -136,14 +136,14 @@ void renderer::translate(const vector4& t)
     o->x += t.x;
     o->y = t.y + o->y;
     o->z = t.z + o->z;
-    set_transform(dev, D3DTS_WORLD, cur);
+    dev->SetTransform(D3DTS_WORLD, as_d3d(cur));
 }
 // @ 0x4081b0
 void renderer::pop()
 {
     sp = sp - 1;
     cur = stack[sp];
-    set_transform(dev, D3DTS_WORLD, cur);
+    dev->SetTransform(D3DTS_WORLD, as_d3d(cur));
 }
 // @ 0x4081f0
 void renderer::draw_sphere(float r)
@@ -717,13 +717,12 @@ void capsule::draw()
 void renderer::apply(const matrix* m)
 {
     matrix* c = &cur;
-    vector4 o = c->transform_point(m->o);
     matrix t;
+    t.o = c->transform_point(m->o);
     static_cast<mat3&>(t) = ((const pos*)c)->rot3(*m);
-    t.o = o;
     *c = t;
     c->s.w = 0.0f; c->f.w = 0.0f; c->u.w = 0.0f; c->o.w = 1.0f;
-    set_transform(dev, D3DTS_WORLD, *c);
+    dev->SetTransform(D3DTS_WORLD, as_d3d(*c));
 }
 // @ 0x40a920
 mat3 matrix::rot3(const mat3& m) const { return mat3(this->rot(m.s), this->rot(m.f), this->rot(m.u)); }
@@ -807,31 +806,17 @@ face::face(const face& o) : shape_base(inline_init()), count(o.count)
 // @ 0x40aef0
 vector4* face::get_min(vector4* out)
 {
-    const vector4* pb = &w[0];
-    int i = 1;
-    vector4 t;
-    vector4& r = t;
-    r = *pb;
-    if (i < count) do {
-        vmin(&r, &r, pb + i);
-        i++;
-    } while (i < count);
-    *out = r;
+    vector4 t = w[0];
+    for (int i = 1; i < count; i++) vmin(&t, &t, &w[i]);
+    *out = t;
     return out;
 }
 // @ 0x40aff0
 vector4* face::get_max(vector4* out)
 {
-    vector4 t;
-    vector4& r = t;
-    const vector4* pb = &w[0];
-    int i = 1;
-    r = *pb;
-    if (i < count) do {
-        vmax(&r, &r, pb + i);
-        i++;
-    } while (i < count);
-    *out = r;
+    vector4 t = w[0];
+    for (int i = 1; i < count; i++) vmax(&t, &t, &w[i]);
+    *out = t;
     return out;
 }
 
@@ -1496,25 +1481,10 @@ void mat3::rotate_about_u(const float* angle)
 // this->transform_point(m.o) with the transform inlined
 matrix matrix::operator*(const matrix& m) const
 {
-    vector4 o = ((const pos*)this)->transform_point_inl(m.o);
     matrix t;
+    t.o = ((const pos*)this)->transform_point_inl(m.o);
     static_cast<mat3&>(t) = ((const pos*)this)->rot3(m);
-    t.o = o;
     return t;
 }
 
 } // namespace rgl
-// @ 0x40af80
-__declspec(noinline) void __cdecl vmin(vector4* out, const vector4* a, const vector4* b)
-{
-    out->x = fmin_(a->x, b->x);
-    out->y = fmin_(a->y, b->y);
-    out->z = fmin_(a->z, b->z);
-}
-// @ 0x40b080
-__declspec(noinline) void __cdecl vmax(vector4* out, const vector4* a, const vector4* b)
-{
-    out->x = fmax_(a->x, b->x);
-    out->y = fmax_(a->y, b->y);
-    out->z = fmax_(a->z, b->z);
-}

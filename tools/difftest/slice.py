@@ -602,7 +602,8 @@ def demangle_qual(name):
                 return "::".join(q + [cls])
             if special == "dtor":
                 return "::".join(q + ["~" + cls])
-            return "::".join(q + ["operator" + special[2:]])
+            op = special[2:]
+            return "::".join(q + ["operator" + _OPS.get(op, op)])      # ??D -> operator*, as the source spells it
         return "::".join(parts[::-1])
     if name.startswith("@") and "@" in name[1:]:
         return name[1:name.index("@", 1)]

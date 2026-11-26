@@ -1,0 +1,2 @@
+../src/engine/physics/collision_vminmax.cpp  ?vmin@@YAXPAUvector4@rgl@@PBU12@1@Z  0040af80  /O2 /MT /Gy /TP
+../src/engine/physics/collision_vminmax.cpp  ?vmax@@YAXPAUvector4@rgl@@PBU12@1@Z  0040b080  /O2 /MT /Gy /TP

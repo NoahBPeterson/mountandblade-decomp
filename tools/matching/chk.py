@@ -112,6 +112,10 @@ def marker_syms(src, va, names):
             if hit and name not in out:
                 out.append(name)
         if out:
+            # an exactly qualified hit beats template symbols that only share the identifier (operator* of matrix vs the STL iterators')
+            exact = [n for n in out if demangle_qual(n) == w]
+            if exact:
+                out = exact
             break
     return out
 

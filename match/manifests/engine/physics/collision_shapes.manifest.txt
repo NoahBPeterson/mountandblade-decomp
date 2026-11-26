@@ -56,8 +56,6 @@
 ../src/engine/physics/collision_shapes.cpp  ?get_max@capsule@@UAEPAUvector4@rgl@@PAU23@@Z  0040ade0  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  ?clone@face@@UAEPAUshape_base@@XZ  0040ae40  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  ??0face@@QAE@ABU0@@Z  0040ae70  /O2 /MT /Gy /TP
-../src/engine/physics/collision_shapes.cpp  ?vmin@@YAXPAUvector4@rgl@@PBU12@1@Z  0040af80  /O2 /MT /Gy /TP
-../src/engine/physics/collision_shapes.cpp  ?vmax@@YAXPAUvector4@rgl@@PBU12@1@Z  0040b080  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  ?shape_contacts@@YAXPAUshape_base@@0HPAUcontact@@PAH@Z  0040bcb0  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  ?shape_contact_count@@YAHPAUshape_base@@0HPAUcontact@@@Z  0040bfe0  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  ?clone@sphere@@UAEPAUshape_base@@XZ  0040c010  /O2 /MT /Gy /TP
@@ -115,3 +113,9 @@
 ../src/engine/physics/collision_shapes.cpp  ?tessellate@renderer@@QAEXPAMPAHMMMHHH@Z  0040ab10  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  $L  0040c257  /O2 /MT /Gy /TP
 ../src/engine/physics/collision_shapes.cpp  ?identity_pos@rgl@@YAPAUmatrix@1@PAU21@@Z  0040cd00  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ??Dmatrix@rgl@@QBE?AU01@ABU01@@Z  0040e870  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ?translate@renderer@@QAEXABUvector4@rgl@@@Z  00408170  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ?pop@renderer@@QAEXXZ  004081b0  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ?apply@renderer@@QAEXPBUmatrix@rgl@@@Z  0040a870  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ?get_min@face@@UAEPAUvector4@rgl@@PAU23@@Z  0040aef0  /O2 /MT /Gy /TP
+../src/engine/physics/collision_shapes.cpp  ?get_max@face@@UAEPAUvector4@rgl@@PAU23@@Z  0040aff0  /O2 /MT /Gy /TP
