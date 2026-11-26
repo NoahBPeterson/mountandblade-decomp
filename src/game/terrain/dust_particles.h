@@ -49,11 +49,9 @@ template<> size_t vector<rgl::point20, allocator<rgl::point20> >::capacity() con
 template<> size_t vector<rgl::face20, allocator<rgl::face20> >::capacity() const;
 // std::vector<T>::reserve of the three mesh lists: the out-of-line instances this TU emits after emit_cell (dust_particles.cpp:
 // 0x4f46d0 vertex60, 0x4f4860 point20; the face20 instance is the same code, folded into 0x4f4860 by the original's ICF)
-#ifndef DUST_RESERVE_INSTANTIATED_HERE   // dust_particles.cpp instantiates them
 template<> void vector<rgl::vertex60, allocator<rgl::vertex60> >::reserve(size_type n);
 template<> void vector<rgl::point20, allocator<rgl::point20> >::reserve(size_type n);
 template<> void vector<rgl::face20, allocator<rgl::face20> >::reserve(size_type n);
-#endif
 }
 
 #include "game/data/ptype.h"                      // AnimBox (meshes at +0x14) / ptype / g_ptypes (shared with terrain_a, terrain_b)

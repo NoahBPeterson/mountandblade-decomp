@@ -180,11 +180,84 @@ void Terrain::emit_cell(int x, int y)
         }
     }
 }
+namespace std {
+template<class I, class T> static __forceinline T* _Uninitialized_copy_fi(I f, I l, T* d, allocator<T>& a)
+{
+    return _Uninit_copy(f, l, d, a, _Ptr_cat(f, d));   // std::_Uninitialized_copy
+}
+template<class I, class T> static __forceinline T* _Uninit_copy_fi(I f, I l, T* d, allocator<T>& a)
+{
+    return _Uninitialized_copy_fi(f, l, d, a);         // vector::_Ucopy, expanded in the library's reserve here
+}
+}
 // ---- the mesh lists' std::vector<T>::reserve, out of line after emit_cell (its three grow calls) ---------------------------
 // The library's own reserve (its _Ucopy is std::_Uninit_copy 0x4f47f0 / 0x4f4960); the original's linker folded face20's onto
 // point20's (ICF, 0x4f4860).
 // @ 0x4f46d0
-template void std::vector<rgl::vertex60>::reserve(size_t);
+namespace std {
+template<> void vector<rgl::vertex60>::reserve(size_type _Count)
+{
+    if (max_size() < _Count)
+        _Xlen();
+    else if ((_Myfirst == 0 ? 0 : (size_type)(_Myend - _Myfirst)) < _Count) {
+        pointer _Ptr = _Alval.allocate(_Count, (void*)0);
+        try {
+            _Uninit_copy_fi(iterator(_Myfirst), iterator(_Mylast), _Ptr, _Alval);
+        } catch (...) {
+            _Alval.deallocate(_Ptr, _Count);
+            throw;
+        }
+        size_type _Size = _Myfirst == 0 ? 0 : (size_type)(_Mylast - _Myfirst);
+        if (_Myfirst != 0)
+            _Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+        _Myend = _Ptr + _Count;
+        _Mylast = _Ptr + _Size;
+        _Myfirst = _Ptr;
+    }
+}
+}
 // @ 0x4f4860
-template void std::vector<rgl::point20>::reserve(size_t);
-template void std::vector<rgl::face20>::reserve(size_t);
+namespace std {
+template<> void vector<rgl::point20>::reserve(size_type _Count)
+{
+    if (max_size() < _Count)
+        _Xlen(), __assume(0);   // noreturn in the original's TU (n stays in edx)
+    else if ((_Myfirst == 0 ? 0 : (size_type)(_Myend - _Myfirst)) < _Count) {
+        pointer _Ptr = _Alval.allocate(_Count, (void*)0);
+        try {
+            _Uninit_copy_fi(iterator(_Myfirst), iterator(_Mylast), _Ptr, _Alval);
+        } catch (...) {
+            _Alval.deallocate(_Ptr, _Count);
+            throw;
+        }
+        size_type _Size = _Myfirst == 0 ? 0 : (size_type)(_Mylast - _Myfirst);
+        if (_Myfirst != 0)
+            _Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+        _Myend = _Ptr + _Count;
+        _Mylast = _Ptr + _Size;
+        _Myfirst = _Ptr;
+    }
+}
+}
+namespace std {   // the same code as point20's: folded onto 0x4f4860 by the original's ICF
+template<> void vector<rgl::face20>::reserve(size_type _Count)
+{
+    if (max_size() < _Count)
+        _Xlen(), __assume(0);   // noreturn in the original's TU (n stays in edx)
+    else if ((_Myfirst == 0 ? 0 : (size_type)(_Myend - _Myfirst)) < _Count) {
+        pointer _Ptr = _Alval.allocate(_Count, (void*)0);
+        try {
+            _Uninit_copy_fi(iterator(_Myfirst), iterator(_Mylast), _Ptr, _Alval);
+        } catch (...) {
+            _Alval.deallocate(_Ptr, _Count);
+            throw;
+        }
+        size_type _Size = _Myfirst == 0 ? 0 : (size_type)(_Mylast - _Myfirst);
+        if (_Myfirst != 0)
+            _Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+        _Myend = _Ptr + _Count;
+        _Mylast = _Ptr + _Size;
+        _Myfirst = _Ptr;
+    }
+}
+}

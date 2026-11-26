@@ -2,3 +2,5 @@
 ../src/game/terrain/dust_particles.cpp  ??$_Uninit_copy@Viterator@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@PAUpoint20@rgl@@V?$allocator@Upoint20@rgl@@@3@@std@@YAPAUpoint20@rgl@@Viterator@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@0@0PAU12@AAV?$allocator@Upoint20@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004f4960  /O2 /MT /Gy /TP
 ../src/game/terrain/dust_particles.cpp  $L  004f4856  /O2 /MT /Gy /TP
 ../src/game/terrain/dust_particles.cpp  $L  004f49c6  /O2 /MT /Gy /TP
+../src/game/terrain/dust_particles.cpp  ?reserve@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QAEXI@Z  004f46d0  /O2 /MT /Gy /TP
+../src/game/terrain/dust_particles.cpp  ?reserve@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QAEXI@Z  004f4860  /O2 /MT /Gy /TP
