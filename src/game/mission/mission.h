@@ -210,7 +210,7 @@ struct Mission {
     int spawn_missile(const rgl::vector4* pos, const rgl::vector4* dir, ItemRef* launcher, ItemRef* ammo, unsigned shooter_id);   // 0x44be50
     void spawn_prop(int* idx, int* id);         // 0x44c210
     __declspec(noinline) void log_message(const tstring* s, float seconds);   // 0x453020 (game/agent/agent_logic.cpp: the line goes to the game log, g_gui.add)
-    void blood_burst(float x, float y, float z, int unused, float amount);   // 0x4525a0 (ret 0x14)
+    void blood_burst(vector4 center, float amount);   // 0x4525a0 (ret 0x14)
     int add_placed(const int* kind, const int* id, const int* value, const rgl::matrix* m, int* spawn_id);   // 0x44f870
     void set_object_target(int n);              // 0x4c6dc0 (game/editor/editor_selection_and_translation.cpp): prop n's entity takes the prop's frame and scale
 

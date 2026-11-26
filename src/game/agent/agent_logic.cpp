@@ -7516,22 +7516,18 @@ void FxDef::skin_lods(rgl::lod_mesh* g, int flag)
     }
 }
 // @ 0x4525a0
-void Mission::blood_burst(float x, float y, float z, int unused, float amount)
+void Mission::blood_burst(vector4 center, float amount)
 {
     if (g_cfg.enable_blood) {
-        // apply_blood reads the burst centre as a vector4 (x, y, z, w): the original hands it the address of its own four
-        // consecutive argument words; here they are gathered into one
-        vector4 c(x, y, z);
-        memcpy(&c.w, &unused, sizeof c.w);
         unsigned i = agents.first_used();
         if (i < (unsigned)agents.count) {
             do {
                 Agent* a = &agents.pages[i >> 4][i & 0xf];
-                float dx = a->pos.x - x;
-                float dy = a->pos.y - y;
-                float dz = a->pos.z - z;
+                float dx = a->pos.x - center.x;
+                float dy = a->pos.y - center.y;
+                float dz = a->pos.z - center.z;
                 if ((float)sqrt(dx * dx + dy * dy + dz * dz) < 3.5f)
-                    a->apply_blood(&c.x, amount);
+                    a->apply_blood(&center.x, amount);
                 agents.next_used(&i);
             } while (i < (unsigned)agents.count);
         }
@@ -9528,12 +9524,12 @@ void Agent::process_blow(float unused)
         return;
     if (has_blow == 0)
         return;
+    anim_a = -1;
+    anim_b = -1;
     attacker = blow.attacker;
     dmg = blow.dmg_out;
     hit_part = blow.absorbed;
     has_blow = 0;
-    anim_a = -1;
-    anim_b = -1;
     if (attacker >= 0)
         ai.last_attacker = attacker;
     m = g_mission;
@@ -9645,7 +9641,7 @@ void Agent::process_blow(float unused)
                 else
                     HIT_SOUND(0x64)
             } else {
-                bool blunt = (blow.item_mod & itp_wooden_attack) != 0 || blow.kind == 2;
+                int blunt = (blow.item_mod & itp_wooden_attack) != 0 || blow.kind == 2;
                 var = 0.15f;
                 if (dmg < 9.0f) {
                     if (hit_part < 14) {
@@ -9707,7 +9703,7 @@ void Agent::process_blow(float unused)
                     go = true;
             }
             if (go)
-                g_mission->blood_burst(blow.pos.x, blow.pos.y, blow.pos.z, 0, blood * dmg);
+                g_mission->blood_burst(blow.pos, blood * dmg);
         }
     }
 
