@@ -165,7 +165,8 @@ void dynamic_entity::resolve()
         for (; c != contacts.end(); ++c) {
             vector4 r(c->p.x - local.o.x, c->p.y - local.o.y, c->p.z - local.o.z);
             float d = u.y * r.y + (u.z * r.z + r.x * u.x);
-            *dp = vector4(r.x - u.x * d, r.y - u.y * d, r.z - u.z * d);
+            vector4 w = d * u;
+            *dp = vector4(r.x - w.x, r.y - w.y, r.z - w.z);
             double len = sqrt(dp->y * dp->y + (dp->x * dp->x + dp->z * dp->z));
             if (len > -0.001 && len < 0.001)
                 flagA = true;
@@ -190,8 +191,11 @@ void dynamic_entity::resolve()
                 if (i != j) {
                     const vector4& p = dirs[j];
                     const vector4& q = dirs[i];
-                    float dotv = q.x * p.x + (p.z * q.z + q.y * p.y);
-                    float s = (p.x * q.z - p.z * q.x) * u.y + ((q.x * p.y - q.y * p.x) * u.z + (p.z * q.y - p.y * q.z) * u.x);
+                    float dotv = q.x * p.x + p.z * q.z + q.y * p.y;
+                    float cx = p.z * q.y - p.y * q.z;
+                    float cy = p.x * q.z - p.z * q.x;
+                    float cz = q.x * p.y - q.y * p.x;
+                    float s = cx * u.x + cz * u.z + cy * u.y;
                     double ang = atan2(s, dotv);
                     if (s > 0.1) {
                         if (-1 < ihi) {
@@ -223,7 +227,7 @@ void dynamic_entity::resolve()
             j++;
             if (!flagB && -(fn.x * c->n.x + (fn.y * c->n.y + fn.z * c->n.z)) > 0.0f) {
                 float sc = 1.0f / (float)n;
-                vector4 g(-fn.x * sc, -fn.y * sc, -fn.z * sc);
+                vector4 g = vector4(-fn.x, -fn.y, -fn.z) * sc;
                 add_torque_at(&c->p, &g);
             }
         }
