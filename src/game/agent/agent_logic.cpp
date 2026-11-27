@@ -6422,15 +6422,17 @@ void Agent::shoot()
     }
     const vector4* o19 = &an->elems[19].m84.o;
     const rgl::matrix* m = &body->local;
-    float kx = o19->x * 0.35f + P.x;
-    float ky = o19->y * 0.35f + P.y;
-    float kz = o19->z * 0.35f + P.z;
+    vector4 k35(o19->x * 0.35f, o19->y * 0.35f, o19->z * 0.35f);        // the scaled offset is a temporary (rounded to float) before the adds
+    float kx = k35.x + P.x;
+    float ky = k35.y + P.y;
+    float kz = k35.z + P.z;
     P.x = kz * m->u.x + ky * m->f.x + kx * m->s.x + m->o.x;
     P.y = kz * m->u.y + ky * m->f.y + kx * m->s.y + m->o.y;
     P.z = kz * m->u.z + ky * m->f.z + kx * m->s.z + m->o.z;
-    P.x = W->f.x * 0.15f + P.x;
-    P.y = W->f.y * 0.15f + P.y;
-    P.z = W->f.z * 0.15f + P.z;
+    vector4 f15(W->f.x * 0.15f, W->f.y * 0.15f, W->f.z * 0.15f);
+    P.x = f15.x + P.x;
+    P.y = f15.y + P.y;
+    P.z = f15.z + P.z;
 
     vector4 d0 = vel;
     if (horse >= 0) {
@@ -6451,10 +6453,10 @@ void Agent::shoot()
         float dist = dn.normalize();
         vector4 q = a_vadd(diff, rel);
         q.normalize();
-        float err = cls + 20.0f;
         float cx = dn.y * q.z - dn.z * q.y;
         float cy = dn.z * q.x - q.z * dn.x;
         float cz = q.y * dn.x - dn.y * q.x;
+        float err = cls + 20.0f;
         float g5 = (float)g_options.difficulty * 0.5f;
         float cm = (float)sqrt(cx * cx + cz * cz + cy * cy);
         float rm = (float)sqrt(rel.x * rel.x + rel.z * rel.z + rel.y * rel.y);
