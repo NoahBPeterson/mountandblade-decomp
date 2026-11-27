@@ -17,3 +17,7 @@
 ../src/engine/physics/world_grid.cpp  $L  00424cab  /O2 /MT /Gy /TP
 ../src/engine/physics/world_grid.cpp  $L  004251b2  /O2 /MT /Gy /TP
 ../src/engine/physics/world_grid.cpp  $L  0042522d  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ?_Insert_n@?$vector@UNavVert@@V?$allocator@UNavVert@@@std@@@std@@IAEXViterator@12@IABUNavVert@@@Z  00424830  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  $L  00424a3e  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  ?_Insert_n@?$vector@UNavCell@@V?$allocator@UNavCell@@@std@@@std@@IAEXViterator@12@IABUNavCell@@@Z  00424db0  /O2 /MT /Gy /TP
+../src/engine/physics/world_grid.cpp  $L  00424fc4  /O2 /MT /Gy /TP

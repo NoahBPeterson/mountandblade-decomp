@@ -21,6 +21,12 @@
 #include "engine/render/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 using rgl::vector4;
+// lane device (2026-11-27 I1-B): size() for the cell / vertex vectors as __forceinline specializations. The original expands size() at every
+// site of _Insert_n; stock size() (31 bytes, cost 28) is rejected by cl's inliner at the 6.25e6-weight site (v 88 >= 74).
+namespace std {
+template<> __forceinline vector<NavVert>::size_type vector<NavVert>::size() const { return (_Myfirst == 0 ? 0 : _Mylast - _Myfirst); }
+template<> __forceinline vector<NavCell>::size_type vector<NavCell>::size() const { return (_Myfirst == 0 ? 0 : _Mylast - _Myfirst); }
+}
 namespace rgl { struct Obj; }        // entity.cpp: the element type of the std::vector<Obj*> instantiation whose resize 0x41fa00 the cell vectors call
 
 // std::vector<rgl::Obj*>::push_back / insert (0x423fc0 / 0x424010, shared by every pointer vector): defined in world_cells.cpp,
@@ -166,7 +172,8 @@ void rgl::world::add_shape(shape_base* s)
 // ---- the std::vector members of the ground geometry's vertex (NavVert, 0x24 bytes) and cell (NavCell, 0x88 bytes)
 // vectors that the original's object holds. cl 13.10.3052's stock <vector> leaves allocator::construct and the
 // _Ucopy / _Ufill wrappers out of line and stops inlining std::copy for elements of >= 128 bytes where the original
-// inlined them, so the _Insert_n / erase / _Uninit_* rows are not byte-exact (the real classes are kept: user ranking).
+// inlined them: the forceinline specializations below (the Contact recipe) and the size() device above put them back (the real classes are kept: user ranking).
+// _Ufill goes through the stock _Uninitialized_fill_n wrapper layer, as <vector>'s does: that layer's temporaries gave the frame its missing slot.
 // std::copy for the 0x88-byte cells, spelled out: cl 13.10 does not inline the stock copy for elements of >= 128 bytes
 __forceinline NavCell* copy_nonscalar(NavCell* f, NavCell* l, NavCell* d) { for (; f != l; ++d, ++f) *d = *f; return d; }
 namespace std {
@@ -199,9 +206,13 @@ template<> template<> __forceinline NavVert* vector<NavVert, allocator<NavVert> 
 {
     return _Uninitialized_copy(_First, _Last, _Ptr, this->_Alval);
 }
+template<> __forceinline void _Uninitialized_fill_n<NavVert*, unsigned int, NavVert, allocator<NavVert> >(NavVert* _First, unsigned int _Count, const NavVert& _Val, allocator<NavVert>& _Al)
+{
+    _Uninit_fill_n(_First, _Count, _Val, _Al, _Ptr_cat(_First, _First));
+}
 template<> __forceinline NavVert* vector<NavVert, allocator<NavVert> >::_Ufill(NavVert* _Ptr, size_type _Count, const NavVert& _Val)
 {
-    _Uninit_fill_n(_Ptr, _Count, _Val, this->_Alval, _Ptr_cat(_Ptr, _Ptr));
+    _Uninitialized_fill_n(_Ptr, _Count, _Val, this->_Alval);
     return (_Ptr + _Count);
 }
 template<> __forceinline void fill<NavCell*, NavCell>(NavCell* _First, NavCell* _Last, const NavCell& _Val)
@@ -223,9 +234,13 @@ template<> template<> __forceinline NavCell* vector<NavCell, allocator<NavCell> 
 {
     return _Uninitialized_copy(_First, _Last, _Ptr, this->_Alval);
 }
+template<> __forceinline void _Uninitialized_fill_n<NavCell*, unsigned int, NavCell, allocator<NavCell> >(NavCell* _First, unsigned int _Count, const NavCell& _Val, allocator<NavCell>& _Al)
+{
+    _Uninit_fill_n(_First, _Count, _Val, _Al, _Ptr_cat(_First, _First));
+}
 template<> __forceinline NavCell* vector<NavCell, allocator<NavCell> >::_Ufill(NavCell* _Ptr, size_type _Count, const NavCell& _Val)
 {
-    _Uninit_fill_n(_Ptr, _Count, _Val, this->_Alval, _Ptr_cat(_Ptr, _Ptr));
+    _Uninitialized_fill_n(_Ptr, _Count, _Val, this->_Alval);
     return (_Ptr + _Count);
 }
 // @ 0x424720
