@@ -444,7 +444,7 @@ class Side:
         if stub:
             at = self.stub_at
             self.stub_at += 0x20
-            stub += b"\xe9" + struct.pack("<i", ret_to - (at + len(stub) + 5))
+            stub += b"\xe9" + struct.pack("<I", (ret_to - (at + len(stub) + 5)) & 0xffffffff)   # rel32 is mod 2^32
             self.uc.mem_write(at, stub)
             self.uc.reg_write(self.U.UC_X86_REG_EIP, at)
         else:
@@ -535,7 +535,22 @@ def compare(job, A, B):
                 return d
     if len(ka) != len(kb):
         return {"what": "event sequence", "event": n, "kind": "sequence", "orig": ka, "ours": kb}
-    return weak[0] if weak else None
+    if weak:
+        d = dict(weak[0])
+        d["weak_kinds"] = sorted({w["kind"] for w in weak})
+        return d
+    return None
+
+
+def frame_deltas(A, B):
+    """{(esp at a call - entry esp) of the original - the same of ours} over every paired call event: one value
+    means the two frames differ by a constant amount (a local more or less), the only thing the angr layer's
+    "esp at a call" difference then says"""
+    out = set()
+    for x, y in zip(A.events, B.events):
+        if x["kind"] == "call" and y["kind"] == "call":
+            out.add((((x["esp"] - A.esp0) - (y["esp"] - B.esp0)) + 2 ** 31) % 2 ** 32 - 2 ** 31)
+    return out
 
 
 def in_stack(S, v):
@@ -612,6 +627,10 @@ def mem_diff(job, A, B, lo, x, y, frame, argw):
     return None
 
 
+def level_L2(job):
+    return job["level"] == "L2"
+
+
 def replay(job, cex):
     """-> {"status": "confirmed"|"not-reproduced"|"unsupported", "why", "diff", "sides": {...}}"""
     model = cex.get("model")
@@ -632,6 +651,11 @@ def replay(job, cex):
                                        for e in S.events], "steps": S.steps, "error": S.err,
                             "branches": S.branches[-6:]}
     d = compare(job, A, B)
+    if d is not None and d.get("weak_kinds") == ["esp"]:
+        # only the frame layout differs on this input: a constant offset between the two frames is no behaviour
+        dl = frame_deltas(A, B)
+        out["frame_deltas"] = sorted(dl)
+        out["frame_only"] = len(dl) == 1
     if d is not None and d["event"] < min(len(A.events), len(B.events)) + (1 if d["kind"] == "sequence" else 0):
         k = d["event"]
         ea = A.events[k] if k < len(A.events) else None
@@ -660,6 +684,14 @@ def replay(job, cex):
         if A.err or B.err:
             # a difference before an error is still a difference, but say what stopped
             out["note"] = "; ".join(x for x in (A.err and "original: " + A.err, B.err and "ours: " + B.err) if x)
+        if d["kind"] == "reg" and d["event"] < len(B.events) and B.events[d["event"]]["kind"] == "ret" and \
+                d["reg"] in ("ecx",) + (() if job.get("ret64") else ("edx",)) and level_L2(job):
+            weak.append("%s is call-clobbered: it differs only in a register the function's callers may not read "
+                        "(L2 compares every register at the return; check the callers)" % d["reg"])
+        if d["kind"] == "reg" and d["reg"] == "eax" and ea and eb and ea["kind"] == "ret" and \
+                ea["depth"] == eb["depth"] == 1 and not job.get("ret64") and ea["st0"] == eb["st0"]:
+            weak.append("eax differs at a return that leaves one equal x87 value: for a float-returning function "
+                        "eax is dead (the angr layer compares it unless the function is void)")
         out.update(status="likely" if weak else "confirmed", why="; ".join(weak), diff=d)
         return out
     if A.err or B.err:
