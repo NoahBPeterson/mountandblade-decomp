@@ -1145,9 +1145,10 @@ void GameData::init_event(TrackRec* rec)
         r->frame.u = nav_recs()[e->m4].trans;
         float c = cosf(angle);
         float s = sinf(angle);
-        float fx = r->frame.f.x, fy = r->frame.f.y;
-        r->frame.f.x = c * fx - s * fy;
-        r->frame.f.y = s * fx + c * fy;
+        float ny = c * r->frame.f.y + s * r->frame.f.x;
+        float nx = c * r->frame.f.x - s * r->frame.f.y;
+        r->frame.f.y = ny;
+        r->frame.f.x = nx;
         // both cross products are built in t's slot (dead after find_at) and copied out whole, so the frame's s.w and
         // f.w are the target's w (0x4b37f0, 0x4b3846 read it back from t)
         cross_into(t, r->frame.f, r->frame.u);
