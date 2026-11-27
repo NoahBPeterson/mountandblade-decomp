@@ -131,12 +131,29 @@ def find_symbol(obj, src, va, size=None):
     c = Coff(obj)
     sid = os.path.basename(src).rsplit(".", 1)[0]
     sym, how = S.find_symbol(c, sid, va, src, size)
+
+    def pick(cands, why):
+        # several candidates (an overload set, a template's instances of `operator[]`): never take the first one.
+        # 0x4d92c0 GlyphMap::operator[] was compared against a 17-byte vector<RagdollBone>::operator[] that way
+        # (lane P1-A, 2026-11-27). Keep the candidates of plausible size (0.5x..2x the original's); exactly one -> it
+        if len(cands) == 1:
+            return cands[0]
+        fit = []
+        for n in cands:
+            f = c.functions().get(n)
+            if f is not None and size:
+                _sec, a, b = c.func_extent(f)
+                if size / 2 <= b - a <= size * 2:
+                    fit.append(n)
+        if len(fit) == 1:
+            return fit[0]
+        raise SystemExit("0x%08x: ambiguous symbol (%s): %s; pass --symbol" % (va, why, ", ".join(cands[:6])))
     if isinstance(sym, list):
-        sym = sym[0]
+        sym = pick(sym, how)
     if sym is None:
         import chk
         cands = chk.marker_syms(src, va, list(c.functions()))
-        sym = cands[0] if cands else None
+        sym = pick(cands, "marker") if cands else None
     if sym is None:
         import insn_exact
         sym = insn_exact.marker_symbol(c, src, va)
