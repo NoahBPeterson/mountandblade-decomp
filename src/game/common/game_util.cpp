@@ -193,12 +193,19 @@ static inline vector4 rot_to_local(const vector4& p, const rgl::mat3* m)
                    m->f.x * p.x + m->f.y * p.y + m->f.z * p.z,
                    m->u.x * p.x + m->u.y * p.y + m->u.z * p.z);
 }
+// the same helper with the arguments the other way round (its operand keys then order the x87 sums differently)
+static inline vector4 rot_to_local_m(const rgl::mat3* m, const vector4& p)
+{
+    return vector4(m->s.x * p.x + m->s.y * p.y + m->s.z * p.z,
+                   m->f.x * p.x + m->f.y * p.y + m->f.z * p.z,
+                   m->u.x * p.x + m->u.y * p.y + m->u.z * p.z);
+}
 // @ 0x432860
 rgl::mat3 rgl::mat3::mul_t(const rgl::mat3& b) const
 {
     rgl::mat3 r;
     r.s = rot_to_local(b.s, this);
-    r.f = rot_to_local(b.f, this);
+    r.f = rot_to_local_m(this, b.f);
     r.u = rot_to_local(b.u, this);
     return r;
 }
