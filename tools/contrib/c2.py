@@ -39,14 +39,15 @@ TOOLS = {"regs": ["tools/c2trace.py", "regs"], "regmap": ["tools/c2trace.py", "r
          "tsweep": ["tools/tsweep.py"],
          "helpersweep": ["tools/helpersweep.py"], "effectmine": ["tools/effectmine.py", "mine"],
          "schedwant": ["tools/schedwant.py"], "symkeys": ["tools/symkeys.py"],
-         "slotwant": ["tools/slotwant.py"]}   # frame layout inverse (docs/c2/slotwant.md); gets --image/--va below
-ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine", "schedwant"}      # take --asm-vs
+         "slotwant": ["tools/slotwant.py"],   # frame layout inverse (docs/c2/slotwant.md); gets --image/--va below
+         "realize": ["tools/realize.py"]}     # register-allocation inverse (docs/c2/realize.md): --from scratch|slots, --from-rasim auto, edit EDIT..
+ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine", "schedwant", "realize"}      # take --asm-vs
 SLOTS, MAXJOBS = 8, 4
 if os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off")):
     # every traced compile runs under wine on the 10-core Mac: 2026-11-25 three effectmine runs at --jobs 4 each
     # (12 traced cl's plus other lanes) pushed the load to 32 and one compile from 40 s to 8 min
     SLOTS, MAXJOBS = 3, 2
-DOC_ALIAS = {"slotwant": "slotwant", "tsweep": "tracer", "schedwant": "sched", "helpersweep": "tracer", "regs": "regalloc", "regmap": "regalloc"}   # tsweep's manual is a section of tracer.md ("tsweep")
+DOC_ALIAS = {"realize": "realize", "slotwant": "slotwant", "tsweep": "tracer", "schedwant": "sched", "helpersweep": "tracer", "regs": "regalloc", "regmap": "regalloc"}   # tsweep's manual is a section of tracer.md ("tsweep")
 LOCAL_OK = {"icount"}                                       # tools with --allow-local (compile under wine when the server declines)
 
 
@@ -94,6 +95,12 @@ def main():
     for opt in ("--orig", "--export", "--keep", "--from", "--out"):     # the tools run in ../vs2005-cpp: a relative path would resolve there
         if opt in rest:
             i = rest.index(opt) + 1
+            if tool == "realize" and opt == "--from":      # realize's --from is a mode (slots / scratch), not a file
+                continue
+            rest[i] = os.path.abspath(rest[i])
+    if tool == "realize" and "--from-rasim" in rest:        # an ANSWERS file (not auto / -) resolves from here
+        i = rest.index("--from-rasim") + 1
+        if i < len(rest) and rest[i] not in ("auto", "-"):
             rest[i] = os.path.abspath(rest[i])
     if "--jobs" in rest:
         i = rest.index("--jobs"); rest[i + 1] = str(min(MAXJOBS, int(rest[i + 1])))
@@ -148,6 +155,15 @@ def main():
         if not rest or rest[0].startswith("-"):
             die("symkeys needs a subcommand: keys, sites, events, whatif, levers, compare, export")
         sub = [rest.pop(0)]
+    if tool == "realize":                     # realize.py takes its mode before the source: edit/measure/pairs or --from X / --from-rasim X
+        if rest and rest[0] in ("edit", "measure", "pairs"):
+            sub = [rest.pop(0)]
+        elif rest and rest[0] in ("--from", "--from-rasim") and len(rest) > 1:
+            sub = [rest.pop(0), rest.pop(0)]
+        elif "--from" in rest or "--from-rasim" in rest:
+            k = rest.index("--from" if "--from" in rest else "--from-rasim"); sub = rest[k:k + 2]; del rest[k:k + 2]
+        else:
+            die("realize needs a mode: --from scratch|slots, --from-rasim auto, or edit EDIT..")
     # symkeys --from EXPORT reads a saved trace (no compile, seconds): it must not get the source, which it would take
     # as an edit, nor the cl flags. Export once per source edit (c2.py symkeys 0x<va> export --out X.json, in the
     # background: the trace takes minutes on a large row), then run sites / levers / whatif / compare with --from.
@@ -158,7 +174,7 @@ def main():
         # the original's slots are read from the image (callee `ret N` for the push depth), as slotwant.md says for M&B
         cmd += ["--image", os.path.join(ROOT, "work", "mb.analysis.bin"), "--va", "0x%x" % va]
     if tool in ASM:
-        cmd += ["--asm-vs", orig] + (["--asm-func", func] if tool in ("regmap", "tsweep", "schedwant") else [])
+        cmd += ["--asm-vs", orig] + (["--asm-func", func] if tool in ("regmap", "tsweep", "schedwant", "realize") else [])
     cmd += rest + ([] if fromx else ["--"] + flags + inc)
 
     os.makedirs(os.path.join(ROOT, "work", "match", ".c2slots"), exist_ok=True)
