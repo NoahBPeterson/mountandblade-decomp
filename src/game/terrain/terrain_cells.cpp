@@ -574,7 +574,7 @@ void Terrain::scatter(particle_list* set, int mode, int n)
                 it->freq = (float)(rand() % 15817) * 0.0031611556f + 50.0f;
                 it->thresh = (float)(rand() % 15817) * 3.1611557e-06f;
                 float rr = (float)(rand() % 15817) * 6.3223117e-05f;
-                int dens = (unsigned short)(g_ptypes[sel].flags >> 32);
+                int dens = g_ptypes[sel].density();
                 it->rate = (rr + 1.0f) * ((it->thresh + 0.4f) * ((3.0f / ((float)n + 2.0f)) * (float)dens)) * 0.015f;
                 if (g_ptypes[sel].flags & 0x80000) {
                     it->freq = it->freq * 0.45f;

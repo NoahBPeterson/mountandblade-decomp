@@ -26,6 +26,7 @@ struct AnimBox {                                // 0x48
 struct ptype {
     tstring name;                               // +0 (0x4650f0)
     unsigned __int64 flags;                     // +0x10 (read as one 64-bit word) (0x400000 / 0x80000 / 0x1000000 / 0x20000 ...; the high dword's low 16 bits are a density)
+    unsigned short density() const { return ((const unsigned short*)&flags)[2]; }   // the high dword's low word (read as a word: 0x4650f0)
     int nframes;                                // +0x18 (0x466cd0, 0x46a270; terrain_b 0x479da0 and dust 0x4f3e10: count of boxes)
     AnimBox* boxes;                             // +0x1c: nframes boxes of 0x48 bytes
     ptype() { nframes = 0; boxes = 0; }         // the flora table's new[] (load_data_files 0x4d0c20) runs it per element

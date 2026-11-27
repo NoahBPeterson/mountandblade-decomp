@@ -2598,9 +2598,7 @@ have_face:
                 if (cursor + 1 >= npath)
                     break;
                 // the pair lives in slot +0x14 of the node record: +0x197c + cur * 16
-                vec2 p4;
-                p4.x = detail[cur + 1].x;
-                p4.y = detail[cur + 1].y;      // 0x4b77ac, 0x4b77b3
+                vec2 p4 = detail[cur + 1];      // 0x4b77ac, 0x4b77b3
                 if (!((rgl::world*)g_script.level)->ground->can_move(from, pos.x, pos.y, path[cur + 1], &p4.x, 0, max))
                     break;
                 cursor = cur + 1;
