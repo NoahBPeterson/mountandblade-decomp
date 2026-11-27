@@ -159,9 +159,10 @@ void CharSheet::open_view()
         // lanes, so s.w/u.w/f.w/o.w hold whatever an earlier callee left on the stack (the original's own uninitialised
         // read; build_planes below then computes with them).  [bm9fv 2026-11-08: the earlier `mat.u.w = 0x1200` pin,
         // which only reproduced one particular leftover for the harness, is removed; the harness stubs build_planes.]
-        mat.o.x += mat.u.x * 1.2f;
-        mat.o.y += mat.u.y * 1.2f;
-        mat.o.z += mat.u.z * 1.2f;
+        rgl::vector4 back = mat.u * 1.2f;       // the three products are formed (z spilled to a float temp) before the adds
+        mat.o.x = back.x + mat.o.x;
+        mat.o.y = mat.o.y + back.y;
+        mat.o.z = mat.o.z + back.z;
         fr.m = mat;
         fr.build_planes();
         view_rect = rgl::vector4(0.0f, 0.0f, 0.0f);
