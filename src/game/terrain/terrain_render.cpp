@@ -980,8 +980,8 @@ ViewParams::ViewParams()
 {
     fog_density = 0.1f; water_fog_density = 0.1f;
     fog_color = 0x384878; water_fog_color = 0x384878;
-    f0 = 1000.0f; fog_end = -100.0f; fog_start = -1.0f;
-    water_fog_start = -1.0f; water_fog_end = -100.0f; water_level = -1.0e7f;
+    fog_end = -100.0f; fog_start = -1.0f; f0 = 1000.0f;
+    water_fog_end = -100.0f; water_level = -1.0e7f; water_fog_start = -1.0f;
     fog_on = 0; sun_shadows = 0;
     pos tmp;
     matrix* id = identity_pos(&tmp);
