@@ -216,6 +216,14 @@ equivalent mutant: a dead pad store changed), 0 of the 10 behaviour-changing con
   instruction sequence (mnemonic and memory size). angr 10.0.6 implements none of Iop_SqrtF64, SinF64, CosF64,
   TanF64, AtanF64, ScaleF64, Yl2xF64, PRemF64 (fsqrt, fsin, fcos, fptan, fpatan, fscale, fyl2x, fprem raise
   UnsupportedIROpError); the layer installs fpSqrt for the first and uninterpreted functions for the rest. angr's own
+  x87_pi_mode (P1-C): when the two x87 instruction sequences differ, the proof counts only if every path pair is
+  proved in the float abstraction alone (float terms free per structural hash, so it holds for every precision and
+  rounding control; Z3's own float semantics is never used for pairing or proof, and a difference is "unknown", never a
+  refutation). Value-preserving normalisation: fadd/fmul operands sorted by hash (commutation of one operation;
+  never fsub/fdiv, never regrouping). Double stores (any 8-byte store) are an uninterpreted function of the value, so a
+  spill to a double is not the identity (it rounds at 64-bit precision); float stores are the F64toF32 term;
+  operations on two constants are uninterpreted (no 53-bit folding). Excluded: fldcw/fnstcw, tbyte, fprem, fscale,
+  f2xm1, frndint, fyl2x, fldl2e etc., SSE/MMX code.
   satisfiability check at every fork is skipped (LAZY_SOLVES; on x87 code it cost 26 s per fork and Z3 does not
   honour its timeout while bit-blasting floats); forks are pruned by a 0.5 s Z3 check on paths without float terms.
   Literal constants are paired by content and checked (func.const_ok) before solving, and (M&B) a pairing that

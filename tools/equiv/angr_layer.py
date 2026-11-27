@@ -223,6 +223,26 @@ def x87_signature_norm(code, base):
     return sorted(out)
 
 
+# (M&B, P1-C) x87_pi_mode: the x87 mnemonics a function may use for a proof over DIFFERENT x87 instruction sequences.
+# All of them are either exact data movement / sign operations, or one IEEE operation (a rounding point) that the
+# structural float abstraction keeps as a term; fldcw / fnstcw (the precision or rounding control changes), fldenv,
+# frstor, fninit, 80-bit (tbyte) loads and stores, fbld, fprem, fscale, f2xm1, frndint, fxam, fsincos, fyl2x and
+# fcmov are out: with them the sequence rule (x87_same) stays the only way through.
+_X87_PI_OK = frozenset("""fld fild fst fstp fist fistp fxch fld1 fldz fchs fabs fsqrt fnstsw fwait wait fnop
+    fadd faddp fiadd fsub fsubp fsubr fsubrp fisub fisubr fmul fmulp fimul fdiv fdivp fdivr fdivrp fidiv fidivr
+    fcom fcomp fcompp fucom fucomp fucompp fcomi fcomip fucomi fucomip ficom ficomp ftst
+    fsin fcos fptan fpatan""".split())      # the last four are uninterpreted functions of their operands (install_x87_ops)
+
+
+def x87_pi_ok(code, base):
+    for i in decode(code, base):
+        if re.search(r"\b(xmm|mm)\d", i.op_str) or i.mnemonic == "emms":
+            return False                    # SSE/MMX: 8-byte stores that are not x87 (see LogMem.store)
+        if i.mnemonic.startswith("f") and (i.mnemonic not in _X87_PI_OK or "tbyte" in i.op_str):
+            return False
+    return True
+
+
 # ---------------------------------------------------------------------- decorated names (MSVC)
 _SIMPLE = {c: 4 for c in "CDEFGHIJK"}
 _SIMPLE.update({"M": 4, "N": 8, "O": 8})
@@ -836,6 +856,9 @@ def prepare(retail, ours, level, hints, folds=()):
         "argw": own_argw(own, retail),
         "frame_same": frame_alloc(retail.code, retail.va) == frame_alloc(pcode, retail.va),
         "x87": bool(sa or sb), "x87_same": sa == sb,
+        # (M&B, P1-C) different x87 instruction sequences: only a structural (precision-independent) proof counts
+        "x87_pi": bool(sa or sb) and sa != sb and not os.environ.get("X87_NO_PI") and
+                  x87_pi_ok(retail.code, retail.va) and x87_pi_ok(pcode, retail.va),
         "x87_norm_same": sa == sb or x87_signature_norm(retail.code, retail.va) == x87_signature_norm(pcode, retail.va),
         "sides": {"retail": {"code": retail.code.hex(), "base": retail.va},
                   "ours": {"code": pcode.hex(), "base": retail.va}},
@@ -891,7 +914,7 @@ def prove(retail, ours, level, hints, timeout):
         return res("unknown", str(e))
     except Exception as e:
         return res("unknown", "prepare failed: %s: %s" % (type(e).__name__, e))
-    if job["x87"] and not job["x87_norm_same"]:
+    if job["x87"] and not job["x87_norm_same"] and not job["x87_pi"]:
         # (M&B) no proof can pass the x87 rule, and a counterexample would not be trusted: do not run the solver
         return res("unknown", "x87 instruction sequences differ (not even the same arithmetic up to stack "
                    "shuffling): the 64-bit x87 model cannot prove it")
@@ -1005,6 +1028,28 @@ def install_x87_ops():
         return f
 
     I.operations["Iop_SqrtF64"] = FOp("Iop_SqrtF64", sqrt)
+
+    # (M&B, P1-C) Commutation of a single x87 fadd / fmul, as a canonical term: the two operands sorted by their
+    # structural hash. IEEE 754 addition and multiplication are commutative for every rounding mode and every
+    # precision (the exact result of a + b is the exact result of b + a, then one rounding), and the x87 returns
+    # the same NaN for both operand orders; the layer identifies all NaNs anyway (Z3's single NaN, the abstraction
+    # below). Nothing else is rewritten: subtraction and division keep their operand order (a - b is not b - a),
+    # and a + (b + c) is never regrouped (floating-point addition is not associative). The abstraction
+    # (abstract_equal) compares float terms structurally, so a proof that rests on it holds for every rounding
+    # function and every precision control; that is what lets code with different x87 instruction sequences pass
+    # (x87_pi_mode).
+    def commutative(orig):
+        def f(args):
+            args = [a.to_claripy() if isinstance(a, SimActionObject) else a for a in args]
+            rm, x, y = args[0], args[1].raw_to_fp(), args[2].raw_to_fp()
+            if y.hash() < x.hash():
+                x, y = y, x
+            return orig.calculate(rm, x, y)
+        return f
+
+    for n in ("Iop_AddF64", "Iop_MulF64"):
+        if n in I.operations and not isinstance(I.operations[n], FOp):
+            I.operations[n] = FOp(n, commutative(I.operations[n]))
     for n in ("Iop_SinF64", "Iop_CosF64", "Iop_TanF64", "Iop_AtanF64", "Iop_ScaleF64", "Iop_Yl2xF64",
               "Iop_Yl2xp1F64", "Iop_PRemF64", "Iop_PRem1F64", "Iop_2xm1F64"):
         I.operations[n] = FOp(n, uf(n))
@@ -1014,11 +1059,46 @@ def install_x87_ops():
         I.unsupported.discard(n) if hasattr(I.unsupported, "discard") else None
 
 
+def install_x87_pi_ops():
+    """(M&B, P1-C) x87_pi_mode only. claripy folds an operation on two constants with the model's own 53-bit
+    arithmetic (the constants are read from the image: fld dword [c]); the real x87 rounds under its own precision
+    control, so 'c1 * c2 computed at run time' and 'the folded constant loaded' agree in the model and differ at
+    the default 64-bit precision. Under this mode an operation whose float arguments are all constants is an
+    uninterpreted function of its arguments (a fresh symbol per structural hash: the same operation on the same
+    constants gives the same term on both sides, a pre-folded constant does not equal it)."""
+    from angr import claripy as C
+    from angr.engines.vex.claripy import irop as I
+    from angr.state_plugins.sim_action_object import SimActionObject
+
+    class Guard:
+        _float = True
+
+        def __init__(self, name, orig):
+            self.name, self.orig = name, orig
+
+        def calculate(self, *args):
+            args = [a.to_claripy() if isinstance(a, SimActionObject) else a for a in args]
+            fa = [a.raw_to_fp() for a in args[1:]]
+            if fa and all(a.concrete for a in fa):
+                hs = [a.hash() for a in fa]
+                if self.name in ("Iop_AddF64", "Iop_MulF64"):
+                    hs.sort()                       # commutative, as in install_x87_ops
+                h = abs(hash((self.name, args[0].hash()) + tuple(hs))) & 0xffffffffffff
+                return C.BVS("uf_const_%s_%x" % (self.name[4:], h), 64, explicit_name=True).raw_to_fp()
+            return self.orig.calculate(*args)
+
+    for n in ("Iop_AddF64", "Iop_SubF64", "Iop_MulF64", "Iop_DivF64", "Iop_SqrtF64"):
+        if n in I.operations and not isinstance(I.operations[n], Guard):
+            I.operations[n] = Guard(n, I.operations[n])
+
+
 def worker_main():
     import logging
     logging.disable(logging.CRITICAL)
     install_x87_ops()
     job = json.loads(sys.stdin.read())
+    if job.get("x87_pi") and not job.get("regions") and not job.get("region"):
+        install_x87_pi_ops()
     if job.get("regions"):
         return region_worker_main(job)
     t0 = time.time()
@@ -1128,6 +1208,9 @@ class Worker:
         self.job = job
         self.level = job["level"]
         self.deadline = time.time() + job["timeout"]
+        # (M&B, P1-C) x87 precision-independent mode (x87_pi_mode): different x87 instruction sequences, whole
+        # function (region mode keeps its per-path sequence rule)
+        self.x87_pi = bool(job.get("x87_pi")) and not job.get("region")
         self.facts = job["facts"]
         self.hints = job.get("hints") or {}
         self.base_syms = {}          # name -> (epoch, addr AST)
@@ -1271,6 +1354,16 @@ class Worker:
                 data = self._bv(data)
                 if type(data).__name__.startswith("FP"):
                     data = C.fpToIEEEBV(data)
+                if W.x87_pi and data.size() == 64 and (size is None or size == 8):
+                    # x87_pi_mode: an x87 store of a double (fst/fstp qword; VEX hands the register as raw bits)
+                    # rounds the register to 53 bits under a 53-bit precision control but not under the default
+                    # 64-bit one; the model's registers are doubles, so the store would be the identity here and
+                    # a spill/reload of a register would equal no spill. The stored bits are an uninterpreted
+                    # function of the value (a fresh symbol per structural hash, the same on both sides), so a
+                    # reload is a new term, equal to the other side's only for the same value stored and
+                    # reloaded. Every 8-byte store is treated so: x87_pi_ok excludes SSE/MMX code (movq,
+                    # movsd), the other source of 8-byte stores (an integer pair is two 4-byte stores)
+                    data = C.BVS("uf_r64_%x" % (abs(data.hash()) & 0xffffffffffff), 64, explicit_name=True)
                 n = data.size() // 8
                 if isinstance(size, int) and size < n:
                     data = data[size * 8 - 1:0] if endness != "Iend_BE" else data[n * 8 - 1:(n - size) * 8]
@@ -2563,6 +2656,11 @@ class Worker:
         if self.abstract_equal(sa, sb, obs, regions, known_equal_pc):
             self.stats["abstract_proofs"] = self.stats.get("abstract_proofs", 0) + 1
             return None
+        if self.x87_pi:
+            # x87_pi_mode: the full query (Z3's 53-bit float semantics) proves nothing for the real x87, and a
+            # difference in it is not a counterexample either: unknown
+            return {"what": ", ".join(n for n, a_, b_ in obs if not same(a_, b_))[:300] or "memory",
+                    "x87_pi": True}
         diffs = []
         guessed = self.guessed
         for name, a, b in obs:
@@ -2629,7 +2727,7 @@ class Worker:
         this one (give each variable its term's value), so 'no difference' here is 'no difference' there. Only
         when float semantics is needed (or there is a real difference) does the full query run, which with float
         stores in the write log is where float-heavy functions spent their time."""
-        if not any(self.has_fp(a) or self.has_fp(b) for _n, a, b in obs) and not regions:
+        if not self.x87_pi and not any(self.has_fp(a) or self.has_fp(b) for _n, a, b in obs) and not regions:
             return False
         if self.entry_F is not None:
             return False            # (frame model) the probe comparisons need the frame bounds: the full query
@@ -2710,10 +2808,14 @@ class Worker:
             del hints_out["loops"]
         zpc, cpc = {}, {}
         feasible = {}
-        for side, S in (("a", A), ("b", B)):
-            for s in S:
-                zpc[id(s)] = self.z(self.pc(s))
-                cpc[id(s)] = self.pc(s).hash()
+        self.abs_mode = self.x87_pi         # x87_pi_mode: every query sees float terms structurally
+        try:
+            for side, S in (("a", A), ("b", B)):
+                for s in S:
+                    zpc[id(s)] = self.z(self.pc(s))
+                    cpc[id(s)] = self.pc(s).hash()
+        finally:
+            self.abs_mode = False
         # pairing
         hp = {a: b for a, b in self.hints.get("pairs", [])}
         hfall = set(self.hints.get("fallback", []))
@@ -2742,7 +2844,22 @@ class Worker:
             ok = None
             for sb in cands:
                 q = self.solver()
-                if cpc[id(sa)] == cpc[id(sb)] or not self.check(q, z3_xor(self.z3, zpc[id(sa)], zpc[id(sb)])):
+                if cpc[id(sa)] == cpc[id(sb)]:
+                    ok = sb
+                    break
+                if self.x87_pi:
+                    # x87_pi_mode: equal path conditions in the float abstraction (a free variable per
+                    # structural float term), not in Z3's 53-bit float semantics
+                    self.abs_mode = True
+                    try:
+                        qa = self.solver()
+                        qa.set("timeout", int(max(0.5, min((self.deadline - time.time()) / 3, 30)) * 1000))
+                        if qa.check(z3_xor(self.z3, zpc[id(sa)], zpc[id(sb)])) == self.z3.unsat:
+                            ok = sb
+                            break
+                    finally:
+                        self.abs_mode = False
+                elif not self.check(q, z3_xor(self.z3, zpc[id(sa)], zpc[id(sb)])):
                     ok = sb
                     break
             if ok is None:
@@ -2759,6 +2876,11 @@ class Worker:
             if c:
                 cexs.append(c)
                 break
+        if self.x87_pi and not cexs and (unA or len(usedB) != len(B)):
+            return {"status": "unknown", "detail": "x87 sequences differ and the paths are not paired by equal "
+                    "path condition in the structural float abstraction (%d unpaired of retail, %d of ours); a "
+                    "proof over different x87 code needs every path paired structurally" % (
+                        len(unA), len(B) - len(usedB)), "hints": {}}
         if not cexs and unA:
             unB = [sb for sb in B if id(sb) not in usedB]
             for sa in unA:
@@ -2793,8 +2915,11 @@ class Worker:
             why = []
             if not self.job["clean"]:
                 st, why = "unknown", why + ["relocation pairing is heuristic"]
-            if self.job["x87"] and not self.job["x87_same"]:
+            if self.job["x87"] and not self.job["x87_same"] and not self.x87_pi:
                 st, why = "unknown", why + ["x87 sequences differ (64-bit model)"]
+            if c.get("x87_pi"):
+                st, why = "unknown", why + ["x87 sequences differ and the structural float abstraction does not "
+                                            "prove the observables equal"]
             if st == "refuted" and (re.search(r"call#\d+ esp", c["what"]) or (
                     not self.job.get("frame_same", True) and re.search(r"esp|memory", c["what"]))):
                 # M&B: a different frame size moves every stack address a callee can see; the strict model calls
@@ -2818,9 +2943,11 @@ class Worker:
             if why:
                 d = "counterexample in the model, not trusted (%s): %s" % ("; ".join(why), d)
             return {"status": st, "detail": d + " | " + summary, "hints": {}}
-        if self.job["x87"] and not self.job["x87_same"]:
+        if self.job["x87"] and not self.job["x87_same"] and not self.x87_pi:
             return {"status": "unknown", "detail": "equal in the 64-bit x87 model, but the x87 instruction "
                     "sequences differ | " + summary, "hints": hints_out}
+        if self.x87_pi:
+            summary += "; x87 code differs: proved in the structural float abstraction (any precision control)"
         return {"status": "proved", "detail": summary, "hints": hints_out, "covered": sorted(self.covered)}
 
 

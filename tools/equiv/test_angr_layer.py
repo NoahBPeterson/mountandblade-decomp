@@ -144,9 +144,95 @@ def test_x87_fsin_uninterpreted():
 
 def test_x87_different_sequences_unknown():
     a = H("d9442404" "dcc0" "c3")                   # fld [esp+4]; fadd st(0),st(0)
-    b = H("d9442404" "d9c0" "dec1" "c3")            # fld [esp+4]; fld st(0); faddp st(1)
+    b = H("d9442404" "d84c2404" "c3")               # fld [esp+4]; fmul [esp+4]: x*x, not x+x
     r = prove(R(a), O(b))
     assert r["status"] == "unknown" and "x87" in r["detail"]
+
+
+# x87_pi_mode (P1-C): different x87 instruction sequences, proved only structurally (any precision control) -------
+def pi(a, b):
+    r = prove(R(a), O(b))
+    return r["status"], r["detail"]
+
+
+def test_x87_pi_dup_vs_fadd_self_proved():
+    # fld x; fadd st(0),st(0)  vs  fld x; fld st(0); faddp: x + x either way (stack renaming, exact copy)
+    st, d = pi(H("d9442404" "dcc0" "c3"), H("d9442404" "d9c0" "dec1" "c3"))
+    assert st == "proved" and "structural" in d
+
+
+def test_x87_pi_commuted_fadd_fmul_proved():
+    # fld a; fadd b  vs  fld b; fld a; faddp (b + a): one commutation of a single fadd / fmul
+    assert pi(H("d9442404" "d8442408" "c3"), H("d9442408" "d9442404" "dec1" "c3"))[0] == "proved"
+    assert pi(H("d9442404" "d84c2408" "c3"), H("d9442408" "d9442404" "dec9" "c3"))[0] == "proved"
+
+
+def test_x87_pi_fsub_memory_vs_register_form_proved():
+    # fld a; fsub [b]  vs  fld a; fld b; fsubp st(1): a - b both ways (a register form instead of a memory operand)
+    assert pi(H("d9442404" "d8642408" "c3"), H("d9442404" "d9442408" "dee9" "c3"))[0] == "proved"
+
+
+def test_x87_pi_mutants_not_proved():
+    sub = H("d9442404" "d8642408" "c3")                                         # a - b
+    # fsubrp (b - a), and the operands loaded in the other order with fsubp (b - a): fsub is not commutative
+    assert pi(sub, H("d9442404" "d9442408" "dee1" "c3"))[0] != "proved"
+    assert pi(sub, H("d9442408" "d9442404" "dee9" "c3"))[0] != "proved"
+    # (a + b) + c against a + (b + c): never reassociated (same sequence: the model refutes it)
+    assert pi(H("d9442404" "d8442408" "d844240c" "c3"), H("d9442408" "d844240c" "d8442404" "c3"))[0] != "proved"
+    # x + x against x * c
+    assert pi(H("d9442404" "dcc0" "c3"), H("d9442404" "d84c2408" "c3"))[0] != "proved"
+
+
+# a * b + c with a spill of the product to a frame slot (sub esp / add esp) vs kept in the register
+NOSPILL_PI = H("d9442404" "d84c2408" "d844240c" "c3")
+SPILL_PI = {"q": H("83ec08" "d944240c" "d84c2410" "dd1c24" "dd0424" "d8442414" "83c408" "c3"),
+            "f": H("83ec08" "d944240c" "d84c2410" "d91c24" "d90424" "d8442414" "83c408" "c3")}
+
+
+def test_x87_pi_spill_vs_register_not_proved():
+    # a double spill rounds the 80-bit register to 53 bits under the default precision control; a float spill
+    # rounds to 24: neither equals no spill (the model's registers are doubles, so the double spill is made opaque)
+    for k in "qf":
+        assert pi(NOSPILL_PI, SPILL_PI[k])[0] == "unknown", k
+        assert pi(SPILL_PI[k], NOSPILL_PI)[0] == "unknown", k
+
+
+def test_x87_pi_spill_of_equal_width_both_sides_proved():
+    # the same spill in both (different frame layout, so the sequences still differ by the extra sub/add)
+    other = {"q": H("83ec10" "d9442414" "d84c2418" "dd5c2408" "dd442408" "d844241c" "83c410" "c3"),
+             "f": H("83ec10" "d9442414" "d84c2418" "d95c2408" "d9442408" "d844241c" "83c410" "c3")}
+    for k in "qf":
+        assert prove(R(SPILL_PI[k]), O(other[k]))["status"] == "proved", k
+
+
+def test_x87_pi_double_spill_vs_float_spill_not_proved():
+    assert pi(SPILL_PI["q"], SPILL_PI["f"])[0] != "proved"
+
+
+def test_x87_pi_constant_arithmetic_not_folded():
+    # fld1; fldz; faddp is 1.0 + 0.0: exact in every precision, but claripy would fold it with its own 53-bit
+    # arithmetic, which is not exact in general (c1 * c2 against a pre-folded constant): constants stay terms
+    assert pi(H("d9e8" "d9ee" "dec1" "c3"), H("d9e8" "c3"))[0] == "unknown"
+    assert pi(H("d9e8" "d9ee" "dec1" "c3"), H("d9ee" "d9e8" "dec1" "c3"))[0] == "proved"
+
+
+def test_x87_pi_every_mutant_rejected():
+    # a proof by structural float abstraction must still fail on every mutant of ours (mutate.py)
+    a = H("d9442404" "d8642408" "d844240c" "c3")                      # a - b + c
+    b = H("d9442404" "d9442408" "dee9" "d844240c" "c3")               # fld a; fld b; fsubp st(1); + c
+    assert prove(R(a), O(b))["status"] == "proved"
+    ms = list(mutate.mutants(O(b), 6, seed=1))
+    assert ms
+    for desc, m in ms:
+        assert prove(R(a), m)["status"] != "proved", desc
+
+
+def test_x87_pi_precision_control_change_excluded():
+    # fnstcw / fldcw (a rounding or precision change) keep the sequence rule: different sequences stay unknown
+    a = H("d9442404" "dcc0" "c3")
+    b = H("d9442404" "d9c0" "9bd93c24" "dec1" "c3")  # (fnstcw [esp]) in the middle: x87_pi_ok is False
+    r = prove(R(a), O(b))
+    assert r["status"] == "unknown" and "structural" not in r["detail"]
 
 
 # relocations and literal constants --------------------------------------------------------------------------------
