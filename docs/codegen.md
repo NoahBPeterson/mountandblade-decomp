@@ -1563,6 +1563,14 @@ merged by discovery; split the extent instead of treating it as one ABI.
 
 ---
 
+### 12.x A helper compiled after its caller stays a call (waves I1 / O1, 2026-11-27)
+
+**Symptom.** The original calls a small helper (an iterator `operator+`, `??_H`, `??_E`, a ctor) that ours inlines, and `tools/contrib/c2.py inline 0x<va> --order` shows ours compiling the helper first (`body yes`, often "accepted at once"). In the image the helper sits right after its caller (0x516370 then 0x534160; 0x4fc820 then ??_Etstring 0x4fd0e0; 0x424220 then 0x4246f0).
+
+**Mechanism (vs2005-cpp 1ae9e37, docs/c2/inline.md "Compile order").** At /O2, c1xx marks every function for the call graph (FUNC+0x69 bit 0x1000) and c2 compiles callees before callers, in source order; moving the callee below the caller changes nothing. A call cycle is the only plain-source way to caller-first, and leaf or compiler-generated helpers cannot be in one. At /Og- or /Od the bit is clear on every function: no call graph, c1xx's emission order, which puts a generated helper right after its first user. That is the original's shape. No per-function `#pragma optimize` or other cl option (/Ob*, /O1, /Os, /Ox, /Oa, /Ow, /Op, /Z7, /GS-, /arch, /fp) changes the order.
+
+**Closest reproduction.** The TU compiled with `/O2 /Og-`, plus `#pragma optimize("g", on)` scoped to the pairs that should inline. At /Og- there is no cost model, so every site is decided by the IL budget. Caller and callee both "g" on: inlined. Callee "g" off: a call. Caller "g" off: never weighed. The I1 trial with the pragma file-wide made 0x4fc820 call ??_Etstring without its `inline_depth(0)` device, but it lost rows elsewhere in the same TUs, and `operator+` / `??_H` still expanded. Open: whether such a TU gives /O2 code elsewhere, and c1xx's -Binl / -Bdlp / -BnoImplicitInline / -Goptil. Until that is settled, do not chase these rows with source shapes, and do not add declaration-only specializations: they reproduce the calls (0x516370 994 -> 51), but they are devices without a match.
+
 ## 13. Exception frames, constructors, destructors
 
 ### 13.1 `/EHsc` only where the original has frames
