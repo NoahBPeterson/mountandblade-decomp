@@ -414,3 +414,71 @@ def test_judge_global_hints_checked(tmp_path, monkeypatch):
     assert ok == {"__real@3f800000": 0x7000}
     assert any("_g_a" in n and "symbols file" in n for n in notes)            # contradicted: rejected
     assert any("_g_b" in n and "unanchored" in n for n in notes)              # unanchored: dropped
+
+
+# ------------------------------------------------------------------ the "calls" cut variant (P1-B)
+# Two calls to the same callee; ours schedules the two loads the other way round, so the lock-step walk diverges at
+# the first instruction. The finest variant, "calls", ends a region at the first call (the call is an event compared
+# inside the region) and starts the next from the post-call state: a region ends at each call, the walk resumes after it.
+CALLEE = 0x2000
+CALL_SYM = ("sym", "?h@@YAXH@Z", 0x14, 0)
+CALLS_SYM = "?f@@YAHHH@Z"
+
+
+def calls_pair(bad=None):
+    # retail: mov edx,[esp+4]; mov ecx,[esp+8]; push ecx; push edx; call h; add esp,8; mov eax,[esp+8]; push eax;
+    # call h; add esp,4; ret. Ours loads ecx and edx the other way round (both are arguments of the first call).
+    r = H("8b542404" "8b4c2408" "51" "52" "e8") + b"\0" * 4 + H("83c408" "8b442408" "50" "e8") + b"\0" * 4 + \
+        H("83c404" "c3")
+    k = bad or 0x08
+    o = H("8b4c2408" "8b542404" "51" "52" "e8") + b"\0" * 4 + H("83c408" "8b4424") + bytes([k]) + H("50" "e8") + \
+        b"\0" * 4 + H("83c404" "c3")
+    r_ops = [i for i in range(len(r)) if r[i] == 0xe8 and r[i + 1:i + 5] == b"\0" * 4]
+    o_ops = [i for i in range(len(o)) if o[i] == 0xe8 and o[i + 1:i + 5] == b"\0" * 4]
+    rr = {p + 1: ("abs", CALLEE) for p in r_ops}
+    r = bytearray(r)
+    for p in r_ops:                                           # the original's rel32 to CALLEE
+        r[p + 1:p + 5] = ((CALLEE - (RVA + p + 5)) & 0xffffffff).to_bytes(4, "little")
+    r = bytes(r)
+    orl = {p + 1: CALL_SYM for p in o_ops}
+    return R(r, rr), O(o, orl, symbol=CALLS_SYM)
+
+
+def test_calls_cut_variant_proves_per_call_regions(monkeypatch):
+    import facts
+    monkeypatch.setattr(facts, "retail_entry", lambda va: set(), raising=False)
+    a, b = calls_pair()
+    r = prove(a, b)
+    assert r["status"] == "proved"
+    regs = r["info"]["regions"]
+    assert any(v[3] == "calls" for v in regs.values()), regs
+    # the region ended at the first call; the rest (equal registers again after the call) is lock-step
+    assert len(RG.LAST["D"].S) >= 7 and len(RG.LAST["D"].edges) >= 6
+
+
+def test_calls_cut_wrong_argument_not_proved(monkeypatch):
+    import facts
+    monkeypatch.setattr(facts, "retail_entry", lambda va: set(), raising=False)
+    a, b = calls_pair(bad=0x0c)                               # the second call's argument is another stack word
+    assert prove(a, b)["status"] != "proved"
+
+
+def test_calls_cut_mutants_rejected(monkeypatch):
+    import facts
+    monkeypatch.setattr(facts, "retail_entry", lambda va: set(), raising=False)
+    a, b = calls_pair()
+    r = prove(a, b)
+    assert r["status"] == "proved"
+    ms = list(mutate.mutants(b, 6, seed=5, covered=r["covered"]))
+    assert ms
+    for desc, m in ms:
+        assert prove(a, m)["status"] != "proved", desc
+
+
+def test_calls_stops_are_the_instructions_after_calls():
+    a, b = calls_pair()
+    Rs, Os, _ = RG.decompose(a, b)
+    ex = RG.fine_stops(Rs, Rs.base, set(), "calls")
+    after = {i.address + i.size for i in Rs.ins if i.mnemonic == "call"}
+    assert after <= ex and len(after) == 2
+    assert RG.fine_stops(Rs, Rs.base, set(), "none") == set()

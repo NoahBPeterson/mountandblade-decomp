@@ -2060,7 +2060,7 @@ class _Pool:
 # paths from its start re-converge). Which stops a region uses changes only where obligations are placed: every stop
 # pair a compared path pair reaches is added to S with the interface R the region proved there (LAYERS.md, "Fine
 # cuts"). The variants are tried finest first; one that does not prove is replaced by the next, coarser one.
-CUT_VARIANTS = ("joins", "pdom", "none")
+CUT_VARIANTS = ("calls", "joins", "pdom", "none")
 
 
 def _region_graph(side, a, stops):
@@ -2079,7 +2079,8 @@ def _region_graph(side, a, stops):
 
 
 def fine_stops(side, a, stops, variant):
-    """the extra stops of a region from a under a cut variant: "joins": every instruction of the stretch with two
+    """the extra stops of a region from a under a cut variant: "calls": the joins and the instructions after calls
+    (below); "joins": every instruction of the stretch with two
     or more predecessors in it (paths from a re-converge there); "pdom": only the first such join that every path
     from a passes (a post-dominator of a in the stretch); "none": no extra stops. Stopping earlier is always
     allowed (the stop pairs reached become cuts of S with their own obligations), so this is a choice of
@@ -2087,6 +2088,13 @@ def fine_stops(side, a, stops, variant):
     if variant == "none":
         return set()
     G, pred = _region_graph(side, a, stops)
+    if variant == "calls":
+        # "calls" (P1-B): the joins plus the instruction after every call of the stretch: a region ends at the
+        # first call both versions make (the call is an event compared inside the region; the stop pair after it
+        # gets pi' from equal values, eax/ecx/edx/flags the callee's results) and the next region starts from the
+        # post-call state. Sound as every fine cut: the stops only choose where an obligation ends
+        extra = {c for b in G if side.kind.get(b) == "call" for c in side.succ.get(b, []) if c in side.by and c not in stops}
+        return fine_stops(side, a, stops, "joins") | extra
     joins = {c for c in G if c != a and len(pred.get(c, ())) >= 2}
     if variant == "joins" or not joins:
         return joins
