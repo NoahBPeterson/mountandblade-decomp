@@ -166,9 +166,9 @@ def run_remote(args, json_path, shards=1, timeout=900):
         for k in range(shards):
             name = "eq_%s_%d" % (ident, k)
             sh = ["--shard", "%d/%d" % (k, shards)] if shards > 1 else []
-            cmd = ("(cd /d {eq}\\s\\{key}&& set DIFFTEST_NO_LEDGER=1&& .venv\\Scripts\\python tools\\difftest\\equiv.py {a} {sh} "
+            cmd = ("(cd /d {eq}\\s\\{key}&& set DIFFTEST_NO_LEDGER=1&& {cc}.venv\\Scripts\\python tools\\difftest\\equiv.py {a} {sh} "
                    "--json {eq}\\out\\{n}.json & echo done> {eq}\\out\\{n}.done)").format(
-                eq=EQ, key=key, a=" ".join(rargs), sh=" ".join(sh), n=name)
+                eq=EQ, key=key, cc="set DIFFTEST_CONCOLIC=1&& " if os.environ.get("DIFFTEST_CONCOLIC") == "1" else "", a=" ".join(rargs), sh=" ".join(sh), n=name)
             r = ssh('powershell -NoProfile -ExecutionPolicy Bypass -File D:\\mb\\startjob.ps1 -Name %s -NoQueue -Cmd "%s"' % (name, cmd))
             if r.returncode == 3 or "declined" in r.stdout:
                 _kill(started)

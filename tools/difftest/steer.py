@@ -10,7 +10,7 @@
 - Coverage-guided parent choice: mutation prefers corpus inputs that reach branches with an uncovered edge.
 Every candidate is an ordinary Input: both builds run it, and it is compared like any other.
 """
-import collections, math, os, struct
+import collections, math, os, struct, time
 
 import capstone
 from capstone import x86_const as X
@@ -145,6 +145,7 @@ class Steer:
         extra = [gen.fin(c) for c in sorted(consts) if c not in set(gen.dic)]
         gen.dic.extend(extra[:4096])
         self.n_consts = len(consts)
+        self.deadline = None                        # equiv.py's wall-clock end of the input loop: no steering search runs past it
         self.concolic = None
         self.cc_time = 0.0                          # seconds spent tracing/solving (capped at 40% of --time-limit)
         if os.environ.get("DIFFTEST_CONCOLIC"):        # opt-in while it is evaluated
@@ -190,7 +191,12 @@ class Steer:
         """Uncovered branches still worth a replay (boundary probing never extends the run)."""
         return any(self.tries.get(k, 0) < MAX_TRIES for k in self.frontier())
 
+    def late(self):
+        return self.deadline is not None and time.time() > self.deadline
+
     def next(self, rng, corpus):
+        if self.late():
+            return None
         if not self.queue:
             self.refill(rng, corpus)
         return self.queue.popleft() if self.queue else None
@@ -454,7 +460,8 @@ class Steer:
                     if not math.isfinite(f):
                         continue
                     for nv in (-f, 2.0 * f, 0.5 * f, 0.1 * f, 10.0 * f, f + 1.0, f - 1.0, 0.0, 1.0, -1.0):
-                        if budget <= 0:
+                        if budget <= 0 or self.late():
+                            budget = 0
                             break
                         budget -= 1
                         c = self.set_loc(cur, loc, nv, "float")

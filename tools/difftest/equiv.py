@@ -7437,6 +7437,8 @@ def _test_function(sid, va, opts, log=print):
     t_loop = time.time()
     checkpoints = sorted(int(x) for x in str(getattr(opts, "checkpoints", "") or "").split(",") if x.strip())
     steer = ST.Steer(runner, gen, opts) if getattr(opts, "steer", True) else None
+    if steer is not None:
+        steer.deadline = deadline
     hard = opts.inputs + (opts.extra_inputs if steer else 0)
     plateau = getattr(opts, "plateau", 0)
     last_new = 0            # input index of the last one that reached a new block or edge

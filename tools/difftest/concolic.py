@@ -33,7 +33,7 @@ Division and the transcendental instructions make their result concrete; NaN and
 Modelled: mov movzx movsx lea add sub inc dec neg and or xor not shl/sal shr sar (immediate or cl count) imul
 (2 and 3 operands) cdq cmp test jcc setcc cmovcc push pop xchg; partial registers; byte-precise memory.
 """
-import functools, math, os, struct
+import functools, math, os, struct, time
 
 import capstone
 from capstone import x86_const as X
@@ -127,6 +127,8 @@ class Trace:
         self.taken = {}             # jcc eip -> concrete direction of its LAST execution (symbolic or not)
         self.pins = []              # concretization constraints (symbolic addresses), in order with path
         self.steps = 0
+        self.deadline = getattr(steer, "cc_deadline", None)   # wall clock: a tracing run is cut, never the verdict
+        self.cut = False
         self.cache = {}
         self.fp = {}                # physical x87 register -> z3 Float64 (absent: concrete)
         self.fpcmp = None           # (a, b) of the last symbolic x87 compare, for fnstsw ax
@@ -256,6 +258,10 @@ class Trace:
     def on_code(self, uc, address, size, _):
         self.apply_pending()
         self.steps += 1
+        if self.deadline is not None and not self.steps & 1023 and time.time() > self.deadline:
+            self.cut = True                 # the steering share of --time-limit is spent: end this trace run
+            uc.emu_stop()
+            return
         try:
             if self.rets and address == self.rets[-1][0]:
                 # back from a branch-feeding image callee: its result is the input the candidate forces
@@ -758,6 +764,9 @@ class Concolic:
         seen before are expanded at the next level (src's branch is checked concretely, so it may test a value
         the callee computed, such as `xor al, al` vs `mov al, 1`). Returns [] when src is never reached."""
         dbg = os.environ.get("DIFFTEST_STEER_DEBUG")
+        self.st.cc_deadline = time.time() + max(5.0, 0.4 * getattr(self.st.opts, "time_limit", 180) - self.st.cc_time)
+        if getattr(self.st, "deadline", None) is not None:
+            self.st.cc_deadline = min(self.st.cc_deadline, self.st.deadline)
         if dbg:
             self.st.dbg_fcmp = {a for a in side.cfg.insns if a <= src and src - a < 16}
         t0 = self.trace(side, inp0)
@@ -786,7 +795,7 @@ class Concolic:
             nxt = []
             for inp, t in level:
                 for k in reversed(decisions(t)[-24:]):
-                    if n >= max_traces:
+                    if n >= max_traces or time.time() > self.st.cc_deadline:
                         break
                     cand = self.flip(t, k, inp)
                     if cand is None:
