@@ -40,14 +40,15 @@ TOOLS = {"regs": ["tools/c2trace.py", "regs"], "regmap": ["tools/c2trace.py", "r
          "helpersweep": ["tools/helpersweep.py"], "effectmine": ["tools/effectmine.py", "mine"],
          "schedwant": ["tools/schedwant.py"], "symkeys": ["tools/symkeys.py"],
          "slotwant": ["tools/slotwant.py"],   # frame layout inverse (docs/c2/slotwant.md); gets --image/--va below
-         "realize": ["tools/realize.py"]}     # register-allocation inverse (docs/c2/realize.md): --from scratch|slots, --from-rasim auto, edit EDIT..
+         "realize": ["tools/realize.py"],
+         "inline": ["tools/c2inline.py"]}     # per-site inliner decisions (docs/c2/inline.md): --func = the row (substring), --callee C     # register-allocation inverse (docs/c2/realize.md): --from scratch|slots, --from-rasim auto, edit EDIT..
 ASM = {"regmap", "icount", "tsweep", "helpersweep", "effectmine", "schedwant", "realize"}      # take --asm-vs
 SLOTS, MAXJOBS = 8, 4
 if os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off")):
     # every traced compile runs under wine on the 10-core Mac: 2026-11-25 three effectmine runs at --jobs 4 each
     # (12 traced cl's plus other lanes) pushed the load to 32 and one compile from 40 s to 8 min
     SLOTS, MAXJOBS = 3, 2
-DOC_ALIAS = {"realize": "realize", "slotwant": "slotwant", "tsweep": "tracer", "schedwant": "sched", "helpersweep": "tracer", "regs": "regalloc", "regmap": "regalloc"}   # tsweep's manual is a section of tracer.md ("tsweep")
+DOC_ALIAS = {"inline": "inline", "realize": "realize", "slotwant": "slotwant", "tsweep": "tracer", "schedwant": "sched", "helpersweep": "tracer", "regs": "regalloc", "regmap": "regalloc"}   # tsweep's manual is a section of tracer.md ("tsweep")
 LOCAL_OK = {"icount"}                                       # tools with --allow-local (compile under wine when the server declines)
 
 
@@ -169,7 +170,7 @@ def main():
     # background: the trace takes minutes on a large row), then run sites / levers / whatif / compare with --from.
     fromx = tool == "symkeys" and "--from" in rest
     cmd = [os.path.join(VS, ".venv", "bin", "python")] + TOOLS[tool] + sub + ([] if fromx else [os.path.join(ROOT, src)])
-    cmd += ["--func", func, "--c2", "13.10.3052" if tool == "tsweep" else "13.10"]
+    cmd += ["--func", func] + ([] if tool == "inline" else ["--c2", "13.10.3052" if tool == "tsweep" else "13.10"])
     if tool == "slotwant" and "--image" not in rest and "--asm-vs" not in rest:
         # the original's slots are read from the image (callee `ret N` for the push depth), as slotwant.md says for M&B
         cmd += ["--image", os.path.join(ROOT, "work", "mb.analysis.bin"), "--va", "0x%x" % va]
@@ -190,6 +191,8 @@ def main():
             time.sleep(2)
     sys.stdout.flush()
     env = dict(os.environ)
+    if tool == "inline":
+        env.setdefault("C2_BUILD", "13.10.3077")   # c2inline takes the build from the environment, not --c2
     if os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off")):
         env["C2S_OFF"] = "1"              # the laptop is off: every traced compile goes to wine at once (no server timeout)
     sys.exit(subprocess.run(cmd, cwd=VS, env=env).returncode)
