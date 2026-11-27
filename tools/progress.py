@@ -35,7 +35,7 @@ try:
 except (OSError, ValueError, KeyError):
     _verd = {}
 _equiv_all = equiv
-equiv = {a for a in _equiv_all if _verd.get("%08x" % a) in ("PASS", "PASS-FP", "PROVEN")}   # PASS-FP = PASS within fp tolerance; PROVEN = static proof (tools/equiv)
+equiv = {a for a in _equiv_all if _verd.get("%08x" % a) in ("PASS", "PROVEN")}   # PROVEN = static proof (tools/equiv); PASS-FP (outputs matched only up to float rounding) is NOT equivalent (2026-11-27)
 # PROVEN-O: a static proof that holds only under the per-object frame model's assumption O (tools/equiv/LAYERS.md
 # "Status"): counted as done, but in a tier of its own, never inside "Equivalent"
 equiv_o = {a for a in _equiv_all if _verd.get("%08x" % a) == "PROVEN-O"}
@@ -586,7 +586,7 @@ def _tree_rows():
             cat = "equivalent_o"
         else:
             v, c = verd.get(a, (None, None))
-            cat = ("equivalent" if v in ("PASS", "PASS-FP", "PROVEN") else "equivalent_o" if v == "PROVEN-O" else "fail" if v in ("FAIL", "FAIL-FP") else
+            cat = ("equivalent" if v in ("PASS", "PROVEN") else "equivalent_o" if v == "PROVEN-O" else "fail" if v in ("FAIL", "FAIL-FP") else
                    "weak" if v in ("WEAK", "WEAK-FP") else
                    # a row a source file claims but no sweep has judged yet is "not run", not "no source" (2026-11-19:
                    # 0x5261e0 lost its verdict with its row in the dz1 wave and drew as a big "No source yet" box)

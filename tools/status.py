@@ -86,10 +86,15 @@ try:
 except (OSError, ValueError):
     _vr = {}
 _cat = {int(k, 16): v.get("category", "not_run") for k, v in _vr.items()}
+# PASS-FP / WEAK-FP (equiv.py --fp-tol): the outputs matched only up to float rounding, i.e. they DID differ: not
+# equivalent, whatever verdicts.py's category says (8 PASS-FP rows were counted equivalent until 2026-11-27)
+for k, v in _vr.items():
+    if v.get("verdict") in ("PASS-FP", "WEAK-FP"):
+        _cat[int(k, 16)] = "fp_round"
 cat_of = lambda cats: {a for a in equiv if _cat.get(a, "not_run") in cats}
 sub = lambda label, cats: line("&nbsp;&nbsp;&nbsp;&nbsp;↳ " + label, cat_of(cats))
 EQ_CATS = ("proven", "proven_o", "pass", "comdat")
-UN_CATS = ("weak", "inputs", "harness", "funclet", "comdatdiff", "notcode", "not_run")
+UN_CATS = ("weak", "fp_round", "inputs", "harness", "funclet", "comdatdiff", "notcode", "not_run")
 eq_rows, un_rows, fail_rows = cat_of(EQ_CATS), cat_of(UN_CATS), cat_of(("fail",))
 assert eq_rows | un_rows | fail_rows == equiv, "a complete row has an unknown verdict category"
 evid_lines = [line("Equivalent, not exact", eq_rows),
@@ -98,6 +103,7 @@ evid_lines = [line("Equivalent, not exact", eq_rows),
               sub("tested: no mismatch, every branch of both sides run (PASS)", ("pass", "comdat")),
               line("Complete source, equivalence not shown", un_rows),
               sub("tested, some branches never run (WEAK)", ("weak",)),
+              sub("outputs differ by float rounding (PASS-FP / WEAK-FP)", ("fp_round",)),
               sub("not testable yet (UNSUPPORTED, funclet)", ("inputs", "harness", "funclet", "comdatdiff", "notcode")),
               sub("no verdict", ("not_run",)),
               line("Known mismatch (FAIL)", fail_rows)]
