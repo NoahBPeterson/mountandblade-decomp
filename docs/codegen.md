@@ -1206,6 +1206,26 @@ inline `fsqrt` is a difference this guide has no confirmed source lever for.
   returns the old length). An x87 return must be declared `double` to come back
   in `st0`.
 
+### 9.4b Rounding points: which values cl stores to float (waves F1, 2026-11-27)
+
+A float value is rounded only where it is stored to a dword (float32) or qword and read back; in between it is an
+80-bit x87 register. A row where one build rounds at a point the other does not is NOT equivalent (results differ
+in the last bits), whatever its bytes; equiv.py --fp-tol hides it (PASS-FP / WEAK-FP), so those verdicts do not count
+as equivalent (docs/STATUS.md). `tools/contrib/c2.py x87round 0x<va>` (c2scope, docs/c2/x87round.md) lists both builds'
+rounding points paired by dataflow (BOTH / OURS ONLY / ORIGINAL ONLY) with the source expression and why cl rounded ours.
+Rules on cl 13.10 (/O2):
+- A named `float` scalar local stays in a register; it is rounded only across a call (any call), a volatile, an
+  address-taken use, or x87 pressure. A call between definition and use is enough: 0x4650f0's `__aullshr` (a 64-bit
+  shift of the flags) rounded two values; a word view of the field removed the call and the rounding.
+- The float FIELDS of an aggregate local (`vector4 r = p - fr.o;`) are always stored: every field is a rounding point.
+  Ours rounded r.x/y/z in 0x42b080 where the original kept them on the stack (the original had no vector4 local there).
+- So the idiom for "the original rounds these products / sums": a vector4 temporary or local holding them
+  (`vector4 t(a * k, b * k, c * k);` then the adds; `(mn + mx) * 0.5f`; `vector4 back = mat.u * 1.2f;`): 0x4792d0,
+  0x509980, 0x49c2c0, 0x44e2b0, 0x4259a0, 0x4ed8d0 (lane F1-A). For "ours rounds, the original does not": remove the
+  aggregate local or the call between definition and use.
+- Sum association is not a rounding point but changes results too: 0x432860 mat3::mul_t became byte-exact once the f
+  row went through the same helper with its arguments swapped (the original's per-element association).
+
 ### 9.4a Operation order cl rewrites (and how to find it)
 
 cl 13.10 at `/O2` changes floating-point arithmetic in ways that change results.
