@@ -77,6 +77,17 @@ static __forceinline float normalize_vec(vector4& v)
     return len;
 }
 
+// Lane device (I1-C): std::vector<int>::push_back expanded in place at the 0x53086e site (cl 13.10 weighs the call v 76 there, the
+// original inlined it: fast path store, else _Insert_n 0x43e7b0), written as the vector's own push_back body.
+struct sel_vec : std::vector<int> {
+    __forceinline void push(const int& _Val)
+    {
+        if (size() < capacity())
+            _Mylast = _Ufill(_Mylast, 1, _Val);
+        else
+            insert(end(), _Val);
+    }
+};
 // @ 0x5305b0
 void MissionBlocker::update_editor()
 {
@@ -126,7 +137,7 @@ add_current:
                     g_game->editor.sel[i] = g_game->editor.sel[g_game->editor.sel.size() - 1];
                     g_game->editor.sel.pop_back();
                 }
-            g_game->editor.sel.push_back(g_game->editor.sel_index);   // 0x53086e: _Insert_n gets the address of the referenced dword
+            ((sel_vec&)g_game->editor.sel).push(g_game->editor.sel_index);   // 0x53086e: _Insert_n gets the address of the referenced dword
             f2f9 = 1;
         }
 refresh_list:
