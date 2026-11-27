@@ -538,6 +538,7 @@ def compare(job, A, B):
     if weak:
         d = dict(weak[0])
         d["weak_kinds"] = sorted({w["kind"] for w in weak})
+        d["weak_all"] = [w.get("weak", "") for w in weak]
         return d
     return None
 
@@ -651,8 +652,9 @@ def replay(job, cex):
                                        for e in S.events], "steps": S.steps, "error": S.err,
                             "branches": S.branches[-6:]}
     d = compare(job, A, B)
-    if d is not None and d.get("weak_kinds") == ["esp"]:
-        # only the frame layout differs on this input: a constant offset between the two frames is no behaviour
+    if d is not None and d.get("weak_all") and all("frame" in w for w in d["weak_all"]):
+        # every weak item is a frame-layout one (esp at a call, a pointer to a local as an argument or register): a
+        # constant offset between the two frames is no behaviour
         dl = frame_deltas(A, B)
         out["frame_deltas"] = sorted(dl)
         out["frame_only"] = len(dl) == 1
