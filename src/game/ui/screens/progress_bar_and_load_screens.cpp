@@ -1103,10 +1103,10 @@ void Terrain::init_map(TerrainDesc* desc)
     for (r = 0; r <= h; r++) {
         int i;
         for (i = 0; i <= w; i++) {
+            cell[i][r].f88 = 0.0f;      // stored through cell[], read back through c: cl keeps the reload (fld f88; fadd h2)
             terrain_cell& c = cell[i][r];
-            c.f88 = 0.0f;
-            c.f8c = -1;
             c.pos.z = c.f88 + c.h2;
+            c.f8c = -1;
             int k;
             for (k = 0; k < 11; k++)
                 c.layer[k] = 0;
