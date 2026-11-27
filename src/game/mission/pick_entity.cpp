@@ -76,7 +76,7 @@ void MissionBlocker::pick_entity()
                     vector4 mx, mn;
                     hit->get_max(&mx);
                     hit->get_min(&mn);
-                    sph.local_center = vector4((mn.x + mx.x) * 0.5f, (mx.y + mn.y) * 0.5f, (mn.z + mx.z) * 0.5f);
+                    sph.local_center = (mn + mx) * 0.5f;
                     sph.local_center.w = hi.w;
                     vector4 d = vector4(mx.x - sph.local_center.x, mx.y - sph.local_center.y, mx.z - sph.local_center.z);
                     sph.radius = d.out_length();
