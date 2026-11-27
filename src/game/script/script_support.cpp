@@ -487,9 +487,10 @@ void Mission::order(int index, int order) {
                 continue;
             if (s->kind == 0)
                 continue;
-            p.x = s->dir.x * 7.0f + s->pos.x;
-            p.y = s->dir.y * 7.0f + s->pos.y;
-            p.z = s->dir.z * 7.0f + s->pos.z;
+            rgl::vector4 step(s->dir.x * 7.0f, s->dir.y * 7.0f, s->dir.z * 7.0f);        // the three products are formed (z spilled to a float temp) before the adds
+            p.x = step.x + s->pos.x;
+            p.y = step.y + s->pos.y;
+            p.z = step.z + s->pos.z;
             if (!point_in_rect(&p))
                 continue;
             s->pos = p;
@@ -511,9 +512,10 @@ void Mission::order(int index, int order) {
             if (s->kind == 0)
                 s->pos = s->sum;
             rgl::vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
-            p.x = s->pos.x - s->dir.x * 7.0f;
-            p.y = s->pos.y - s->dir.y * 7.0f;
-            p.z = s->pos.z - s->dir.z * 7.0f;
+            rgl::vector4 step(s->dir.x * 7.0f, s->dir.y * 7.0f, s->dir.z * 7.0f);
+            p.x = s->pos.x - step.x;
+            p.y = s->pos.y - step.y;
+            p.z = s->pos.z - step.z;
             if (!point_in_rect(&p))
                 continue;
             s->pos = p;
