@@ -528,6 +528,8 @@ void StrTable::load(const tstring* root_t)
     ptr_tag tag;
     if (fgets(buf, 5000, f)) {
         line.assign(buf);
+        (void)line.len;     // lane device (R1-B): a first reference to the length view before the buffer view, so cl orders the address
+                            // add base-first ([edx+eax-1]); symkeys levers: swap:_line+12,_line+4
         if (line.buf[line.len - 1] == '\n')
             language = line.substr(0, line.len - 1);
         else
@@ -550,6 +552,8 @@ void StrTable::load(const tstring* root_t)
         char path[0x200];
         sprintf(path, "%slanguages\\%s\\%s", root_t->c_str(), language.c_str(), fd->name);
         FILE* g = fopen(path, "r");
+        int i = 0;          // lane device (R1-B): i / end first referenced before `text`, which gives the original's [text.buf+i] base order
+        int end = 0;        // (symkeys levers: swap:_i,_text / swap:_end,_text)
         tstring text;
         tstring key;
         tstring value;
@@ -562,14 +566,14 @@ void StrTable::load(const tstring* root_t)
             first = false;
             bool done = false;                  // the line is split at its first '|' only ([esp+0x12] in the original)
             int len = text.len;
-            int i = 0;
+            i = 0;
             while (i < len && !done) {
                 if (text.buf[i] == '|') {
                     done = true;
                     int a = 0;
                     int stop = i;
                     int kstart = i + 1;
-                    int end = len - 1;
+                    end = len - 1;
                     if (text.buf[0] == '"') a = 1;
                     if (text.buf[i - 1] == '"') stop = i - 1;
                     if (text.buf[kstart] == '"') kstart++;

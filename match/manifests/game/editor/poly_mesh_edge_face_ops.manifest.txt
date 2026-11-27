@@ -73,3 +73,4 @@
 ../src/game/editor/poly_mesh_edge_face_ops.cpp  ??0StrTable@@QAE@XZ  004cda20  /O2 /MT /Gy /TP
 ../src/game/editor/poly_mesh_edge_face_ops.cpp  _$E4  00547a80  /O2 /MT /Gy /TP
 ../src/game/editor/poly_mesh_edge_face_ops.cpp  _$E5  00548470  /O2 /MT /Gy /TP
+../src/game/editor/poly_mesh_edge_face_ops.cpp  ?load@StrTable@@QAEXPBUtstring@@@Z  004cda90  /O2 /MT /Gy /TP
