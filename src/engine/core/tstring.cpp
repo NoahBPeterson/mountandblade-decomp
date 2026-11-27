@@ -12,6 +12,24 @@
 #include <new>     // declares operator new[]/delete[]: without it cl 13.10 calls the scalar operators (the original calls 0x535482/0x53570d)
 
 #include "engine/core/tstring.h"
+#include <vector>
+
+// The out-of-line instances of the pointer vectors' iterator operator+ (VC7.1 `iterator _Tmp = *this; return _Tmp += _Off;`; the
+// original keeps one ICF-folded copy, 0x534160) that TUs declaring the specialization without a body call instead of expanding
+// it (const_iterator of vector<Event*> in game/mission/mission_context.cpp, of vector<MissionUi*> in game/ui/hud/mission_item_source.cpp). Defined here,
+// in a TU that never indexes these vectors, so nothing in this object expands them. (Lane device, I1-C: out-of-line specialization.)
+struct Event;
+struct MissionUi;
+template<> std::vector<Event*>::const_iterator std::vector<Event*>::const_iterator::operator+(difference_type _Off) const
+{
+    const_iterator _Tmp = *this;
+    return (_Tmp += _Off);
+}
+template<> std::vector<MissionUi*>::const_iterator std::vector<MissionUi*>::const_iterator::operator+(difference_type _Off) const
+{
+    const_iterator _Tmp = *this;
+    return (_Tmp += _Off);
+}
 
 int   g_str_grow_add = 128;    // 0x5a8e60 (image value 0x80: growth step)
 float g_str_grow_mul = 2.0f;    // 0x5a8e64 (image value 2.0: growth factor)
