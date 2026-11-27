@@ -43,6 +43,13 @@ def candidates(same_count, vas=None, skip_proven=False):
             pass
     out = []
     moved = None
+    current = sidecar_sources()
+    if vas:
+        # a --vas-file / --va row that docs/insn_exact.json does not list (a row newer than it) is still a candidate:
+        # its source comes from the current sidecars; the symbol is left to prove.py (the function's marker)
+        for v in sorted(vas):
+            if "%08x" % v not in rows and v in current:
+                rows["%08x" % v] = {"verdict": "DIFF", "src": current[v], "symbol": None}
     for va, r in sorted(rows.items()):
         if r.get("verdict") != "DIFF" or not r.get("src") or va in proven:
             continue
@@ -52,12 +59,29 @@ def candidates(same_count, vas=None, skip_proven=False):
             continue
         # docs/insn_exact.json can be older than a file merge or move: the function's `// @ 0x<va>` marker names its
         # file now (a missing source made tools/remote/rcl.py answer "busy" forever, so the sweep's warm-up never ended)
+        # the current .nonmatching.txt that lists the VA names its source (tools/common/sidecars.py, as task.py and
+        # chk.py read it); then a `// @ 0x<va>` marker; the old JSON's path last (0x52c2b0 sat under a deleted
+        # mission_5.cpp in docs/insn_exact.json and was skipped, 2026-11-27)
         moved = moved if moved is not None else markers()
-        src = moved.get(int(va, 16), r["src"])
+        src = current.get(int(va, 16)) or moved.get(int(va, 16), r["src"])
         if not os.path.exists(os.path.join(ROOT, src)):
             print("skipped %s: %s is gone and no marker names it" % (va, r["src"]), file=sys.stderr)
             continue
         out.append((int(va, 16), src, r.get("symbol")))
+    return out
+
+
+def sidecar_sources():
+    """va -> the source file (relative to ROOT) of the .nonmatching.txt row that lists it now"""
+    sys.path.insert(0, os.path.join(ROOT, "tools", "common"))
+    import sidecars as SC
+    out = {}
+    for nm in SC.all_nonmatching():
+        src = os.path.relpath(SC.source_for(nm), ROOT)
+        for ln in open(nm, encoding="utf-8", errors="replace"):
+            m = re.match(r"([0-9a-fA-F]{8})\s", ln)
+            if m:
+                out.setdefault(int(m.group(1), 16), src)
     return out
 
 
