@@ -68,16 +68,6 @@ static __forceinline lod_mesh* clone_char_mesh(int colour, lod_mesh* Skin::* mes
 }
 
 
-// delete of a lod record, as the original expands it at 0x48262b..0x4826c9: the null test, the inline ~lod_mesh (the name's destructor
-// 0x42bc40, the five level lists' destructors 0x419420 in a loop) and operator delete, where cl 13.10 weighs the compiler's own
-// ??_Glod_mesh call v 144 (four if arms deep). Lane device (I1-C): the delete written out.
-static __forceinline void drop_lod(lod_mesh* p)
-{
-    if (p) {
-        p->~lod_mesh();
-        ::operator delete(p);
-    }
-}
 // @ 0x482240
 void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRef* hweapon,
                       lod_mesh** ap, int* stats, mesh** extra, int* extra_count,
@@ -155,9 +145,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
             int c3 = (wflags & 0x80000000) ? 1 : legs_covered;
             ap[3] = wl;
             if (!(c3 == 0)) {
-                drop_lod(ap[0]);
-                drop_lod(ap[1]);
-                drop_lod(ap[2]);
+                delete ap[0];
+                delete ap[1];
+                delete ap[2];
                 ap[0] = ap[1] = ap[2] = 0;
             } else {
                 ap[0]->transform(mtx);

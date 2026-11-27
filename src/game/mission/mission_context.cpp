@@ -69,10 +69,6 @@ int save_game(int id, tstring* name);                  // 0x4e8980
 
 static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k); }
 #include "game/campaign/event.h"                                  // Event: the 0x98-byte record of GameData::events (pages at game+0xe4)
-// Lane device (I1-C): MissionCtx::frame 0x516370 calls the page iterator's operator+ out of line (the original's ICF-folded COMDAT
-// 0x534160) where the other functions here expand it. node_call walks the pages with a const_iterator, whose operator+ is declared
-// as an out-of-line specialization (no body here; engine/core/tstring.cpp defines it) before any use of it.
-template<> std::vector<Event*>::const_iterator std::vector<Event*>::const_iterator::operator+(difference_type) const;
 // ---- objects and constants of other translation units ----------------------------------------------------------------
 #include "game/ui/screens/result_window.h"                           // ResultWindow: setup 0x48a3a0 (ret 8)
 #include "game/data/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in game/app/options_dialog_and_module_tables.cpp)
@@ -1017,11 +1013,11 @@ void MissionCtx::init_battle(int id_)
     WL_MARKER(13)
 }
 
-// the event record `id`: the original calls the iterator's operator+ (the ICF-folded COMDAT 0x534160) for the page
+// the event record `id`: the original calls the iterator's operator+ (COMDAT 0x516393 / 0x534160, another vector's instance that steps
+// four-byte elements) for the page; here the page vector's own operator[]
 static __forceinline Event& node_call(unsigned id)
 {
-    std::vector<Event*>::const_iterator pages = g_game->events.pages.begin();
-    return (*(pages + (id >> 4)))[id & 0xf];
+    return g_game->events.pages[id >> 4][id & 0xf];
 }
 // @ 0x516370
 void MissionCtx::frame(int tick)

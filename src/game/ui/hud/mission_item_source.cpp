@@ -24,15 +24,12 @@ __declspec(noinline) void UiD::on_value_changed(float arg)
     set_value((f17c / rect_max[f178] * arg) * 0.0005f + value());
 }
 
-// the overlay at index i: the original reaches it through begin() + i, the iterator's operator+ left out of line in its key loop
-// (the ICF-folded COMDAT 0x534160, one result temporary per use). Lane device (I1-C): the const_iterator's operator+ is declared as an
-// out-of-line specialization (no body here; engine/core/tstring.cpp defines it) and the key loop walks the overlays with it; the
-// other loops keep the vector's own operator[] (the iterator, expanded in place).
-template<> std::vector<MissionUi*>::const_iterator std::vector<MissionUi*>::const_iterator::operator+(difference_type) const;
+// the overlay at index i: the original reaches it through begin() + i, the iterator's operator+ left out of line in its key
+// loop (the COMDAT 0x534160, one result temporary per use). That COMDAT belongs to another vector's iterator (it steps four-byte
+// elements), so here it is the vector's own operator[].
 static __forceinline MissionUi* item_at(widget_mgr* s, unsigned i)
 {
-    std::vector<MissionUi*>::const_iterator it = s->widgets.begin();
-    return *(it + i);
+    return s->widgets[i];
 }
 // @ 0x4d5410
 void widget_mgr::pick(int* arg)
