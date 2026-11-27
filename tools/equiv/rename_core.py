@@ -100,6 +100,9 @@ HELPER64_SHIFT = ("__allshl", "__allshr", "__aullshr")
 HELPER64_STACK = ("__allmul", "__alldiv", "__allrem", "__aulldiv", "__aullrem", "__alldvrm", "__aulldvrm")
 HELPER64_DVRM = ("__alldvrm", "__aulldvrm")
 
+# two-register operations whose result and flags do not depend on the order of the two source registers
+# (RULE commute: add, and, or, xor, adc, imul r, r/m and test are symmetric in value, CF, OF, SF, ZF, PF and AF)
+COMMUTATIVE = ("add", "adc", "and", "or", "xor", "imul", "test")
 CANON_TEST = False      # optional peephole: test r32, imm<0x80 == test r8, imm
 STD_SAFE = None         # callable(original callee va) -> True when the standard call model is sound (facts.py)
 ENTRY_REGS = None       # callable(original callee va) -> registers the callee reads before writing (facts.py)
@@ -107,6 +110,11 @@ CALLEE_POP = None       # callable(original callee va) -> bytes the callee pops 
 TOKEN_OK = None         # callable(token A, token B) -> False when a pair is known wrong (func.const_ok)
 FRAME_SLOTS = True      # False: frame operands are compared by offset only (delta mode with D = 0 always)
 TRANSPARENT = True      # False: every instruction is paired one to one (the rule before the value flow)
+# Separately switchable rules of the P1-D extensions (each is sound on its own; see the soundness note at its code).
+# rename.py sets RULES from its `rules` argument / EQUIV_RENAME_RULES; check() reads it.
+ALL_RULES = ("tailmerge", "splice", "commute", "memorder", "constreg")
+RULES = set(ALL_RULES)
+LAST = {}               # diagnostics of the last check(): "mode"
 CONV_MISMATCH = []      # (callee name, the original callee's ret N, callconv's pops) where they disagree
 
 
@@ -138,8 +146,8 @@ def cfg_map(A, B):
     for P in (A, B):
         fwd = {}
         for n, b in enumerate(P.bl):
-            x = P.ins[b[0]]
-            if n and len(b) == 1 and x.kind == "jmp" and x.tr is None and not paired(x) and P.succ[n] and \
+            x = P.ins[b[0]] if b else None
+            if x is not None and n and n not in P.dead and len(b) == 1 and x.kind == "jmp" and x.tr is None and not paired(x) and P.succ[n] and \
                     P.succ[n][0] != n:
                 fwd[n] = P.succ[n][0]
 
@@ -157,8 +165,8 @@ def cfg_map(A, B):
         if not work:
             # blocks no edge reaches (code the EH runtime enters through an address in data, dead code): paired
             # in layout order, as the rule before, and their successors from there
-            la = [n for n in range(len(A.bl)) if n not in bm and n not in A.fwd]
-            lb = [n for n in range(len(B.bl)) if n not in rev and n not in B.fwd]
+            la = [n for n in range(len(A.bl)) if n not in bm and n not in A.fwd and n not in A.dead]
+            lb = [n for n in range(len(B.bl)) if n not in rev and n not in B.fwd and n not in B.dead]
             if not la or len(la) != len(lb):
                 break
             bm[la[0]], rev[lb[0]] = lb[0], la[0]
@@ -186,10 +194,11 @@ def cfg_map(A, B):
             bm[x], rev[y] = y, x
             work.append(x)
     for P, m, nm in ((A, bm, "A"), (B, rev, "B")):
-        left = [n for n in range(len(P.bl)) if n not in m and n not in P.fwd]
+        left = [n for n in range(len(P.bl)) if n not in m and n not in P.fwd and n not in P.dead]
         if left:
             raise Reject("CFG differs: %d blocks of %s unpaired (first +%#x; %d vs %d blocks)" % (
-                len(left), nm, P.ins[P.bl[left[0]][0]].off, len(A.bl) - len(A.fwd), len(B.bl) - len(B.fwd)))
+                len(left), nm, P.ins[P.bl[left[0]][0]].off, len(A.bl) - len(A.fwd) - len(A.dead),
+                len(B.bl) - len(B.fwd) - len(B.dead)))
     return bm, inv
 
 
@@ -216,7 +225,7 @@ def op_access(i, op, idx=None):
 
 class Ins:
     __slots__ = ("addr", "off", "size", "text", "mnem", "shape", "uses", "defs", "mem", "kind", "target", "rd",
-                 "depth", "poison", "poison_reader", "chk", "cs", "save", "relaxed", "comm", "tr")
+                 "depth", "poison", "poison_reader", "chk", "cs", "save", "relaxed", "comm", "tr", "comm2", "mref")
 
 
 def s32(v):
@@ -400,8 +409,8 @@ def frame_pass(raw, base, size, calls):
                 w = []
             if any(i.reg_name(r) in ("esp", "sp") for r in w):
                 raise Reject("+%#x %s %s writes esp" % (i.address - base, m, i.op_str))
-        # escapes and stack operands
-        for op in i.operands:
+        # escapes and stack operands (lea esp, [esp + d] is an esp adjustment, not a frame address)
+        for op in (i.operands if adj is None else []):
             if op.type == X.X86_OP_REG and i.reg_name(op.reg) == "esp" and adj is None and m not in ("push", "pop") \
                     and not (is_mov_ebp_esp(i) or is_mov_esp_ebp(i) or is_and_esp(i)):
                 escapes = True                       # esp read as a value (mov r, esp; mov fs:[0], esp)
@@ -560,6 +569,8 @@ def _one(i, base, relocs, d, mode, callinfo, ebp0=None):
     x.depth = d
     x.poison, x.poison_reader, x.chk, x.cs, x.save, x.relaxed = set(), False, False, i, False, False
     x.comm = None
+    x.comm2 = False
+    x.mref = None
     x.rd = None
     x.tr = None
     mn = i.mnemonic
@@ -852,6 +863,26 @@ def _one(i, base, relocs, d, mode, callinfo, ebp0=None):
                                                                            [(j, 0) for j in range(len(local))
                                                                             if ("i", local[j]) in [u for u, _ in uses]]):
             x.comm = ("shape",)                # the registers occur elsewhere too: only the operand order may swap
+    if "commute" in RULES and mn in COMMUTATIVE and len(i.operands) == 2 and \
+            all(o.type == X.X86_OP_REG and o.size == 4 for o in i.operands):
+        fa, fb = _fam32(i, i.operands[0]), _fam32(i, i.operands[1])
+        if fa and fb and fa != fb:
+            x.comm2 = True                    # op r1, r2 == op r2, r1 as a value (see uses_ok)
+    # memory reference summary for RULE memorder: (kind 'r'/'w', direct (lo, hi) frame range or None); None = anything
+    if x.mem and "memorder" in RULES and mn not in ("call", "ret", "retn") and not string and d is not None:
+        mems = [t for t in shape if isinstance(t, tuple) and t and t[0] in ("mem", "stk", "fslot", "stkix")]
+        if mn in ("push", "pop") and not mems and (mn == "pop" or i.operands[0].type in (X.X86_OP_REG, X.X86_OP_IMM)):
+            n_ = i.operands[0].size if i.operands else 4
+            kk = -(d + n_) if mn == "push" else -d
+            x.mref = ("w" if mn == "push" else "r", (kk, kk + n_))
+        elif len(mems) == 1 and mn not in IMPLICIT_MEM and not mn.startswith(("push", "pop")):
+            t = mems[0]
+            oi = [o_ for o_ in i.operands if o_.type == X.X86_OP_MEM]
+            if len(oi) == 1:
+                acc_ = op_access(i, oi[0], i.operands.index(oi[0]))
+                kind = "r" if acc_ == 1 else "w"
+                rng = (t[1], t[1] + t[2]) if t[0] in ("stk", "fslot") else None
+                x.mref = (kind, rng)
     x.shape = shape
     x.uses, x.defs = uses, defs
     x.tr = _transfer(i, d, mode, fields, adj) if TRANSPARENT else None
@@ -1271,8 +1302,8 @@ def opaque_reads(P):
             seen.add((v[1], v[2]))
             for a in P.phiargs.get((v[1], v[2]), ()):
                 walk(a)
-    for x in P.ins:
-        if x.tr is None and x.rd:
+    for k, x in enumerate(P.ins):
+        if x.tr is None and x.rd and k not in P.deadins:
             for v in x.rd.values():
                 walk(v)
     return out
@@ -1443,6 +1474,17 @@ class Checker:
             self.phis = set()
             if self._uses_ok(a, b, final, swap) is None:
                 why = None                  # base and index (scale 1) exchanged: the same address
+        if why and a.comm2 and b.comm2:
+            # RULE commute. SOUNDNESS: for op in COMMUTATIVE with two distinct 32-bit register operands, `op r1, r2`
+            # computes f(r1, r2) into r1 with flags g(r1, r2), f and g symmetric. The other function's `op r2', r1'`
+            # (its own destination register) is the same dataflow node when the two source VALUES are exchanged:
+            # the pairing maps A's slot of the destination read to B's source read and vice versa. The definitions
+            # are paired as before, so every later reader sees the same value; flags are symmetric (checked: the
+            # flags defs are the same set of groups, and the operation is the same mnemonic).
+            swap = {("e", 0): ("e", 1), ("e", 1): ("e", 0)}
+            self.phis = set()
+            if self._uses_ok(a, b, final, swap) is None:
+                why = None
         if why is None:
             keep |= self.phis
         self.phis = keep
@@ -1612,7 +1654,7 @@ def restored(P):
     """Callee-saved registers that hold their entry value at every ret of program P (never written, or popped from
     the slot their own save pushed). Slots mode only (needs the frame bytes in the graph)."""
     out = set()
-    rets = [k for k, x in enumerate(P.ins) if x.kind == "ret"]
+    rets = [k for k, x in enumerate(P.ins) if x.kind == "ret" and k not in P.deadins]
     for r in CALLEE_SAVED:
         ok = True
         for k in rets:
@@ -1647,6 +1689,8 @@ class Prog:
         self.base = base
         self.ins = ins
         self.bl, self.succ = blocks(self.ins, base, size)
+        self.dead = set()                 # blocks removed by normalise() (twins merged away): never paired
+        self.deadins = set()              # their instructions
 
     def finish(self):
         """the value pass; a transparent instruction whose opaque flags are read is paired after all (rerun)"""
@@ -1654,13 +1698,419 @@ class Prog:
             values(self)
             bad = opaque_reads(self)
             if not bad:
+                if "constreg" in RULES:
+                    self.constreg = const_regs(self)
                 return
             for k in bad:
                 self.ins[k].tr = None
         raise Reject("transparent instructions' flags are read")
 
 
+CONST_ALU = ("mov", "add", "adc", "sub", "sbb", "and", "or", "xor", "cmp", "test")
+AF_READERS = ("lahf", "pushfd", "pushf", "aaa", "aas", "daa", "das", "aam", "aad")
+
+
+def const_regs(P):
+    """RULE constreg. A 32-bit register that is only SOURCE operand of `op dst, reg` (op in CONST_ALU, mov / push
+    included) and holds a known constant c at that instruction (a transparent `xor r, r` / `mov r, imm` value, found
+    by the value pass) is the immediate c: the instruction is given the shape of `op dst, imm32 c` and the use of the
+    register is dropped. SOUNDNESS: `op dst, r` with r = c computes exactly `op dst, c`, flags included (the same
+    ALU operation on the same operand values); the value pass has established r = c on every path reaching it (a
+    phi of unequal values is not a constant). The register must be the last of the instruction's register families
+    (so the renumbering of the other registers is unchanged) and occur once in it. `test r, r` and `cmp r, 0` are
+    the same flag computation on r (CF = OF = 0; SF, ZF, PF of r) except AF, which `test` leaves undefined: both
+    become one `cmp0` shape, and only if no instruction of the function reads AF (AF_READERS; Jcc/SETcc/CMOVcc do
+    not). Immediate sizes 1 and 4 of a 32-bit operation are the same value (sign extension is already applied).
+    -> number of instructions rewritten"""
+    n = 0
+    af_read = any(x.mnem in AF_READERS for k, x in enumerate(P.ins) if k not in P.deadins)
+    for k, x in enumerate(P.ins):
+        if x.tr is not None or k in P.deadins or x.rd is None or x.kind != "other":
+            continue
+        mn = x.mnem
+        ops = x.cs.operands
+        if mn not in CONST_ALU + ("push",) or not ops or (ops[0].size != 4 and mn != "push"):
+            continue
+        sh = x.shape
+        for j, t in enumerate(sh):
+            if isinstance(t, tuple) and t and t[0] == "imm" and t[2] == 1:
+                sh[j] = ("imm", t[1], 4)             # imm8 (sign-extended) of a 32-bit operation: the same value
+        if mn != "push" and len(ops) != 2:
+            continue
+        srcpos = 0 if mn == "push" else 1
+        if ops[srcpos].type == X.X86_OP_REG and ops[srcpos].size == 4:
+            idx = max((j for j, t in enumerate(sh) if isinstance(t, tuple) and t and t[0] == "reg"), default=None)
+            ent = sh[idx] if idx is not None else None
+            if ent is not None and ent[1][0] == "R" and ent[1][2] == "32":
+                j = ent[1][1]
+                slot = ("e", j)
+                fams = [t[1][1] for t in sh if isinstance(t, tuple) and t and t[0] == "reg" and t[1][0] == "R"]
+                fams += [r[1] for t in sh if isinstance(t, tuple) and t and t[0] == "mem" for r in t[2:4]
+                         if r and r[0] == "R"]
+                v = canon(P, x.rd[slot]) if slot in x.rd else None
+                if v is not None and v[0] == "const" and fams.count(j) == 1 and j == max(fams) and \
+                        not any(sl == slot for sl, _ in x.defs) and not (mn == "test" and len(fams) == 1):
+                    sh[idx] = ("imm", v[1] & 0xffffffff, 4)
+                    x.uses = [(sl, r) for sl, r in x.uses if sl != slot]
+                    del x.rd[slot]
+                    x.comm = None
+                    x.comm2 = False
+                    n += 1
+        if af_read:
+            continue
+        if mn == "cmp" and len(sh) > 3 and sh[2][0] == "reg" and sh[3][0] == "imm" and sh[3][1] == 0:
+            _cmp0(x, 2)
+            n += 1
+        elif mn == "test" and len(ops) == 2 and ops[0].type == ops[1].type == X.X86_OP_REG and \
+                ops[0].reg == ops[1].reg and sh[2] == sh[3]:
+            _cmp0(x, 2)
+            n += 1
+    return n
+
+
+def _cmp0(x, pos):
+    """the shape of `cmp r, 0` / `test r, r`: one register operand (see const_regs)"""
+    sh = x.shape
+    rt = sh[pos]
+    x.shape = ["cmp0", sh[1], rt]
+    x.mnem = "cmp0"
+    j = rt[1][1]
+    x.uses = [(sl, r) for sl, r in x.uses if sl == ("e", j) or sl[0] != "e"]
+    x.rd = {sl: v for sl, v in x.rd.items() if sl == ("e", j) or sl[0] != "e"}
+    x.comm = None
+    x.comm2 = False
+
+
+def _conflict(x, y):
+    """may the memory operations x and y touch the same byte with at least one writing (RULE memorder)"""
+    if x.mref is None or y.mref is None:
+        return True
+    if x.mref[0] == "r" and y.mref[0] == "r":
+        return False
+    rx, ry = x.mref[1], y.mref[1]
+    if rx is not None and ry is not None:
+        return not (rx[1] <= ry[0] or ry[1] <= rx[0])
+    return True
+
+
+def _order_ok(A, B, C, mema, memidx_a, memidx_b, ka, kb):
+    """RULE memorder. The memory operations of a block need not keep their order position by position: A's a and B's
+    b may be paired when every earlier operation a' of A that may conflict with a (_conflict: two loads never do,
+    nor two direct stack operands of disjoint bytes) is paired to a b' that comes earlier than b in B. SOUNDNESS:
+    only pairs that cannot touch the same byte with a write are exchanged, so every load still reads the value of the
+    same stores and the final memory contents are the same; calls, rets, string operations, pushes/pops of memory
+    and anything with an unknown address conflict with everything. Checked when the later of two conflicting
+    operations is paired (A's order drives the search), in both functions (a conflict in either counts)."""
+    a, b = A.ins[ka], B.ins[kb]
+    ja = memidx_a[ka]
+    for kq in mema[:ja]:
+        kq2 = C.pi.get(kq)
+        if kq2 is None:
+            return False
+        if (_conflict(A.ins[kq], a) or _conflict(B.ins[kq2], b)) and memidx_b[kq2] > memidx_b[kb]:
+            return False
+    # B's operations before b that are not paired yet will be paired with A operations after a: the same test
+    # is made then; but an operation of B before b whose A partner is before a is fine
+    return True
+
+
+def _twin_key(P, n):
+    """what makes block n of P the same code as another block: every instruction's operation, operands (registers by
+    name, relocated fields by token), static stack depth, and the block's successors"""
+    out = []
+    for k in P.bl[n]:
+        x = P.ins[k]
+        br = x.kind in ("jmp", "jcc")
+        out.append((x.mnem, x.text if x.kind not in ("jmp", "jcc", "call") else x.mnem, tuple(map(str, x.shape)),
+                    None if br else str(x.target), x.depth, x.kind))
+    return (tuple(out), tuple(P.succ[n]))
+
+
+def normalise(P):
+    """RULE tailmerge (LAYERS.md "rename: CFG normalisation"). Blocks that are the same code (_twin_key: identical
+    instructions, relocated fields, static stack depth) with the same successors are merged: every edge into a later
+    twin goes to the first one and the later twin leaves the graph (P.dead). SOUNDNESS: two blocks with identical
+    instructions at identical stack depths and the same successors perform the same state transformation, so the
+    program in which all predecessors share one copy has exactly the same set of executions (the value pass merges
+    the incoming values with phis as for any join); a block ending in a fall-through is only a twin of one with the
+    same fall-through block. Block 0 is never removed. Then a block whose only predecessor has it as its only
+    successor is appended to that predecessor (straight-line split: the value pass is per instruction anyway)."""
+    nb = len(P.bl)
+    if nb < 2:
+        return 0
+    changed = 0
+    seen = {}
+    keys = {n: _twin_key(P, n) for n in range(nb)}
+    redirect = {}
+    for n in range(nb):
+        k = keys[n]
+        if not k[0]:
+            continue
+        if k in seen and n != 0:
+            redirect[n] = seen[k]
+        else:
+            seen.setdefault(k, n)
+    if redirect:
+        for n, s_ in enumerate(P.succ):
+            P.succ[n] = [redirect.get(m, m) for m in s_]
+        for n in redirect:
+            P.dead.add(n)
+            P.succ[n] = []
+            P.deadins.update(P.bl[n])
+        changed += len(redirect)
+    preds = [[] for _ in range(nb)]
+    for n, s_ in enumerate(P.succ):
+        if n in P.dead:
+            continue
+        for m in s_:
+            preds[m].append(n)
+    for x_ in range(1, nb):
+        if x_ in P.dead or len(preds[x_]) != 1:
+            continue
+        p = preds[x_][0]
+        last = P.ins[P.bl[p][-1]]
+        if p == x_ or p in P.dead or P.succ[p] != [x_] or last.kind != "other":
+            continue
+        P.bl[p] = P.bl[p] + P.bl[x_]
+        P.succ[p] = P.succ[x_]
+        P.bl[x_] = []
+        P.succ[x_] = []
+        P.dead.add(x_)
+        preds = [[] for _ in range(nb)]
+        for n, s_ in enumerate(P.succ):
+            if n in P.dead:
+                continue
+            for m in s_:
+                preds[m].append(n)
+        changed += 1
+    return changed
+
+
+# ---- RULE splice: a call on one side against the callee's inlined body on the other ------------------------------
+HELPER_A = None         # callable(original callee va) -> (code, relocs) of that function in the image, or None
+HELPER_B = None         # callable(callee symbol name) -> (code, relocs) of our compiled callee, or None
+SPLICE_MAX_BYTES = 700  # a helper longer than this is not spliced
+SPLICE_MAX_COMBOS = 400
+SPLICE_SECONDS = 10.0   # wall-clock budget of the splice search for one pair
+
+
+class _It:
+    __slots__ = ("b", "kind", "tgt", "fields", "abs_tgt", "size")
+
+    def __init__(self, b, kind=None, tgt=None, fields=None, abs_tgt=None):
+        self.b, self.kind, self.tgt, self.fields, self.abs_tgt = bytearray(b), kind, tgt, fields or {}, abs_tgt
+        self.size = len(self.b)
+
+
+def _items(code, base, relocs, helper=False):
+    """The instructions of one function as re-encodable items (branches inside the function become rel32 whose
+    targets are item objects; rel32 fields of a relocation keep their token). helper=True: `ret` / `ret N` become
+    `lea esp, [esp + 4 (+ N)]` and (unless last) a jump to the end of the helper (END)."""
+    raw, wl = disasm_all(code, base)
+    n = len(raw)
+    its = [None] * n
+    where = {}
+    for k, i in enumerate(raw):
+        where[i.address] = k
+    END = _It(b"", "end")
+    for k, i in enumerate(raw):
+        off = i.address - base
+        mn = i.mnemonic
+        flds = {o - off: relocs[o] for o in range(off, off + i.size) if o in relocs}
+        if i.address in wl:
+            its[k] = _It(bytes(i.bytes) + wl[i.address])
+            continue
+        if helper and mn in ("ret", "retn"):
+            pop = i.operands[0].imm if i.operands else 0
+            d = 4 + pop
+            lea = bytes([0x8d, 0x64, 0x24, d]) if d < 128 else bytes([0x8d, 0xa4, 0x24]) + d.to_bytes(4, "little")
+            its[k] = _It(lea)
+            if k != n - 1:
+                its[k] = (its[k], _It(b"\xe9\0\0\0\0", "jmp", END))
+            continue
+        isj = mn.startswith("j") or mn in ("loop", "loope", "loopne", "jecxz", "jcxz")
+        if isj or mn == "call":
+            if not i.operands or i.operands[0].type != X.X86_OP_IMM:
+                if mn == "call":
+                    its[k] = _It(i.bytes, "call", None, flds)          # call [mem] / call reg: no branch target
+                    continue
+                raise Reject("splice: indirect jump at +%#x" % off)
+            if mn in ("loop", "loope", "loopne", "jecxz", "jcxz"):
+                raise Reject("splice: %s at +%#x" % (mn, off))
+            t = i.operands[0].imm & 0xffffffff
+            ext = (i.size - 4) in flds
+            b0 = i.bytes[0]
+            if ext:
+                tok = flds[i.size - 4]
+                if helper and mn != "call":
+                    raise Reject("splice: a tail jump out of the helper at +%#x" % off)
+                its[k] = _It(i.bytes, "call" if mn == "call" else None, None, flds,
+                             tok[1] if tok[0] == "abs" else None)
+                continue
+            if not base <= t < base + len(code):
+                raise Reject("splice: branch out of the function without relocation at +%#x" % off)
+            if mn == "call":
+                raise Reject("splice: call inside the function at +%#x" % off)
+            if mn == "jmp":
+                its[k] = _It(b"\xe9\0\0\0\0", "jmp", t)
+            else:
+                cc = (b0 & 0xf) if 0x70 <= b0 <= 0x7f else (i.bytes[1] & 0xf)
+                its[k] = _It(bytes([0x0f, 0x80 | cc, 0, 0, 0, 0]), "jcc", t)
+            continue
+        its[k] = _It(i.bytes, None, None, flds)
+    flat = []
+    for k, x in enumerate(its):
+        if isinstance(x, tuple):
+            flat += list(x)
+        else:
+            flat.append(x)
+    # resolve internal targets (addresses) to item objects
+    for x in flat:
+        if x.kind in ("jmp", "jcc") and isinstance(x.tgt, int):
+            x.tgt = its[where[x.tgt]] if not isinstance(its[where[x.tgt]], tuple) else its[where[x.tgt]][0]
+    return flat, END
+
+
+def _encode(flat, base, final_end):
+    """concatenate items -> (code, relocs); branch fields recomputed"""
+    pos, offs = 0, {}
+    for x in flat:
+        offs[id(x)] = pos
+        pos += x.size
+    offs[id(final_end)] = pos
+    out = bytearray()
+    rel = {}
+    for x in flat:
+        o = offs[id(x)]
+        b = bytearray(x.b)
+        if x.kind in ("jmp", "jcc"):
+            b[-4:] = ((offs[id(x.tgt)] - (o + x.size)) & 0xffffffff).to_bytes(4, "little")
+        elif x.abs_tgt is not None:
+            b[-4:] = ((x.abs_tgt - (base + o + x.size)) & 0xffffffff).to_bytes(4, "little")
+        out += b
+        for fo, tok in x.fields.items():
+            rel[o + fo] = tok
+    return bytes(out), rel
+
+
+def splice_calls(code, base, relocs, which, helpers):
+    """code with the calls numbered `which` (indexes among its direct calls) replaced by the helper bodies
+    helpers = [(hcode, hrelocs)]. -> (code, relocs)
+    SOUNDNESS: `call H` pushes a return address, runs H and returns with esp advanced by the return address and
+    H's `ret N` bytes. The splice replaces the call by `push 0` (the return address, any value: H's code never
+    reads it, the frame model checks a read of it is not a value flow we rely on) and each `ret N` of H by
+    `lea esp, [esp + 4 + N]` (no flags, exactly the pop) followed by a jump past H's body; H's branches are
+    re-encoded inside the caller. The result executes exactly the instructions the call would have, so comparing
+    it to the other function is a comparison of the real behaviour; nothing about H's calling convention is assumed
+    (its register effects are its own code's). H must not jump out of itself, call itself or have indirect jumps."""
+    flat, END = _items(code, base, relocs)
+    calls = [k for k, x in enumerate(flat) if x.kind == "call"]
+    out = []
+    hi = iter(helpers)
+    wn = {calls[w] for w in which}
+    redirect = {}
+    for k, x in enumerate(flat):
+        if k in wn:
+            if k == len(flat) - 1:
+                raise Reject("splice: call is the last instruction")
+            hcode, hrel = next(hi)
+            hflat, hend = _items(hcode, 0, hrel, helper=True)
+            nxt = flat[k + 1]
+            for y in hflat:
+                if y.tgt is hend:
+                    y.tgt = nxt
+            push = _It(b"\x68\0\0\0\0")
+            redirect[id(x)] = push
+            out += [push] + hflat
+        else:
+            out.append(x)
+    for x in out:
+        if x.kind in ("jmp", "jcc") and id(x.tgt) in redirect:
+            x.tgt = redirect[id(x.tgt)]
+    return _encode(out, base, END)
+
+
+def _call_targets(code, base, relocs):
+    """[(kind, token)] of the direct calls (rel32 with a relocation) in order, kind 'abs' (original) / 'sym' (ours)"""
+    raw, wl = disasm_all(code, base)
+    out = []
+    for i in raw:
+        if i.mnemonic == "call":
+            off = i.address - base
+            if i.bytes[0] == 0xe8 and (off + 1) in relocs:
+                out.append((len(out), relocs[off + 1]))
+            else:
+                out.append((len(out), None))
+    return out
+
+
+def _helper_for(side, tok, self_range):
+    try:
+        if tok is None:
+            return None
+        if side == "A" and tok[0] == "abs" and HELPER_A is not None:
+            if self_range[0] <= tok[1] < self_range[1]:
+                return None
+            return HELPER_A(tok[1])
+        if side == "B" and tok[0] == "sym" and HELPER_B is not None:
+            return HELPER_B(tok[1])
+    except BaseException:
+        return None
+    return None
+
+
+def _try_splices(why, codeA, baseA, relA, codeB, baseB, relB, level, ret64):
+    """RULE splice driver: the side with more calls inlines the other side's call; try the subsets of its calls
+    to small helpers whose removal makes the call counts agree."""
+    import itertools
+    import re
+    m = re.match(r"(\d+) calls in A, (\d+) in B", why)
+    if not m:
+        return None
+    na, nb = int(m.group(1)), int(m.group(2))
+    side = "A" if na > nb else "B"
+    code, base, rel = (codeA, baseA, relA) if side == "A" else (codeB, baseB, relB)
+    diff = abs(na - nb)
+    cts = _call_targets(code, base, rel)
+    cands = []
+    for k, tok in cts:
+        h = _helper_for(side, tok, (base, base + len(code)))
+        if h is not None and len(h[0]) <= SPLICE_MAX_BYTES:
+            cands.append((k, h))
+    tried = 0
+    import time
+    t0 = time.time()
+    for r in range(1, min(diff, len(cands)) + 1):
+        for sub in itertools.combinations(cands, r):
+            tried += 1
+            if tried > SPLICE_MAX_COMBOS or time.time() - t0 > SPLICE_SECONDS:
+                return None
+            try:
+                ncode, nrel = splice_calls(code, base, rel, [k for k, _ in sub], [h for _, h in sub])
+            except Reject:
+                continue
+            args = (ncode, base, nrel, codeB, baseB, relB) if side == "A" else (codeA, baseA, relA, ncode, base, nrel)
+            ok, info = _check(*args, level=level, ret64=ret64)
+            LAST.setdefault("splice_tried", []).append((side, [k for k, _ in sub], info if not ok else "ok"))
+            if ok:
+                info["spliced"] = (side, [k for k, _ in sub])
+                return ok, info
+    return None
+
+
 def check(codeA, baseA, relA, codeB, baseB, relB, level=1, ret64=False, budget=200000):
+    """-> (True, info) or (False, reason). The rules of RULES beyond the base layer are tried after it fails."""
+    ok, info = _check(codeA, baseA, relA, codeB, baseB, relB, level, ret64, budget)
+    if ok or "splice" not in RULES or not isinstance(info, str):
+        return ok, info
+    try:
+        r = _try_splices(info, codeA, baseA, relA, codeB, baseB, relB, level, ret64)
+    except Reject:
+        r = None
+    return r if r is not None else (ok, info)
+
+
+def _check(codeA, baseA, relA, codeB, baseB, relB, level=1, ret64=False, budget=200000):
     """-> (True, info) or (False, reason)"""
     try:
         rawA, wlA = disasm_all(codeA, baseA)
@@ -1671,6 +2121,7 @@ def check(codeA, baseA, relA, codeB, baseB, relB, level=1, ret64=False, budget=2
         dA, eA, pA = frame_pass(rawA, baseA, len(codeA), calls)
         dB, eB, pB = frame_pass(rawB, baseB, len(codeB), calls)
         mode = "delta" if (eA or eB or not FRAME_SLOTS) else "slots"
+        LAST["mode"] = mode
         Ai = build(rawA, baseA, relA, level, ret64, calls, dA, mode, pA, wlA)
         Bi = build(rawB, baseB, relB, level, ret64, calls, dB, mode, pB, wlB)
         if not FRAME_SLOTS:
@@ -1678,6 +2129,7 @@ def check(codeA, baseA, relA, codeB, baseB, relB, level=1, ret64=False, budget=2
         A = Prog(Ai, baseA, len(codeA))
         B = Prog(Bi, baseB, len(codeB))
         model_calls(A.ins, B.ins, calls, level, mode == "slots")
+        LAST["merged"] = [normalise(A), normalise(B)] if "tailmerge" in RULES else [0, 0]
         bmap, inv = cfg_map(A, B)
         A.finish()
         B.finish()
@@ -1720,8 +2172,11 @@ def check(codeA, baseA, relA, codeB, baseB, relB, level=1, ret64=False, budget=2
                 if kb in used:
                     continue
                 b = B.ins[kb]
-                if a.mem != b.mem or (a.mem and memidx_a[ka] != memidx_b[kb]):
+                if a.mem != b.mem:
                     continue
+                if a.mem and memidx_a[ka] != memidx_b[kb]:
+                    if "memorder" not in RULES or not _order_ok(A, B, C, mema, memidx_a, memidx_b, ka, kb):
+                        continue
                 saved = (dict(C.sym), dict(C.symr), C.delta)
                 if not C.shape_eq(a, b, True):
                     C.sym, C.symr, C.delta = saved

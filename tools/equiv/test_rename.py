@@ -472,3 +472,197 @@ def test_crt_64bit_helper_interfaces():
     for nm in ("__allmul", "__alldiv", "__allrem", "__aulldiv", "__aullrem"):
         assert AL.name_facts(nm)["W"] == 16
     assert AL.name_facts("__aulldvrm").get("kills") == ["ebx"]
+
+
+# --- P1-D rules: each separately switchable ------------------------------------------------------------------------
+@pytest.fixture
+def rules():
+    """RC.RULES = exactly the named rules for the test; hooks restored afterwards"""
+    saved = (RC.RULES, RC.HELPER_A, RC.HELPER_B)
+
+    def set_(*names):
+        RC.RULES = set(names)
+    yield set_
+    RC.RULES, RC.HELPER_A, RC.HELPER_B = saved
+
+
+def rel32(code, at, target, base=0x1000):
+    """patch the rel32 field at `at` of a call/jmp whose instruction ends at at+4 so it reaches `target`"""
+    b = bytearray(code)
+    b[at:at + 4] = ((target - (base + at + 4)) & 0xffffffff).to_bytes(4, "little")
+    return bytes(b)
+
+
+# splice: `call helper` against the helper's inlined body
+HELP = H("8b442404" "03c0" "c20400")                      # mov eax,[esp+4]; add eax,eax; ret 4
+CALLER = rel32(H("8b4c2404" "51" "e800000000" "c3"), 6, 0x2000)   # mov ecx,[esp+4]; push ecx; call H; ret
+INLINED = H("8b4c2404" "8bc1" "03c0" "c3")                # mov ecx,[esp+4]; mov eax,ecx; add eax,eax; ret
+CALLER_REL = {6: ("abs", 0x2000)}
+
+
+def test_splice_off_by_default_rule(rules):
+    rules()                                                # no rule: the counts differ
+    RC.HELPER_A = lambda va: (HELP, {})
+    reject(CALLER, INLINED, ra=CALLER_REL)
+
+
+def test_splice_inlined_helper_accepted(rules):
+    rules("splice")
+    RC.HELPER_A = lambda va: (HELP, {}) if va == 0x2000 else None
+    why = accept(CALLER, INLINED, ra=CALLER_REL)
+    assert why["spliced"][0] == "A"
+
+
+@pytest.mark.parametrize("inl", [
+    H("8b4c2404" "8bc1" "83c001" "c3"),                    # adds 1: another computation
+    H("8b4c2404" "8bc1" "03c0" "03c0" "c3"),               # adds twice
+    H("8b4c2404" "8bc1" "2bc0" "c3"),                      # sub eax,eax
+    H("8b4c2408" "8bc1" "03c0" "c3"),                      # reads the other argument slot
+])
+def test_splice_mutants_rejected(rules, inl):
+    rules("splice")
+    RC.HELPER_A = lambda va: (HELP, {})
+    reject(CALLER, inl, ra=CALLER_REL)
+
+
+def test_splice_helper_mutant_rejected(rules):
+    rules("splice")
+    RC.HELPER_A = lambda va: (H("8b442404" "03c0" "40" "c20400"), {})      # inc eax before ret
+    reject(CALLER, INLINED, ra=CALLER_REL)
+
+
+def test_splice_wrong_callee_pop_rejected(rules):
+    rules("splice")
+    RC.HELPER_A = lambda va: (H("8b442404" "03c0" "c20800"), {})           # ret 8: pops a slot nobody pushed
+    reject(CALLER, INLINED, ra=CALLER_REL)
+
+
+def test_splice_cdecl_helper_with_branch(rules):
+    # helper: mov eax,[esp+4]; test eax,eax; jz L; add eax,eax; L: ret (cdecl); caller cleans with add esp,4
+    helper = H("8b442404" "85c0" "7402" "03c0" "c3")
+    caller = rel32(H("8b4c2404" "51" "e800000000" "83c404" "c3"), 6, 0x2000)
+    inl = H("8b4c2404" "8bc1" "85c0" "7402" "03c0" "c3")
+    rules("splice")
+    RC.HELPER_A = lambda va: (helper, {})
+    accept(caller, inl, ra={6: ("abs", 0x2000)})
+    bad = H("8b4c2404" "8bc1" "85c0" "7502" "03c0" "c3")                    # jnz instead of jz
+    reject(caller, bad, ra={6: ("abs", 0x2000)})
+
+
+def test_splice_our_side_helper(rules):
+    # B calls our own helper (HELPER_B), A has it inlined
+    rules("splice")
+    RC.HELPER_B = lambda name: (HELP, {}) if name == "_helper@4" else None
+    caller = H("8b4c2404" "51" "e800000000" "c3")
+    accept(INLINED, caller, rb={6: ("sym", "_helper@4", 0x14, 0)}, ra={})
+
+
+def test_splice_recursion_and_tail_jump_refused(rules):
+    rules("splice")
+    RC.HELPER_A = lambda va: (H("e9fbffffff"), {0: ("abs", 0x3000)}) if False else (H("e900000000"), {1: ("abs", 0x3000)})
+    reject(CALLER, INLINED, ra=CALLER_REL)
+
+
+# commute: op r1, r2 == op r2, r1
+def test_commutative_register_operands(rules):
+    rules("commute")
+    a = H("8b4c2404" "8b542408" "33ca" "8bc1" "c3")        # mov ecx,[esp+4]; mov edx,[esp+8]; xor ecx,edx; mov eax,ecx
+    b = H("8b4c2404" "8b542408" "33d1" "8bc2" "c3")        # xor edx,ecx; mov eax,edx
+    accept(a, b)
+    rules()
+    reject(a, b)
+    rules("commute")
+    c = H("8b4c2404" "8b542408" "2bca" "8bc1" "c3")        # sub ecx,edx
+    d = H("8b4c2404" "8b542408" "2bd1" "8bc2" "c3")        # sub edx,ecx: NOT commutative
+    reject(c, d)
+    e = H("8b4c2404" "8b542408" "23d1" "8bc2" "c3")        # and edx,ecx: another operation
+    reject(a, e)
+
+
+# constreg: a register holding a known constant is the immediate
+def test_zero_register_compare_and_store(rules):
+    rules("constreg")
+    # xor edx,edx; mov ecx,[esp+4]; cmp ecx,edx; je L; mov eax,1; ret; L: xor eax,eax; ret
+    a = H("33d2" "8b4c2404" "3bca" "7406" "b801000000" "c3" "33c0" "c3")
+    b = H("8b4c2404" "85c9" "7406" "b801000000" "c3" "33c0" "c3")          # test ecx,ecx
+    c = H("8b4c2404" "83f900" "7406" "b801000000" "c3" "33c0" "c3")        # cmp ecx,0
+    accept(a, b)
+    accept(a, c)
+    rules()
+    reject(a, b)
+    rules("constreg")
+    # a nonzero register is not the immediate 0, and test with another register is another comparison
+    d = H("ba01000000" "8b4c2404" "3bca" "7406" "b801000000" "c3" "33c0" "c3")     # mov edx,1
+    reject(d, b)
+    e = H("8b4c2404" "85c9" "7506" "b801000000" "c3" "33c0" "c3")                # jne
+    reject(a, e)
+    f = H("8b4c2404" "85c0" "7406" "b801000000" "c3" "33c0" "c3")                # test eax,eax
+    reject(a, f)
+
+
+def test_constant_register_as_alu_source(rules):
+    rules("constreg")
+    a = H("ba05000000" "8b4c2404" "03ca" "8bc1" "c3")      # mov edx,5; mov ecx,[esp+4]; add ecx,edx; mov eax,ecx
+    b = H("8b4c2404" "83c105" "8bc1" "c3")                  # add ecx,5
+    accept(a, b)
+    bad = H("8b4c2404" "83c106" "8bc1" "c3")
+    reject(a, bad)
+
+
+def test_cmp0_refused_when_af_is_read(rules):
+    rules("constreg")
+    a = H("33d2" "8b4c2404" "3bca" "9f" "8bc1" "c3")         # lahf reads AF
+    b = H("8b4c2404" "85c9" "9f" "8bc1" "c3")
+    reject(a, b)
+
+
+# tailmerge: identical return tails
+def test_identical_tails_merged(rules):
+    rules("tailmerge")
+    # a: je L; mov eax,1; ret; L: mov eax,1; ret     b: je L; L: mov eax,1; ret  (shared tail)
+    a = H("8b4c2404" "85c9" "7406" "b801000000" "c3" "b801000000" "c3")
+    b = H("8b4c2404" "85c9" "7400" "b801000000" "c3")
+    accept(a, b)
+    rules()
+    reject(a, b)
+    rules("tailmerge")
+    c = H("8b4c2404" "85c9" "7406" "b801000000" "c3" "b802000000" "c3")      # the tails differ
+    reject(c, b)
+
+
+# memorder: operations that cannot conflict may change their order
+def test_two_loads_exchanged(rules):
+    a = H("8b4c2404" "8b542408" "8b01" "8b1a" "03c3" "c3")     # mov eax,[ecx]; mov ebx,[edx]  (ebx clobbered: use esi)
+    a = H("8b4c2404" "8b542408" "8b01" "8b32" "03c6" "c3")     # mov eax,[ecx]; mov esi,[edx]; add eax,esi
+    b = H("8b4c2404" "8b542408" "8b32" "8b01" "03c6" "c3")     # the loads in the other order
+    rules()
+    reject(a, b)
+    rules("memorder")
+    accept(a, b)
+
+
+def test_load_and_store_not_exchanged(rules):
+    rules("memorder")
+    a = H("8b4c2404" "8b542408" "8b01" "8902" "c3")            # mov eax,[ecx]; mov [edx],eax  -- same chain
+    st = H("8b4c2404" "8b542408" "c70201000000" "8b01" "c3")   # mov [edx],1; mov eax,[ecx]  (may alias)
+    st2 = H("8b4c2404" "8b542408" "8b01" "c70201000000" "c3")  # mov eax,[ecx]; mov [edx],1
+    reject(st, st2)
+    # a store and a load of the same frame-relative slot through a pointer stay ordered
+    c = H("8b4c2404" "c70101000000" "8b4108" "c3")
+    d = H("8b4c2404" "8b4108" "c70101000000" "c3")
+    reject(c, d)
+
+
+def test_direct_frame_slots_disjoint_reordered(rules):
+    # a frame address escapes (delta mode); two direct stores to different slots may be exchanged,
+    # a store and a load of the same slot may not
+    pre = "83ec10" "8d442408" "50"                              # sub esp,16; lea eax,[esp+8]; push eax
+    a = H(pre + "c744240c01000000" "c744241002000000" "58" "83c410" "c3")
+    b = H(pre + "c744241002000000" "c744240c01000000" "58" "83c410" "c3")
+    rules()
+    reject(a, b)
+    rules("memorder")
+    accept(a, b)
+    c = H(pre + "c744240c01000000" "c744240c02000000" "58" "83c410" "c3")      # same slot twice
+    d = H(pre + "c744240c02000000" "c744240c01000000" "58" "83c410" "c3")
+    reject(c, d)
