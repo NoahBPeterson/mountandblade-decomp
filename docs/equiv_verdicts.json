@@ -94,8 +94,8 @@
 "work/equiv_results/2026-11-26/D"
 ],
 "summary": {
-"pass": 84,
-"proven": 27,
+"pass": 85,
+"proven": 26,
 "proven_o": 0,
 "weak": 224,
 "fail": 1,
@@ -106,10 +106,10 @@
 "funclet": 28,
 "notcode": 0,
 "not_run": 0,
-"pass_sz": 56461,
-"proven_sz": 14525,
+"pass_sz": 56602,
+"proven_sz": 15676,
 "proven_o_sz": 0,
-"weak_sz": 472388,
+"weak_sz": 471096,
 "fail_sz": 328,
 "inputs_sz": 6723,
 "harness_sz": 0,
@@ -562,10 +562,11 @@
 "00433e40": {
 "module": "item_kind",
 "file": "match/manifests/game/data/item_kind.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PROVEN",
+"category": "proven",
 "size": 3214,
-"stale_proof": "stale proof: proof of 2026-11-14 is of an older build of src/game/data/item_kind.cpp (build hash differs)"
+"tested": "WEAK",
+"proof": "rename L1"
 },
 "00435520": {
 "module": "agent_queries",
@@ -709,11 +710,10 @@
 "0043cc30": {
 "module": "agent_logic",
 "file": "match/manifests/game/agent/agent_logic.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1026,
-"tested": "WEAK",
-"proof": "region L1"
+"stale_proof": "stale proof: proof of 2026-11-14 is of an older build of src/game/agent/agent_logic.cpp (build hash differs)"
 },
 "0043d040": {
 "module": "agent_logic",
@@ -1156,11 +1156,10 @@
 "0046b940": {
 "module": "terrain_render",
 "file": "match/manifests/game/terrain/terrain_render.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
+"verdict": "PASS",
+"category": "pass",
 "size": 141,
-"tested": "PASS",
-"proof": "region L1"
+"stale_proof": "stale proof: proof of 2026-11-14 is of an older build of src/game/terrain/terrain_render.cpp (build hash differs)"
 },
 "0046bc70": {
 "module": "terrain_render",
@@ -1843,9 +1842,11 @@
 "004b6070": {
 "module": "party_map",
 "file": "match/manifests/game/party/party_map.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 271
+"verdict": "PROVEN",
+"category": "proven",
+"size": 271,
+"tested": "WEAK",
+"proof": "rename L1"
 },
 "004b6180": {
 "module": "party_map",
@@ -1962,11 +1963,10 @@
 "004cda90": {
 "module": "poly_mesh_edge_face_ops",
 "file": "match/manifests/game/editor/poly_mesh_edge_face_ops.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1167,
-"tested": "WEAK",
-"proof": "region L1"
+"stale_proof": "stale proof: proof of 2026-11-20 is of an older build of src/game/editor/poly_mesh_edge_face_ops.cpp (build hash differs)"
 },
 "004cf100": {
 "module": "launcher_config_dialog",
@@ -2823,5 +2823,6 @@
 "category": "weak",
 "size": 1719
 }
-}
+},
+"when_proofs": "2026-11-27T15:51:05-06:00"
 }

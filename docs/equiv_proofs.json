@@ -1,7 +1,7 @@
 {
  "what": "functions proven equivalent by tools/equiv/prove.py (static: the rename layer, angr symbolic execution or STOKE DDEC; L1 = calling contract, L2 = every register; see tools/equiv/LAYERS.md). Each row has our build hash (func.build_hash) and its proof bundle (docs/equiv_proofs/<va>.json, or work/equiv/proofs/ when large); prove.py --recheck re-verifies it. tools/difftest/verdicts.py --apply-proofs applies it to docs/equiv_verdicts.json.",
- "when": "2026-11-20T22:31:02-06:00",
- "commit": "bc8ed5f3",
+ "when": "2026-11-27T15:47:37-06:00",
+ "commit": "fc9bc109",
  "rows": {
   "0041d6f0": {
    "src": "src/engine/resource/resource_manager.cpp",
@@ -16,14 +16,14 @@
   },
   "00433e40": {
    "src": "src/game/data/item_kind.cpp",
-   "symbol": "?get_carry_pos@ItemKind@@QAEXPAUpos2@@PAH1@Z",
-   "layer": "angr",
+   "symbol": "?get_carry_pos@ItemKind@@QAEXPAUmatrix@rgl@@PAH1@Z",
+   "layer": "rename",
    "level": "L1",
-   "detail": "L1: retail 37 paths (0 diverging), ours 37 (0); 37 paired by equal path condition, 0 by overlap; explore 515.0s, 0 queries; loops {\"retail\":{\"31\":[32,\"exits within bound\"]},\"ours\":{\"31\":[32,\"exits within bound\"]}}",
-   "build": "633e5b77b446cb2725a0baa80e60b7c3aaa1c4fff55c10f831a3a0499c8deff9",
+   "detail": "793 instructions, 76 blocks, 2 moved, 9 with other register names, 0 with other frame slots (delta mode, D {False: 0}); values moved by 64/64 instructions (ours 793 instructions)",
+   "build": "0d6f766903b7fababeb041e1d679943b52f5de878ebf172cae344aa69098177c",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/00433e40.json",
-   "proved": "2026-11-14"
+   "proved": "2026-11-27"
   },
   "00435520": {
    "src": "src/game/agent/agent_queries.cpp",
@@ -279,15 +279,15 @@
    "proved": "2026-11-14"
   },
   "0049e9c0": {
-   "src": "src/game/script/script_interpreter.cpp",
-   "symbol": "?attach_party_center@GameData@@QAEHPBMHH@Z",
+   "src": "src/game/script/operation_execute.cpp",
+   "symbol": "?attach_party_center@GameData@@QAEHABUVec2@@HH@Z",
    "layer": "rename",
    "level": "L1",
    "detail": "157 instructions, 5 blocks, 0 moved, 4 with other register names, 0 with other frame slots (delta mode, D {False: 0}); values moved by 20/20 instructions (ours 157 instructions)",
    "build": "9aa0e3206884993d927cca454415c662390aa40731bf9304f265b97a17e061f3",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0049e9c0.json",
-   "proved": "2026-11-20"
+   "proved": "2026-11-27"
   },
   "004b2880": {
    "src": "src/game/party/party_map.cpp",
@@ -299,6 +299,17 @@
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/004b2880.json",
    "proved": "2026-11-12"
+  },
+  "004b6070": {
+   "src": "src/game/party/party_map.cpp",
+   "symbol": "?push_party_event@GameData@@QAEXHPBHPBM@Z",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "85 instructions, 5 blocks, 0 moved, 2 with other register names, 0 with other frame slots (delta mode, D {False: 0}); values moved by 10/10 instructions (ours 85 instructions)",
+   "build": "69de8d5fb03b90f0c53371dca3d3e8ac094dcb318acfd3a9a614f768d1dde638",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/004b6070.json",
+   "proved": "2026-11-27"
   },
   "004cda90": {
    "src": "src/game/editor/poly_mesh_edge_face_ops.cpp",
