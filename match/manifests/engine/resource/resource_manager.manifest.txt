@@ -31,6 +31,7 @@
 ../src/engine/resource/resource_manager.cpp  ?resize@?$vector@PAUnamed_object@@V?$allocator@PAUnamed_object@@@std@@@std@@QAEXIPAUnamed_object@@@Z  0041ad20  /O2  /MT  /Gy  /TP
 ../src/engine/resource/resource_manager.cpp  ?resize@?$vector@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@QAEXIUvec_array@@@Z  0041adb0  /O2  /MT  /Gy  /TP
 ../src/engine/resource/resource_manager.cpp  ?resize@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@QAEXIUidx_weight@rgl@@@Z  0041ae70  /O2  /MT  /Gy  /TP
+../src/engine/resource/resource_manager.cpp  ??_Eframe_set@@UAEPAXI@Z  0041aee0  /O2  /MT  /Gy  /TP
 ../src/engine/resource/resource_manager.cpp  ??$_Copy_backward_opt@PAUbone_influence@rgl@@PAU12@@std@@YAPAUbone_influence@rgl@@PAU12@00U_Nonscalar_ptr_iterator_tag@0@@Z  0041afc0  /O2  /MT  /Gy  /TP
 ../src/engine/resource/resource_manager.cpp  ??0resmgr@@QAE@XZ  0041b000  /O2  /MT  /Gy  /TP
 ../src/engine/resource/resource_manager.cpp  ??0Bone@@QAE@XZ  0041b0c0  /O2  /MT  /Gy  /TP
