@@ -606,20 +606,19 @@ bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format)
 // runs) -> 3 (in the second run) -> 4 (after the second run).
 void Config::split_line(const char* line, tstring* first, tstring* second)
 {
+    int i = 0;
     first->clear();
     second->clear();
 
     char ch;
     const char* p = line;
-    const char* start = line + 1;
-    do {
-        ch = *p;
-        p++;
-    } while (ch != 0);
+    const char* start = p + 1;
+    while (*p++ != 0) {
+    }
     int count = (int)(p - start);
     int state = 0;
 
-    for (int i = 0; i < count; i++) {
+    for (; i < count; i++) {
         ch = line[i];
         if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_') {
             if (state == 0) {
@@ -1278,22 +1277,17 @@ void MapWidget::screen_to_world(vector4* near_pt, vector4* far_pt)
 // @ 0x4bd4d0
 void ini_file::parse_line(const char* line, tstring& key, tstring& value)
 {
+    int i = 0;
     key.clear();
     value.clear();
 
-    char ch;
     const char* p = line;
     const char* start = p + 1;
-    for (;;) {
-        ch = *p;
-        p++;
-        if (ch == 0) {
-            break;
-        }
+    while (*p++ != 0) {
     }
     int len = (int)(p - start);
     int state = 0;
-    for (int i = 0; i < len; i++) {
+    for (; i < len; i++) {
         char c = line[i];
         if (c <= ' ' || c == '=') {
             if (state == 1) {
