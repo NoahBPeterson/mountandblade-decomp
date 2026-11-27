@@ -2164,12 +2164,14 @@ bool Agent::line_of_sight(unsigned tid, shape_base* ignore)
 {
     Agent* o = agent_by_id(tid);
     bool r = false;
+    vector4 dir;
+    (void)dir.x;    // lane device (S1-A): dir.x's field view first, so its key sorts below d.x's (symkeys levers: dp's 3rd fmul)
     vector4 d;
     d.x = o->pos.x - pos.x;
     d.y = o->pos.y - pos.y;
     d.z = o->pos.z - pos.z;
     if (d.normalize() <= 300.0f && body != 0 && o->body != 0) {
-        vector4 p, dir;
+        vector4 p;
         aim_point_and_dir(&p, &dir);
         vector4 head = ((const ::pos&)o->body->local).transform_point(o->body->fx->elems[9].m84.o);
         head.z += 0.2f;
