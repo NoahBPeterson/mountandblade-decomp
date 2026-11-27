@@ -363,9 +363,10 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         wind_a->base_color = wind_a->color;
 
         // the cell colour: the unpacked table colour faded by k, offset by the table base position
-        u.x = cx * 0.2f + sp->base[0];
-        u.y = cy * 0.2f + sp->base[1];
-        u.z = cz * 0.2f + sp->base[2];
+        vector4 tint(cx * 0.2f, cy * 0.2f, cz * 0.2f);
+        u.x = tint.x + sp->base[0];
+        u.y = tint.y + sp->base[1];
+        u.z = tint.z + sp->base[2];
         if (!g_use_shaders) {
             u.x = sqrtf(u.x);
             u.y = sqrtf(u.y);
