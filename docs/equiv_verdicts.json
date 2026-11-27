@@ -95,9 +95,9 @@
 ],
 "summary": {
 "pass": 85,
-"proven": 26,
+"proven": 31,
 "proven_o": 0,
-"weak": 224,
+"weak": 219,
 "fail": 1,
 "inputs": 7,
 "harness": 0,
@@ -107,9 +107,9 @@
 "notcode": 0,
 "not_run": 0,
 "pass_sz": 56602,
-"proven_sz": 15676,
+"proven_sz": 22807,
 "proven_o_sz": 0,
-"weak_sz": 471096,
+"weak_sz": 463965,
 "fail_sz": 328,
 "inputs_sz": 6723,
 "harness_sz": 0,
@@ -1320,10 +1320,11 @@
 "0047af30": {
 "module": "mesh_vertex_ops",
 "file": "match/manifests/game/mission/mesh_vertex_ops.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PROVEN",
+"category": "proven",
 "size": 1064,
-"stale_proof": "stale proof: proof of 2026-11-13 is of an older build of src/game/mission/mesh_vertex_ops.cpp (build hash differs)"
+"tested": "WEAK",
+"proof": "region L1"
 },
 "0047b7b0": {
 "module": "mesh_vertex_ops",
@@ -1513,10 +1514,11 @@
 "0048f9f0": {
 "module": "party_members",
 "file": "match/manifests/game/party/party_members.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PROVEN",
+"category": "proven",
 "size": 470,
-"stale_proof": "stale proof: proof of 2026-11-14 is of an older build of src/game/party/party_members.cpp (build hash differs)"
+"tested": "WEAK",
+"proof": "region L1"
 },
 "00490ce0": {
 "module": "game_data_party_quest",
@@ -1683,9 +1685,11 @@
 "0049d930": {
 "module": "operation_execute",
 "file": "match/manifests/game/script/operation_execute.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1024
+"verdict": "PROVEN",
+"category": "proven",
+"size": 1024,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "0049deb0": {
 "module": "operation_execute",
@@ -2120,10 +2124,11 @@
 "004e7b30": {
 "module": "progress_bar_and_load_screens",
 "file": "match/manifests/game/ui/screens/progress_bar_and_load_screens.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PROVEN",
+"category": "proven",
 "size": 2706,
-"stale_proof": "stale proof: proof of 2026-11-20 is of an older build of src/game/ui/screens/progress_bar_and_load_screens.cpp (build hash differs)"
+"tested": "WEAK",
+"proof": "region L1"
 },
 "004e85d0": {
 "module": "progress_bar_and_load_screens",
@@ -2266,9 +2271,11 @@
 "004fa790": {
 "module": "agent_hud",
 "file": "match/manifests/game/ui/hud/agent_hud.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1867
+"verdict": "PROVEN",
+"category": "proven",
+"size": 1867,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "004faee0": {
 "module": "agent_hud",
@@ -2824,5 +2831,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-27T15:51:05-06:00"
+"when_proofs": "2026-11-27T17:47:58-06:00"
 }
