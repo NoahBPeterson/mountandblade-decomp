@@ -44,6 +44,7 @@ def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     # --symbol=MANGLED: the object symbol to compare (passed to chk.py), for twins the marker binds wrongly
     sym = [a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--symbol=")]
+    fl = [a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--flags=")]     # --flags="/O2 /Og- /MT /Gy /TP" (O1 2026-11-27)
     if len(args) != 2:
         sys.exit(__doc__)
     src, va = args
@@ -52,6 +53,7 @@ def main():
     with tempfile.TemporaryDirectory(dir=os.path.join(ROOT, "work", "match")) as d:
         obj = os.path.join(d, "row.obj")
         r = subprocess.run([PY, os.path.join(ROOT, "tools/matching/chk.py"), "--keep-obj", obj, src, va]
+                           + (["--flags", fl[0]] if fl else [])
                            + (["--symbol=%s=%s" % (va, sym[0])] if sym else []),
                            cwd=ROOT, env=env, capture_output=True, text=True)
         row = [l for l in r.stdout.splitlines() if re.match(r'^[0-9a-f]{8} ', l)]
