@@ -247,7 +247,7 @@ after_scroll:
         slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
         pid = sel_type != 0 ? w10 : g_game->main_party;
         sel = &party_index(pid)->stacks[slot];
-        tsel = &g_game->troops[sel->troop];
+        tsel = &g_game->troops[party_index(pid)->stacks[slot].troop];   // the original looks the party up again here (0x531d49)
         bool found = false;
         int limit = 1;
         int j = 0;
