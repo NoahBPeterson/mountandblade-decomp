@@ -732,7 +732,7 @@ void capsule::draw()
     g_render.draw_capsule(-half, half, radius);
     g_render.sp = g_render.sp - 1;
     g_render.cur = g_render.stack[g_render.sp];
-    set_transform(g_render.dev, D3DTS_WORLD, g_render.cur);
+    g_render.dev->SetTransform(D3DTS_WORLD, as_d3d(g_render.cur));
 }
 // @ 0x40a870
 void renderer::apply(const matrix* m)
@@ -1191,17 +1191,6 @@ shape_base* manifold::build_composite()
     c->m8 = m8;
     return c;
 }
-// The frame as the D3DMATRIX the device takes (the same 16 floats, so it is the SDK's struct filled lane by lane).
-HRESULT set_transform(IDirect3DDevice9* dev, D3DTRANSFORMSTATETYPE state, const matrix& m)
-{
-    D3DMATRIX d;
-    d._11 = m.s.x; d._12 = m.s.y; d._13 = m.s.z; d._14 = m.s.w;
-    d._21 = m.f.x; d._22 = m.f.y; d._23 = m.f.z; d._24 = m.f.w;
-    d._31 = m.u.x; d._32 = m.u.y; d._33 = m.u.z; d._34 = m.u.w;
-    d._41 = m.o.x; d._42 = m.o.y; d._43 = m.o.z; d._44 = m.o.w;
-    return dev->SetTransform(state, &d);
-}
-
 // @ 0x40cd00
 __declspec(noinline) matrix* __cdecl rgl::identity_pos(matrix* out)
 {
