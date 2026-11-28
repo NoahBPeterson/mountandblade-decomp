@@ -34,7 +34,7 @@ equiv.py's machine-wide CPU slots (DIFFTEST_MAX_PROCS) still apply. --status pri
 The functions the source defines with a `// @ 0x<va>` marker (other than the tested one) are passed as --transparent:
 our object runs its own copies of them, so the original's call to one is replaced by the calls it makes.
 """
-import argparse, datetime, glob, hashlib, json, os, re, signal, struct, subprocess, sys, tempfile, threading, time
+import shlex, argparse, datetime, glob, hashlib, json, os, re, signal, struct, subprocess, sys, tempfile, threading, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -407,6 +407,8 @@ def run_equiv(a, case, pin, transparent, slice_id, shard):
         cmd += ["--pin", x]
     for x in a.hint or ():
         cmd += ["--hint", x]
+    for x in a.equiv_arg or ():                 # --equiv-arg: any further equiv.py option, split like a shell line
+        cmd += shlex.split(x)
     # the case's own edges: equiv stops steering (and stops) once these are covered
     sfd, scope = tempfile.mkstemp(suffix=".json", prefix="case_scope_")
     with os.fdopen(sfd, "w") as fh:
@@ -471,6 +473,8 @@ def main():
     ap.add_argument("--selector", help="the dispatch selector as an equiv.py --pin field: this+OFF&MASK")
     ap.add_argument("--pin", action="append", help="further equiv.py --pin fields for every case (repeatable): e.g. the "
                     "operand count and the operands' tag dwords, so the cases see realistic operands")
+    ap.add_argument("--equiv-arg", action="append", metavar="'OPTS'",
+                    help="further equiv.py options for every case (repeatable, shell-split): e.g. '--party-table 0.9'")
     ap.add_argument("--hint", action="append", help="equiv.py --hint soft pins for every case (repeatable)")
     ap.add_argument("--operand-hints", action="store_true",
                     help="Module System operands, softly: in half the fresh inputs each operand's high dword "
@@ -556,7 +560,7 @@ def main():
     transparent = sorted({int(x, 16) for x in re.findall(r"^// @ 0x([0-9a-fA-F]+)", text, re.M)} - {a.va})
     hh = harness_hash()
     opt_key = json.dumps([a.selector, flags, a.inputs, a.min_valid, a.time_limit, transparent, a.pin or []]
-                         + ([a.hint] if a.hint else []) + (["shards", a.shards] if a.shards > 1 else []))
+                         + ([a.hint] if a.hint else []) + (["equiv-arg", a.equiv_arg] if a.equiv_arg else []) + (["shards", a.shards] if a.shards > 1 else []))
     cases = {}
     for c in plan.cases:
         c["dispatch"] = plan.dispatch_o
