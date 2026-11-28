@@ -1745,7 +1745,6 @@ inline void place_scene_agents(rgl::strategic_entity* e, ItemRef* items, void* b
 // 0x4288c0, 0x46b9d0) live in other slices.
 void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
 {
-    SpawnArea area;
     if (g_tableaus.worlds.size() == 0)
         return;
     SceneObject* world = g_tableaus.worlds[g_tableaus.worlds.size() - 1];
@@ -1758,6 +1757,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     s.m4 = 0;
     s.reduce(0);
 
+    SpawnArea area;
     float dist = 0.0f;
     char scratch = 0;
 
@@ -1771,18 +1771,19 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     if (!(party < 0)) {
         unsigned t = (unsigned)::g_game->chars[party].flags & 0xf;
         def->init(t < (unsigned)g_anim.char_count ? g_anim.skin_vec[t].skeleton : 0);
-        int level = ::g_game->chars[party].level48;
         for (int i = 0; i < 10; i++)
             items[i] = pick_slot_item(party, i, world->override_flags, world->num_override_items,
                                                            world->override_items, 0, &scratch);
-        count = level;
+        count = ::g_game->chars[party].level48;
     } else {
         def->init(::g_resmgr.get_object70(tstring("skel_horse")));
         count = 1;
     }
-    char name[0x10];
-    ::build_appearance(e, count, party, *args, &s, area.slots, (int*)name, area.extra,
-                       (int*)&dist, &area.body, (EquipSet*)items, -1);
+    {
+        char name[0x10];
+        ::build_appearance(e, count, party, *args, &s, area.slots, (int*)name, area.extra,
+                           (int*)&dist, &area.body, (EquipSet*)items, -1);
+    }
     if (party >= 0) {
         ::setup_item_meshes(e, count, party, area.slots, (int*)&dist, items, -1);
         place_scene_agents(e, items, area.slots);
