@@ -589,8 +589,8 @@ void GameData::weekly_report(bool)
     }
 
     if (p->morale < 0.2f) {
-        tstring key("ui_party_morale_is_low");
-        body.append(*g_strtable.lookup(key));
+        { tstring key("ui_party_morale_is_low");
+        body.append(*g_strtable.lookup(key)); }
         float f = 0.3f - p->morale;
         if (factor1 > f)
             f = factor1;
@@ -606,11 +606,12 @@ void GameData::weekly_report(bool)
     int i = p->nstacks - 1;
     for (; i > 0; i--) {
         Stack* s = &p->stacks[i];
+        Troop* st = &troops[s->troop];
         int hits = 0;
         float thr = factor1;
         if (s->flags & 1)
             thr = factor2;
-        if ((troops[s->troop].flags30 & 0x10) == 0) {
+        if ((st->flags30 & 0x10) == 0) {
             counts[nsel] = 0;
             for (int k = 0; k < s->count; k++) {
                 if ((float)(rand() % 0x3dc9) * 6.3223117e-5f < thr) {
@@ -628,7 +629,6 @@ void GameData::weekly_report(bool)
     }
 
     if (nsel != 0) {
-        int before_last = nsel - 2;
         for (int j = 0; j < nsel; j++) {
             body.push_back(' ');
             Troop* tr = &troops[ids[j]];
@@ -641,21 +641,23 @@ void GameData::weekly_report(bool)
                 tstring* name = g_strtable.find(&tr->key);
                 if (name == 0)
                     name = (tstring*)tr;
-                char buf[4092];
+                char buf[4096];
                 sprintf(buf, "%d %s ", counts[j], name->c_str());
                 tstring part(buf);
                 body.append(part);
             }
-            if (j < before_last)
+            if (j < nsel - 2)
                 body.push_back(',');
-            else if (j == before_last) {
+            else if (j == nsel - 2) {
                 tstring key("ui_and_one_space");
                 body.append(*g_strtable.lookup(key));
             }
         }
-        {
-            tstring key(nsel == 1 && counts[0] == 1 ? "ui_has_deserted_the_party"
-                                                    : "ui_have_deserted_the_party");
+        if (nsel == 1 && counts[0] == 1) {
+            tstring key("ui_has_deserted_the_party");
+            body.append(*g_strtable.lookup(key));
+        } else {
+            tstring key("ui_have_deserted_the_party");
             body.append(*g_strtable.lookup(key));
         }
         {
