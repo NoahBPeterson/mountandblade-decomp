@@ -1,6 +1,6 @@
 {
-"when": "2026-11-27T20:24:30-06:00",
-"commit": "7dcea462",
+"when": "2026-11-27T21:19:49-06:00",
+"commit": "3e0f3e45",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -89,14 +89,15 @@
 "work/equiv_results/2026-11-25/U",
 "work/equiv_results/2026-11-26/D",
 "work/equiv_results/2026-11-27/c1",
-"work/equiv_results/2026-11-27/d1fix"
+"work/equiv_results/2026-11-27/d1fix",
+"work/equiv_results/2026-11-27/refresh"
 ],
 "summary": {
 "pass": 88,
 "proven": 31,
 "proven_o": 0,
 "weak": 188,
-"fail": 3,
+"fail": 2,
 "inputs": 7,
 "harness": 0,
 "comdat": 2,
@@ -107,8 +108,8 @@
 "pass_sz": 64705,
 "proven_sz": 23789,
 "proven_o_sz": 0,
-"weak_sz": 420428,
-"fail_sz": 15595,
+"weak_sz": 422063,
+"fail_sz": 13895,
 "inputs_sz": 7464,
 "harness_sz": 0,
 "comdat_sz": 71,
@@ -1840,18 +1841,11 @@
 "size": 3686
 },
 "004b9110": {
-"module": "launcher_options_dialog",
-"file": "match/manifests/game/config/launcher_options_dialog.nonmatching.txt",
+"module": "http_client",
+"file": "match/manifests/game/config/http_client.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1464
-},
-"004b9aa0": {
-"module": "launcher_options_dialog",
-"file": "match/manifests/game/config/launcher_options_dialog.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 65
 },
 "004bb3f0": {
 "module": "config",
@@ -1905,34 +1899,9 @@
 "004cf100": {
 "module": "launcher_config_dialog",
 "file": "match/manifests/game/config/launcher_config_dialog.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 1700,
-"reason": "5/7 valid inputs mismatched; first: call #17 (depth 1); NOTE resolution audit: 10 agree, 0 same-code, 0 unverified, 2 disagree, 1 local copies (??_C@_08FKCDPKDM@?532?5bits?$AA@ resolved 00594928 (operand 00594928), original operand 00594934 at 004cf28e; ??_C@_08OMEJNJFC@?516?5bits?$AA@ resolved 00594934 (operand 00594934), original operand 00594928 at 004cf295) [our own copy runs where the original calls: ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z -> 0043e7b0]",
-"first_mismatch": {
-"input": 0,
-"profile": "zeroish",
-"origin": "regress",
-"observable": "call #17 (depth 1)",
-"kind": "value",
-"orig": "0043e575 ecx=- args=[0, 0, 0]",
-"ours": "0043e575 ecx=- args=[10, 0, 0]",
-"detail": "callee, this/edx and stack args (normalised)",
-"args": [
-"40020000"
-],
-"regs": {
-"eax": "00000004",
-"ecx": "4a620000",
-"edx": "4f050000"
-},
-"fake_calls": 8,
-"repairs": 0,
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work/difftest/fail_inputs/launcher_config_dialog_004cf100.pkl"
-}
+"verdict": "UNSUPPORTED",
+"category": "weak",
+"size": 1700
 },
 "004cf7b0": {
 "module": "launcher_config_dialog",
