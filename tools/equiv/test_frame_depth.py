@@ -75,3 +75,30 @@ def test_ebp_frame_mov_esp_ebp_restores_depth():
     s, pops, P = _depths(c)
     ret = [i for i in s.ins if i.mnemonic == "ret"][0]
     assert P[ret.address][2] == 0
+
+
+def _pf_after(code, mnem_prefix):
+    s, pops, P = _depths(code)
+    nxt = [i for i in s.ins if i.mnemonic == mnem_prefix][0]
+    return P[nxt.address][0]
+
+
+def test_stack_argument_load_is_no_frame_address():
+    # sub esp,8; lea ecx,[esp]; mov eax,[esp+0xc] (the first argument); add esp,8; ret
+    c = H("83ec08" "8d0c24" "8b44240c" "83c408" "c3")
+    assert "eax" not in _pf_after(c, "add")
+
+
+def test_stack_argument_load_after_a_write_to_the_argument_area_is_tainted():
+    # the same, but the function stores ecx (a frame address) into its argument first
+    c = H("83ec08" "8d0c24" "894c240c" "8b44240c" "83c408" "c3")
+    assert "eax" in _pf_after(c, "add")
+
+
+def test_taken_before_lists_the_frame_addresses_taken_so_far():
+    # sub esp,8; lea ecx,[esp]; call [eax]; lea edx,[esp+4]; call [eax]; add esp,8; ret
+    c = H("83ec08" "8d0c24" "ff10" "8d542404" "ff10" "83c408" "c3")
+    s, pops, P = _depths(c)
+    tb = s.taken_before(P)
+    calls = sorted(tb)
+    assert tb[calls[0]] == [8] and tb[calls[1]] == [8, 4]

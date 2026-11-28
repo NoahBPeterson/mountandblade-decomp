@@ -212,6 +212,7 @@ class Side:
         self.heads = self._heads()
         self.live = None
         self.assumed_pops = {}         # (frame model) indirect call address -> the `ret N` assumed (_pops)
+        self._args_clean = None
 
     def inside(self, t):
         return self.base <= t < self.end
@@ -345,6 +346,16 @@ class Side:
 
     # ---------------------------------------------------------------- provenance (for the entry-pointer assumption)
     def provenance(self, pops, lea_nop=False):
+        """(see _provenance) in the frame model (lea_nop) two passes: the first, without the stack-argument load rule,
+        gives the depths the rule's side condition (_args_clean) needs; the second applies the rule"""
+        if not lea_nop:
+            return self._provenance(pops, False, False)
+        self._args_clean = None
+        first = self._provenance(pops, True, False)
+        self._args_clean = self._compute_args_clean(first)
+        return self._provenance(pops, True, True) if self._args_clean else first
+
+    def _provenance(self, pops, lea_nop, argrule):
         """Forward pass from the entry: per instruction (pf, esc, depth) where pf = the registers that may hold a
         frame address (computed from esp) or a value of unknown provenance (loaded from memory or returned by a
         callee after a frame address escaped), esc = a frame address may have escaped (stored to memory, or in a
@@ -387,6 +398,12 @@ class Side:
             stores = any(o.type == X.X86_OP_MEM and o.access & 2 for o in ops) or m == "push" or \
                 m.startswith(("rep stos", "stos", "rep movs", "movs"))
             src_pf = bool((reads - {"flags"}) & pf) or esp_val or esp_lea
+            if lea_nop and m == "mov" and len(ops) == 2 and ops[0].type == X.X86_OP_REG and \
+                    ops[1].type == X.X86_OP_MEM and argrule and self._arg_load(i, dep, bpd[0] if bpd else None, bpd_ok):
+                # (frame model) a load of the function's own stack argument (at or above E + 4): the caller's value,
+                # no frame address of ours (the frame did not exist when it was passed), provided the function never
+                # writes or takes the address of the argument area (_arg_load)
+                src_pf = False
 
             def framed(o):
                 return any(r and FAM.get(i.reg_name(r)) in pf | {"esp"} for r in (o.mem.base, o.mem.index))
@@ -418,9 +435,11 @@ class Side:
                         esc = True           # a frame address (or a value that may be one) stored to memory
                 if m == "push" and ops and ops[0].type == X.X86_OP_REG and i.reg_name(ops[0].reg) == "esp":
                     esc = True
+                argld = lea_nop and m == "mov" and len(ops) == 2 and ops[0].type == X.X86_OP_REG and \
+                    ops[1].type == X.X86_OP_MEM and argrule and self._arg_load(i, dep, bpd[0] if bpd else None, bpd_ok)
                 for r in writes - {"flags"}:
                     pf.discard(r)
-                    if src_pf or (loads and (esc or (fst and load_frame))):
+                    if not argld and (src_pf or (loads and (esc or (fst and load_frame)))):
                         pf.add(r)
                 if dep is not None:
                     if m == "push" or m.startswith("pushf"):
@@ -667,16 +686,59 @@ class Side:
             out[a] = [o for o in range(4, min(p[2], self.FRAME_CAP) + 1, 4) if not v & set(range(o - 3, o + 1))]
         return out
 
-    def lowest_taken(self, prov):
-        """(frame model, EQUIV_FRAME_OUP) the offset o below the entry esp E of the LOWEST frame address the function
-        ever takes (`lea r, [esp + d]` / `lea r, [ebp + d]` of an ebp frame), so E - o is that address; None when some
+    def _arg_load(self, i, dep, bpd, bpd_ok):
+        """(frame model) is the load i `mov r, [esp+d]` / `[ebp+d]` of a stack argument (the address is at or above
+        E + 4 given the depth `dep` / the ebp frame's `bpd`), in a function that never writes the argument area or
+        takes its address (_compute_args_clean), so the word is still the caller's value?"""
+        mem = i.operands[1].mem
+        if mem.index or not mem.base:
+            return False
+        b = i.reg_name(mem.base)
+        if b == "esp" and dep is not None:
+            above = mem.disp - dep
+        elif b == "ebp" and bpd_ok and bpd is not None:
+            above = mem.disp - bpd
+        else:
+            return False
+        return above >= 4 and bool(self._args_clean)
+
+    def _compute_args_clean(self, out):
+        """no instruction writes the argument area (at or above E + 4) through esp / ebp, takes the address of
+        anything there, or uses an indexed esp / ebp operand; depths from the first provenance pass `out`"""
+        from capstone import x86_const as X
+        bpd = getattr(self, "bpd", None)
+        for j in self.ins:
+            st = out.get(j.address)
+            if st is None:
+                continue
+            for o in j.operands:
+                if o.type != X.X86_OP_MEM or not o.mem.base:
+                    continue
+                bb = j.reg_name(o.mem.base)
+                if bb not in ("esp", "ebp"):
+                    continue
+                if o.mem.index:
+                    return False
+                if bb == "esp":
+                    ab = None if st[2] is None else o.mem.disp - st[2]
+                else:
+                    ab = None if bpd is None else o.mem.disp - bpd
+                if ab is None:
+                    return False
+                if ab >= 4 and (j.mnemonic == "lea" or o.access & 2):
+                    return False
+        return True
+
+    def taken_at(self, prov):
+        """(frame model, EQUIV_FRAME_OUP) {address of a taking instruction: the offset o below the entry esp E of the frame
+        address it takes} (`lea r, [esp + d]` / `lea r, [ebp + d]` of an ebp frame), so E - o is that address; None when some
         use of esp or ebp as a value is not such a lea (mov r, esp; an indexed lea; push esp; ...) or a depth is
         unknown there: then nothing is known. Words below it (larger o) are in no object whose address the function
         gives away, under the strengthened assumption O-up (an object extends upward from the lowest byte the
         function takes of it)."""
         from capstone import x86_const as X
         bpd = getattr(self, "bpd", None)
-        low = None
+        at = {}
         for i in self.ins:
             m, ops = i.mnemonic, i.operands
             st = prov.get(i.address)
@@ -691,7 +753,7 @@ class Side:
                     o = (st[2] if b == "esp" else bpd) - mem.disp
                     if b == "esp" and ops[0].type == X.X86_OP_REG and i.reg_name(ops[0].reg) == "esp":
                         continue                          # lea esp,[esp+k]: an esp adjustment, not a taken address
-                    low = o if low is None else max(low, o)
+                    at[i.address] = o
                 continue
             if m in ("push", "pop", "call", "ret", "retn", "leave", "enter") or m.startswith(("push", "pop")):
                 if m == "push" and ops and ops[0].type == X.X86_OP_REG and i.reg_name(ops[0].reg) in ("esp", "ebp") \
@@ -716,7 +778,33 @@ class Side:
                     return None
                 if r == "esp":
                     return None
-        return low
+        return at
+
+    def taken_before(self, prov):
+        """(frame model, EQUIV_FRAME_OUP) {call address: the offsets (sorted, lowest address first) of every frame
+        address taken on some path before the call}, None when taken_at is None (an unresolvable use of esp / ebp)"""
+        at = self.taken_at(prov)
+        if at is None:
+            return None
+        pred = {}
+        for a, ss in self.succ.items():
+            for b in ss:
+                pred.setdefault(b, []).append(a)
+        out = {a: frozenset() for a in self.by}
+        work = list(self.by)
+        while work:
+            a = work.pop()
+            ins = frozenset().union(*(out[p] for p in pred.get(a, ()))) if pred.get(a) else frozenset()
+            new = ins | ({at[a]} if a in at else set())
+            if new != out[a]:
+                out[a] = new
+                work.extend(self.succ.get(a, []))
+        res = {}
+        for a in self.by:
+            if self.kind.get(a) == "call":
+                ins = frozenset().union(*(out[p] for p in pred.get(a, ()))) if pred.get(a) else frozenset()
+                res[a] = sorted(ins, reverse=True)
+        return res
 
     def prologue_saves(self):
         """(frame model) the addresses of the prologue's `push r` that save a callee-saved register (ebx, esi, edi,
@@ -1555,7 +1643,9 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         job["npush_r"] = {"%x" % a: v[0] for a, v in cpr.items()}
         job["npush_o"] = {"%x" % a: v[0] for a, v in cpo.items()}
         if os.environ.get("EQUIV_FRAME_OUP") == "1":
-            job["lowt_r"], job["lowt_o"] = R.lowest_taken(PR), O.lowest_taken(PO)
+            tr_, to_ = R.taken_before(PR), O.taken_before(PO)
+            job["tb_r"] = None if tr_ is None else {"%x" % a: v for a, v in tr_.items()}
+            job["tb_o"] = None if to_ is None else {"%x" % a: v for a, v in to_.items()}
         if os.environ.get("EQUIV_FRAME_DUMP"):
             # diagnostics: the static depth / escape state at every instruction of both sides
             with open(os.environ["EQUIV_FRAME_DUMP"], "w") as fh_:
@@ -1576,8 +1666,8 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         # code outside the region changes them, so the region cache must not hand it the original's result
         bij_sig += hashlib.sha256(json.dumps([job.get(k) for k in (
             "frame_r", "frame_o", "frame_dead_r", "frame_dead_o", "noesc_r", "noesc_o", "saved_r", "saved_o",
-            "unw_r", "unw_o", "npush_r", "npush_o", "escb_r", "escb_o", "pops_r", "pops_o", "lowt_r",
-            "lowt_o")], sort_keys=True).encode()).hexdigest()[:16]
+            "unw_r", "unw_o", "npush_r", "npush_o", "escb_r", "escb_o", "pops_r", "pops_o", "tb_r",
+            "tb_o")], sort_keys=True).encode()).hexdigest()[:16]
     done, forced, rounds = {}, set(), 0
     vidx, tried = {}, {}         # key -> index into CUT_VARIANTS; key -> [(variant, stop sets, result)]
     pool = _Pool(jobs)

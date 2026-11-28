@@ -1282,7 +1282,11 @@ class Worker:
                           "ours": {int(a, 16): n for a, n in (job.get("npush_o") or {}).items()}}
             self.unw = {"retail": {int(a, 16): set(v) for a, v in (job.get("unw_r") or {}).items()},
                         "ours": {int(a, 16): set(v) for a, v in (job.get("unw_o") or {}).items()}}
-            self.lowt = {"retail": job.get("lowt_r"), "ours": job.get("lowt_o")}
+            # (O-up) per side {call address: offsets of the frame addresses taken before it}, None: nothing known
+            self.tb = {"retail": {int(a, 16): v for a, v in (job.get("tb_r") or {}).items()} if job.get("tb_r") is not None
+                       else None,
+                       "ours": {int(a, 16): v for a, v in (job.get("tb_o") or {}).items()} if job.get("tb_o") is not None
+                       else None}
             self.pops = {"retail": {int(a, 16): n for a, n in (job.get("pops_r") or {}).items()},
                          "ours": {int(a, 16): n for a, n in (job.get("pops_o") or {}).items()}}
             self.esc_before = {"retail": {int(a, 16) for a in job.get("escb_r") or ()},
@@ -1519,11 +1523,15 @@ class Worker:
                         inarea = C.And(C.ULT(x, ahi), C.Or(C.ULT(ahi, big), C.UGE(x, ahi - big)))
                         fresh = C.If(inarea, own, fresh)
                 if len(ent) > 4 and ent[4] is not None:
-                    # (O-up) ours' reachable frame after the call: the original's bytes at the shifted address
-                    dsym_, slo_, shi_ = ent[4]
+                    # (O-up) ours' reachable frame after the call: per object piece, the original's bytes at the
+                    # address shifted by the piece's D
                     dd_ = const_diff(x, inesp)
-                    if dd_ is not None and slo_ <= (dd_ - (1 << 32) if dd_ >= 0x80000000 else dd_) < shi_:
-                        fresh = self.base_byte(ep, x + dsym_)
+                    if dd_ is not None:
+                        sd_ = dd_ - (1 << 32) if dd_ >= 0x80000000 else dd_
+                        for dsym_, slo_, shi_ in ent[4]:
+                            if slo_ <= sd_ < shi_:
+                                fresh = self.base_byte(ep, x + dsym_)
+                                break
                 cur = C.If(C.Or(*inside), cur, fresh) if inside else fresh
         if self.region and epoch == "0" and cur is base0:
             # region mode: memory below the cut's esp is not part of the interface (the regions only compare memory
@@ -2098,6 +2106,51 @@ class Worker:
         return False
 
     def arg_bytes(self, info, i, f):
+        """(see _arg_bytes_cleanup) in the frame model, a cleanup merged with an earlier cdecl call's covers that
+        call's leftover argument words too: this call's own arguments are the pushes since that call returned (the
+        arguments are contiguous at the top of the stack, so a cdecl callee's leftover words lie above them: the
+        code generator cleans an earlier call's words first when a later call's arguments would not be contiguous)"""
+        w = self._arg_bytes_cleanup(info, i, f)
+        if w is None or not (self.region and self.frame_model):
+            return w
+        own = self.own_arg_bytes(info, i)
+        return own if own is not None and 0 < own < w else w
+
+    def own_arg_bytes(self, info, i):
+        """bytes pushed since the previous call of the straight-line block when that call is a cdecl callee (known
+        `ret 0`, no stack arguments popped) and only pushes / register work lie between; None otherwise"""
+        from capstone import x86_const as X
+        prev = info.get("_prev")
+        if prev is None:
+            prev = {j.address + j.size: j for j in info["ins"]}
+            info["_prev"] = prev
+        preds = info.get("_preds")
+        if preds is None:
+            preds = {}
+            for a, ss in info["succ"].items():
+                for b in ss:
+                    preds[b] = preds.get(b, 0) + 1
+            info["_preds"] = preds
+        n, a = 0, i.address
+        for _ in range(48):
+            p = prev.get(a)
+            if p is None or preds.get(a, 0) != 1:
+                return None
+            k = info["kinds"].get(p.address)
+            if k == "call":
+                _, f2, _ = self.callee(info, p)
+                return n if f2 and f2.get("retn") == 0 and (f2.get("retn_code") or f2.get("conv") == "cdecl"
+                                                           or "retn_code" not in f2) else None
+            if k or p.mnemonic.startswith(("j", "pop", "leave", "enter", "ret")):
+                return None
+            if p.mnemonic == "push":
+                n += p.operands[0].size if p.operands else 4
+            elif p.op_str.split(",")[0].strip() in ("esp", "sp"):
+                return None
+            a = p.address
+        return None
+
+    def _arg_bytes_cleanup(self, info, i, f):
         """(frame model) the stack argument bytes of a call from evidence in the code, not from a name (a decomp's
         declaration may be wrong): a callee-pops callee's own `ret N` (N > 0, read from the original's code), else
         the cleanup right after this call site (`add esp, N`, or pops of N/4 registers) when the callee pops
@@ -2179,6 +2232,17 @@ class Worker:
             a = p.address + p.size
         return None
 
+    def taken_here(self, addr, other=False):
+        """(O-up) the offsets of the frame addresses taken before the call at addr in the current side's code
+        (other: the other side's own entry is not known here, only that its analysis exists); None: no analysis"""
+        if getattr(self, "tb", None) is None:
+            return None
+        side = self.cur_side if not other else ("ours" if self.cur_side == "retail" else "retail")
+        t = self.tb.get(side)
+        if t is None:
+            return None
+        return True if other else t.get(addr)
+
     def do_call(self, s, i, info, tail=False):
         """the call event and the callee's effect; returns the successor state or None (path ends)"""
         C = self.C
@@ -2249,24 +2313,22 @@ class Worker:
             if w is not None and w < 0x100000 and w % 4 == 0 and wp % 4 == 0:
                 prot = list(prot) + [(top - o, top - o + 4) for o in sorted(self.saved_words.get(self.cur_side, ()))
                                      if o <= w]
-                lt = (getattr(self, "lowt", None) or {}).get(self.cur_side)
-                if lt is not None and (getattr(self, "lowt", None) or {}).get("ours" if self.cur_side == "retail"
-                                                                             else "retail") is not None:
-                    # (O-up, EQUIV_FRAME_OUP) the frame below the lowest address the function takes (above the
-                    # arguments of this call) is in no object the callee is given: it keeps its bytes
-                    lo_p, hi_p = esp_ev + 4 + wp, top - lt
+                tk = self.taken_here(i.address)
+                if tk is not None and self.taken_here(i.address, other=True) is not None and tk:
+                    # (O-up, EQUIV_FRAME_OUP) the frame below the lowest address the function has taken so far (above
+                    # the arguments of this call) is in no object the callee is given: it keeps its bytes
+                    lo_p, hi_p = esp_ev + 4 + wp, top - tk[0]
                     wd = const_diff(hi_p, lo_p)
                     if wd is not None and 0 < wd < 0x100000:
                         prot.append((lo_p, hi_p))
                 wframe = True
         dsym = None
-        if wframe and self.cur_side == "ours" and all(v is not None for v in (getattr(self, "lowt", None) or {}
-                                                                              ).values()) and getattr(self, "lowt", None):
-            # (O-up, uniform shift) what the callee leaves in ours' reachable frame is the original's bytes at the
-            # address shifted by D, the object shift the call obligation derives from the pointers it receives
-            # (_frame_window_diffs asserts D == that shift): the correlated havoc, so a frame read after the call
-            # relates (read_byte)
-            dsym = C.BVS("dsh%d" % k, 32, explicit_name=True)
+        if wframe and self.cur_side == "ours" and self.taken_here(i.address) and self.taken_here(i.address, other=True):
+            # (O-up) one correlated-havoc shift symbol per object piece of ours (module-level _pieces): what the
+            # callee leaves in a piece is the original's bytes at the address shifted by that piece's D, the shift
+            # the call obligation derives from the pointers it receives (_window_pieces pins D to it)
+            dsym = [C.BVS("dsh%d_%d" % (k, j_), 32, explicit_name=True)
+                    for j_, _pc in enumerate(_pieces(self.taken_here(i.address)))]
         if pframe or wframe:
             # (the callee's own area ends at the bytes pushed for this call: wp may be a merged cleanup that also
             # frees the frame, and must never reach the caller's memory at and above E)
@@ -2314,12 +2376,11 @@ class Worker:
         s.regs.fpreg = fresh("fpreg", 512)
         shift_ent = None
         if dsym is not None and area is not None:
-            zlo, zhi = const_diff(esp_ev + 4 + wp, self.IN["esp"]), const_diff(top, self.IN["esp"])
-            if zlo is not None and zhi is not None:
-                sg = lambda v: v - (1 << 32) if v >= 0x80000000 else v
-                shift_ent = (dsym, sg(zlo), sg(zhi))
-            else:
-                ev["dsym"] = dsym = None
+            depth_ = self.region_dz["depth"]
+            shift_ent = tuple((dsym[j_], depth_ - pc[0], depth_ - pc[1])
+                              for j_, pc in enumerate(_pieces(self.taken_here(i.address))))
+        elif dsym is not None:
+            ev["dsym"] = dsym = None
         s.memory.log = s.memory.log + ((("havoc", str(k + 1), tuple(prot), area, shift_ent) if area else
                                         ("havoc", str(k + 1), tuple(prot))),)
         if f.get("chkstk"):
@@ -3118,6 +3179,127 @@ def _frame_words(self, log, inesp, depth, lo):
     return out
 
 
+def _pieces(taken):
+    """(O-up) the object pieces of one side from its taken offsets (offsets below E): [(t, t_next)], lowest address
+    first; the piece's words are at offsets t, t-4, .. down to t_next + 4 (t_next: the next taken offset above it in
+    memory, else 0). Offsets at or above E are no pieces; an unaligned one makes the whole thing unusable ([])."""
+    ts = sorted({t for t in taken if t > 0}, reverse=True)
+    if any(t % 4 for t in ts):
+        return []
+    return [(t, ts[i + 1] if i + 1 < len(ts) else 0) for i, t in enumerate(ts)]
+
+
+def _piece_of(pcs, p):
+    """the index of the piece holding the frame offset p (a pointer's target), None below the lowest / above E"""
+    for i, (t, tn) in enumerate(pcs):
+        if tn < p <= t:
+            return i
+    return None
+
+
+def _window_pieces(self, name, fr, q, ptrs, Wa, Wb, word, Ua, Ub, depth, top_a, top_b, diffs):
+    """(O-up) the escaped-objects window, per OBJECT PIECE. The pieces of each version are the runs of frame words
+    between consecutive addresses it takes (_pieces); the callee reaches the pieces whose addresses it is given
+    (assumption O + O-up: an object extends upward from its lowest taken byte and holds no other taken address of
+    its own). Pointer pairs the call receives (arguments, registers, frame addresses found inside paired words)
+    pair a piece of the original with a piece of ours at the same position inside it; a pair needs equal sizes and
+    every word equal (indeterminate words aside), pointer words by their relation; a piece nothing points at is
+    paired with the piece at its own offset and size (an earlier escape); every piece must end up paired on both
+    sides. The shift of each pair pins that piece's correlated-havoc symbol D (do_call). -> diffs"""
+    C, z3 = self.C, self.z3
+    Pa = _pieces((self.tb.get("retail") or {}).get(fr.get("ar"), ()))
+    Pb = _pieces((self.tb.get("ours") or {}).get(fr.get("ao"), ()))
+    dsyms = fr["dsym"]
+    if os.environ.get("EQUIV_P2_DEBUG"):
+        with open(os.environ["EQUIV_P2_DEBUG"], "a") as dbg:
+            dbg.write("P2 pieces %s R=%s O=%s ptrs=%s\n" % (name, [(hex(a), hex(b)) for a, b in Pa],
+                                                        [(hex(a), hex(b)) for a, b in Pb], ptrs))
+    if not Pa or not Pb or len(dsyms) != len(Pb):
+        return diffs + [(name + " object pieces unusable", z3.BoolVal(True))]
+    pair, inv, work = {}, {}, []
+
+    def add(pa_, pb_):
+        ia, ib = _piece_of(Pa, pa_), _piece_of(Pb, pb_)
+        if ia is None or ib is None:
+            return name + " a pointer below the lowest taken address or outside the frame"
+        if Pa[ia][0] - pa_ != Pb[ib][0] - pb_:
+            return name + " pointers at different positions of their objects"
+        if pair.get(ia, ib) != ib or inv.get(ib, ia) != ia:
+            return name + " one object paired with two"
+        if ia not in pair:
+            pair[ia], inv[ib] = ib, ia
+            work.append(ia)
+        return None
+    for pa_, pb_ in ptrs:
+        if pa_ <= 0 and pb_ == pa_:
+            continue
+        bad = add(pa_, pb_)
+        if bad:
+            return diffs + [(bad, z3.BoolVal(True))]
+    for ia, (ta, tna) in enumerate(Pa):
+        if ia in pair:
+            continue
+        ib = next((j for j, (tb, tnb) in enumerate(Pb) if tb == ta and j not in inv), None)
+        if ib is None:
+            continue
+        pair[ia], inv[ib] = ib, ia
+        work.append(ia)
+    while work:
+        ia = work.pop()
+        ib = pair[ia]
+        (ta, tna), (tb, tnb) = Pa[ia], Pb[ib]
+        # a piece's words stop at the saved-register words / the top of the locals (not in W)
+        na_ = next((j for j in range((ta - tna) // 4) if ta - 4 * j not in Wa), (ta - tna) // 4)
+        nb_ = next((j for j in range((tb - tnb) // 4) if tb - 4 * j not in Wb), (tb - tnb) // 4)
+        if na_ != nb_:
+            # (O-up) an object holds no other taken address and no saved word: where one piece is shorter (it ends
+            # at the next taken address, or at the saved words) the true object is no longer than it, so the
+            # longer piece's extra words are no part of this object
+            na_ = nb_ = min(na_, nb_)
+        for j in range(na_):
+            oa, ob = ta - 4 * j, tb - 4 * j
+            if oa in Ua and ob in Ub:
+                continue
+            a_, b_ = word(oa, fr["la"], "a"), word(ob, fr["lb"], "b")
+            if a_ is None and b_ is None:
+                continue
+            if a_ is None or b_ is None:
+                diffs.append((name + " frame -%#x/-%#x written by one version only" % (oa, ob), z3.BoolVal(True)))
+                continue
+            if same(a_, b_):
+                po = _fp_off(self, a_, depth)
+                if po is not None and po > 0:
+                    if po > min(top_a, top_b):
+                        return diffs + [(name + " a frame address into the bytes pushed for the call",
+                                         z3.BoolVal(True))]
+                    bad = add(po, po)
+                    if bad:
+                        return diffs + [(bad, z3.BoolVal(True))]
+                continue
+            pa_, pb_ = _fp_off(self, a_, depth, q), _fp_off(self, b_, depth, q)
+            if pa_ is not None and pb_ is not None and pa_ > 0 and pb_ > 0:
+                if pa_ > top_a or pb_ > top_b:
+                    return diffs + [(name + " a frame address into the bytes pushed for the call", z3.BoolVal(True))]
+                bad = add(pa_, pb_)
+                if bad:
+                    return diffs + [(bad, z3.BoolVal(True))]
+                continue
+            if os.environ.get("EQUIV_P2_DEBUG"):
+                with open(os.environ["EQUIV_P2_DEBUG"], "a") as dbg:
+                    dbg.write("P2 pdiff %s piece %s>%s -%#x/-%#x R=%s O=%s\n" % (name, hex(ta), hex(tb), oa, ob,
+                                                                               str(a_)[:140], str(b_)[:140]))
+            diffs.append((name + " frame -%#x/-%#x" % (oa, ob), self.z(a_) != self.z(b_)))
+    for ia in range(len(Pa)):
+        if ia not in pair:
+            diffs.append((name + " object at -%#x of the original has no counterpart" % Pa[ia][0], z3.BoolVal(True)))
+    for ib in range(len(Pb)):
+        if ib not in inv:
+            diffs.append((name + " object at -%#x of ours has no counterpart" % Pb[ib][0], z3.BoolVal(True)))
+    for ib, ia in inv.items():
+        q.add(self.z(dsyms[ib] == C.BVV((Pb[ib][0] - Pa[ia][0]) & 0xffffffff, 32)))
+    return diffs
+
+
 def _frame_region_diffs(self, name, lo, la, lb, fr, q):
     """the frame-model obligation for one call/exit memory region: bytes at/above the entry esp equal, and every
     LIVE frame word matched to a word of the other side with an equal value (or a frame pointer to a matched
@@ -3316,6 +3498,9 @@ def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
             if pa_ is not None and pb_ is not None and pa_ != pb_:
                 ptrs.append((pa_, pb_))
                 continue
+            if os.environ.get("EQUIV_P2_DEBUG"):
+                with open(os.environ["EQUIV_P2_DEBUG"], "a") as dbg:
+                    dbg.write("P2 argword %s k=%d R=%s O=%s fp=%s/%s\n" % (name, k, str(a_)[:150], str(b_)[:150], pa_, pb_))
             diffs.append((name + " argument word %d" % k, self.z(a_) != self.z(b_)))
         for r, a_, b_ in fr.get("fpvis") or ():
             if b_ is not None and same(a_, b_) and _fp_off(self, a_, depth) is not None:
@@ -3355,6 +3540,9 @@ def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
                     dbg.write("   -%#x  R=%s  O=%s  %s\n" % (o, None if wa_ is None else str(wa_)[:60],
                                                            None if wb_ is None else str(wb_)[:60],
                                                            "same" if wa_ is not None and wb_ is not None and same(wa_, wb_) else "DIFF"))
+        if oup:
+            fr = dict(fr, la=la, lb=lb)
+            return _window_pieces(self, name, fr, q, ptrs, Wa, Wb, word, Ua, Ub, depth, top_a, top_b, diffs)
         while shifts:
             d = shifts.pop()
             if d in done:
@@ -3370,17 +3558,6 @@ def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
                     continue
                 if o in Ua and o + d in Ub:
                     continue            # neither version wrote either word since the entry: indeterminate
-                lr_, lo_ = self.lowt.get("retail"), self.lowt.get("ours")
-                if lr_ is not None and lo_ is not None:
-                    # (O-up, EQUIV_FRAME_OUP) a word entirely below the lowest address the version ever takes is in
-                    # no object it gives away: skipped when both are, a difference in object structure when one is
-                    pr_, po_ = o > lr_ + 3, o + d > lo_ + 3
-                    if pr_ and po_:
-                        continue
-                    if pr_ != po_:
-                        diffs.append((name + " frame -%#x/-%#x: below the lowest taken address on one side only"
-                                      % (o, o + d), z3.BoolVal(True)))
-                        continue
                 a_, b_ = word(o, la, "a"), word(o + d, lb, "b")
                 if a_ is None and b_ is None:
                     continue
@@ -3793,6 +3970,11 @@ def _run_region(self):
     bysig = {}
     for sb in B:
         bysig.setdefault(sb.globals["br"], []).append(sb)
+    if os.environ.get("EQUIV_P2_DEBUG"):
+        with open(os.environ["EQUIV_P2_DEBUG"], "a") as dbg:
+            for tag_, L_ in (("A", A), ("B", B)):
+                for s_ in L_:
+                    dbg.write("P2 path %s br=%s pc=%s\n" % (tag_, s_.globals["br"], str(self.pc(s_))[:400]))
     used, unA, cexs, matched, overlap = set(), [], [], 0, 0
     for sa in A:
         ok = None
