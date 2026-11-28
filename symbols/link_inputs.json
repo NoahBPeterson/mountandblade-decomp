@@ -224,6 +224,7 @@
   "fx_animation",
   "fx_key_frames",
   "world_cells",
+  "world_cells_tail",
   "world_grid",
   "rigid_body",
   "entity_types",

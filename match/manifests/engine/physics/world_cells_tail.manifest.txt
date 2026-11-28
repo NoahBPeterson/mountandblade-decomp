@@ -1,0 +1,7 @@
+../src/engine/physics/world_cells_tail.cpp  ?min2@@YAPAUint2@@PAU1@PBU1@1@Z  00423e70  /O2 /MT /Gy /TP
+../src/engine/physics/world_cells_tail.cpp  ?max2@@YAPAUint2@@PAU1@PBU1@1@Z  00423ea0  /O2 /MT /Gy /TP
+../src/engine/physics/world_cells_tail.cpp  ?in_rect@world@rgl@@QAEHPBUint2@@00@Z  00423ed0  /O2 /MT /Gy /TP
+../src/engine/physics/world_cells_tail.cpp  ?add@cell@rgl@@QAEXPAUshape_base@@@Z  00423f10  /O2 /MT /Gy /TP
+../src/engine/physics/world_cells_tail.cpp  ?remove@cell@rgl@@QAEXPAUshape_base@@@Z  00424060  /O2 /MT /Gy /TP
+../src/engine/physics/world_cells_tail.cpp  ?find@cell@rgl@@QBEHPAUshape_base@@@Z  004240d0  /O2 /MT /Gy /TP
+../src/engine/physics/world_cells_tail.cpp  ?push_back@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAEXABQAUObj@rgl@@@Z  00423fc0  /O2 /MT /Gy /TP

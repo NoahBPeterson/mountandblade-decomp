@@ -29,6 +29,7 @@ src/engine/fx/strategic_emitters.cpp
 src/engine/fx/fx_animation.cpp
 src/engine/fx/fx_key_frames.cpp
 src/engine/physics/world_cells.cpp
+src/engine/physics/world_cells_tail.cpp
 src/engine/physics/world_grid.cpp
 src/engine/physics/rigid_body.cpp
 src/engine/physics/world_collide.cpp

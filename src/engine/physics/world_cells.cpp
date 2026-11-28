@@ -68,7 +68,7 @@ void rgl::world::relocate(shape_base* o)
     int2 mn, mx;
     { int2 t1; mn = *min2(&t1, &nlo, lo); }
     int2* hi = &o->cell_max;
-    { int2 t2; mx = *max2(&t2, &nhi, hi); }
+    mx = *max2((int2*)&tmp, &nhi, hi);       // out aliases the dead bounding-box scratch (no frame slot of its own: 0x44)
     int2 p;
     for (p.x = mn.x; p.x <= mx.x; p.x++) {
         for (p.y = mn.y; p.y <= mx.y; p.y++) {
@@ -88,106 +88,3 @@ void rgl::world::relocate(shape_base* o)
     o->cell_min = nlo;
     o->cell_max = nhi;
 }
-
-// @ 0x423e70
-__declspec(noinline) int2* min2(int2* out, const int2* a, const int2* b)
-{
-    int x = a->x < b->x ? a->x : b->x;
-    int y = a->y < b->y ? a->y : b->y;
-    out->x = x;
-    out->y = y;
-    return out;
-}
-// @ 0x423ea0
-__declspec(noinline) int2* max2(int2* out, const int2* a, const int2* b)
-{
-    int x = a->x > b->x ? a->x : b->x;
-    int y = a->y > b->y ? a->y : b->y;
-    out->x = x;
-    out->y = y;
-    return out;
-}
-
-// @ 0x423ed0
-__declspec(noinline) int rgl::world::in_rect(const int2* p, const int2* lo, const int2* hi)
-{
-    if (p->x >= lo->x && p->x <= hi->x && p->y >= lo->y && p->y <= hi->y)
-        return 1;
-    return 0;
-}
-
-// std::vector<rgl::Obj*>::push_back / insert (0x423fc0 / 0x424010, shared by every pointer vector): instantiated where the original has
-// them (the end of this file); world_grid.cpp declares them extern, so its callers call them out of line (cl 13.10 refuses both in one unit)
-
-// ---- the cell ----------------------------------------------------------------------------------------------------
-// The cell's vector and list are instances the linker folded onto the shared pointer ones (docs/codegen.md 14.1):
-// vector<shape_base*>::push_back = vector<rgl::Obj*>'s 0x423fc0 (below), resize = vector<rgl::Obj*>'s 0x41fa00
-// (engine/scene/fx_element_pool.cpp), list<shape_base*>::_Insert = list<int>'s 0x41f640 (engine/scene/fx_element_pool.cpp). The original calls them out of line.
-namespace std {
-template<> __declspec(noinline) void vector<shape_base*>::push_back(shape_base* const& _X);                   // 0x423fc0
-template<> void vector<shape_base*>::resize(vector<shape_base*>::size_type _N, shape_base* _X);               // 0x41fa00
-template<> void list<shape_base*>::_Insert(list<shape_base*>::iterator _P, shape_base* const& _X);            // 0x41f640
-}
-
-// @ 0x423f10
-void rgl::cell::add(shape_base* x)
-{
-    unsigned pos = (unsigned)-1;
-    unsigned i = 0;
-    for (;;) {
-        if (i >= a.size())
-            break;
-        if (a[i] > x)
-            pos = i;
-        i++;
-        if (pos != (unsigned)-1)
-            break;
-    }
-    if (pos == (unsigned)-1) {
-        a.push_back(x);
-    } else {
-        a.resize(a.size() + 1, 0);
-        for (int j = a.size() - 1; j > (int)pos; j--)
-            a[j] = a[j - 1];
-        a[pos] = x;
-    }
-    objs.push_back(x);
-}
-
-// @ 0x4240d0
-__declspec(noinline) inline int rgl::cell::find(shape_base* o) const
-{
-    for (unsigned i = 0; i < a.size(); i++) {
-        if (a[i] == o)
-            return i;
-    }
-    return -1;
-}
-
-// @ 0x424060
-void rgl::cell::remove(shape_base* o)
-{
-    int idx = find(o);
-    if (idx >= 0) {
-        unsigned i = idx;
-        while (i < a.size() - 1) {
-            a[i] = a[i + 1];
-            i++;
-        }
-        a.resize(a.size() - 1, 0);
-    }
-}
-
-// @ 0x424010
-// insert is the stock body spelled with the public insert(where, 1, x), out of line (cl 13.10 would inline the stock one into push_back)
-namespace std {
-template<> __declspec(noinline) vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator _P, rgl::Obj* const& _X)
-{
-    size_type _Off = size() == 0 ? 0 : _P - begin();
-    insert(_P, (size_type)1, _X);
-    return (begin() + _Off);
-}
-}
-// @ 0x423fc0 / 0x424010
-template void std::vector<rgl::Obj*>::push_back(rgl::Obj* const&);
-template std::vector<rgl::Obj*>::iterator std::vector<rgl::Obj*>::insert(std::vector<rgl::Obj*>::iterator, rgl::Obj* const&);
