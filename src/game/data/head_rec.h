@@ -53,7 +53,7 @@ struct head_rec {
     // slot 7: pure here (the base table 0x5947d8 holds __purecall there); EVERY derived class overrides it - 0x48b170
     // (`return 1`) in most, 0x4280e0 (`return 0`) in ResultWindow, C4c3050, Rec34 and Rec38.
     virtual char pure_7() = 0;                                      // slot 7: __purecall; every derived class overrides it
-    virtual char always_true() { return 1; }                        // slot 8  0x48b170
+    virtual bool always_true() { return 1; }                        // slot 8  0x48b170
     void frame_hook();         // 0x4ec460 (game/ui/screens/screen_misc.cpp): the current screen's end-of-frame keys (the body never reads this)
     void set_enabled_text(MissionUi* w);   // 0x4d6dd0 (game/ui/screens/options/keys_page.cpp): caption a toggle "ui_enabled" / "ui_disabled" (never reads this)
     int     w04;               // +4     0x4c2c50

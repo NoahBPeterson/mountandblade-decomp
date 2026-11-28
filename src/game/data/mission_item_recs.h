@@ -98,7 +98,7 @@ struct MissionBlocker : item_base {
     virtual void frame_update(float);                         // slot 3  0x5261e0 tick (mission_5.cpp)
     virtual void slot_empty_4();                                // slot 4  0x4cea10 the camera / parameter initialiser (mission_item_records.cpp)
     virtual char pure_7() { return 1; }                         // slot 7  0x48b170 (overrides the base's pure slot)
-    virtual char always_true() { return 0; }                    // slot 8  0x4280e0 rgl::static_entity::awake (xor al,al; ret: ICF folds it)
+    virtual bool always_true() { return 0; }                    // slot 8  0x4280e0 rgl::static_entity::awake (xor al,al; ret: ICF folds it)
     void update_camera(float dt);                               // 0x4f8c80 (ret 4; agent_hud.cpp)
     void update_status();                                       // 0x4fb350 (agent_hud.cpp)
     void update_equipment();                                    // 0x4f8b40 (this unused; agent_hud.cpp)
