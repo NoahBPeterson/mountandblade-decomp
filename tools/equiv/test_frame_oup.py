@@ -205,15 +205,15 @@ def test_selftest_different_callee_saved_registers():
 # stop pins it as a constant (F' marker) and the next region starts from it. Mutants: ours pushes ebx unzeroed;
 # ours zeroes it to 1.
 def _zero(ours_zero="31db"):
-    # retail: ebp = 0 once; ours: ebx = 0 inside the loop (every iteration)
-    pre_r = H("55" "31ed" "8b4c2408" "55")
+    # retail: ebp = 0 once; ours: ebx = 0 inside the loop (every iteration); the loop counter is esi (callee-saved)
+    pre_r = H("55" "56" "31ed" "8b74240c" "55")
     cr, rr = _call_g(len(pre_r))
-    tail_r = H("83c404" "49" "75f4" "5d" "c3")
+    tail_r = H("83c404" "4e" "75f4" "5e" "5d" "c3")
     a = Func(RVA, pre_r + cr + tail_r, {rr: ("abs", RVA + 0x5000)}, "retail", "retail", {"tables": None})
-    pre_o = H("53" "8b4c2408") + H(ours_zero) + H("53")
+    pre_o = H("53" "56" "8b74240c") + H(ours_zero) + H("53")
     co, ro = _call_g(len(pre_o))
     back = (-(len(ours_zero) // 2 + 1 + 5 + 3 + 1 + 2)) & 0xff
-    tail_o = H("83c404" "49" "75") + bytes([back]) + H("5b" "c3")
+    tail_o = H("83c404" "4e" "75") + bytes([back]) + H("5e" "5b" "c3")
     b = Func(0, pre_o + co + tail_o, {ro: ("sym", "_g", 0x14, 0)}, "ours", "ours",
              {"symbol": "?f@@YAHH@Z", "consts": {}, "tables": None})
     return a, b
@@ -229,3 +229,7 @@ def test_zero_register_not_zeroed_not_proved():
 
 def test_zero_register_zeroed_to_one_not_proved():
     assert _prove(*_zero(ours_zero="bb01000000")) != "proved"
+
+
+def test_selftest_zero_register():
+    _selftest(_zero())
