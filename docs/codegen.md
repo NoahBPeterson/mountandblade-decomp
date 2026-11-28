@@ -621,6 +621,15 @@ a constant in ebx, look for a web the original keeps live across a call (an elem
 `uv run tools/constregs.py SRC --func S --c2 13.10 [--value 1] -- <cl args>` (in ../vs2005-cpp) lists each constant's
 priority, benefit, uses by width, the BYTE flag, the outcome and the levers.
 
+**`base + index*size`: chain, lea or base (c2scope probe addrsum, docs/c2/immcand.md 6.6; 2026-11-27).** Evaluated
+ONCE (in any spelling: `p + i`, `&p[i]`, char* arithmetic, local base / index), the sum is built in place as
+`imul r,size; add r,[base]` (one user: the two-address add with a memory operand). Evaluated TWICE in one region, it is
+one CSE temporary with two users, lowered as a separate base load and `lea r,[prod+base]`; if only the product is
+shared, base goes into the register and then `add r,prod`. A second evaluation after a call stays a chain (the call
+kills the loads). So an original `lea edi,[eax+edx]` where ours has `imul; add` means the original source evaluated the
+address twice: Mission::spawn 0x4832b0 tests `g_game->troops[a->troop].flags` again beside `Troop* t = &...` (aligned
+366 -> 284, size equal, equiv 0 mismatches).
+
 ### 6.3 Register calling conventions for translation-unit-local statics
 
 **Without link-time code generation, a `static` function in the same TU gets a
