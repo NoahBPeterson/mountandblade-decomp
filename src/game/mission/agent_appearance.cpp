@@ -95,7 +95,8 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
     if (!(hand != 0)) {
         // ---- the character's weapon ---------------------------------------------------------------
-        ItemRef* w = &eq->weapon;
+        ItemRef wv = eq->weapon;                    // the original works on a frame copy of the pair (its armor getters get a frame address)
+        ItemRef* w = &wv;
         if (w->item >= 0) {
             stats[0] += w->head_armor();
             stats[1] += w->body_armor();
@@ -165,7 +166,8 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         // ---- the helmet --------------------------------------------------------------------------
         {
-            ItemRef* h = &eq->helmet;
+            ItemRef hv = eq->helmet;
+            ItemRef* h = &hv;
             if (h->item >= 0) {
                 stats[0] += h->head_armor();
                 stats[1] += h->body_armor();
@@ -205,7 +207,8 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         // ---- the boots (the L/R pair plus the lit Lx/Rx pair) ------------------------------------
         {
-            ItemRef* b = &eq->boots;
+            ItemRef bv = eq->boots;
+            ItemRef* b = &bv;
             if (b->item >= 0) {
                 stats[0] += b->head_armor();
                 stats[1] += b->body_armor();
@@ -263,7 +266,8 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         // ---- the body armour ---------------------------------------------------------------------
         {
-            ItemRef* bd = &eq->body;
+            ItemRef bdv = eq->body;
+            ItemRef* bd = &bdv;
             if (bd->item < 0) {
                 lod_mesh* c1 = clone_char_mesh(colour, &Skin::calf_l);
                 lod_mesh* c2 = clone_char_mesh(colour, &Skin::calf_r);
