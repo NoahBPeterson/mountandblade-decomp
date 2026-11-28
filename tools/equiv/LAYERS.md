@@ -587,6 +587,12 @@ model, the third behind its own flag because it strengthens O:
   consecutive frame addresses a version has taken so far (`Side.taken_before`, per call): pointer pairs pair pieces
   (same position inside), the longer piece of a pair is cut to the shorter (an object holds no other taken address,
   no saved word), each pair pins its own correlated-havoc symbol; every piece must pair on both sides.
+  (j) Constant registers carried across stops (frame model): a live register whose value is a concrete constant at a
+  stop pair (the zero register of `xor ebp,ebp` that only one version has run yet) is pinned in F' by a marker
+  triple ((-100-i, c, 0): the original's register i; (-200-i, c, 0): ours'; (-300,0,0): the frame part is the
+  standard interface), and the next region's entry state sets the register to c. An exact fact (the term is the
+  constant on every path of the stop pair; the cut key carries it), and only at stops where it cannot unroll a loop
+  (at a loop head: registers the loop never writes). Test test_frame_oup `_zero` (proves only with the markers).
   Known limits that keep rows unproved: spills inside the top piece (above the highest taken address) are compared
   with the other version's; a callee that returns a pointer into the frame which is dereferenced; the zero register
   (`xor ebp,ebp` on one side only) is not carried across cuts (a constant relation in pi would do it).
