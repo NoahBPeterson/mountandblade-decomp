@@ -401,6 +401,7 @@ class Side:
             nd = dep
             if bpd_ok and m == "mov" and i.op_str == "ebp, esp" and dep is not None and not bpd:
                 bpd.append(dep)
+                self.bpd = dep
             if k == "call":
                 if pf & set(GPR7) or fst:
                     esc = True               # (fst: a frame address in the frame may be a stack argument)
@@ -665,6 +666,57 @@ class Side:
                 continue
             out[a] = [o for o in range(4, min(p[2], self.FRAME_CAP) + 1, 4) if not v & set(range(o - 3, o + 1))]
         return out
+
+    def lowest_taken(self, prov):
+        """(frame model, EQUIV_FRAME_OUP) the offset o below the entry esp E of the LOWEST frame address the function
+        ever takes (`lea r, [esp + d]` / `lea r, [ebp + d]` of an ebp frame), so E - o is that address; None when some
+        use of esp or ebp as a value is not such a lea (mov r, esp; an indexed lea; push esp; ...) or a depth is
+        unknown there: then nothing is known. Words below it (larger o) are in no object whose address the function
+        gives away, under the strengthened assumption O-up (an object extends upward from the lowest byte the
+        function takes of it)."""
+        from capstone import x86_const as X
+        bpd = getattr(self, "bpd", None)
+        low = None
+        for i in self.ins:
+            m, ops = i.mnemonic, i.operands
+            st = prov.get(i.address)
+            if st is None:
+                continue                                  # unreachable
+            if m == "lea" and len(ops) == 2 and ops[1].type == X.X86_OP_MEM:
+                mem = ops[1].mem
+                b = i.reg_name(mem.base) if mem.base else None
+                if b in ("esp", "ebp") or (mem.index and i.reg_name(mem.index) in ("esp", "ebp")):
+                    if mem.index or (b == "esp" and st[2] is None) or (b == "ebp" and bpd is None):
+                        return None
+                    o = (st[2] if b == "esp" else bpd) - mem.disp
+                    if b == "esp" and ops[0].type == X.X86_OP_REG and i.reg_name(ops[0].reg) == "esp":
+                        continue                          # lea esp,[esp+k]: an esp adjustment, not a taken address
+                    low = o if low is None else max(low, o)
+                continue
+            if m in ("push", "pop", "call", "ret", "retn", "leave", "enter") or m.startswith(("push", "pop")):
+                if m == "push" and ops and ops[0].type == X.X86_OP_REG and i.reg_name(ops[0].reg) in ("esp", "ebp") \
+                        and i.reg_name(ops[0].reg) == "esp":
+                    return None
+                continue
+            if m == "mov" and i.op_str in ("esp, ebp", "ebp, esp"):
+                continue                                  # the ebp frame's set-up and tear-down
+            for k, o_ in enumerate(ops):
+                if o_.type != X.X86_OP_REG:
+                    continue
+                r = i.reg_name(o_.reg)
+                if r not in ("esp", "ebp"):
+                    continue
+                if m in ("sub", "add", "and") and k == 0 and r == "esp":
+                    continue
+                if m in ("mov", "cmp", "test") and k == 1 and r == "ebp" and ops[0].type == X.X86_OP_MEM:
+                    return None                           # a frame pointer stored
+                if r == "ebp" and m == "mov" and k == 1:
+                    return None
+                if r == "ebp" and k == 0:
+                    return None
+                if r == "esp":
+                    return None
+        return low
 
     def prologue_saves(self):
         """(frame model) the addresses of the prologue's `push r` that save a callee-saved register (ebx, esi, edi,
@@ -1502,6 +1554,8 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         job["escb_r"], job["escb_o"] = escb(PR, cpr), escb(PO, cpo)
         job["npush_r"] = {"%x" % a: v[0] for a, v in cpr.items()}
         job["npush_o"] = {"%x" % a: v[0] for a, v in cpo.items()}
+        if os.environ.get("EQUIV_FRAME_OUP") == "1":
+            job["lowt_r"], job["lowt_o"] = R.lowest_taken(PR), O.lowest_taken(PO)
         if os.environ.get("EQUIV_FRAME_DUMP"):
             # diagnostics: the static depth / escape state at every instruction of both sides
             with open(os.environ["EQUIV_FRAME_DUMP"], "w") as fh_:
@@ -1522,7 +1576,8 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         # code outside the region changes them, so the region cache must not hand it the original's result
         bij_sig += hashlib.sha256(json.dumps([job.get(k) for k in (
             "frame_r", "frame_o", "frame_dead_r", "frame_dead_o", "noesc_r", "noesc_o", "saved_r", "saved_o",
-            "unw_r", "unw_o", "npush_r", "npush_o", "escb_r", "escb_o", "pops_r", "pops_o")], sort_keys=True).encode()).hexdigest()[:16]
+            "unw_r", "unw_o", "npush_r", "npush_o", "escb_r", "escb_o", "pops_r", "pops_o", "lowt_r",
+            "lowt_o")], sort_keys=True).encode()).hexdigest()[:16]
     done, forced, rounds = {}, set(), 0
     vidx, tried = {}, {}         # key -> index into CUT_VARIANTS; key -> [(variant, stop sets, result)]
     pool = _Pool(jobs)

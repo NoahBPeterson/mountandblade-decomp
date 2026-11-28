@@ -1282,6 +1282,7 @@ class Worker:
                           "ours": {int(a, 16): n for a, n in (job.get("npush_o") or {}).items()}}
             self.unw = {"retail": {int(a, 16): set(v) for a, v in (job.get("unw_r") or {}).items()},
                         "ours": {int(a, 16): set(v) for a, v in (job.get("unw_o") or {}).items()}}
+            self.lowt = {"retail": job.get("lowt_r"), "ours": job.get("lowt_o")}
             self.pops = {"retail": {int(a, 16): n for a, n in (job.get("pops_r") or {}).items()},
                          "ours": {int(a, 16): n for a, n in (job.get("pops_o") or {}).items()}}
             self.esc_before = {"retail": {int(a, 16) for a in job.get("escb_r") or ()},
@@ -2242,6 +2243,15 @@ class Worker:
             if w is not None and w < 0x100000 and w % 4 == 0 and wp % 4 == 0:
                 prot = list(prot) + [(top - o, top - o + 4) for o in sorted(self.saved_words.get(self.cur_side, ()))
                                      if o <= w]
+                lt = (getattr(self, "lowt", None) or {}).get(self.cur_side)
+                if lt is not None and (getattr(self, "lowt", None) or {}).get("ours" if self.cur_side == "retail"
+                                                                             else "retail") is not None:
+                    # (O-up, EQUIV_FRAME_OUP) the frame below the lowest address the function takes (above the
+                    # arguments of this call) is in no object the callee is given: it keeps its bytes
+                    lo_p, hi_p = esp_ev + 4 + wp, top - lt
+                    wd = const_diff(hi_p, lo_p)
+                    if wd is not None and 0 < wd < 0x100000:
+                        prot.append((lo_p, hi_p))
                 wframe = True
         if pframe or wframe:
             # (the callee's own area ends at the bytes pushed for this call: wp may be a merged cleanup that also
@@ -2849,10 +2859,15 @@ class Worker:
             bad = [n for n, d in diffs if z3.is_true(m.eval(d, model_completion=True))]
             out["what"] = ", ".join(bad[:4]) or diffs[0][0]
             mem = [n for n in bad if n.endswith("memory")]
+            if not mem:
+                # (frame model) a memory obligation's finer names: "exit#0 memory caller", "... frame -0x38"
+                mem = [n.split(" memory")[0] + " memory" for n in bad if " memory" in n]
             if mem:
+                out["rel"] = None
                 ev = lambda e: m.eval(self.z(e), model_completion=True).as_long()
                 addr = ev(self.PROBE)
                 out["addr"] = hex(addr)
+                out["addr_rel_in_esp"] = hex((addr - ev(self.IN["esp"])) & 0xffffffff)
                 reg = [r for r in regions if r[0] == mem[0]][0]
                 lo, top = ev(reg[1]), ev(self.IN["esp"]) + 4 + (self.job.get("argw") or 0)
                 argtop = lo + 4 + reg[5] if isinstance(reg[5], int) else lo
@@ -3330,6 +3345,17 @@ def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
                     continue
                 if o in Ua and o + d in Ub:
                     continue            # neither version wrote either word since the entry: indeterminate
+                lr_, lo_ = self.lowt.get("retail"), self.lowt.get("ours")
+                if lr_ is not None and lo_ is not None:
+                    # (O-up, EQUIV_FRAME_OUP) a word entirely below the lowest address the version ever takes is in
+                    # no object it gives away: skipped when both are, a difference in object structure when one is
+                    pr_, po_ = o > lr_ + 3, o + d > lo_ + 3
+                    if pr_ and po_:
+                        continue
+                    if pr_ != po_:
+                        diffs.append((name + " frame -%#x/-%#x: below the lowest taken address on one side only"
+                                      % (o, o + d), z3.BoolVal(True)))
+                        continue
                 a_, b_ = word(o, la, "a"), word(o + d, lb, "b")
                 if a_ is None and b_ is None:
                     continue
