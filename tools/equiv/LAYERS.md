@@ -567,6 +567,30 @@ model, the third behind its own flag because it strengthens O:
   from the object, object contents differing: not proved; the same under a uniform shift with the frame read after the
   call).
 
+- *More of stage 3.* (e) A load of the function's own stack argument (`mov r, [esp+d]` / `[ebp+d]` at or above E+4)
+  is no frame address (regions `_arg_load`), provided the function never writes the argument area, takes its
+  address or uses an indexed esp/ebp operand (`_compute_args_clean`, from a first provenance pass); a pointer
+  parameter then counts as "no frame address" for the entry-pointer assumption, and the path conditions of a
+  function that stored a spill before reading through its parameter stop containing If-chains over the spill slot
+  (the equal-path-condition pairing of 0x423c80 went from 1 of 5 paths to 5 of 5). Same dead-stack argument as for
+  entry registers. (f) The argument bytes of a cdecl call whose cleanup is merged into a later call's: the call's OWN
+  pushes since the previous cdecl call returned (the arguments are contiguous at the top of the stack; a cdecl
+  callee's leftover words lie above them and hold garbage after its call), not the merged N. (g) F' also carries
+  SLOT <-> REGISTER relations (a triple with a negative offset: `(o, -(1+i), 4)` = the original's word o holds ours'
+  register i of regs eax..edi; `(-(1+i), p, 4)` = ours' word p holds the original's register i): a live word with no
+  word partner that equals a register of the other version at the stop (a callee-saved register one version pushed
+  and the other kept: 0x4915d0, test_frame_oup `_saves`); each pair is an obligation (the two terms equal), and the
+  next region reads the slot as that register's entry value (frame_base). Reads through a symbolic pointer ignore
+  them (weaker, never wrong). (h) A stop that one version can reach from a cut's start while the other version
+  reaches none but its own is a stop of ANOTHER cut (a shared epilogue entered at a different position): the region
+  runs through it instead (`regions._no_phantom`). (i) With EQUIV_FRAME_OUP the objects are the PIECES between
+  consecutive frame addresses a version has taken so far (`Side.taken_before`, per call): pointer pairs pair pieces
+  (same position inside), the longer piece of a pair is cut to the shorter (an object holds no other taken address,
+  no saved word), each pair pins its own correlated-havoc symbol; every piece must pair on both sides.
+  Known limits that keep rows unproved: spills inside the top piece (above the highest taken address) are compared
+  with the other version's; a callee that returns a pointer into the frame which is dereferenced; the zero register
+  (`xor ebp,ebp` on one side only) is not carried across cuts (a constant relation in pi would do it).
+
 **Stage 1 (implemented, same flag).** F is carried in the cut key (x, y, pi, F) with g = 0 (esp equal at cuts):
 - *F at a stop* (angr_layer `_frame_exit_diffs`): memory at and above E equal at the same addresses; the frame words
   [esp, E) live at the stop on either side (frame_liveness, "all" at a call) are compared at the same address
