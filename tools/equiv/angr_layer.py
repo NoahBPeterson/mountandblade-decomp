@@ -3961,12 +3961,34 @@ def _match_exit(self, xa, xb, q):
         # (frame model) a live register whose value is a constant at the stop (a zero register, `xor ebp, ebp`, that
         # only one version has set so far; a pair of equal constants is better kept as constants than as a pi pair,
         # which would relate the two registers' unknown entry values): the next region starts with that constant (the
-        # concrete value is the same on every path of this stop pair: an exact fact, not a guess)
+        # concrete value is the same on every path of this stop pair: an exact fact, not a guess). At a loop head
+        # only a register the loop never writes (a loop-carried counter is a constant on every iteration, and one
+        # cut per value would unroll the loop).
+        def invariant(side, at, reg):
+            info = self.info.get(side, {})
+            if at not in info.get("heads", ()):
+                return True
+            fam = {"eax": "eax", "ax": "eax", "al": "eax", "ah": "eax", "ecx": "ecx", "cx": "ecx", "cl": "ecx",
+                   "ch": "ecx", "edx": "edx", "dx": "edx", "dl": "edx", "dh": "edx", "ebx": "ebx", "bx": "ebx",
+                   "bl": "ebx", "bh": "ebx", "ebp": "ebp", "bp": "ebp", "esi": "esi", "si": "esi", "edi": "edi",
+                   "di": "edi"}
+            for a in loop_body(info, at):
+                ins = info["by"].get(a)
+                if ins is None:
+                    return False
+                try:
+                    wr = {fam.get(ins.reg_name(x)) for x in ins.regs_access()[1]}
+                except Exception:
+                    return False
+                if reg in wr or (info["kinds"].get(a) == "call" and reg in ("eax", "ecx", "edx")) or \
+                        ins.mnemonic.startswith(("rep", "movs", "stos", "lods", "scas", "cmps")):
+                    return False
+            return True
         for i_, r in enumerate(g7):
-            if r in lr and ra[r].concrete:
+            if r in lr and ra[r].concrete and invariant("retail", xa["at"], r):
                 self._exit_consts.append((-100 - i_, ra[r].concrete_value, 0))
         for i_, v in enumerate(g7):
-            if v in lo and rb[v].concrete:
+            if v in lo and rb[v].concrete and invariant("ours", xb["at"], v):
                 self._exit_consts.append((-200 - i_, rb[v].concrete_value, 0))
     if self.frame_model:
         # (stage 2) a live register holding a frame address on both sides, at different offsets (the esp delta,
