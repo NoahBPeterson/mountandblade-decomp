@@ -188,6 +188,7 @@ class Machine:
         self.hooks = []
         self.last_fault = None
         self.lazy = None            # callable(page) -> bytes for pool pages, set by the runner
+        self.snap_fetch = None      # callable(address, size) -> bool: maps captured-process pages on demand (equiv.py --snapshots)
         self.pool_pages = {}        # page -> initial bytes of every page mapped during this run
         self.pool_slots = []        # slots mapped during this run
         self.pool_built = set()     # slots the input itself lays out (typed objects, Input.pool_over): exempt from the
@@ -271,6 +272,9 @@ class Machine:
         return 1                    # skip the real rdtsc
 
     def _on_bad_mem(self, uc, access, address, size, value, _):
+        if (self.snap_fetch is not None and access in (UCC.UC_MEM_READ_UNMAPPED, UCC.UC_MEM_WRITE_UNMAPPED)
+                and self.snap_fetch(address, size)):
+            return True
         if (access in (UCC.UC_MEM_READ_UNMAPPED, UCC.UC_MEM_WRITE_UNMAPPED) and self.lazy is not None
                 and POOL_BASE <= address < POOL_BASE + POOL_SIZE):
             slot = address & ~(SLOT - 1)
@@ -508,10 +512,16 @@ class Machine:
 
     # ------------------------------------------------------------------ memory helpers
     def u32(self, a):
-        return struct.unpack("<I", self.uc.mem_read(a, 4))[0]
+        return struct.unpack("<I", self.read(a, 4))[0]
 
     def read(self, a, n):
-        return bytes(self.uc.mem_read(a, n))
+        try:
+            return bytes(self.uc.mem_read(a, n))
+        except UcError:
+            # an import handler reading captured-process memory the program itself has not touched yet
+            if self.snap_fetch is None or not self.snap_fetch(a, n):
+                raise
+            return bytes(self.uc.mem_read(a, n))
 
     def write(self, a, data):
         """Write on behalf of the emulated program (import handlers, input setup): refuses read-only
@@ -541,7 +551,12 @@ class Machine:
                 stop = min(e, hi)
                 if start < stop:
                     self.img_dirty.update(range(start, stop, 0x1000))
-        self.uc.mem_write(a, bytes(data))
+        try:
+            self.uc.mem_write(a, bytes(data))
+        except UcError:
+            if self.snap_fetch is None or not self.snap_fetch(a, n):
+                raise
+            self.uc.mem_write(a, bytes(data))
 
     def cstr(self, a, wide=False, limit=1 << 16):
         out = bytearray()

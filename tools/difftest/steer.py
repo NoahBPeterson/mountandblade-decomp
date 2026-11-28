@@ -298,8 +298,7 @@ class Steer:
                 except Exception as e:
                     if os.environ.get("DIFFTEST_STEER_DEBUG"):
                         print("  callee cmp %08x: operands failed: %r" % (ins.address, e), flush=True)
-            ranges = [(M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE), (r.esp_entry, r.args_hi)]
-            ranges += [(lo, hi) for _nm, lo, hi in m.writable]
+            ranges = r.input_ranges()
             hooks = [uc.hook_add(UC_HOOK_MEM_READ, on_read, begin=lo, end=hi - 1) for lo, hi in ranges]
             hooks.append(uc.hook_add(UC_HOOK_CODE, on_cmp, begin=cins.address, end=cins.address))
             if goal and kind == "float":
@@ -441,7 +440,7 @@ class Steer:
             return []
         locs = []
         for a, pc in freads:                    # every float the run read from the input, not just the last few
-            if pc in self.fpcs and self.region(a) in ("pool", "data", "arg") and (a, 4) not in locs:
+            if pc in self.fpcs and self.region(a) in ("pool", "data", "arg", "snap") and (a, 4) not in locs:
                 locs.append((a, 4))
         rng.shuffle(locs)
         locs = locs[:24]
@@ -595,6 +594,9 @@ class Steer:
         try:
             return m.read(a, n)
         except Exception:
+            sp = self.r.snap_peek(a, n)
+            if sp is not None:
+                return sp
             if not (M.POOL_BASE <= a and a + n <= M.POOL_BASE + M.POOL_SIZE) or getattr(m, "lazy", None) is None:
                 raise
             out = bytearray()
@@ -680,6 +682,8 @@ class Steer:
             return "arg"
         if r.m.in_image_writable(a):
             return "data"
+        if r.snapin is not None and r.snapin.mappable(a & ~0xFFF):
+            return "snap"                   # captured game memory (--snapshots): an edit is an Input.overrides dword
         return None
 
     def set_loc(self, inp, loc, val, kind):
@@ -745,6 +749,10 @@ class Steer:
             return struct.unpack_from("<I", pg, a4 & 0xFFF)[0]
         if a4 in inp.overrides:
             return inp.overrides[a4]
+        if getattr(inp, "snap", None) is not None and self.r.snapin is not None:
+            return self.r.snapin.value(inp, a4)         # the captured state (image .data included)
+        if reg == "snap":
+            return None
         m = self.r.m
         for nm, lo, hi in m.writable:
             if lo <= a4 < hi:
@@ -853,7 +861,7 @@ class Steer:
         boundary value and the other recent float fields to 0."""
         fl = []
         for a, s, v, pc in reversed(rec):
-            if s == 4 and pc in self.fpcs and self.region(a) in ("pool", "data", "arg") and (a, 4) not in fl:
+            if s == 4 and pc in self.fpcs and self.region(a) in ("pool", "data", "arg", "snap") and (a, 4) not in fl:
                 fl.append((a, 4))
             if len(fl) >= 4:
                 break
@@ -876,7 +884,7 @@ class Steer:
         (std::vector-style begin/end, a count from end - begin), make end = begin + a small size."""
         out = []
         seen = set()
-        reads = {a: v for a, s, v, _pc in rec if s == 4 and self.region(a) in ("pool", "data")}
+        reads = {a: v for a, s, v, _pc in rec if s == 4 and self.region(a) in ("pool", "data", "snap")}
         for a, s, v, _pc in reversed(rec):
             if s != 4 or a in seen or (a - 4) not in reads:
                 continue

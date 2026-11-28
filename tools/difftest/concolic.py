@@ -144,7 +144,7 @@ class Trace:
         return v
 
     def input_byte(self, a):
-        return self.st.region(a) in ("pool", "data", "arg")
+        return self.st.region(a) in ("pool", "data", "arg", "snap")
 
     def rd_reg(self, name):
         """(expr or None, concrete) of a (partial) register."""

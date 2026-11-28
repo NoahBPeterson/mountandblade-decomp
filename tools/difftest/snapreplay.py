@@ -46,12 +46,12 @@ def read_snapshots(d):
     return sorted(out)
 
 
-def parse(path):
-    """-> (va, ctx bytes, [(page, bytes or None for zero)])"""
-    b = open(path, "rb").read()
+def walk_records(b, base=0):
+    """-> (seq, va, ctx bytes, [(page, offset of its 4 KB in b, or None for a zero page)]): the one place that knows the
+    cap_*.bin layout (capture.c). `b` is bytes or an mmap; offsets are relative to it."""
     magic, seq, va, n = struct.unpack_from("<4I", b, 0)
-    assert magic == 0x50434d4d, path
-    ctx = b[16:16 + n]
+    assert magic == 0x50434d4d, "not a capture file"
+    ctx = bytes(b[16:16 + n])
     p = 16 + n
     pages = []
     while True:
@@ -62,9 +62,109 @@ def parse(path):
         if rec & 1:
             pages.append((rec & ~0xfff, None))
         else:
-            pages.append((rec, b[p:p + 0x1000]))
+            pages.append((rec, p))
             p += 0x1000
-    return va, ctx, pages
+    return seq, va, ctx, pages
+
+
+def parse(path):
+    """-> (va, ctx bytes, [(page, bytes or None for zero)])"""
+    b = open(path, "rb").read()
+    _seq, va, ctx, pages = walk_records(b)
+    return va, ctx, [(pg, None if off is None else b[off:off + 0x1000]) for pg, off in pages]
+
+
+class SnapStore:
+    """The captured process memory as a lazily read, random-access store: page(seq, address) is the page's bytes as of
+    snapshot `seq`. Snapshot k stores only the pages that changed since k-1 (capture.c), so an index {page: [(seq, file,
+    offset)]} (built by walking the files with mmap, cached in <dir>/.index.pkl) finds the newest version at or before
+    `seq` without holding the 2.5 GB in memory. equiv.py --snapshots maps pages from it on demand; Replayer (below)
+    keeps its own whole-state dict and does not need it."""
+
+    def __init__(self, d):
+        import mmap, pickle
+        self.dir = os.path.abspath(d)
+        files = read_snapshots(d)
+        self.files = [f for _s, _v, f in files]
+        key = [(os.path.basename(f), os.path.getsize(f)) for f in self.files]
+        cache = os.path.join(d, ".index.pkl")
+        idx = None
+        try:
+            idx = pickle.load(open(cache, "rb"))
+            if idx.get("key") != key:
+                idx = None
+        except Exception:                                  # noqa: BLE001 - no / stale cache: rebuild
+            idx = None
+        if idx is None:
+            pages, ctxs, vas = {}, {}, {}
+            for fi, (seq, va, f) in enumerate(files):
+                with open(f, "rb") as fh:
+                    mm = mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ)
+                    try:
+                        _s, _v, ctx, recs = walk_records(mm)
+                    finally:
+                        mm.close()
+                ctxs[seq], vas[seq] = ctx, va
+                for pg, off in recs:
+                    pages.setdefault(pg, []).append((seq, fi, off))
+            idx = {"key": key, "pages": pages, "ctx": ctxs, "va": vas}
+            try:
+                pickle.dump(idx, open(cache + ".tmp", "wb"), protocol=4)
+                os.replace(cache + ".tmp", cache)
+            except OSError:
+                pass
+        self.pages, self.ctxs, self.vas = idx["pages"], idx["ctx"], idx["va"]
+        self._seqs = {pg: [e[0] for e in lst] for pg, lst in self.pages.items()}
+        self._fd = {}
+
+    def seqs(self, va):
+        """Snapshot numbers of function va, oldest first."""
+        return sorted(s for s, v in self.vas.items() if v == va)
+
+    def vas_captured(self):
+        return sorted(set(self.vas.values()))
+
+    def ctx(self, seq):
+        return self.ctxs[seq]
+
+    def has(self, seq, page):
+        """True when the capture ever recorded `page` at or before snapshot seq."""
+        sq = self._seqs.get(page)
+        return bool(sq) and sq[0] <= seq
+
+    def page(self, seq, page):
+        """-> bytes (4 KB), or None for a page recorded as zero; KeyError when the capture never recorded it by seq."""
+        sq = self._seqs.get(page)
+        k = bisect.bisect_right(sq, seq) - 1 if sq else -1
+        if k < 0:
+            raise KeyError(page)
+        _s, fi, off = self.pages[page][k]
+        if off is None:
+            return None
+        fd = self._fd.get(fi)
+        if fd is None:
+            fd = self._fd[fi] = os.open(self.files[fi], os.O_RDONLY)
+        return os.pread(fd, 0x1000, off)
+
+    def close(self):
+        for fd in self._fd.values():
+            os.close(fd)
+        self._fd = {}
+
+    def pages_in(self, lo, hi):
+        """Every recorded page address in [lo, hi)."""
+        return sorted(p for p in self.pages if lo <= p < hi)
+
+
+_STORES = {}
+
+
+def store(d=None):
+    """The process's SnapStore of a capture directory (default work/capture), built once."""
+    d = os.path.abspath(d or os.path.join(ROOT, "work", "capture"))
+    if d not in _STORES:
+        _STORES[d] = SnapStore(d)
+    return _STORES[d]
 
 
 def module_of(va):
@@ -74,7 +174,7 @@ def module_of(va):
         for line in open(f, errors="replace"):
             p = line.split()
             if p and ("%08x" % va) in p[:3]:
-                src = re.sub(r"\.(nonmatching|manifest)\.txt$", ".cpp", f)
+                src = SC.source_for(f)
                 return os.path.basename(src)[:-4], src
     return None, None
 

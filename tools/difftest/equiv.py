@@ -45,6 +45,16 @@ Verdicts:
               tolerated (with a note) only when the bytes at both are identical; otherwise it is a FAIL
               whose detail names the differing dwords;
   UNSUPPORTED unresolved reference, symbol not found, compile error, or almost every input discarded.
+--snapshots [DIR] (opt-in, default dir work/capture): real game states as inputs. Every entry-state snapshot of the row's
+function that tools/hybrid/capture.py recorded from a run of the original game (registers, the stack arguments, the
+captured process memory, mapped page by page on first touch) is an Input run first, on both builds, from the same state,
+compared like any input and counted for edge coverage; then --snap-share (default 0.75) of the fresh inputs and every
+mutant of a snapshot input are the snapshot with 1-3 edits (a flag toggled, a count / id moved to another value seen in
+the state, a float perturbed, a pointer swapped for another object's or NULL, an argument changed) chosen among the
+dwords the function actually read, so steering / concolic work from real objects (steer.set_loc writes a snapshot dword
+into Input.overrides). A run that touches a page the capture never recorded non-zero reads zeros there (as snapreplay.py),
+one that leaves the captured state in any other way (an unmapped address, an external module) is discarded as before.
+The result's "snapshot_inputs" counts seeds / mutants and their validity. Local only (the captures are not on the laptop).
 --hint g:ADDR[&MASK]=V1,V2@P (opt-in, soft, nothing discarded): in a share P of fresh inputs the original-image global at ADDR
 (.data/.bss, hex) is set to one of the values, for a row whose branches hang on a count or flag the image leaves at zero. The
 value is an Input.overrides dword written into the image before BOTH passes (our relocations are resolved to the original's
@@ -63,6 +73,10 @@ import argparse, bisect, collections, glob, json, math, os, random, re, struct, 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+if any(a == "--snapshots" or a.startswith("--snapshots=") for a in sys.argv[1:]):
+    # --snapshots maps the captured game's pages (its heap fills 0x30000000-0x37ffffff under wine) beside the harness:
+    # our compiled sections move above them (machine.OBJ_BASE reads this once, at import)
+    os.environ.setdefault("DIFFTEST_OBJ_BASE", "0x38000000")
 import capstone                                    # noqa: E402
 try:
     os.nice(10)                                    # yield the CPU to interactive work
@@ -134,6 +148,8 @@ def regress_inputs(sid, va, opts):
             inp = Input()
             inp.__dict__.update(pickle.load(open(os.path.join(d, f), "rb")))
             inp.__dict__.setdefault("pagegen", 1)
+            if getattr(inp, "snap", None) is not None and not getattr(opts, "snapshots", None):
+                continue                # a snapshot input needs the capture (--snapshots)
             inp.origin = "regress"
             out.append((f, inp))
         except Exception:       # noqa: BLE001 - an unreadable file (older harness) is skipped, never fatal
@@ -1268,6 +1284,8 @@ class Input:
         n.forced = dict(getattr(self, "forced", {}))
         n.fake_ret = dict(getattr(self, "fake_ret", {}))
         n.typed = getattr(self, "typed", 0)
+        if getattr(self, "snap", None) is not None:     # a snapshot input (SnapInputs): the state it starts from + its edit targets
+            n.snap, n.snap_cands = dict(self.snap), getattr(self, "snap_cands", None)
         return n
 
 
@@ -1305,6 +1323,8 @@ class InputGen:
         self.slot_cache = {}
         self.typed = None                           # TypedInputs (set by Runner), or None: soup only
         self.typed_share = 0.0
+        self.snap = None                            # SnapInputs (--snapshots), or None
+        self.snap_share = 0.0
 
     def fin(self, v):
         """Unless --nan: never produce a dword whose float32 reading is NaN/Inf (clears the top
@@ -1501,6 +1521,8 @@ class InputGen:
         return self.typed.realign(self, inp)
 
     def fresh(self, rng):
+        if self.snap is not None and self.snap.bases and rng.random() < self.snap_share:
+            return self.snap.mutant(rng)            # a real game state with a few edits instead of soup
         inp = Input()
         inp.seed = rng.getrandbits(32)
         inp.profile = rng.choice(list(PROFILES))
@@ -1543,6 +1565,8 @@ class InputGen:
 
     def mutate(self, parent, rng, corpus):
         """Coverage-guided fuzzing step: 1-4 small edits of a corpus input."""
+        if getattr(parent, "snap", None) is not None and self.snap is not None:
+            return self.snap.mutant(rng, parent)
         inp = parent.copy()
         inp.origin = "mutant"
         kinds = self.t.stack_kinds
@@ -2404,6 +2428,242 @@ FILL_PATTERNS = frozenset((0xCCCCCCCC, 0xCDCDCDCD, 0xDDDDDDDD, 0xFDFDFDFD, 0x0BB
 FILL_BYTES = frozenset((0xCC, 0xCD, 0xDD, 0xFD))
 
 
+SNAP_SHARE = 0.75        # share of fresh inputs that are mutated snapshots (--snap-share)
+SNAP_CANDS = 400         # edit targets kept per snapshot (distinct dwords the original read from the captured state)
+SNAP_READ_CAP = 200000   # reads recorded while tracing a snapshot's run for its targets
+
+
+class SnapInputs:
+    """Real game states as inputs (--snapshots): the entry-state snapshots tools/hybrid/capture.py recorded of the row's
+    function in a run of the original game. A snapshot Input carries `snap = {"dir", "seq"}`, its registers, the stack
+    argument dwords and `overrides` (edits); the memory is the captured process's, read through snapreplay.SnapStore: the
+    image's writable pages are written before the run (as `overrides` are), every other page is mapped on first touch
+    (Runner._snap_fetch). The arguments are copied onto the harness stack like any input's, so frame handling, the
+    stack-address normalisation and the "caller stack" comparison stay as they are; the captured stack pages the
+    arguments point into are ordinary compared memory (region "extra").
+
+    Edits (`mutant`) go to dwords the original read from the captured state (`snap_cands`, one run's trace): a flag is
+    toggled, a count / id moves to another small value seen in the state, a float is perturbed, a pointer becomes another
+    object's pointer or NULL; arguments and `this` can take another snapshot's value. Every edit is an ordinary
+    Input.overrides dword, so steering sets locations the same way and --replay reproduces the input."""
+
+    def __init__(self, t, store, m, img, dirpath):
+        self.t, self.store, self.m, self.img, self.dir = t, store, m, img, dirpath
+        self.seqs = store.seqs(t.va)
+        self.bases = []                 # seed inputs, one per snapshot
+        self.vals = set()               # small ints read anywhere in the traced states: valid ids / counts for swaps
+        self.ptrs = set()               # pointer-like values read
+        self.img_cache = {}
+        self._img_pages = None
+
+    @classmethod
+    def setup(cls, t, opts, m, img):
+        """-> (SnapInputs or None, why)."""
+        if M.OBJ_BASE < 0x38000000:
+            return None, "--snapshots needs DIFFTEST_OBJ_BASE=0x38000000 (set automatically when the flag is on the command line)"
+        import snapreplay as SR
+        d = os.path.abspath(opts.snapshots)
+        if not os.path.isdir(d):
+            return None, "no capture directory %s" % d
+        store = SR.store(d)
+        if not store.seqs(t.va):
+            return None, "no snapshot of %08x in %s" % (t.va, d)
+        return cls(t, store, m, img, d), None
+
+    # ---- the captured memory
+    def mappable(self, page):
+        """A page the captured process can supply: below the harness's regions (OBJ_BASE up), not the null page, not the
+        analysis image (its writable pages are written before the run, the rest is the image itself)."""
+        return 0x10000 <= page < M.OBJ_BASE and not (self.img.base <= page < self.img.base + self.img.size)
+
+    def page_bytes(self, seq, page):
+        """-> (bytes, zero_filled): the state's page at snapshot seq. A page never recorded reads as zeros (the process had
+        it as zero memory: capture.c only writes pages that changed)."""
+        try:
+            d = self.store.page(seq, page)
+        except KeyError:
+            return bytes(0x1000), True
+        return (bytes(0x1000) if d is None else d), False
+
+    def image_pages(self, seq):
+        """{page: bytes} of the image's writable pages whose captured content differs from the harness's baseline."""
+        out = self.img_cache.get(seq)
+        if out is None:
+            if self._img_pages is None:
+                self._img_pages = [(nm, pg) for nm, lo, hi in self.m.writable for pg in self.store.pages_in(lo, hi)]
+            out = {}
+            for nm, pg in self._img_pages:
+                if not self.store.has(seq, pg):
+                    continue
+                d = self.store.page(seq, pg)
+                d = bytes(0x1000) if d is None else d
+                if d != self.m.image_base_page(nm, pg):
+                    out[pg] = d
+            self.img_cache[seq] = out
+        return out
+
+    def read(self, seq, addr, n):
+        """n bytes of the captured state at addr (image: the captured writable page, else the image's own bytes)."""
+        out = bytearray()
+        while n > 0:
+            pg = addr & ~0xFFF
+            if self.img.base <= pg < self.img.base + self.img.size:
+                d = self.image_pages(seq).get(pg)
+                if d is None:
+                    d = next((self.m.image_base_page(nm, pg) for nm, lo, hi in self.m.writable if lo <= pg < hi), None)
+                if d is None:
+                    d = bytes(self.img.read(pg, 0x1000))
+            else:
+                d = self.page_bytes(seq, pg)[0]
+            k = min(n, 0x1000 - (addr & 0xFFF))
+            out += d[addr & 0xFFF:(addr & 0xFFF) + k]
+            addr += k
+            n -= k
+        return bytes(out)
+
+    def value(self, inp, a4):
+        """The dword the snapshot input holds at a4 (an edit, else the captured state)."""
+        if a4 in inp.overrides:
+            return inp.overrides[a4]
+        return struct.unpack("<I", self.read(inp.snap["seq"], a4, 4))[0]
+
+    # ---- inputs
+    def seed(self, seq):
+        import snapreplay as SR
+        ctx = self.store.ctx(seq)
+        reg = {k: struct.unpack_from("<I", ctx, o)[0] for k, o in SR.CTX.items()}
+        n = len(self.t.stack_kinds)
+        words = struct.unpack("<%dI" % (n + 4), self.read(seq, reg["esp"] + 4, 4 * (n + 4)))
+        inp = Input()
+        inp.seed, inp.profile, inp.origin = seq, "mixed", "snapshot"
+        inp.pool_over, inp.touched, inp.overrides, inp.extra, inp.forced, inp.fake_ret = {}, [], {}, {}, {}, {}
+        inp.args, inp.pad = list(words[:n]), list(words[n:])
+        inp.regs = {r: reg[r] for r in ("eax", "ecx", "edx", "ebx", "esi", "edi", "ebp")}
+        inp.xmm, inp.alloc_fail, inp.typed = [0] * 8, (), 0
+        inp.snap, inp.snap_cands = {"dir": self.dir, "seq": seq}, None
+        return inp
+
+    def seeds(self, runner, limit=None):
+        """The row's snapshot inputs (each with its edit targets, traced on the original). Also fills the value pools."""
+        seqs = self.seqs[:limit] if limit else self.seqs
+        self.bases = [self.seed(q) for q in seqs]
+        for b in self.bases:
+            b.snap_cands = self.targets(runner, b)
+            for a in b.args:
+                self._note(a)
+        return self.bases
+
+    def _note(self, v):
+        if 0 < v <= 0xFFFF:
+            self.vals.add(v)
+        elif self.mappable(v & ~0xFFF) or self.img.in_image(v):
+            self.ptrs.add(v)
+
+    def targets(self, runner, inp):
+        """[(address, size, kind)] of the distinct dwords the original read from the captured state on this input, in order
+        of first read; kind: flag / int / float / ptr (by the value the state holds)."""
+        seen, out = set(), []
+        try:
+            reads = runner.snap_trace(inp)
+        except UcError:
+            reads = []
+        for a, size in reads:
+            a4 = a & ~3
+            if a4 in seen or a4 in runner.vptrs or len(out) >= SNAP_CANDS:
+                continue
+            seen.add(a4)
+            try:
+                v = self.value(inp, a4)
+            except Exception:   # noqa: BLE001
+                continue
+            if v in (0, 1):
+                kind = "flag"
+            elif 0 < v <= 0xFFFF:
+                kind = "int"
+            elif self.mappable(v & ~0xFFF) or self.img.in_image(v):
+                kind = "ptr"
+            elif 1e-6 < abs(struct.unpack("<f", struct.pack("<I", v))[0]) < 1e7:
+                kind = "float"
+            else:
+                continue
+            if kind == "int":
+                self.vals.add(v)
+            elif kind == "ptr":
+                self.ptrs.add(v)
+            out.append((a4, size, kind))
+        return out
+
+    # ---- mutation
+    def mutant(self, rng, parent=None):
+        """A snapshot input with 1-3 edits (of `parent`, else of a random seed)."""
+        inp = (parent or rng.choice(self.bases)).copy()
+        inp.origin = "mutant"
+        for _ in range(rng.randint(1, 3)):
+            self._edit(inp, rng)
+        return inp
+
+    def _edit(self, inp, rng):
+        cands = inp.snap_cands or []
+        r = rng.random()
+        kinds = self.t.stack_kinds
+        if r < 0.15 and inp.args:                                    # an argument
+            i = rng.randrange(len(inp.args))
+            k = kinds[i] if i < len(kinds) and isinstance(kinds[i], str) else "soup"
+            v = inp.args[i]
+            if k == "float":
+                inp.args[i] = self._float(v, rng)
+            elif k in ("ptr", "this"):
+                others = [b.args[i] for b in self.bases if i < len(b.args)]
+                inp.args[i] = rng.choice([0] + others + sorted(self.ptrs)[:32])
+            elif k in ("double_lo", "double_hi", "i64_lo", "i64_hi"):
+                pass
+            else:
+                inp.args[i] = self._int(v, rng)
+        elif r < 0.2 and self.bases:                                 # this / a register: another snapshot's value
+            reg = rng.choice(["ecx"] if self.t.reg_kinds.get("ecx") == "this" else ["eax", "ecx", "edx"])
+            inp.regs[reg] = rng.choice(self.bases).regs[reg]
+        elif cands:
+            a4, size, kind = rng.choice(cands)
+            cur = self.value(inp, a4)
+            if kind == "flag":
+                nv = cur ^ 1 if rng.random() < 0.8 else rng.choice([0, 1, 2])
+            elif kind == "int":
+                nv = self._int(cur, rng)
+            elif kind == "float":
+                nv = self._float(cur, rng)
+            else:
+                pool = sorted(self.ptrs)
+                nv = 0 if rng.random() < 0.3 or not pool else rng.choice(pool)
+            if size in (1, 2):                                       # a byte / word field: only its own bytes change
+                msk = (1 << (8 * size)) - 1
+                nv = (cur & ~msk) | (nv & msk)
+            inp.overrides[a4] = nv & 0xFFFFFFFF
+
+    def _int(self, v, rng):
+        r = rng.random()
+        if r < 0.35:
+            return (v + rng.choice([-1, 1, -2, 2, 4])) & 0xFFFFFFFF
+        if r < 0.7 and self.vals:
+            return rng.choice(sorted(self.vals))
+        if r < 0.85:
+            return rng.choice([0, 1, 2, 3, 0xFFFFFFFF])
+        return rng.randrange(0, 2 * v + 8) if v < 0x10000 else v
+
+    @staticmethod
+    def _float(v, rng):
+        f = struct.unpack("<f", struct.pack("<I", v & 0xFFFFFFFF))[0]
+        if not math.isfinite(f):
+            f = 1.0
+        r = rng.random()
+        g = (f * rng.choice([0.5, 0.9, 1.1, 2.0, -1.0]) if r < 0.4 else
+             f + rng.choice([-1.0, 1.0, 0.5, -0.5, 1e-3, -1e-3]) if r < 0.7 else
+             rng.choice([0.0, 1.0, -1.0, 100.0, 0.001]))
+        try:
+            return struct.unpack("<I", struct.pack("<f", g))[0]
+        except (OverflowError, struct.error):
+            return v
+
+
 def unobserved_fill(v, base):
     """v (the original's value) is a fill/sentinel leftover: v itself is one of FILL_PATTERNS (a dword a
     build stamped), or `v` differs from the bytes it had when the run started (`base`, the input the run
@@ -2745,6 +3005,15 @@ class Runner:
                                  "cannot place a value there" % (h_.spec, ga_))
         if getattr(opts, "pin", None):                  # --pin: not an invariant of the type, never disabled
             self.gen.invs = self.gen.invs + [INV.pin_invariant(p) for p in opts.pin]
+        # --snapshots: real game states of the row's function as inputs (SnapInputs)
+        self.snapin, self.snap_why = None, None
+        self.snap_init, self.snap_cur, self.snap_zero, self.snap_pages_seen = {}, None, 0, set()
+        if getattr(opts, "snapshots", None):
+            self.snapin, self.snap_why = SnapInputs.setup(t, opts, self.m, self.img)
+            if self.snapin is None:
+                log("  snapshots: %s" % self.snap_why)
+            else:
+                self.gen.snap, self.gen.snap_share = self.snapin, getattr(opts, "snap_share", SNAP_SHARE)
         self.cov_on = False
         self.cov_side = None
         self.prev_end = None
@@ -4664,13 +4933,99 @@ class Runner:
             self.last_call_uninit = None
         return {x: (oa[x], ob[x]) for x in oa if x in ob}
 
+    def snap_ranges(self):
+        """Address ranges that hold captured-process memory (everything below OBJ_BASE outside the image)."""
+        return [(0x10000, self.img.base), (self.img.base + self.img.size, M.OBJ_BASE)]
+
+    def input_ranges(self):
+        """Address ranges a run reads its input from: pool, incoming arguments, image .data, captured memory."""
+        out = [(M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE), (self.esp_entry, self.args_hi)]
+        out += [(lo, hi) for _nm, lo, hi in self.m.writable]
+        if self.snapin is not None:
+            out += self.snap_ranges()
+        return out
+
+    def _snap_fetch(self, address, size):
+        """Machine.snap_fetch: map the captured process's pages under [address, address + size) (initial content, plus the
+        input's edits). False when the first unmapped page is not the captured state's to give (harness region, null page)."""
+        cur, si = self.snap_cur, self.snapin
+        if cur is None or si is None:
+            return False
+        uc = self.m.uc
+        ok = False
+        for pg in range(address & ~0xFFF, ((address + max(size, 1) - 1) & ~0xFFF) + 0x1000, 0x1000):
+            if pg in self.snap_init:
+                continue
+            if not si.mappable(pg):
+                return ok
+            data, zero = si.page_bytes(cur["seq"], pg)
+            ed = cur["over"].get(pg)
+            if ed:
+                data = bytearray(data)
+                for a_, v_ in ed.items():
+                    struct.pack_into("<I", data, a_ - pg, v_)
+                data = bytes(data)
+            try:
+                uc.mem_map(pg, 0x1000, UC_PROT_READ | UC_PROT_WRITE)
+            except UcError:
+                continue                                    # already mapped (the other page of an access pair)
+            uc.mem_write(pg, data)
+            self.snap_init[pg] = data
+            self.snap_zero += zero
+            ok = True
+        return ok
+
+    def snap_peek(self, a, n):
+        """Bytes of captured memory at [a, a + n) for a hook that fires before the access that would map the page (the
+        steering compare hooks), with the current input's edits; None when no snapshot run is under way / not captured."""
+        cur, si = self.snap_cur, self.snapin
+        if cur is None or si is None or not si.mappable(a & ~0xFFF) or not si.mappable((a + n - 1) & ~0xFFF):
+            return None
+        b = bytearray(si.read(cur["seq"], a, n))
+        for pg, ed in cur["over"].items():
+            for a_, v_ in ed.items():
+                for k in range(4):
+                    if a <= a_ + k < a + n:
+                        b[a_ + k - a] = (v_ >> (8 * k)) & 0xFF
+        return bytes(b)
+
+    def _snap_unmap(self):
+        """Unmap the captured pages of the run just ended -> {page: final bytes} of those whose content changed."""
+        out = {}
+        for pg, init in self.snap_init.items():
+            try:
+                cur = bytes(self.m.uc.mem_read(pg, 0x1000))
+                self.m.uc.mem_unmap(pg, 0x1000)
+            except UcError:
+                continue
+            if cur != init:
+                out[pg] = cur
+        return out
+
+    def snap_trace(self, inp):
+        """[(address, size)] of the reads the original makes from captured memory and image .data on a snapshot input, in
+        order (the targets SnapInputs.mutant edits)."""
+        m = self.m
+        out = []
+
+        def on_read(uc, access, address, size, value, _):
+            if len(out) < SNAP_READ_CAP and size <= 4:
+                out.append((address, size))
+        hs = [m.uc.hook_add(UC_HOOK_MEM_READ, on_read, begin=lo, end=hi - 1)
+              for lo, hi in self.snap_ranges() + [(lo, hi) for _nm, lo, hi in m.writable]]
+        try:
+            self.run_side(self.orig, inp)
+        finally:
+            for h in hs:
+                m.uc.hook_del(h)
+        return out
+
     def _traced_reads(self, inp, side=None):
         """[(address, dword)] of every 4-byte read the original (or `side`) makes from an input buffer, the
         argument area or image .data, in order (the last matching one is the most recent)."""
         m = self.m
         self.reads = []
-        ranges = [(M.POOL_BASE, M.POOL_BASE + M.POOL_SIZE), (self.esp_entry, self.args_hi)]
-        ranges += [(lo, hi) for _nm, lo, hi in m.writable]
+        ranges = self.input_ranges()
         hs = [m.uc.hook_add(UC_HOOK_MEM_READ, self._on_read, begin=lo, end=hi - 1) for lo, hi in ranges]
         try:
             self.run_side(side or self.orig, inp)
@@ -4770,6 +5125,8 @@ class Runner:
         (the last 4-byte read from the input buffers, image .data or the argument area with
         0 <= A - V < 64K; else an argument/register holding such a V) and make it point into a
         fresh input buffer. Returns the repaired input or None."""
+        if getattr(inp, "snap", None) is not None:
+            return None             # a snapshot input is real game state: its pointers and counts are not repaired
         kind, A, _sz = fault
         if kind not in ("read", "write", "read-prot", "write-prot"):
             return None
@@ -4926,6 +5283,8 @@ class Runner:
         record's soup-sized string in turn (uninitialized_copy 0x524cd0 under MapDialog::place_c 0x4c6f50), and
         shrinking one size per round never ends it. Last resort: the most recent large non-pointer value. Returns the
         repaired input or None."""
+        if getattr(inp, "snap", None) is not None:
+            return None             # a snapshot input is real game state: its pointers and counts are not repaired
         mm = re.search(r"\((\d+) bytes\)", str(why))
         size = int(mm.group(1)) if mm else 0
         if round_ >= 2:
@@ -5233,6 +5592,8 @@ class Runner:
         Up to `rounds` shrinks are made per call, each checked by a run capped at `cap` (one soup count per element
         of an array: rec_tables 0x4c47d0's strings); the caller replays the result at the full cap. Returns the
         repaired input or None."""
+        if getattr(inp, "snap", None) is not None:
+            return None             # a snapshot input is real game state: its pointers and counts are not repaired
         cur = None
         self.loop_fit = False
         for _round in range(rounds):
@@ -5398,6 +5759,8 @@ class Runner:
         that carried the vtable pointer -- an argument slot, a pool object's vtable field or an image
         .data global -- and, when that dword is not the input's, the slot itself. Returns the
         resampled input or None; the caller keeps the first attempt that gets past the pure call."""
+        if getattr(inp, "snap", None) is not None:
+            return None             # a snapshot input is real game state: its pointers and counts are not repaired
         site = self.pure_call_site()
         if site is None:
             return None
@@ -5507,7 +5870,26 @@ class Runner:
         m.pool_slots = []
         m.pool_entry = set()
         m.pool_built = {a_ & ~(M.SLOT - 1) for a_ in inp.pool_over}
+        if self.snap_init:                      # captured pages a run that raised left mapped
+            self._snap_unmap()
+            self.snap_init = {}
+        snap = getattr(inp, "snap", None) if self.snapin is not None else None
+        m.snap_fetch = None
+        self.snap_cur = None
+        if snap is not None:
+            # a snapshot input: the captured image .data first (the edits below overwrite it), the rest of the captured
+            # memory is mapped on first touch with the edits applied (_snap_fetch)
+            over = {}
+            for a_, v_ in inp.overrides.items():
+                if not self.img.in_image(a_):
+                    over.setdefault(a_ & ~0xFFF, {})[a_] = v_
+            self.snap_cur = {"seq": snap["seq"], "over": over}
+            for pg_, d_ in self.snapin.image_pages(snap["seq"]).items():
+                m.write(pg_, d_)
+            m.snap_fetch = self._snap_fetch
         for a_, v_ in inp.overrides.items():
+            if snap is not None and not self.img.in_image(a_):
+                continue                        # captured memory: laid in when its page is mapped
             m.write(a_, struct.pack("<I", v_))
         for a_, v_ in self.vptrs.items():
             # a global polymorphic object always carries the vtable its static initialiser installed, never the
@@ -5620,6 +6002,15 @@ class Runner:
                 for k in range(0, size, 0x1000):
                     mem["extra"][base + k] = data[k:k + 0x1000]
                 m.uc.mem_unmap(base, size)
+        if snap is not None:
+            changed = self._snap_unmap()
+            if self.snap_init:
+                o["extra_init"] = dict(self.snap_init)
+                mem["extra"] = changed          # only the changed pages: an untouched one equals its initial content
+            self.snap_pages_seen.update(self.snap_init)
+            self.snap_init = {}
+            m.snap_fetch = None
+            self.snap_cur = None
         o["pool_init"] = init = dict(m.pool_pages)
         entry = m.pool_entry
         mem["pool"] = m.unmap_pool()
@@ -7414,6 +7805,14 @@ def _test_function(sid, va, opts, log=print):
         regress = [r for j, r in enumerate(regress) if j % n == k]
         out["shard"] = "%d/%d" % (k, n)
     opts.regress_set = [f for f, _i in regress]      # keyed: a new regression input re-runs the row
+    if getattr(opts, "snapshots", None):
+        # keyed: the capture the row's snapshots come from (a re-capture changes the states, the options alone would not)
+        try:
+            import snapreplay as SR
+            st_ = SR.store(opts.snapshots)
+            opts.snap_sig = [len(st_.files), sum(os.path.getsize(f_) for f_ in st_.files), st_.seqs(va)]
+        except Exception as e:      # noqa: BLE001 - reported by the Runner's setup below
+            opts.snap_sig = repr(e)
     key = _cache_key(t, out, opts)
     if key:
         try:
@@ -7445,6 +7844,20 @@ def _test_function(sid, va, opts, log=print):
     deadline = time.time() + opts.time_limit
     t_loop = time.time()
     checkpoints = sorted(int(x) for x in str(getattr(opts, "checkpoints", "") or "").split(",") if x.strip())
+    snap_log = []           # per snapshot seed: [seq, valid?, why]
+    n_seeds = 0
+    if runner.snapin is not None:
+        # the row's real game states run first (before the saved regression inputs), then seed the mutation
+        seeds = runner.snapin.seeds(runner, getattr(opts, "snap_seeds", None))
+        n_seeds = len(seeds)
+        regress = [("snapshot-%d" % q.snap["seq"], q) for q in seeds] + regress
+        n_regress += n_seeds
+        out["snapshots"] = {"dir": runner.snapin.dir, "seeds": n_seeds, "targets": [len(q.snap_cands or []) for q in seeds]}
+        if opts.verbose:
+            log("  snapshots: %d seed(s), %s edit targets" % (n_seeds, out["snapshots"]["targets"]))
+    elif getattr(opts, "snapshots", None):
+        out["snapshots"] = {"unavailable": runner.snap_why}
+    snap_mut_run = snap_mut_valid = snap_seed_valid = 0
     steer = ST.Steer(runner, gen, opts) if getattr(opts, "steer", True) else None
     if steer is not None:
         steer.deadline = deadline
@@ -7452,6 +7865,7 @@ def _test_function(sid, va, opts, log=print):
     plateau = getattr(opts, "plateau", 0)
     last_new = 0            # input index of the last one that reached a new block or edge
     i = -1
+    reg_k = 0               # next saved input (snapshot seeds, regression inputs, coverage inputs) to replay
     try:
         while True:
             i += 1
@@ -7480,14 +7894,21 @@ def _test_function(sid, va, opts, log=print):
                 out["stopped_early"] = "time limit %ds after %d inputs" % (opts.time_limit, i)
                 break
             ran += 1
+            if 0 < i <= n_seeds:            # how the previous snapshot seed ended (valid, or the discard reason)
+                snap_log.append(_seed_note(i - 1, valid, v0, discarded, d0))
+            v0, d0 = valid, dict(discarded)
             rng = random.Random(rng_master.getrandbits(64))
             inp = None
-            if steer and corpus and i >= len(regress) and (i >= opts.inputs or rng.random() < opts.steer_share):
+            use_saved = reg_k < len(regress)
+            if use_saved and runner.snapin is not None and reg_k >= n_regress and corpus and rng.random() < 0.5:
+                use_saved = False       # saved coverage inputs alternate with snapshot mutants (hundreds of them replay first)
+            if steer and corpus and reg_k >= len(regress) and (i >= opts.inputs or rng.random() < opts.steer_share):
                 inp = steer.next(rng, corpus)
-            if inp is None and i < len(regress):
-                inp = regress[i][1]
-                inp.origin = "regress" if i < n_regress else "cover"
-                if i >= n_regress and gen.typed is not None and not getattr(inp, "typed", 0):
+            if inp is None and use_saved:
+                inp = regress[reg_k][1]
+                inp.origin = "snapshot" if reg_k < n_seeds else "regress" if reg_k < n_regress else "cover"
+                reg_k += 1
+                if reg_k > n_regress and gen.typed is not None and not getattr(inp, "typed", 0):
                     # a saved soup-only coverage input of a row that has typed objects: replaying it would make it
                     # the corpus' only seed, every mutant/steered input would stay soup and the typed objects
                     # (valid typed inputs 131 -> 1, obj_tbl 0x4991d0) would never be built; build a fresh input
@@ -7505,6 +7926,8 @@ def _test_function(sid, va, opts, log=print):
                 inp.regs["ecx"] = M.POOL_BASE + M.SLOT
             if getattr(inp, "typed", 0):
                 typed_n += 1
+            if getattr(inp, "snap", None) is not None and i >= n_seeds:
+                snap_mut_run += 1
             vec_fixed += gen.realign(inp)       # vectors of known element size: whole elements (TypedInputs.realign)
             try:
                 a = runner.run_side(runner.orig, inp)
@@ -7779,6 +8202,11 @@ def _test_function(sid, va, opts, log=print):
                     continue
                 faked += 1
             valid += 1
+            if getattr(inp, "snap", None) is not None:
+                if i < n_seeds:
+                    snap_seed_valid += 1
+                else:
+                    snap_mut_valid += 1
             if st == "exit":
                 out["exited"] = out.get("exited", 0) + 1      # valid runs that ended in a program exit
             if getattr(inp, "typed", 0):
@@ -7795,7 +8223,8 @@ def _test_function(sid, va, opts, log=print):
                 last_new = i
                 if getattr(inp, "typed", 0):
                     typed_seeds += 1
-                if i >= len(regress) and new_edge and (gen.typed is None or getattr(inp, "typed", 0)):
+                if not use_saved and new_edge and (gen.typed is None or getattr(inp, "typed", 0)) \
+                        and getattr(inp, "snap", None) is None:
                     saved_cover += save_cover(sid, va, opts, inp) is not None
             elif getattr(inp, "typed", 0) and typed_seeds < TYPED_SEEDS:
                 # a valid typed input that adds no edge is still a seed: mutants of it keep the typed objects. Without
@@ -7876,6 +8305,13 @@ def _test_function(sid, va, opts, log=print):
                     break
     finally:
         runner.close()
+    if n_seeds and ran == n_seeds:
+        snap_log.append(_seed_note(n_seeds - 1, valid, v0, discarded, d0))
+    if "snapshots" in out and runner.snapin is not None:
+        sn = out["snapshots"]
+        sn.update(seeds_valid=snap_seed_valid, mutants_valid=snap_mut_valid,
+                  mutants_run=snap_mut_run,
+                  seed_notes=snap_log, zero_pages_read=runner.snap_zero, pages_touched=len(runner.snap_pages_seen))
     out["repaired_inputs"] = repaired
     if runner.shrink_stats:
         out["shrink_repairs"] = dict(runner.shrink_stats.most_common())
@@ -7893,7 +8329,7 @@ def _test_function(sid, va, opts, log=print):
     out["mismatch_sigs"] = dict(sigs.most_common(40))
     if gen.invs:
         out["input_invariants"] = describe_invariants(gen.invs)
-    out["regress_inputs"] = n_regress
+    out["regress_inputs"] = n_regress - n_seeds
     if vec_fixed:
         out["vectors_realigned"] = vec_fixed
     out["cover_inputs"] = {"replayed": len(regress) - n_regress, "saved": saved_cover}
@@ -8043,6 +8479,14 @@ def _test_function(sid, va, opts, log=print):
 
 
 OURS_IMPORT_PROBES = 40
+
+
+def _seed_note(k, valid, v0, discarded, d0):
+    """How snapshot seed k ended: [k, "valid"] or [k, the discard reason(s)]."""
+    if valid > v0:
+        return [k, "valid"]
+    why = {r: n - d0.get(r, 0) for r, n in discarded.items() if n > d0.get(r, 0)}
+    return [k, ", ".join("%s=%d" % kv for kv in sorted(why.items())) or "mismatch"]
 
 
 def mismatch_sig(d):
@@ -8337,6 +8781,14 @@ def parse_args(argv=None):
                     help="opt-in environment (off by default): in a share P (default 0.5) of fresh inputs point g_items (0x5e29d0) "
                          "at a table of 100 ItemKind records whose types (+0x1c8 low byte) cover every itp_type_* value, with "
                          "plausible weight/value/stat fields, for BOTH builds; saved with the input. See ItemTable")
+    ap.add_argument("--snapshots", nargs="?", const=os.path.join(S.ROOT, "work", "capture"), default=None, metavar="DIR",
+                    help="opt-in (default dir work/capture): real game states as inputs. Every snapshot of the row's function "
+                         "(tools/hybrid/capture.py) runs first on both builds and counts for edge coverage; --snap-share of the "
+                         "fresh inputs and every mutant of one are the snapshot with a few edits (see SnapInputs). Local only")
+    ap.add_argument("--snap-share", type=float, default=SNAP_SHARE, metavar="P",
+                    help="--snapshots: share of fresh inputs that are mutated snapshots (default %.2f)" % SNAP_SHARE)
+    ap.add_argument("--snap-seeds", type=int, default=None, metavar="N",
+                    help="--snapshots: use only the first N snapshots of the row's function")
     ap.add_argument("--edge-scope", metavar="FILE",
                     help="JSON list of the original's edges ('0049fafc->004ac670') the run is about: it continues past "
                          "--inputs and steers only while one of them is uncovered (a pinned switch case)")
