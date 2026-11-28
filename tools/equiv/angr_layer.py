@@ -3212,8 +3212,9 @@ def _window_pieces(self, name, fr, q, ptrs, Wa, Wb, word, Ua, Ub, depth, top_a, 
     dsyms = fr["dsym"]
     if os.environ.get("EQUIV_P2_DEBUG"):
         with open(os.environ["EQUIV_P2_DEBUG"], "a") as dbg:
-            dbg.write("P2 pieces %s R=%s O=%s ptrs=%s\n" % (name, [(hex(a), hex(b)) for a, b in Pa],
-                                                        [(hex(a), hex(b)) for a, b in Pb], ptrs))
+            dbg.write("P2 pieces %s R=%s O=%s ptrs=%s F=%s g=%s depth=%s\n" % (
+                name, [(hex(a), hex(b)) for a, b in Pa], [(hex(a), hex(b)) for a, b in Pb], ptrs, self.entry_F,
+                self.g, depth))
     if not Pa or not Pb or len(dsyms) != len(Pb):
         return diffs + [(name + " object pieces unusable", z3.BoolVal(True))]
     pair, inv, work = {}, {}, []
@@ -3288,6 +3289,9 @@ def _window_pieces(self, name, fr, q, ptrs, Wa, Wb, word, Ua, Ub, depth, top_a, 
                 with open(os.environ["EQUIV_P2_DEBUG"], "a") as dbg:
                     dbg.write("P2 pdiff %s piece %s>%s -%#x/-%#x R=%s O=%s\n" % (name, hex(ta), hex(tb), oa, ob,
                                                                                str(a_)[:140], str(b_)[:140]))
+                    for v_ in sorted(a_.variables | b_.variables):
+                        if v_ in self.base_syms:
+                            dbg.write("      %s = %s\n" % (v_, str(self.base_syms[v_])[:160]))
             diffs.append((name + " frame -%#x/-%#x" % (oa, ob), self.z(a_) != self.z(b_)))
     for ia in range(len(Pa)):
         if ia not in pair:

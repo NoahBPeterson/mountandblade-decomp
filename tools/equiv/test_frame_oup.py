@@ -105,3 +105,38 @@ def test_uniform_shift_spill_reloaded_from_the_object_not_proved():
 
 def test_uniform_shift_object_contents_differ_not_proved():
     assert _prove(*_pair_shift(obj_x1=True)) != "proved"
+
+
+# a cdecl call whose cleanup is merged into the next call's: f(x); g(x+1); add esp,8. The second call's cleanup
+# covers the first call's argument word too; the model takes the second call's OWN arguments (the pushes since the
+# first returned). ours computes x+1 by lea. Mutants: x+2; a different first argument.
+def _merged(bump="40", second="8d4001", first_arg="50"):
+    def build(inc, lea):
+        c = H("8b442404") + H(first_arg)                     # eax = x; push eax
+        return c
+    pre_r = H("8b442404" "50")
+    cr1, rr1 = _call_g(len(pre_r))
+    mid_r = H("8b442408" "40" "50")                           # eax = x (now at [esp+8]); inc eax; push eax
+    cr2, rr2 = _call_g(len(pre_r) + len(cr1) + len(mid_r))
+    tail = H("83c408" "31c0" "c3")
+    a = Func(RVA, pre_r + cr1 + mid_r + cr2 + tail, {rr1: ("abs", RVA + 0x5000), rr2: ("abs", RVA + 0x5000)},
+             "retail", "retail", {"tables": None})
+    pre_o = H("8b442404") + H(first_arg)
+    co1, ro1 = _call_g(len(pre_o))
+    mid_o = H("8b442408") + H(second) + H("50")
+    co2, ro2 = _call_g(len(pre_o) + len(co1) + len(mid_o))
+    b = Func(0, pre_o + co1 + mid_o + co2 + tail, {ro1: ("sym", "_g", 0x14, 0), ro2: ("sym", "_g", 0x14, 0)}, "ours",
+             "ours", {"symbol": "?f@@YAHH@Z", "consts": {}, "tables": None})
+    return a, b
+
+
+def test_merged_cleanup_calls_prove():
+    assert _prove(*_merged()) == "proved"
+
+
+def test_merged_cleanup_second_argument_mutant_not_proved():
+    assert _prove(*_merged(second="8d4002")) != "proved"
+
+
+def test_merged_cleanup_first_argument_mutant_not_proved():
+    assert _prove(*_merged(first_arg="6a00")) != "proved"
