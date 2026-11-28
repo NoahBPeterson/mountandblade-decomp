@@ -1,7 +1,7 @@
 {
  "what": "functions proven equivalent by tools/equiv/prove.py (static: the rename layer, angr symbolic execution or STOKE DDEC; L1 = calling contract, L2 = every register; see tools/equiv/LAYERS.md). Each row has our build hash (func.build_hash) and its proof bundle (docs/equiv_proofs/<va>.json, or work/equiv/proofs/ when large); prove.py --recheck re-verifies it. tools/difftest/verdicts.py --apply-proofs applies it to docs/equiv_verdicts.json.",
- "when": "2026-11-27T17:47:31-06:00",
- "commit": "8a040f5b",
+ "when": "2026-11-27T18:17:05-06:00",
+ "commit": "84c75921",
  "rows": {
   "0041d6f0": {
    "src": "src/engine/resource/resource_manager.cpp",
@@ -140,11 +140,11 @@
    "symbol": "?compute_normals@mesh@rgl@@QAEXXZ",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 323 cuts (322 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 9 relocation pairs, 2s",
-   "build": "871e8879412e5a12eed5dcc4cb569e514836b3d7ec2fb911c591799689899c8c",
+   "detail": "regions: 323 cuts (322 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 9 relocation pairs, 12s",
+   "build": "0a76f49b2cfbd7057fbc92e1a200fac06c8d515f7235527490b1c9c458f2c1ec",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/00451c50.json",
-   "proved": "2026-11-13"
+   "proved": "2026-11-27"
   },
   "004556d0": {
    "src": "src/game/agent/agent_logic.cpp",
