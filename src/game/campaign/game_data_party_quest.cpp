@@ -448,41 +448,41 @@ void GameData::recruit(int id, int count, Party* dest)
             else
                 pick = rand() % total;
             int base = 0;
-            int found = 0;
+            char found = 0;                    // a byte slot in the original (mov byte ptr [esp+..], 0)
             int j = 0;
             do {
                 if (j >= n)
                     break;
-                int mi = m->lookup(members[j]);
-                Party* mp = m->at(mi);
-                int sum = mp->sum_stat(0x134);
-                base += sum;
+                PartyMgr* mm = &parties;
+                int mi = mm->lookup(members[j]);
+                Party* mp = mm->at(mi);
+                int prev = base;
+                base += mp->sum_stat(0x134);
                 if (pick < base) {
                     found = 1;
-                    Stack* st = &mp->stacks[mp->find_worth(pick - (base - sum), 0x134)];
-                    int troop = st->troop;
-                    int hp = troops[troop].level + 10;
-                    if ((troops[troop].flags30 & 0x10) != 0)
+                    Stack* st = &mp->stacks[mp->find_worth(pick - prev, 0x134)];
+                    int hp = troops[st->troop].level + 10;
+                    if ((troops[st->troop].flags30 & 0x10) != 0)
                         hp += 10;
                     if ((float)(rand() % 0x3dc9) * (float)hp * 6.322312e-05f < 2.0f) {
-                        if ((troops[troop].flags30 & 0x10) != 0) {
-                            if (troops[troop].hp > g_module_settings.player_wounded_treshold)
-                                troops[troop].hp = g_module_settings.player_wounded_treshold;
-                            troops[troop].hp -= 15.0f;
-                            if (troops[troop].hp < 0.0f)
-                                troops[troop].hp = 0.0f;
+                        if ((troops[st->troop].flags30 & 0x10) != 0) {
+                            if (troops[st->troop].hp > g_module_settings.player_wounded_treshold)
+                                troops[st->troop].hp = g_module_settings.player_wounded_treshold;
+                            troops[st->troop].hp -= 15.0f;
+                            if (troops[st->troop].hp < 0.0f)
+                                troops[st->troop].hp = 0.0f;
                             if (dest != 0)
-                                dest->add_members(troop, 1, 0, 1, 0);
+                                dest->add_members(st->troop, 1, 0, 1, 0);
                         } else {
                             if ((float)(rand() % 0x3dc9) * 6.322312e-05f < g_k065
-                                || (troops[troop].flags30 & 0x80) != 0) {
+                                || (troops[st->troop].flags30 & 0x80) != 0) {
                                 st->count--;
                                 if (dest != 0)
-                                    dest->add_members(troop, 1, 0, 0, 0);
+                                    dest->add_members(st->troop, 1, 0, 0, 0);
                             } else {
                                 st->wounded++;
                                 if (dest != 0)
-                                    dest->add_members(troop, 1, 0, 1, 0);
+                                    dest->add_members(st->troop, 1, 0, 1, 0);
                             }
                         }
                         total--;
@@ -572,7 +572,7 @@ void GameData::remove_party(int id)
     p->clear_map_flag();
 
     idx = m->lookup(id);
-    if (idx >= 0 && idx < parties.count)
+    if (idx >= 0 && idx < m->count)
         m->atu(idx)->type = 2;
 
     unsigned cur = m->first_party_id();
