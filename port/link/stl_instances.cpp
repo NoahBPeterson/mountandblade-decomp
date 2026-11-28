@@ -5,16 +5,8 @@
 #include <vector>
 #include <list>
 
-struct Event;
 struct Light;
-struct Party;
-namespace rgl { struct entity; }
-namespace rgl { struct lod_mesh; }
 struct shape_base;
 
 template void std::vector<shape_base* >::push_back(shape_base* const&);   // _ZNSt6vectorIP10shape_baseSaIS1_EE9push_backERKS1_
-template bool std::vector<Event* >::_Buy(std::vector<Event* >::size_type);   // _ZNSt6vectorIP5EventSaIS1_EE4_BuyEj
-template bool std::vector<Party* >::_Buy(std::vector<Party* >::size_type);   // _ZNSt6vectorIP5PartySaIS1_EE4_BuyEj
-template bool std::vector<rgl::entity* >::_Buy(std::vector<rgl::entity* >::size_type);   // _ZNSt6vectorIPN3rgl6entityESaIS2_EE4_BuyEj
-template void std::vector<rgl::lod_mesh* >::push_back(rgl::lod_mesh* const&);   // _ZNSt6vectorIPN3rgl8lod_meshESaIS2_EE9push_backERKS2_
 template void std::_Uninitialized_fill_n<Light**, unsigned int, Light*, std::allocator<Light*> >(Light**, unsigned int, Light* const&, std::allocator<Light*>&);   // _ZSt21_Uninitialized_fill_nIPP5LightjS1_SaIS1_EEvT_T0_RKT1_RT2_

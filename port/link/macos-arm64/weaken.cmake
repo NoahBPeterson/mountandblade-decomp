@@ -188,14 +188,6 @@ mb_weaken(src/game/campaign/game_data_party_quest.cpp
     __ZTSNSt9__mb_vc7112length_errorE
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
-mb_weaken(src/game/campaign/game_state_load.cpp
-    __ZTINSt9__mb_vc7111logic_errorE
-    __ZTINSt9__mb_vc7112length_errorE
-    __ZTINSt9__mb_vc7112out_of_rangeE
-    __ZTSNSt9__mb_vc7111logic_errorE
-    __ZTSNSt9__mb_vc7112length_errorE
-    __ZTSNSt9__mb_vc7112out_of_rangeE
-    ___clang_call_terminate)
 mb_weaken(src/game/campaign/game_tick.cpp
     __ZN8PartyMgr13next_party_idEPi)
 mb_weaken(src/game/campaign/map_builder_and_data_load.cpp
@@ -418,6 +410,14 @@ mb_weaken(src/game/party/party_map.cpp
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
 mb_weaken(src/game/save/save_game.cpp
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
+    ___clang_call_terminate)
+mb_weaken(src/game/save/save_records.cpp
     __ZTINSt9__mb_vc7111logic_errorE
     __ZTINSt9__mb_vc7112length_errorE
     __ZTINSt9__mb_vc7112out_of_rangeE

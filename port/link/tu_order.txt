@@ -101,6 +101,7 @@ src/game/ui/widgets/widget_manager.cpp
 src/game/ui/widgets/drop_down_list.cpp
 src/game/party/party_map.cpp
 src/game/party/party_track_allocator.cpp
+src/game/config/http_client.cpp
 src/game/config/launcher_options_dialog.cpp
 src/game/config/config.cpp
 src/game/data/module_option_records.cpp

@@ -279,6 +279,7 @@
   "drop_down_list",
   "party_map",
   "party_track_allocator",
+  "http_client",
   "launcher_options_dialog",
   "face_generator_refresh",
   "options_panel",

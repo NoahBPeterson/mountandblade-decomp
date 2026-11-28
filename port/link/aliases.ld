@@ -39,8 +39,6 @@ PROVIDE(_ZN8item_mod10translatedEv = _ZN13PartyTemplate10translatedEv);
 PROVIDE(_ZN9DialogRec10translatedEv = _ZN13PartyTemplate10translatedEv);
 /* menu_item::translated()  ->  Troop::translated() */
 PROVIDE(_ZN9menu_item10translatedEv = _ZN5Troop10translatedEv);
-/* std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const  ->  std::vector<rgl::point20, std::allocator<rgl::point20>>::capacity() const */
-PROVIDE(_ZNKSt6vectorIN3rgl6face20ESaIS1_EE8capacityEv = _ZNKSt6vectorIN3rgl7point20ESaIS1_EE8capacityEv);
 /* std::list<shape_base*, std::allocator<shape_base*>>::_Insert(std::list<shape_base*, std::allocator<shape_base*>>::iterator, shape_base* const&)  ->  std::list<int, std::allocator<int>>::_Insert(std::list<int, std::allocator<int>>::iterator, int const&) */
 PROVIDE(_ZNSt4listIP10shape_baseSaIS1_EE7_InsertENS3_8iteratorERKS1_ = _ZNSt4listIiSaIiEE7_InsertENS1_8iteratorERKi);
 /* std::vector<MEdge, std::allocator<MEdge>>::clear()  ->  std::vector<rgl::entity*, std::allocator<rgl::entity*>>::_Tidy() */
@@ -51,7 +49,5 @@ PROVIDE(_ZNSt6vectorI5MPolySaIS0_EE5clearEv = _ZNSt6vectorIPN3rgl6entityESaIS2_E
 PROVIDE(_ZNSt6vectorI5MVertSaIS0_EE5clearEv = _ZNSt6vectorIPN3rgl6entityESaIS2_EE5_TidyEv);
 /* std::vector<shape_base*, std::allocator<shape_base*>>::resize(unsigned int, shape_base*)  ->  std::vector<rgl::Obj*, std::allocator<rgl::Obj*>>::resize(unsigned int, rgl::Obj*) */
 PROVIDE(_ZNSt6vectorIP10shape_baseSaIS1_EE6resizeEjS1_ = _ZNSt6vectorIPN3rgl3ObjESaIS2_EE6resizeEjS2_);
-/* std::vector<rgl::strategic_entity*, std::allocator<rgl::strategic_entity*>>::resize(unsigned int, rgl::strategic_entity*)  ->  std::vector<int, std::allocator<int>>::resize(unsigned int, int) */
-PROVIDE(_ZNSt6vectorIPN3rgl16strategic_entityESaIS2_EE6resizeEjS2_ = _ZNSt6vectorIiSaIiEE6resizeEji);
 /* std::vector<long long, std::allocator<long long>>::clear()  ->  std::vector<rgl::entity*, std::allocator<rgl::entity*>>::_Tidy() */
 PROVIDE(_ZNSt6vectorIxSaIxEE5clearEv = _ZNSt6vectorIPN3rgl6entityESaIS2_EE5_TidyEv);
