@@ -2594,6 +2594,7 @@ class Runner:
         self.targets_cache = {}   # id(insns) -> addresses a branch/call in that code lands on (block starts)
         self.fakes = []
         self.midfn = None         # (target, call site) of the original's indirect call into mid-function code
+        self.wildcall = []        # (target, call site) of each indirect call to no code at all, in a run with a failed allocation
         self.orig = Side("orig", t.va, [(t.orig_lo, t.orig_hi)], self._sites_orig(), t.orig_cfg, (t.orig_lo, t.orig_hi))
         self.ours = Side("ours", obj["entry"], obj["code"], self._sites_ours(), self._cfg_ours(), obj["func_range"])
         for side in (self.orig, self.ours):
@@ -3410,6 +3411,12 @@ class Runner:
             # an indirect call (vtable slot / function pointer) into the middle of the original's code: no
             # object the game builds has such a slot (see the call-midfunction discard in the input loop)
             self.midfn = (tgt, address)
+        if len(self.wildcall) < 16 and getattr(self.m, "alloc_fail", ()) and info["ins"].operands[0].type != CX.X86_OP_IMM and \
+                not self.img.in_text(tgt):
+            # an indirect call to a target that is no code, in a run where the input made a `new` return NULL: the
+            # code that follows reads its vtable through the (repair-mapped) null page, which no real program does
+            # (the allocation failure would have crashed it). The target is soup that differs by frame layout.
+            self.wildcall.append((tgt, address))
         esp = uc.reg_read(UC_X86_REG_ESP)
         while self.tr_stack and esp >= self.tr_stack[-1]:
             self.tr_stack.pop()                         # transparent calls that already returned
@@ -5554,6 +5561,7 @@ class Runner:
             entry["xmm%d" % k] = uc.reg_read(UC_X86_REG_XMM0 + k)
         self.fakes, self.calls = [], []
         self.midfn = None
+        self.wildcall = []
         self.call_esps = []
         self.call_taint = []
         self.call_regs, self.fake_regs, self.import_regs = [], [], []
@@ -5710,6 +5718,7 @@ class Runner:
         o["fakes"] = list(self.fakes)
         o["calls"] = list(self.calls)
         o["midfn"] = self.midfn
+        o["wildcall"] = self.wildcall
         o["call_esps"] = list(self.call_esps)
         if self.opts.call_regs:
             # index-aligned with the three traces above: the register file at each recorded call (copied: a
@@ -7577,6 +7586,18 @@ def _test_function(sid, va, opts, log=print):
                     if opts.verbose:
                         log("  discard input %d: %s" % (i, why_))
                     continue
+                if a.get("wildcall") and (lambda wo: wo and [w[0] for w in wo] != [w[0] for w in a["wildcall"]])(
+                        runner.run_side(runner.ours, inp).get("wildcall")):
+                    # both builds call through a vtable read from the null page after the input's failed `new`, to different soup targets (an
+                    # unchecked allocation failure: undefined behaviour in the original too); the soup target
+                    # differs with the frame layout (inventory_window 0x501a20: ff5db87d vs ff5dc87d), so no
+                    # comparison can mean anything. Discarded only when BOTH builds do it and the targets differ; a build that
+                    # does not (it checked the pointer) or the same target is compared as usual.
+                    discarded["call-null-vtable"] = discarded.get("call-null-vtable", 0) + 1
+                    if opts.verbose:
+                        log("  discard input %d: indirect call at %08x to %08x after a failed allocation" % (
+                            i, a["wildcall"][0][1], a["wildcall"][0][0]))
+                    continue
                 if st == "import" and ours_probe < OURS_IMPORT_PROBES and \
                         not M.is_heap_exhausted(a["status"][1]):
                     # our side's call sites that stop at the same import (for its 'blocked' edges): run it,
@@ -8167,7 +8188,8 @@ def replay(sid, va, path, opts):
         print("%s: %s eax=%08x edx=%08x ebx=%08x esi=%08x edi=%08x ebp=%08x esp=+%x x87=%d fakes=%d" % (
             nm, o["status"], o["eax"], o["edx"], o["ebx"], o["esi"], o["edi"], o["ebp"], o["esp"], o["fpu_depth"],
             len(o["fakes"])))
-        for ent in cmp_.norm_calls(o["calls"])[:60]:
+        ncalls = int(os.environ.get("EQUIV_REPLAY_CALLS", "60"))   # a long call trace (e.g. the 0x4cf100 mode list) is cut at 60 by default
+        for ent in cmp_.norm_calls(o["calls"])[:ncalls]:
             print("    call", fmt_tcall(ent))
         for ent in o["imports"][:40]:
             print("    import", fmt_call((ent[0], tuple(norm_val(v, runner.stk_hi) for v in ent[1]))))

@@ -1274,5 +1274,12 @@
       "--stub-callees"
     ],
     "why": "Rec1208::init_screen (3 KB) builds the dialogue screen through ~7300 fake/image calls; --stub-callees keeps the image functions from running (the old not_run/UNSUPPORTED was 0 valid on soup objects). One 60 s run is ~45 valid inputs, so the row is run as 8 shards merged with merge_shards.py (2026-11-25: WEAK, 68/108 edges per side, no mismatch)."
+  },
+  "launcher_config_dialog 004cf100": {
+    "args": [
+      "--transparent",
+      "43e7b0"
+    ],
+    "why": "list_modes (a header inline, src/game/data/list_modes.h) pushes to three vector<int> and a vector<tstring>: the original calls the image's _Insert_n 0x43e7b0 (one ICF'd body shared by vector<int> and vector<SceneObject*>) where ours expands its own _Insert_n<int> (operator new, memmove, _Ufill<SceneObject*>), so the depth-1 call traces differ although the heap contents agree. --transparent 43e7b0 runs the original's copy with its calls compared against ours, as for 0x484590's add_mesh. D1 2026-11-27: the saved fail input replays with no difference."
   }
 }
