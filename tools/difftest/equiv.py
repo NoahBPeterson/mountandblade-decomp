@@ -3731,6 +3731,13 @@ class Runner:
             self.tr_stack.pop()
         if not self.tr_stack or self.tr_block is not None:
             return
+        if info["is_jmp"] and esp != self.tr_stack[-1] - 4:
+            # a `jmp` is a tail call only with the stack balanced back to the entry state (the return address on top, as at
+            # the call that entered the transparent function). Anything else is a jump inside the function's own body to a
+            # label Ghidra split off as a function (vector<tstring>::_Insert_n 0x43e310 jumps to its cleanup / epilogue
+            # funclet 0x43e575): recording it made the stack words of a live frame (uninitialised locals) the "arguments"
+            # (list_modes 0x4cf100: [0,0,0] vs [10,0,0] on identical std code)
+            return
         tgt = self._eval_target(info["ins"])
         if tgt is None or self._thunk(tgt):
             return
