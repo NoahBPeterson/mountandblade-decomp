@@ -609,6 +609,18 @@ in source is normally neutral.
 
 **realize.py only helps when the registers really differ (wave R1, 2026-11-26).** On 29 rows whose notes blamed "register choice", realize found nothing: on most of them regmap or scratch agreed with the original on every variable. The residue was operand order, x87 order, scheduling, or block layout. Check `c2.py regmap` / `realize --from scratch`'s "N of N picks" first. If they agree, the row is not a register row, and its note should say which class it is.
 
+**A constant in a register, and the BYTE rule (c2scope tools/constregs.py, docs/c2/immcand.md 6; 2026-11-27).** cl 13.10
+makes a constant a register candidate with 2 qualifying uses (or 1 in a loop); its benefit is the sum of each use's
+cost x block weight minus the load (a use costs 1 when its other operand is memory with a symbol / displacement; `cmp
+reg,K` or a store through [reg] costs 0); benefit <= 0 is never coloured, and a callee-saved register is kept for it
+only at benefit >= 3. Any 1-BYTE use (`mov byte ptr [..], 1`) flags the constant BYTE: it needs a byte register, which
+across calls means ebx; while it waits every interfering web is steered off ebx, and if a call-crossing web takes ebx
+first the constant is dropped and every use stays an immediate. So when the original has immediates where ours holds
+a constant in ebx, look for a web the original keeps live across a call (an element address, a reference): binding it
+(`int& a = p->attached[k];` in GameData::remove_party 0x4915d0, aligned 158 -> 55, size equal) takes ebx first.
+`uv run tools/constregs.py SRC --func S --c2 13.10 [--value 1] -- <cl args>` (in ../vs2005-cpp) lists each constant's
+priority, benefit, uses by width, the BYTE flag, the outcome and the levers.
+
 ### 6.3 Register calling conventions for translation-unit-local statics
 
 **Without link-time code generation, a `static` function in the same TU gets a
