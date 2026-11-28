@@ -168,3 +168,33 @@ def test_restoring_the_wrong_register_not_proved():
 
 def test_not_restoring_not_proved():
     assert _prove(*_saves(ours_pop="90")) != "proved"
+
+
+# prove.py's own self-test (mutate.py mutants of ours, fast and full runs) under the frame model with the O-up flag:
+# the pair is EQUIVALENT-O only after the unconditional layers failed, and every mutant must stay unproved.
+def _prove_py(a, b, k=6):
+    import prove as PV
+    b.meta.update(src="", flags=[])
+    return PV.run_funcs(a, b, "L1", k, True, lambda s: None, {"region": 120.0}, ["region"], match_shortcut=False,
+                        frame_model=True)
+
+
+def _selftest(pair):
+    a, b = pair
+    r = _prove_py(a, b)
+    print(r["verdict"], r.get("detail", "")[:300], r.get("mutants"))
+    assert r["verdict"] == "EQUIVALENT-O", r.get("detail")
+    assert r["mutants"] and all(t[1] != "proved" for t in r["mutants"]), r["mutants"]
+    return r
+
+
+def test_selftest_spill_below_objects():
+    _selftest(_pair())
+
+
+def test_selftest_uniform_shift_read_after_call():
+    _selftest(_pair_shift())
+
+
+def test_selftest_different_callee_saved_registers():
+    _selftest(_saves())
