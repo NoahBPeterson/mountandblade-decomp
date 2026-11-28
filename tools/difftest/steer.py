@@ -844,6 +844,7 @@ class Steer:
                     c = self.set_loc(inp0, loc, v, kind)
                     if c is not None:
                         out.append(c)
+            out.extend(self._snap_directed(inp0, locs, kind, rng))
             if kind == "int" and addr is None and not any(isinstance(l[0], int) for l in locs):
                 for loc, d in self._near_locations(val, size, rec):
                     for v in vals:
@@ -854,6 +855,24 @@ class Steer:
                 out.extend(self._pair_candidates(rec, inp0, rng)[:8])
             if kind == "float" and not locs:
                 out.extend(self._float_candidates(rec, inp0, vals)[:12])
+        return out
+
+    def _snap_directed(self, inp0, locs, kind, rng):
+        """A snapshot input (real game state): besides the compare's other operand, the compared field also takes what the
+        state itself offers: the same field of the other live objects of its class (an id / type / count another record
+        holds), another object of the pointee's class for a pointer field (SnapInputs.related). The rest of the state
+        stays as captured, so the flip cannot leave a dangling id or a pointer into nothing."""
+        si = self.r.snapin
+        if kind != "int" or si is None or getattr(inp0, "snap", None) is None:
+            return []
+        out = []
+        for loc in locs:
+            if not isinstance(loc[0], int) or self.region(loc[0]) != "snap" or loc[1] != 4 or loc[0] & 3:
+                continue
+            for v in si.related(inp0, loc[0], rng)[:6]:
+                c = self.set_loc(inp0, loc, v, "int")
+                if c is not None:
+                    out.append(c)
         return out
 
     def _float_candidates(self, rec, inp0, vals):

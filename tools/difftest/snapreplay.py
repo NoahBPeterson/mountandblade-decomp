@@ -102,6 +102,8 @@ class SnapStore:
                     mm = mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ)
                     try:
                         _s, _v, ctx, recs = walk_records(mm)
+                    except (struct.error, AssertionError):
+                        continue            # a truncated file (the game was killed mid-write): not a snapshot, left in place
                     finally:
                         mm.close()
                 ctxs[seq], vas[seq] = ctx, va
@@ -157,6 +159,24 @@ class SnapStore:
 
 
 _STORES = {}
+
+# Every directory that holds captured sessions (never deleted or moved): the main capture, the dated sessions under
+# work/capture_sessions/, and the older work/capture_* directories. A session's snapshots are deltas within that session,
+# so sessions are never merged: each has its own SnapStore.
+SESSION_GLOBS = ["work/capture", "work/capture_sessions/*", "work/capture_*"]
+
+
+def session_dirs(spec=None):
+    """Directories a --snapshots spec names, absolute: "all" / None = every session directory that holds cap_*.bin
+    (SESSION_GLOBS); a path, or an os.pathsep-separated list of paths, = exactly those."""
+    if spec in (None, "", "all"):
+        out = []
+        for g in SESSION_GLOBS:
+            for d in sorted(glob.glob(os.path.join(ROOT, g))):
+                if os.path.isdir(d) and d not in out and glob.glob(os.path.join(d, "cap_*.bin")):
+                    out.append(d)
+        return out
+    return [os.path.abspath(x) for x in str(spec).split(os.pathsep) if os.path.isdir(x)]
 
 
 def store(d=None):

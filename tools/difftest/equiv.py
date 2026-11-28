@@ -45,14 +45,18 @@ Verdicts:
               tolerated (with a note) only when the bytes at both are identical; otherwise it is a FAIL
               whose detail names the differing dwords;
   UNSUPPORTED unresolved reference, symbol not found, compile error, or almost every input discarded.
---snapshots [DIR] (opt-in, default dir work/capture): real game states as inputs. Every entry-state snapshot of the row's
-function that tools/hybrid/capture.py recorded from a run of the original game (registers, the stack arguments, the
+--snapshots [DIR] (opt-in; no DIR = every session directory: work/capture, work/capture_sessions/*, work/capture_*; a path or
+os.pathsep-separated paths = only those): real game states as inputs. Every entry-state snapshot of the row's
+function (in every session; a session's snapshots are deltas within it, so sessions are never merged: an Input's `snap` is
+{dir, seq}) that tools/hybrid/capture.py recorded from a run of the original game (registers, the stack arguments, the
 captured process memory, mapped page by page on first touch) is an Input run first, on both builds, from the same state,
 compared like any input and counted for edge coverage; then --snap-share (default 0.75) of the fresh inputs and every
 mutant of a snapshot input are the snapshot with 1-3 edits (a flag toggled, a count / id moved to another value seen in
 the state, a float perturbed, a pointer swapped for another object's or NULL, an argument changed) chosen among the
 dwords the function actually read, so steering / concolic work from real objects (steer.set_loc writes a snapshot dword
-into Input.overrides). A run that touches a page the capture never recorded non-zero reads zeros there (as snapreplay.py),
+into Input.overrides). Edits and steering are state-consistent (SnapInputs.related): a compared id / count / pointer field
+also takes what the same snapshot holds, the same field of the other live objects of its class (same vtable) or another
+object of the pointee's class, never an invented value (DIFFTEST_NO_RELATED=1 turns this off for an A/B). A run that touches a page the capture never recorded non-zero reads zeros there (as snapreplay.py),
 one that leaves the captured state in any other way (an unmapped address, an external module) is discarded as before.
 The result's "snapshot_inputs" counts seeds / mutants and their validity. Local only (the captures are not on the laptop).
 --hint g:ADDR[&MASK]=V1,V2@P (opt-in, soft, nothing discarded): in a share P of fresh inputs the original-image global at ADDR
@@ -2473,13 +2477,22 @@ class SnapInputs:
     Input.overrides dword, so steering sets locations the same way and --replay reproduces the input."""
 
     def __init__(self, t, store, m, img, dirpath):
-        self.t, self.store, self.m, self.img, self.dir = t, store, m, img, dirpath
-        self.seqs = store.seqs(t.va)
+        # `store` / `dirpath`: one SnapStore and its directory, or lists of them (every session directory that captured
+        # the row's function: a session's snapshots are deltas within that session, so sessions are never merged)
+        stores = store if isinstance(store, list) else [store]
+        dirs = dirpath if isinstance(dirpath, list) else [dirpath]
+        self.t, self.m, self.img = t, m, img
+        self.stores = dict(zip(dirs, stores))
+        self.store, self.dir = stores[0], dirs[0]               # the first session (single-session callers)
+        self.ids = [(d, q) for d, st in self.stores.items() for q in st.seqs(t.va)]   # (session dir, seq), per snapshot
+        self.seqs = [q for _d, q in self.ids]
         self.bases = []                 # seed inputs, one per snapshot
         self.vals = set()               # small ints read anywhere in the traced states: valid ids / counts for swaps
         self.ptrs = set()               # pointer-like values read
         self.img_cache = {}
         self._img_pages = None
+        self._vt_cache = {}
+        self.use_related = not os.environ.get("DIFFTEST_NO_RELATED")      # state-consistent values (off: A/B tests)
 
     @classmethod
     def setup(cls, t, opts, m, img):
@@ -2487,13 +2500,18 @@ class SnapInputs:
         if M.OBJ_BASE < 0x38000000:
             return None, "--snapshots needs DIFFTEST_OBJ_BASE=0x38000000 (set automatically when the flag is on the command line)"
         import snapreplay as SR
-        d = os.path.abspath(opts.snapshots)
-        if not os.path.isdir(d):
-            return None, "no capture directory %s" % d
-        store = SR.store(d)
-        if not store.seqs(t.va):
-            return None, "no snapshot of %08x in %s" % (t.va, d)
-        return cls(t, store, m, img, d), None
+        dirs = SR.session_dirs(opts.snapshots)
+        if not dirs:
+            return None, "no capture directory %s" % opts.snapshots
+        have = [(d, SR.store(d)) for d in dirs]
+        have = [(d, st) for d, st in have if st.seqs(t.va)]
+        if not have:
+            return None, "no snapshot of %08x in %s" % (t.va, ", ".join(os.path.basename(d) for d in dirs))
+        return cls._mk(t, have, m, img), None
+
+    @classmethod
+    def _mk(cls, t, have, m, img):
+        return cls(t, [st for _d, st in have], m, img, [d for d, _st in have])
 
     # ---- the captured memory
     def mappable(self, page):
@@ -2501,45 +2519,55 @@ class SnapInputs:
         analysis image (its writable pages are written before the run, the rest is the image itself)."""
         return 0x10000 <= page < M.OBJ_BASE and not (self.img.base <= page < self.img.base + self.img.size)
 
-    def page_bytes(self, seq, page):
-        """-> (bytes, zero_filled): the state's page at snapshot seq. A page never recorded reads as zeros (the process had
+    def _at(self, snap):
+        """snap = {"dir", "seq"} (or a bare seq of the first session) -> (SnapStore, seq, cache key)."""
+        if isinstance(snap, dict):
+            return self.stores[snap["dir"]], snap["seq"], (snap["dir"], snap["seq"])
+        return self.store, snap, (self.dir, snap)
+
+    def page_bytes(self, snap, page):
+        """-> (bytes, zero_filled): the state's page at snapshot snap. A page never recorded reads as zeros (the process had
         it as zero memory: capture.c only writes pages that changed)."""
+        st, seq, _k = self._at(snap)
         try:
-            d = self.store.page(seq, page)
+            d = st.page(seq, page)
         except KeyError:
             return bytes(0x1000), True
         return (bytes(0x1000) if d is None else d), False
 
-    def image_pages(self, seq):
+    def image_pages(self, snap):
         """{page: bytes} of the image's writable pages whose captured content differs from the harness's baseline."""
-        out = self.img_cache.get(seq)
+        st, seq, key = self._at(snap)
+        out = self.img_cache.get(key)
         if out is None:
             if self._img_pages is None:
-                self._img_pages = [(nm, pg) for nm, lo, hi in self.m.writable for pg in self.store.pages_in(lo, hi)]
+                self._img_pages = {}
+            if snap_dir_key(key) not in self._img_pages:
+                self._img_pages[snap_dir_key(key)] = [(nm, pg) for nm, lo, hi in self.m.writable for pg in st.pages_in(lo, hi)]
             out = {}
-            for nm, pg in self._img_pages:
-                if not self.store.has(seq, pg):
+            for nm, pg in self._img_pages[snap_dir_key(key)]:
+                if not st.has(seq, pg):
                     continue
-                d = self.store.page(seq, pg)
+                d = st.page(seq, pg)
                 d = bytes(0x1000) if d is None else d
                 if d != self.m.image_base_page(nm, pg):
                     out[pg] = d
-            self.img_cache[seq] = out
+            self.img_cache[key] = out
         return out
 
-    def read(self, seq, addr, n):
+    def read(self, snap, addr, n):
         """n bytes of the captured state at addr (image: the captured writable page, else the image's own bytes)."""
         out = bytearray()
         while n > 0:
             pg = addr & ~0xFFF
             if self.img.base <= pg < self.img.base + self.img.size:
-                d = self.image_pages(seq).get(pg)
+                d = self.image_pages(snap).get(pg)
                 if d is None:
                     d = next((self.m.image_base_page(nm, pg) for nm, lo, hi in self.m.writable if lo <= pg < hi), None)
                 if d is None:
                     d = bytes(self.img.read(pg, 0x1000))
             else:
-                d = self.page_bytes(seq, pg)[0]
+                d = self.page_bytes(snap, pg)[0]
             k = min(n, 0x1000 - (addr & 0xFFF))
             out += d[addr & 0xFFF:(addr & 0xFFF) + k]
             addr += k
@@ -2550,28 +2578,31 @@ class SnapInputs:
         """The dword the snapshot input holds at a4 (an edit, else the captured state)."""
         if a4 in inp.overrides:
             return inp.overrides[a4]
-        return struct.unpack("<I", self.read(inp.snap["seq"], a4, 4))[0]
+        return struct.unpack("<I", self.read(inp.snap, a4, 4))[0]
 
     # ---- inputs
-    def seed(self, seq):
+    def seed(self, ident):
+        """The seed input of snapshot ident = (session dir, seq) (a bare seq: the first session)."""
         import snapreplay as SR
-        ctx = self.store.ctx(seq)
+        d, seq = ident if isinstance(ident, tuple) else (self.dir, ident)
+        snap = {"dir": d, "seq": seq}
+        ctx = self.stores[d].ctx(seq)
         reg = {k: struct.unpack_from("<I", ctx, o)[0] for k, o in SR.CTX.items()}
         n = len(self.t.stack_kinds)
-        words = struct.unpack("<%dI" % (n + 4), self.read(seq, reg["esp"] + 4, 4 * (n + 4)))
+        words = struct.unpack("<%dI" % (n + 4), self.read(snap, reg["esp"] + 4, 4 * (n + 4)))
         inp = Input()
         inp.seed, inp.profile, inp.origin = seq, "mixed", "snapshot"
         inp.pool_over, inp.touched, inp.overrides, inp.extra, inp.forced, inp.fake_ret = {}, [], {}, {}, {}, {}
         inp.args, inp.pad = list(words[:n]), list(words[n:])
         inp.regs = {r: reg[r] for r in ("eax", "ecx", "edx", "ebx", "esi", "edi", "ebp")}
         inp.xmm, inp.alloc_fail, inp.typed = [0] * 8, (), 0
-        inp.snap, inp.snap_cands = {"dir": self.dir, "seq": seq}, None
+        inp.snap, inp.snap_cands = snap, None
         return inp
 
     def seeds(self, runner, limit=None):
         """The row's snapshot inputs (each with its edit targets, traced on the original). Also fills the value pools."""
-        seqs = self.seqs[:limit] if limit else self.seqs
-        self.bases = [self.seed(q) for q in seqs]
+        ids = self.ids[:limit] if limit else self.ids
+        self.bases = [self.seed(i) for i in ids]
         for b in self.bases:
             b.snap_cands = self.targets(runner, b)
             for a in b.args:
@@ -2618,6 +2649,76 @@ class SnapInputs:
             out.append((a4, size, kind))
         return out
 
+    # ---- branch-directed, state-consistent values
+    SIB_CAP = 12                        # sibling objects consulted per field
+    OBJ_SPAN = 0x800                    # a pointer owns the dwords [p, p + OBJ_SPAN) for container lookup
+
+    def _vtable_ptrs(self, inp):
+        """Sorted pointers read from this state whose first dword is an image address (an object with a vtable)."""
+        key = (inp.snap["dir"], inp.snap["seq"])
+        c = self._vt_cache.get(key)
+        if c is None or c[0] != len(self.ptrs):
+            ps = []
+            for p in sorted(self.ptrs):
+                if p & 3 or not self.mappable(p & ~0xFFF):
+                    continue
+                try:
+                    v = struct.unpack("<I", self.read(inp.snap, p, 4))[0]
+                except Exception:       # noqa: BLE001
+                    continue
+                if self.img.in_image(v):
+                    ps.append((p, v))
+            c = self._vt_cache[key] = (len(self.ptrs), ps, [p for p, _v in ps])
+        return c[1], c[2]
+
+    def container(self, inp, addr):
+        """(object pointer, its vtable) of the live object (a pointer seen in the state, vtable at +0) whose first
+        OBJ_SPAN bytes hold addr, nearest base wins; None when no such object is known."""
+        ps, keys = self._vtable_ptrs(inp)
+        k = bisect.bisect_right(keys, addr) - 1
+        if k >= 0 and addr - ps[k][0] < self.OBJ_SPAN and addr != ps[k][0]:
+            return ps[k]
+        return None
+
+    def siblings(self, inp, vt, skip=None):
+        """Live objects of the same class (same vtable) as the one with vtable vt, in the same snapshot."""
+        ps, _k = self._vtable_ptrs(inp)
+        return [p for p, v in ps if v == vt and p != skip][:self.SIB_CAP * 4]
+
+    def related(self, inp, a4, rng=None, cur=None):
+        """Replacement values for the dword at a4 that keep the state consistent, drawn from the same snapshot: the same
+        field of the other live objects of its class (an id / type / count another record really holds), for a pointer
+        field the other live objects of the pointee's class, and cur +-1 for a count. [] when nothing is known."""
+        if not self.use_related:
+            return []
+        if cur is None:
+            cur = self.value(inp, a4)
+        out = []
+        c = self.container(inp, a4)
+        if c is not None:
+            base, vt = c
+            for q in self.siblings(inp, vt, base)[:self.SIB_CAP]:
+                try:
+                    v = self.value(inp, q + (a4 - base))
+                except Exception:       # noqa: BLE001
+                    continue
+                if v != cur and v not in out:
+                    out.append(v)
+        if self.mappable(cur & ~0xFFF) and cur & 3 == 0:                # a pointer: same-class objects
+            try:
+                vt = struct.unpack("<I", self.read(inp.snap, cur, 4))[0]
+            except Exception:           # noqa: BLE001
+                vt = None
+            if vt is not None and self.img.in_image(vt):
+                for q in self.siblings(inp, vt, cur)[:self.SIB_CAP]:
+                    if q not in out:
+                        out.append(q)
+        if 0 < cur < 0x10000 and cur - 1 not in out:
+            out.append(cur - 1)                                         # a count one shorter / an id one lower
+        if rng is not None:
+            rng.shuffle(out)
+        return out
+
     # ---- mutation
     def mutant(self, rng, parent=None):
         """A snapshot input with 1-3 edits (of `parent`, else of a random seed)."""
@@ -2659,6 +2760,9 @@ class SnapInputs:
             else:
                 pool = sorted(self.ptrs)
                 nv = 0 if rng.random() < 0.3 or not pool else rng.choice(pool)
+            rel = self.related(inp, a4, rng, cur) if kind in ("int", "ptr") and rng.random() < 0.5 else []
+            if rel:
+                nv = rel[0]                                      # a value another live record of the class holds
             if size in (1, 2):                                       # a byte / word field: only its own bytes change
                 msk = (1 << (8 * size)) - 1
                 nv = (cur & ~msk) | (nv & msk)
@@ -2687,6 +2791,10 @@ class SnapInputs:
             return struct.unpack("<I", struct.pack("<f", g))[0]
         except (OverflowError, struct.error):
             return v
+
+
+def snap_dir_key(key):
+    return key[0]
 
 
 def unobserved_fill(v, base):
@@ -4990,7 +5098,7 @@ class Runner:
                 continue
             if not si.mappable(pg):
                 return ok
-            data, zero = si.page_bytes(cur["seq"], pg)
+            data, zero = si.page_bytes(cur.get("snap", cur["seq"]), pg)
             ed = cur["over"].get(pg)
             if ed:
                 data = bytearray(data)
@@ -5013,7 +5121,7 @@ class Runner:
         cur, si = self.snap_cur, self.snapin
         if cur is None or si is None or not si.mappable(a & ~0xFFF) or not si.mappable((a + n - 1) & ~0xFFF):
             return None
-        b = bytearray(si.read(cur["seq"], a, n))
+        b = bytearray(si.read(cur.get("snap", cur["seq"]), a, n))
         for pg, ed in cur["over"].items():
             for a_, v_ in ed.items():
                 for k in range(4):
@@ -5915,8 +6023,8 @@ class Runner:
             for a_, v_ in inp.overrides.items():
                 if not self.img.in_image(a_):
                     over.setdefault(a_ & ~0xFFF, {})[a_] = v_
-            self.snap_cur = {"seq": snap["seq"], "over": over}
-            for pg_, d_ in self.snapin.image_pages(snap["seq"]).items():
+            self.snap_cur = {"seq": snap["seq"], "snap": snap, "over": over}
+            for pg_, d_ in self.snapin.image_pages(snap).items():
                 m.write(pg_, d_)
             m.snap_fetch = self._snap_fetch
         for a_, v_ in inp.overrides.items():
@@ -7841,8 +7949,11 @@ def _test_function(sid, va, opts, log=print):
         # keyed: the capture the row's snapshots come from (a re-capture changes the states, the options alone would not)
         try:
             import snapreplay as SR
-            st_ = SR.store(opts.snapshots)
-            opts.snap_sig = [len(st_.files), sum(os.path.getsize(f_) for f_ in st_.files), st_.seqs(va)]
+            opts.snap_sig = []
+            for d_ in SR.session_dirs(opts.snapshots):      # every session the spec names: a new one re-runs the row
+                st_ = SR.store(d_)
+                if st_.seqs(va):
+                    opts.snap_sig.append([os.path.basename(d_), len(st_.files), sum(os.path.getsize(f_) for f_ in st_.files), st_.seqs(va)])
         except Exception as e:      # noqa: BLE001 - reported by the Runner's setup below
             opts.snap_sig = repr(e)
     key = _cache_key(t, out, opts)
@@ -7882,9 +7993,10 @@ def _test_function(sid, va, opts, log=print):
         # the row's real game states run first (before the saved regression inputs), then seed the mutation
         seeds = runner.snapin.seeds(runner, getattr(opts, "snap_seeds", None))
         n_seeds = len(seeds)
-        regress = [("snapshot-%d" % q.snap["seq"], q) for q in seeds] + regress
+        regress = [("snapshot-%s:%d" % (os.path.basename(q.snap["dir"]), q.snap["seq"]), q) for q in seeds] + regress
         n_regress += n_seeds
-        out["snapshots"] = {"dir": runner.snapin.dir, "seeds": n_seeds, "targets": [len(q.snap_cands or []) for q in seeds]}
+        out["snapshots"] = {"dir": runner.snapin.dir, "sessions": [os.path.basename(d) for d in runner.snapin.stores],
+                            "seed_ids": ["%s:%d" % (os.path.basename(q.snap["dir"]), q.snap["seq"]) for q in seeds], "seeds": n_seeds, "targets": [len(q.snap_cands or []) for q in seeds]}
         if opts.verbose:
             log("  snapshots: %d seed(s), %s edit targets" % (n_seeds, out["snapshots"]["targets"]))
     elif getattr(opts, "snapshots", None):
@@ -8813,8 +8925,8 @@ def parse_args(argv=None):
                     help="opt-in environment (off by default): in a share P (default 0.5) of fresh inputs point g_items (0x5e29d0) "
                          "at a table of 100 ItemKind records whose types (+0x1c8 low byte) cover every itp_type_* value, with "
                          "plausible weight/value/stat fields, for BOTH builds; saved with the input. See ItemTable")
-    ap.add_argument("--snapshots", nargs="?", const=os.path.join(S.ROOT, "work", "capture"), default=None, metavar="DIR",
-                    help="opt-in (default dir work/capture): real game states as inputs. Every snapshot of the row's function "
+    ap.add_argument("--snapshots", nargs="?", const="all", default=None, metavar="DIR",
+                    help="opt-in (no DIR: every session directory, see snapreplay.session_dirs): real game states as inputs. Every snapshot of the row's function "
                          "(tools/hybrid/capture.py) runs first on both builds and counts for edge coverage; --snap-share of the "
                          "fresh inputs and every mutant of one are the snapshot with a few edits (see SnapInputs). Local only")
     ap.add_argument("--snap-share", type=float, default=SNAP_SHARE, metavar="P",
