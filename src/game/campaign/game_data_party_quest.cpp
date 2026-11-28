@@ -554,6 +554,7 @@ void GameData::remove_party(int id)
     }
     if (p->attached.size() != 0) {
         for (unsigned k = 0; k < p->attached.size(); k++) {
+            int& a = p->attached[k];
             if ((unsigned)p->attached[k] >= m->serial)
                 continue;
             int j = m->lookup(p->attached[k]);
@@ -561,7 +562,7 @@ void GameData::remove_party(int id)
                 continue;
             if (m->atu(j)->type != 1)
                 continue;
-            wd_at(m, m->lookup(p->attached[k]))->attached_to = -1;
+            wd_at(m, m->lookup(a))->attached_to = -1;
             wd_at(m, m->lookup(p->attached[k]))->engaged = 0;
             wd_at(m, m->lookup(p->attached[k]))->dirty = 1;
         }
