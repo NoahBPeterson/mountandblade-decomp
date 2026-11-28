@@ -531,6 +531,42 @@ Known limits that still fall back to byte-equality (not proved, never a false pr
 2 below; a soundness bug found in the frame model withdraws the tier: `prove.py --recheck-all --record` after the
 fix removes every row that no longer proves.
 
+**Stage 3 (lane P2, 2026-11-27; the frame-blocked rows).** Three additions, the first two always on under the frame
+model, the third behind its own flag because it strengthens O:
+- *Static stack depth through indirect calls* (regions.py `_pops`, `check_pops`; angr_layer `do_call`, `arg_bytes`,
+  `deferred_cleanup`). The frame model needs the depth below the entry esp at every cut; it was lost after the first
+  virtual call (unknown `ret N`) and at ebp frames. Now: (a) an INDIRECT call (register / `[reg+disp]` operand) removes
+  exactly the bytes pushed for it (straight-line pushes back to the first other esp write, a block start or a
+  prologue save `push r`/`pop r` pair), unless the code right after it cleans up itself (`add esp` / `pop ecx|edx`: a
+  cdecl callee: no assumption); the worker models `ret N` as that constant (both versions must assume the same N:
+  observable "assumed ret N"); (b) a direct callee whose own code does not tell (SEH epilogue elsewhere, import) and
+  is followed by the compiler's cleanup `add esp,k` / `pop ecx` within six straight-line instructions pops 0; a `jmp`
+  thunk takes its target's pop; (c) `mov esp, ebp` of an ebp frame restores the depth `mov ebp, esp` ran at (ebp
+  written by that one mov only); (d) a cdecl call whose cleanup is merged into a later call's (`call f; pushes; call
+  g; add esp,N`) has N minus the net pushes / callee pops in between as its argument bytes. SOUNDNESS: the compiler
+  tracks esp statically, so every path of the function leaves esp at the entry value at its ret; `check_pops` verifies
+  it under the assumed pops (every ret at depth 0 on both sides, else the frame-model run is `unknown`), which pins
+  the sum of the assumed cleanups; an individual N could still be wrong only by errors that cancel on every path to
+  every ret (two indirect calls on one path with opposite errors). Mutant: tests test_frame_depth.py.
+  Also: a relocated call of ours that the walk rewrote to the original's callee address is no longer taken for a call
+  into the function itself when that address merely falls inside a LONGER build of ours (only the entry, or the
+  original's own range, counts).
+- *EQUIV_FRAME_OUP=1: assumption O-up* ("an object extends upward from the lowest byte the function takes of it"):
+  `Side.lowest_taken` (static: every `lea r,[esp+d]` / ebp-frame `lea`; any other use of esp/ebp as a value or an
+  indexed lea: nothing known). A frame word entirely below the lowest taken address of its version is in no object
+  given to a callee: at a call it is not compared (both sides below it: skipped; one side only: a difference in object
+  structure) and the callee's havoc leaves it alone (protected). A frame whose objects all sit at ONE uniform shift d
+  between the versions may be read after the call: ours' havoc then writes the original's bytes at the address
+  shifted by a symbol D that the call obligation pins to d (`dsh<k>`), the correlated havoc of the design above;
+  several shifts, or d from a different object than the pointers pair, stay refused. NOT covered (so such pairs stay
+  unproved): a callee that returns a pointer into the frame which is then dereferenced or compared; objects at
+  different shifts; a callee writing past the object it was given (assumption O itself; no model can test it). O-up
+  is stronger than O (an interior pointer to an object that extends below it breaks it), so a proof that needs it is
+  recorded as such: prove.py's tier text says O; the report of lane P2 names every row that needs the flag.
+  Tests: test_frame_oup.py (spill below every object: proves only with the flag; wrong spilled value, spill reloaded
+  from the object, object contents differing: not proved; the same under a uniform shift with the frame read after the
+  call).
+
 **Stage 1 (implemented, same flag).** F is carried in the cut key (x, y, pi, F) with g = 0 (esp equal at cuts):
 - *F at a stop* (angr_layer `_frame_exit_diffs`): memory at and above E equal at the same addresses; the frame words
   [esp, E) live at the stop on either side (frame_liveness, "all" at a call) are compared at the same address
