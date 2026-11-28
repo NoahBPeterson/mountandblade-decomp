@@ -140,3 +140,31 @@ def test_merged_cleanup_second_argument_mutant_not_proved():
 
 def test_merged_cleanup_first_argument_mutant_not_proved():
     assert _prove(*_merged(first_arg="6a00")) != "proved"
+
+
+# the two versions save DIFFERENT callee-saved registers (retail keeps the argument in ebx, ours in esi): at the join
+# each version's saved word holds the OTHER version's untouched register (slot <-> register relations of F', and the
+# pops at the return restore them). Mutants: ours restores a register it did not save (pop edi); ours does not restore.
+def _saves(ours_pop="5e", ours_push="56"):
+    pre_r = H("53" "8b5c2408" "85db" "740a" "6a00")
+    cr, rr = _call_g(len(pre_r))
+    tail_r = H("83c404" "89d8" "5b" "c3")
+    a = Func(RVA, pre_r + cr + tail_r, {rr: ("abs", RVA + 0x5000)}, "retail", "retail", {"tables": None})
+    pre_o = H(ours_push) + H("8b742408" "85f6" "740a" "6a00")
+    co, ro = _call_g(len(pre_o))
+    tail_o = H("83c404" "89f0") + H(ours_pop) + H("c3")
+    b = Func(0, pre_o + co + tail_o, {ro: ("sym", "_g", 0x14, 0)}, "ours", "ours",
+             {"symbol": "?f@@YAHH@Z", "consts": {}, "tables": None})
+    return a, b
+
+
+def test_different_callee_saved_registers_prove():
+    assert _prove(*_saves()) == "proved"
+
+
+def test_restoring_the_wrong_register_not_proved():
+    assert _prove(*_saves(ours_pop="5f")) != "proved"          # pop edi: edi was never saved
+
+
+def test_not_restoring_not_proved():
+    assert _prove(*_saves(ours_pop="90")) != "proved"

@@ -1545,6 +1545,19 @@ class Worker:
                     raise Unsupported("a region reads the stack below the cut's esp (esp%+d)" % (sd - low))
         return cur
 
+    def ours_reg0(self, r):
+        """(frame model, slot <-> register relations) ours' register r at the region's entry: the original's register
+        its pi pairs it with, else its own symbol (entry_state's `own`)"""
+        C = self.C
+        inv = {v.split(":")[0].split("@")[0]: (o, int(v.split(":")[1]) if ":" in v else 32) for o, v in
+               self.pi.items() if v}
+        if r not in inv:
+            return self.IN2[r]
+        o, w = inv[r]
+        if w == 32:
+            return self.IN[o]
+        return C.Concat(self.IN2[r][31:w], self.IN[o][w - 1:0])
+
     def frame_base(self, x, epoch, dz, ours):
         """(frame model) the cut's memory at x before the region writes it. A frame address (in_esp + c, c in
         [0, depth): at or above the cut's esp, below the entry esp E) gets a canonical key, so the two versions'
@@ -1562,10 +1575,22 @@ class Worker:
             return self.base_byte(epoch, x)
         sd = d - (1 << 32) if d >= 0x80000000 else d
         depth = self.region_dz.get("depth")
-        # ours' frame at the cut is [in_esp + g, E), E = in_esp + depth (g: the esp delta; offsets are from E)
+        G7 = ("eax", "ecx", "edx", "ebx", "ebp", "esi", "edi")
+        if not ours and self.entry_F is not None and depth is not None and 0 <= sd < depth:
+            # (slot <-> register) the original's word that ours' register holds: the register's bytes
+            off = depth - sd
+            for r_lo, o_lo, n in self.entry_F:
+                if o_lo < 0 and r_lo - n < off <= r_lo:
+                    k = r_lo - off
+                    return self.ours_reg0(G7[-1 - o_lo])[8 * k + 7:8 * k]
         if ours and self.entry_F is not None and depth is not None and self.g <= sd < depth:
             off = depth - sd
             for r_lo, o_lo, n in self.entry_F:
+                if r_lo < 0:
+                    if o_lo - n < off <= o_lo:      # ours' word holds the original's register
+                        k = o_lo - off
+                        return self.IN[G7[-1 - r_lo]][8 * k + 7:8 * k]
+                    continue
                 if o_lo - n < off <= o_lo:
                     sd = depth - r_lo + (o_lo - off)
                     break
@@ -1590,6 +1615,8 @@ class Worker:
         bv = lambda c: C.BVV(c & 0xffffffff, 32)
         v = C.If(C.ULT(x - lo, bv(depth - self.g)), self.base_byte(epoch + "o", x), self.base_byte(epoch, x))
         for r_lo, o_lo, n in self.entry_F:
+            if r_lo < 0 or o_lo < 0:
+                continue                    # a slot <-> register relation: not an address correspondence
             v = C.If(C.ULT(x - (E - bv(o_lo)), bv(n)), self.base_byte(epoch, x + bv(o_lo - r_lo)), v)
         return v
 
@@ -2768,7 +2795,7 @@ class Worker:
                 obs += self.x87_valid(tag, x["regs"], y["regs"])
                 regions.append((tag + " memory", x["esp"], [], x["log"], y["log"], None,
                                 {"frame": True, "ar": x.get("at"), "ao": y.get("at"), "exit": True,
-                                 "esp_o": y["esp"]}))
+                                 "esp_o": y["esp"], "regs": (x["regs"], y["regs"])}))
         return obs, regions
 
     def x87_valid(self, tag, ra, rb):
@@ -3737,6 +3764,34 @@ def _frame_exit_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
         sd_ = (self.region.get("deps_" + side) or {}).get("%x" % at) if at is not None else None
         if (sd_ is not None and sd_ != dv) or (sd_ is None and dep != dep_o):
             return diffs + [(name + " stop depth %s (static) vs %d" % (sd_, dv), z3.BoolVal(True))]
+    # (slot <-> register) a live word of one version with no word partner that equals a register of the OTHER version
+    # at this stop (a callee-saved register pushed by one version only: the value sits in the slot there, in the
+    # register here): the next region starts with the slot holding that register's value. Obligations like any pair.
+    G7 = ("eax", "ecx", "edx", "ebx", "ebp", "esi", "edi")
+    xr_, yr_ = fr.get("regs") or (None, None)
+    rs_pairs, sr_pairs = [], []
+    if xr_ is not None:
+        save2 = getattr(self, "qcap", None)
+        self.qcap = REGION_QCAP
+        used_o = set(pairs.values())
+        qb = [24]
+        for o in sorted(LA):
+            if o in pairs or wa.get(o) is None:
+                continue
+            for i_, v in enumerate(G7):
+                if same(wa[o], yr_[v]) or (qb[0] > 0 and not same(wa[o], yr_[v]) and _try_peq(self, q, wa[o], yr_[v], qb)):
+                    rs_pairs.append((o, -(1 + i_)))
+                    diffs.append((name + " slot -%#x/%s" % (o, v), self.z(wa[o]) != self.z(yr_[v])))
+                    break
+        for p_ in sorted(LB):
+            if p_ in used_o or wb.get(p_) is None:
+                continue
+            for i_, r in enumerate(G7):
+                if same(xr_[r], wb[p_]) or (qb[0] > 0 and not same(xr_[r], wb[p_]) and _try_peq(self, q, xr_[r], wb[p_], qb)):
+                    sr_pairs.append((-(1 + i_), p_))
+                    diffs.append((name + " slot -%#x/%s (ours)" % (p_, r), self.z(xr_[r]) != self.z(wb[p_])))
+                    break
+        self.qcap = save2
     F = []
     for o_r in sorted(pairs):
         o_o = pairs[o_r]
@@ -3748,8 +3803,18 @@ def _frame_exit_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
             F[-1] = (o_r, o_o, F[-1][2] + 4)
         else:
             F.append((o_r, o_o, 4))
+    F += [(o, v, 4) for o, v in rs_pairs] + [(r, p_, 4) for r, p_ in sr_pairs]
     self._exit_F = tuple(F)
     return diffs
+
+
+def _try_peq(self, q, a, b, budget):
+    """one solver query (budgeted): are the two 32-bit terms equal under the path condition?"""
+    budget[0] -= 1
+    try:
+        return not self.check(q, self.z(a) != self.z(b))
+    except GiveUp:
+        return False
 
 
 Worker.frame_region_diffs = _frame_region_diffs
@@ -4006,6 +4071,11 @@ def _run_region(self):
                 if self.region_unsat([self.pc(sa), self.pc(sb)]):
                     continue
                 overlap += 1
+                if os.environ.get("EQUIV_P2_DEBUG"):
+                    with open(os.environ["EQUIV_P2_DEBUG"], "a") as dbg:
+                        dbg.write("P2 overlap A br=%s B br=%s kindsA=%s kindsB=%s\n   pcA=%s\n   pcB=%s\n" % (
+                            sa.globals["br"], sb.globals["br"], [e["kind"] for e in sa.globals["events"]],
+                            [e["kind"] for e in sb.globals["events"]], str(self.pc(sa))[:300], str(self.pc(sb))[:300]))
                 c = self.region_compare(sa, sb, (zpc[id(sa)], zpc[id(sb)]), False)
                 if c:
                     cexs.append(c)

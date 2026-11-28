@@ -1778,12 +1778,12 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
                 variant = hint.get("cut", "none")
                 if variant not in CUT_VARIANTS:
                     return res("unknown", "region: the hints name an unknown cut variant at %s" % hk)
-                sets = (region_sets(R, x, stops_r, variant), region_sets(O, y, stops_o, variant))
+                sets = _no_phantom((region_sets(R, x, stops_r, variant), region_sets(O, y, stops_o, variant)), x, y)
             else:
                 seen = [t[1] for t in tried.get(key, [])]
                 while True:
                     variant = CUT_VARIANTS[vidx.get(key, 0)]
-                    sets = (region_sets(R, x, stops_r, variant), region_sets(O, y, stops_o, variant))
+                    sets = _no_phantom((region_sets(R, x, stops_r, variant), region_sets(O, y, stops_o, variant)), x, y)
                     if sets not in seen or variant == CUT_VARIANTS[-1]:
                         break
                     vidx[key] = vidx.get(key, 0) + 1
@@ -2414,6 +2414,20 @@ def fine_stops(side, a, stops, variant):
     # the nearest: the one the others post-dominate
     first = max(chain, key=lambda p: len(pdom[p]))
     return {first}
+
+
+def _no_phantom(sets, x, y):
+    """a stop one version can reach from its start while the other version reaches NO stop (but its own start) can
+    never be paired: it is a stop of another cut (a shared epilogue entered at a different position in the other
+    version). The region then runs that version through it (to the next stop or the return) instead of ending
+    there: sound, a longer region compares the same executions."""
+    (sr, cr), (so, co) = sets
+    real_r, real_o = sr - {x}, so - {y}
+    if real_o and not real_r:
+        so, co = so & {y}, set()
+    elif real_r and not real_o:
+        sr, cr = sr & {x}, set()
+    return (sr, cr), (so, co)
 
 
 def region_sets(side, a, stops, variant):
