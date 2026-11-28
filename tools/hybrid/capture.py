@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """capture.py: build a runnable copy of the original exe that snapshots chosen functions' entry states.
 
-usage: capture.py [--targets nonmatching|FILE|VA,...] [--max-hits N] [--out work/hybrid/mb.capture.exe]
+usage: capture.py [--targets nonmatching|missing|FILE|VA,...] [--max-hits N] [--out work/hybrid/mb.capture.exe]
                   [--dir 'C:\\...\\'] [--run SECS] [--play]
 
 The copy is the stage-1 runnable image (work/hybrid/mb.base.exe, tools/hybrid/build.py) plus a section .capt
@@ -9,7 +9,7 @@ holding tools/hybrid/capture.c, whose entry point plants int3 at every target an
 first --max-hits calls of each target it writes cap_<seq>_<va>.bin (registers + the writable pages that changed
 since the previous snapshot; capture.c has the format) into the game folder (or --dir). The original exe is
 never touched: the copy is written as mb_capture.exe next to it (as tools/hybrid/play.sh does) and the snapshots
-are moved to work/capture/ afterwards. tools/difftest/snapreplay.py replays them through the original function
+are moved to work/capture_sessions/<date_time>/ afterwards (one directory per session, nothing deleted). tools/difftest/snapreplay.py replays them through the original function
 and ours.
 
 --targets nonmatching (default): every row of every src/ module's *.nonmatching.txt (complete but not byte-exact:
@@ -157,16 +157,17 @@ def run(out, secs, play):
         if cmd.startswith(GAME_WIN + COPY):
             os.kill(int(pid), 9)
     p.wait(30)
-    dst = os.path.join(ROOT, "work", "capture")
-    if os.path.isdir(dst):
-        shutil.rmtree(dst)
+    # every session in its own directory, never deleting an earlier one (2026-11-27: this deleted work/capture, 2.5 GB of
+    # earlier sessions, 47 functions' only snapshots). A session's snapshots are deltas against the previous one of the
+    # SAME session (capture.c), so sessions are never merged into one directory.
+    dst = os.path.join(ROOT, "work", "capture_sessions", time.strftime("%Y-%m-%d_%H%M"))
     os.makedirs(dst)
     n = size = 0
     for f in sorted(glob.glob(os.path.join(game, "cap_*.bin"))):
         size += os.path.getsize(f)
         shutil.move(f, dst)
         n += 1
-    print("%d snapshots, %.1f MB -> work/capture/" % (n, size / 1e6))
+    print("%d snapshots, %.1f MB -> %s" % (n, size / 1e6, os.path.relpath(dst, ROOT)))
 
 
 def press(limit, name="mb_capture"):
@@ -204,6 +205,16 @@ def main():
     a = ap.parse_args()
     if a.targets == "nonmatching":
         targets = nonmatching_vas()
+    elif a.targets == "missing":
+        # the nonmatching functions that do not have --max-hits snapshots yet in any session (work/capture*, the per-session
+        # directories): a session then stops only where a state is still missing (2026-11-27)
+        have = {}
+        for d in glob.glob(os.path.join(ROOT, "work", "capture*")) + glob.glob(os.path.join(ROOT, "work", "capture_sessions", "*")):
+            for f in glob.glob(os.path.join(d, "cap_*_*.bin")):
+                v = int(os.path.basename(f)[:-4].rsplit("_", 1)[1], 16)
+                have[v] = have.get(v, 0) + 1
+        targets = {v for v in nonmatching_vas() if have.get(v, 0) < a.max_hits}
+        print("--targets missing: %d nonmatching functions lack %d snapshots" % (len(targets), a.max_hits))
     elif os.path.exists(a.targets):
         targets = {int(l.split()[0], 16) for l in open(a.targets) if l.strip() and not l.startswith("#")}
     else:
