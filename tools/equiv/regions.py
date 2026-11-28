@@ -211,6 +211,7 @@ class Side:
                     self.leaders.add(a + self.by[a].size)
         self.heads = self._heads()
         self.live = None
+        self.assumed_pops = {}         # (frame model) indirect call address -> the `ret N` assumed (_pops)
 
     def inside(self, t):
         return self.base <= t < self.end
@@ -356,6 +357,14 @@ class Side:
         from capstone import x86_const as X
         out = {self.base: (frozenset(), False, 0, False)}
         work = [self.base]
+        # (frame model, lea_nop) an ebp frame: ebp written only by ONE `mov ebp, esp` (and popped back); then `mov esp,
+        # ebp` restores the depth that mov ran at (bpd[0], set when the forward pass passes it)
+        bpd = []
+        bpd_ok = False
+        if lea_nop:
+            wr_ = [i for i in self.ins if (lambda rw_: rw_ is None or "ebp" in (rw_[1] | rw_[2]))(reg_rw(i))
+                   and not (i.mnemonic == "pop" and i.op_str == "ebp")]
+            bpd_ok = len(wr_) == 1 and wr_[0].mnemonic == "mov" and wr_[0].op_str == "ebp, esp"
         while work:
             a = work.pop()
             i = self.by.get(a)
@@ -390,6 +399,8 @@ class Side:
             load_frame = m in ("pop", "popal", "popfd") or any(
                 o.type == X.X86_OP_MEM and o.access & 1 and framed(o) for o in ops)
             nd = dep
+            if bpd_ok and m == "mov" and i.op_str == "ebp, esp" and dep is not None and not bpd:
+                bpd.append(dep)
             if k == "call":
                 if pf & set(GPR7) or fst:
                     esc = True               # (fst: a frame address in the frame may be a stack argument)
@@ -425,6 +436,10 @@ class Side:
                         # an aligned frame (and esp, -8): esp moves down by 0 .. 7 bytes; depth stays a LOWER
                         # bound (the frame zone ends at or below the return address: a smaller zone assumes less)
                         nd = dep
+                    elif lea_nop and bpd_ok and bpd and m == "mov" and len(ops) == 2 and \
+                            ops[0].type == X.X86_OP_REG and i.reg_name(ops[0].reg) == "esp" and \
+                            ops[1].type == X.X86_OP_REG and i.reg_name(ops[1].reg) == "ebp":
+                        nd = bpd[0]         # (frame model) mov esp, ebp: the depth when `mov ebp, esp` ran
                     elif lea_nop and m == "lea" and len(ops) == 2 and ops[1].type == X.X86_OP_MEM and \
                             ops[1].mem.base and i.reg_name(ops[1].mem.base) == "esp" and not ops[1].mem.index and \
                             ops[1].mem.disp == 0 and i.reg_name(ops[0].reg) == "esp":
@@ -649,6 +664,27 @@ class Side:
             if not p or p[2] is None:
                 continue
             out[a] = [o for o in range(4, min(p[2], self.FRAME_CAP) + 1, 4) if not v & set(range(o - 3, o + 1))]
+        return out
+
+    def prologue_saves(self):
+        """(frame model) the addresses of the prologue's `push r` that save a callee-saved register (ebx, esi, edi,
+        ebp): in the straight-line code from the entry (to the first branch or call), before r is written, with a
+        `pop r` somewhere in the function. They are not arguments of a later call."""
+        from capstone import x86_const as X
+        popped = {i.op_str for i in self.ins if i.mnemonic == "pop"}
+        out, written, a = set(), set(), self.base
+        while a in self.by:
+            i = self.by[a]
+            if self.kind.get(a) or i.mnemonic.startswith("j"):
+                break
+            if i.mnemonic == "push" and i.op_str in ("ebx", "esi", "edi", "ebp") and i.op_str in popped and \
+                    i.op_str not in written:
+                out.add(a)
+            rw = reg_rw(i)
+            if rw is None:
+                break
+            written |= {r for r in (rw[1] | rw[2])}
+            a += i.size
         return out
 
     def call_pushes(self):
@@ -1424,15 +1460,20 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         # ours' callees through the whole pairing (the walk's, completed for fields it never reached; the regions
         # run with it, and prepare checks it): a call the walk did not lock-step otherwise has no known `ret N`, and
         # the stack depth (so the frame zone, F's anchor and the non-escaping calls) is lost after it
-        PO = O.provenance(_pops(O, D.bij, "ours", _paired_targets(retail, ours, O, job)), lea_nop=True)
+        PO = O.provenance(_pops(O, D.bij, "ours", _paired_targets(retail, ours, O, job), indirect=True), lea_nop=True)
         # the original's __chkstk through the job's pairing too (its size differs with the frame: the walk diverges
         # at its `mov eax, N` and never pairs the call)
-        PR = R.provenance(_pops(R, D.bij, "retail", facts_=job.get("facts")), lea_nop=True)
+        PR = R.provenance(_pops(R, D.bij, "retail", facts_=job.get("facts"), indirect=True), lea_nop=True)
+        why = None if os.environ.get("EQUIV_NO_CHECK_POPS") else (check_pops(R, PR) or check_pops(O, PO))
+        if why:
+            return res("unknown", "region (frame model): " + why)
+        job["pops_r"] = {"%x" % a: n for a, n in sorted(R.assumed_pops.items())}
+        job["pops_o"] = {"%x" % a: n for a, n in sorted(O.assumed_pops.items())}
         # the frame-slot liveness per side, once for the whole function (the worker looks up any call/exit address):
         # "all" or a list of [lo, hi) offset intervals below the entry esp, plus the addresses with a dead frame
         # on their far side (where the correspondence may be relaxed)
-        lr, dr = R.frame_liveness(PR, _pops(R, D.bij, "retail", facts_=job.get("facts")))
-        lo_, do_ = O.frame_liveness(PO, _pops(O, D.bij, "ours"))
+        lr, dr = R.frame_liveness(PR, _pops(R, D.bij, "retail", facts_=job.get("facts"), indirect=True))
+        lo_, do_ = O.frame_liveness(PO, _pops(O, D.bij, "ours", indirect=True))
         job["frame_r"], job["frame_dead_r"] = _frame_live_job(lr), ["%x" % a for a in sorted(dr)]
         job["frame_o"], job["frame_dead_o"] = _frame_live_job(lo_), ["%x" % a for a in sorted(do_)]
         # the calls after which no frame address can have escaped (the static provenance pass: none in a register
@@ -1461,6 +1502,16 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         job["escb_r"], job["escb_o"] = escb(PR, cpr), escb(PO, cpo)
         job["npush_r"] = {"%x" % a: v[0] for a, v in cpr.items()}
         job["npush_o"] = {"%x" % a: v[0] for a, v in cpo.items()}
+        if os.environ.get("EQUIV_FRAME_DUMP"):
+            # diagnostics: the static depth / escape state at every instruction of both sides
+            with open(os.environ["EQUIV_FRAME_DUMP"], "w") as fh_:
+                for tag_, S_, P_ in (("R", R, PR), ("O", O, PO)):
+                    for i_ in S_.ins:
+                        st_ = P_.get(i_.address)
+                        fh_.write("%s %04x %-28s depth=%s esc=%s fst=%s pf=%s\n" % (
+                            tag_, i_.address - S_.base, i_.mnemonic + " " + i_.op_str, None if st_ is None else st_[2],
+                            None if st_ is None else int(st_[1]), None if st_ is None else int(st_[3]),
+                            None if st_ is None else ",".join(sorted(st_[0]))))
     own_w = job.get("argw") or 0
     # (judge hints) the candidates change which pi' / F' a region finds: part of the region cache key
     bij_sig = hashlib.sha256(json.dumps([job["bij"], job["folds"], job.get("pairing")], sort_keys=True).encode()
@@ -1471,7 +1522,7 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         # code outside the region changes them, so the region cache must not hand it the original's result
         bij_sig += hashlib.sha256(json.dumps([job.get(k) for k in (
             "frame_r", "frame_o", "frame_dead_r", "frame_dead_o", "noesc_r", "noesc_o", "saved_r", "saved_o",
-            "unw_r", "unw_o", "npush_r", "npush_o", "escb_r", "escb_o")], sort_keys=True).encode()).hexdigest()[:16]
+            "unw_r", "unw_o", "npush_r", "npush_o", "escb_r", "escb_o", "pops_r", "pops_o")], sort_keys=True).encode()).hexdigest()[:16]
     done, forced, rounds = {}, set(), 0
     vidx, tried = {}, {}         # key -> index into CUT_VARIANTS; key -> [(variant, stop sets, result)]
     pool = _Pool(jobs)
@@ -1711,13 +1762,53 @@ def _paired_targets(retail, ours, O, job):
     return tgt
 
 
-def _pops(side, bij, which, target=None, facts_=None):
+def _pops(side, bij, which, target=None, facts_=None, indirect=False):
     """pops(call insn) for Side.provenance: the bytes the callee removes. The original's callee from its own code
     (facts.callee_pop: every reachable `ret N` the same), __chkstk / __alloca_probe from the `mov eax, N` before it
     (negative: it allocates), an indirect call: unknown."""
     prev = {}
     for i in side.ins:
         prev[i.address + i.size] = i
+    nxt = {i.address: i for i in side.ins}
+    leaders = side.leaders
+
+    saves = side.prologue_saves() if indirect else set()
+
+    def pushed_bytes(i):
+        """the bytes pushed right before the call i in its straight-line block: the pushes back to the first other
+        instruction that touches esp (sub / add / and / mov / lea esp, a pop, a call, ...) or the block's start; any
+        other instruction (register moves, lea, loads) is skipped"""
+        n, a = 0, i.address
+        while a not in leaders and a in prev:
+            p = prev[a]
+            if side.kind.get(p.address) or p.mnemonic.startswith(("j", "pop", "leave", "enter", "ret")) or \
+                    p.address in saves:
+                break
+            if p.mnemonic == "push":
+                n += p.operands[0].size if p.operands else 4
+            elif p.mnemonic.startswith(("push",)) or p.op_str.split(",")[0].strip() in ("esp", "sp") or \
+                    p.mnemonic.startswith("rep"):
+                break
+            a = p.address
+        return n
+
+    def indirect_pop(i):
+        """(frame model, assumption C) an INDIRECT call (a virtual method: its `ret N` is unknown) removes exactly
+        the bytes pushed for it (the callee-cleanup conventions of this binary: thiscall / stdcall methods), unless
+        the code after it cleans up itself (an `add esp` / `pop` right after: a cdecl callee, or a merged cleanup:
+        unknown). The assumption is recorded (side.assumed_pops) and CHECKED by check_pops: every ret of the
+        function must then run at depth 0 on both sides."""
+        o = i.operands[0] if i.operands else None
+        if o is None or side.kind.get(i.address) != "call" or not (
+                o.type == 1 or (o.type == 3 and o.mem.base != 0)):  # a register or [reg + disp]: a virtual call
+            return None
+        n = pushed_bytes(i)
+        nx = nxt.get(i.address + i.size)
+        if nx is None or (nx.mnemonic == "add" and nx.op_str.startswith("esp,")) or \
+                (nx.mnemonic == "pop" and nx.op_str in ("ecx", "edx")):
+            return None
+        side.assumed_pops[i.address] = n
+        return n
 
     def pops(i):
         t = side.call_target(i)
@@ -1737,13 +1828,63 @@ def _pops(side, bij, which, target=None, facts_=None):
                 return -(p.operands[1].imm & 0xffffffff)
             return None
         if t is None:
+            if indirect:
+                return indirect_pop(i)
             return None
         try:
             import facts
-            return facts.callee_pop(t)
+            n = facts.callee_pop(t)
+            if n is None and indirect:
+                n = thunk_pop(t)
+            if n is None and indirect:
+                # (frame model) a callee whose own code does not tell (SEH epilogue elsewhere, import): the
+                # compiler's cleanup right after the call (`add esp, k` / `pop ecx`) is a cdecl callee's, it pops 0
+                a_ = i.address + i.size
+                for _ in range(6):
+                    nx = nxt.get(a_)
+                    if nx is None or side.kind.get(a_) or nx.mnemonic.startswith(("j", "push", "ret")) or \
+                            a_ in side.leaders:
+                        break
+                    if (nx.mnemonic == "add" and nx.op_str.startswith("esp, ")) or \
+                            (nx.mnemonic == "pop" and nx.op_str in ("ecx", "edx")):
+                        n = 0
+                        break
+                    if nx.op_str.split(",")[0].strip() == "esp" or nx.mnemonic.startswith(("pop", "leave")):
+                        break
+                    a_ += nx.size
+            return n
         except Exception:
             return None
+
+    def thunk_pop(t, depth=0):
+        """(frame model) a callee that is a `jmp rel32` thunk (the CRT's operator delete / free wrappers): the pop of
+        the function it jumps to"""
+        import facts
+        rc = facts.retail_code(t)
+        if rc is None or depth > 3:
+            return None
+        code, lo = rc
+        if code[:1] != b"\xe9" or len(code) < 5:
+            return None
+        t2 = (t + 5 + int.from_bytes(code[1:5], "little", signed=True)) & 0xffffffff
+        n = facts.callee_pop(t2)
+        return n if n is not None else thunk_pop(t2, depth + 1)
     return pops
+
+
+def check_pops(side, P):
+    """(frame model, assumption C) None when the `ret N` assumed for the side's indirect calls (_pops) is consistent
+    with the code: every ret of the function runs at depth exactly 0 (esp = the entry esp: a function that balances
+    its stack, which the original does by construction and ours must for the pair to be equal). Else a reason."""
+    if not side.assumed_pops:
+        return None
+    for i in side.ins:
+        if i.mnemonic in ("ret", "retn"):
+            st = P.get(i.address)
+            if st is not None and st[2] != 0:
+                return "ret at +%#x runs at depth %s under the assumed callee cleanup of indirect calls" % (
+                    i.address - side.base, st[2])
+    return None
 
 
 def _cut_dz(PR, PO, x, y, pi, own_w, frame_model=False):

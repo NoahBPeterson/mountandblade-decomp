@@ -1282,6 +1282,8 @@ class Worker:
                           "ours": {int(a, 16): n for a, n in (job.get("npush_o") or {}).items()}}
             self.unw = {"retail": {int(a, 16): set(v) for a, v in (job.get("unw_r") or {}).items()},
                         "ours": {int(a, 16): set(v) for a, v in (job.get("unw_o") or {}).items()}}
+            self.pops = {"retail": {int(a, 16): n for a, n in (job.get("pops_r") or {}).items()},
+                         "ours": {int(a, 16): n for a, n in (job.get("pops_o") or {}).items()}}
             self.esc_before = {"retail": {int(a, 16) for a in job.get("escb_r") or ()},
                                "ours": {int(a, 16) for a in job.get("escb_o") or ()}}
             self._exit_F = None
@@ -2097,6 +2099,11 @@ class Worker:
         call obligation requires the two equal (the original's is the evidence). None: unknown."""
         from capstone import x86_const as X
         r = f.get("retn")
+        if r is None and self.region and self.frame_model:
+            # (frame model, assumption C) an indirect call: the bytes pushed for it (regions._pops)
+            ap = (getattr(self, "pops", None) or {}).get(self.cur_side, {}).get(i.address)
+            if ap is not None:
+                return ap
         if f.get("retn_code") and isinstance(r, int) and r > 0:
             return r
         if r != 0:
@@ -2120,7 +2127,50 @@ class Worker:
                 break
             n += 1
             a = p.address + p.size
-        return 4 * n if n else None
+        return 4 * n if n else self.deferred_cleanup(info, i)
+
+    def deferred_cleanup(self, info, i):
+        """(frame model) a cdecl call whose cleanup is merged with a LATER call's (`call f; <pushes>; call g; add esp,
+        N`): f's argument bytes are N minus what the straight-line code pushed after f and what its callees (known
+        `ret N`) popped. Exact when every step is seen: a branch target, a jump, an unknown callee or any other esp
+        write in between gives None."""
+        from capstone import x86_const as X
+        preds = info.get("_preds")
+        if preds is None:
+            preds = {}
+            for a, ss in info["succ"].items():
+                for b in ss:
+                    preds[b] = preds.get(b, 0) + 1
+            info["_preds"] = preds
+        net, a = 0, i.address + i.size
+        for _ in range(48):
+            p = info["by"].get(a)
+            if p is None or preds.get(a, 0) != 1 or info["kinds"].get(a) in ("ret", "tail", "tailcc", "ijmp", "trap"):
+                return None
+            m, ops = p.mnemonic, p.operands
+            if m == "push":
+                net += ops[0].size if ops else 4
+            elif m == "pop" and ops and ops[0].type == X.X86_OP_REG and p.reg_name(ops[0].reg) != "esp":
+                net -= 4
+            elif m == "add" and len(ops) == 2 and ops[0].type == X.X86_OP_REG and p.reg_name(ops[0].reg) == "esp" \
+                    and ops[1].type == X.X86_OP_IMM:
+                w = ops[1].imm - net
+                return w if 0 < w <= 0x10000 and w % 4 == 0 else None
+            elif info["kinds"].get(a) == "call":
+                _, f2, _ = self.callee(info, p)
+                r2 = (f2 or {}).get("retn")
+                if r2 is None or not (f2.get("retn_code") or r2 == 0):
+                    return None
+                net -= r2
+            elif m.startswith(("j", "loop")) or m in ("sub", "and", "leave", "enter", "xchg") and ops and \
+                    ops[0].type == X.X86_OP_REG and p.reg_name(ops[0].reg) == "esp":
+                return None
+            elif any(o.type == X.X86_OP_REG and p.reg_name(o.reg) == "esp" and o.access & 2 for o in ops) or \
+                    m.startswith(("push", "pop", "rep", "mov")) and ops and ops[0].type == X.X86_OP_REG and \
+                    p.reg_name(ops[0].reg) == "esp":
+                return None
+            a = p.address + p.size
+        return None
 
     def do_call(self, s, i, info, tail=False):
         """the call event and the callee's effect; returns the successor state or None (path ends)"""
@@ -2143,6 +2193,13 @@ class Worker:
             s.memory.store(esp_ev, C.BVS("ra%d" % k, 32, explicit_name=True), endness="Iend_LE")
             s.regs.esp = esp_ev
         retn = f.get("retn")
+        assumed_pop = None
+        if retn is None and self.region and self.frame_model:
+            # (frame model, assumption C) an indirect call removes the bytes pushed for it (regions._pops; checked
+            # by regions.check_pops); the call obligation requires both versions to assume the same
+            assumed_pop = (getattr(self, "pops", None) or {}).get(self.cur_side, {}).get(i.address)
+            if assumed_pop is not None:
+                retn = C.BVV(assumed_pop, 32)
         if retn is None:
             rn = C.BVS("rn%d" % k, 32, explicit_name=True)
             self.assume += [C.ULE(rn, 64), (rn & 3) == 0]
@@ -2195,10 +2252,15 @@ class Worker:
             if const_diff(top, esp_ev + 4 + n) is None or const_diff(top, esp_ev + 4 + n) >= 0x80000000:
                 n = 0
             area = (esp_ev + 4 + n - 0x100000, esp_ev + 4 + n, self.cur_side[0])
+        if os.environ.get("EQUIV_P2_DEBUG") and self.region:
+            with open(os.environ["EQUIV_P2_DEBUG"], "a") as dbg:     # diagnostics (local workers only)
+                dbg.write("P2 call %s %x wp=%s pframe=%s wframe=%s retn=%s depth=%s F=%s\n" % (
+                    self.cur_side, i.address, wp, pframe, wframe, f.get("retn"), self.region_dz.get("depth"),
+                    self.entry_F))
         ev = dict(kind="call", target=tgt, key=key or "", regs=self.snapshot(s), esp=esp_ev, log=s.memory.log,
                   reads=reads, W=W, prot=prot, escaped=esc, name=f.get("name", ""), at=i.address,
                   guess=reads if f.get("guess") else [], pframe=pframe, wp=wp, pwhy=None if pframe else pwhy,
-                  wframe=wframe, chkstk=bool(f.get("chkstk")))
+                  wframe=wframe, chkstk=bool(f.get("chkstk")), apop=assumed_pop)
         s.globals["events"] = s.globals["events"] + (ev,)
         if f.get("noreturn"):
             ev2 = dict(kind="noreturn")
@@ -2295,8 +2357,11 @@ class Worker:
                 self.covered.add(a - info["base"])
             if kind == "call":
                 t = _imm_target(i)
-                if t is not None and info["base"] <= t < info["end"]:
-                    raise Unsupported("call into the function itself at %x" % a)
+                # (ours' relocated calls are rewritten to the original's callee address, which can fall inside a
+                # longer build of ours: only a call to the entry (recursion) or, for the original, into its own
+                # range is a call into the function itself)
+                if t is not None and (t == info["base"] or (side == "retail" and info["base"] <= t < info["end"])):
+                    raise Unsupported("call into the function itself at %x (%s, target %x)" % (a, side, t))
                 r = self.do_call(s, i, info)
                 if r is None:
                     done.append(s)
@@ -2558,6 +2623,10 @@ class Worker:
                                 fpregs.append((r, ra_, rb_))
                                 regs.remove(r)
                 obs += [("%s %s" % (tag, r), x["regs"][r], y["regs"][r]) for r in regs]
+                if x.get("apop") != y.get("apop"):
+                    # (assumption C) the two versions assume different `ret N` for one callee: not one callee model
+                    obs.append((tag + " assumed ret N", C.BVV(x.get("apop") if x.get("apop") is not None else 0xffff, 32),
+                                C.BVV(y.get("apop") if y.get("apop") is not None else 0xffff, 32)))
                 if not L2:
                     obs += self.x87_valid(tag, x["regs"], y["regs"])
                 lo = x["esp"]
@@ -3237,6 +3306,15 @@ def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
                (ao is not None and ao in self.frame_dead.get("ours", set()))
         Ua = self.unw.get("retail", {}).get(ar, set()) if ar is not None else set()
         Ub = self.unw.get("ours", {}).get(ao, set()) if ao is not None else set()
+        if os.environ.get("EQUIV_P2_DEBUG"):
+            with open(os.environ["EQUIV_P2_DEBUG"], "a") as dbg:
+                dbg.write("P2 window %s ar=%s ao=%s early=%s top=%s/%s ptrs=%s shifts=%s dead=%s\n" % (
+                    name, ar, ao, early, top_a, top_b, ptrs, shifts, dead))
+                for o in sorted(Wa | Wb):
+                    wa_, wb_ = word(o, la, "a"), word(o, lb, "b")
+                    dbg.write("   -%#x  R=%s  O=%s  %s\n" % (o, None if wa_ is None else str(wa_)[:60],
+                                                           None if wb_ is None else str(wb_)[:60],
+                                                           "same" if wa_ is not None and wb_ is not None and same(wa_, wb_) else "DIFF"))
         while shifts:
             d = shifts.pop()
             if d in done:
