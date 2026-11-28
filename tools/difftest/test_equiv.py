@@ -319,11 +319,24 @@ def resmgr_run(extra, src=RESMGR_SRC):
                                                                       *extra]))
 
 
+FS_NEW = "frame_set::~frame_set() { if (nbones != 0) delete[] bones; }"
+FS_OLD = "frame_set::~frame_set() { if (nbones != 0 && bones != 0) delete[] bones; }"
+
+
 def test_transparent_hides_only_the_call_boundary():
-    base = resmgr_run(["--no-auto-transparent"])
-    assert base["verdict"] == "FAIL" and "call #" in base["first_mismatch"]["observable"], base
-    r = resmgr_run(FS_TRANSPARENT)
-    assert r["verdict"] in ("PASS", "WEAK"), r
+    # 0x41aee0 has been byte-exact since 2026-11-27 (5a4e04f4: ~frame_set tests nbones only, so ??_EBone inlines);
+    # the fixture is the earlier destructor, written to a copy beside the module so its #includes resolve
+    text = open(RESMGR_SRC).read()
+    assert FS_NEW in text, "the ~frame_set line moved: update the fixture"
+    old = os.path.join(os.path.dirname(RESMGR_SRC), "_test_resmgr_oldfs.cpp")
+    open(old, "w").write(text.replace(FS_NEW, FS_OLD, 1))
+    try:
+        base = resmgr_run(["--no-auto-transparent"], src=old)
+        assert base["verdict"] == "FAIL" and "call #" in base["first_mismatch"]["observable"], base
+        r = resmgr_run(FS_TRANSPARENT, src=old)
+        assert r["verdict"] in ("PASS", "WEAK"), r
+    finally:
+        os.remove(old)
 
 
 def test_marker_names_skip_declspec():
