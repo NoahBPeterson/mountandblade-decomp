@@ -536,8 +536,8 @@ void Mission::start_setup()
     {
         EnvRow* e = &g_env_rows[env_row];
         this->f5274 = 0;
-        int fade_color = (int)e->f44;
-        scene->set_fade(&this->fog_density, &fade_color);   // 0x4624c0
+        // the original passes the row's own colour member (the heap row), not a copy
+        scene->set_fade(&this->fog_density, reinterpret_cast<const int*>(&e->f44));   // 0x4624c0
     }
     {
         unsigned color = 0xff334455;

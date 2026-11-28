@@ -135,10 +135,9 @@ void gui_manager::process(int param)
 
     this->warp_x = this->saved_x;
     this->warp_y = this->saved_y;
-    POINT cur;
+    // the original reads the cursor straight into the object's saved position (+0xb0b0), so the POINT is the member pair
+    POINT& cur = *reinterpret_cast<POINT*>(&this->saved_x);
     GetCursorPos(&cur);
-    this->saved_x = cur.x;
-    this->saved_y = cur.y;
     this->prev_mx = this->mouse[0];
     this->mouse[0] = (float)(cur.x - this->view_x) / (float)this->screen_w;
     this->prev_my = this->mouse[1];
