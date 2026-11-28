@@ -130,23 +130,43 @@ def regress_dir(sid, va, opts):
     return os.path.join(REGRESS_DIR, "%s_%08x" % (sid, va), sub)
 
 
+def _row_dirs(sid, va, opts, sub=""):
+    """The row's input dirs to READ: its own first, then the same VA's dirs under any other module id (2026-11-27: the
+    source-tree moves renamed module ids, and the saved regression / coverage inputs of 0x4259a0, 0x41ce80, ... were
+    no longer replayed, so rows read worse than their old results). An input is the entry state of the function at
+    that VA, independent of which module id compiled it. Writing still goes to the row's own dir."""
+    own = os.path.join(regress_dir(sid, va, opts), sub) if sub else regress_dir(sid, va, opts)
+    tail = os.path.basename(regress_dir(sid, va, opts))
+    out = [own]
+    for d in sorted(glob.glob(os.path.join(REGRESS_DIR, "*_%08x" % va, tail))):
+        d = os.path.join(d, sub) if sub else d
+        if os.path.abspath(d) != os.path.abspath(own):
+            out.append(d)
+    return out
+
+
 def regress_inputs(sid, va, opts):
     """[(file name, Input)] of the row's regression inputs, oldest first."""
     if getattr(opts, "no_regress", False) or os.environ.get("DIFFTEST_NO_REGRESS"):
         return []
     import pickle
-    d = regress_dir(sid, va, opts)
     out = []
-    try:
-        names = sorted(os.listdir(d), key=lambda f: os.path.getmtime(os.path.join(d, f)))
-    except OSError:
-        return []
-    for f in names:
-        if not f.endswith(".pkl"):
+    names = []
+    for d in _row_dirs(sid, va, opts):
+        try:
+            names += [os.path.join(d, f) for f in os.listdir(d) if f.endswith(".pkl")]
+        except OSError:
+            pass
+    names.sort(key=os.path.getmtime)
+    seen = set()
+    for path in names:
+        f = os.path.basename(path)
+        if f in seen:               # content-addressed names: the same input saved under two ids runs once
             continue
+        seen.add(f)
         try:
             inp = Input()
-            inp.__dict__.update(pickle.load(open(os.path.join(d, f), "rb")))
+            inp.__dict__.update(pickle.load(open(path, "rb")))
             inp.__dict__.setdefault("pagegen", 1)
             if getattr(inp, "snap", None) is not None and not getattr(opts, "snapshots", None):
                 continue                # a snapshot input needs the capture (--snapshots)
@@ -169,18 +189,23 @@ def cover_inputs(sid, va, opts):
     if getattr(opts, "no_regress", False) or os.environ.get("DIFFTEST_NO_REGRESS"):
         return []
     import pickle
-    d = cover_dir(sid, va, opts)
     out = []
-    try:
-        names = sorted(os.listdir(d), key=lambda f: os.path.getmtime(os.path.join(d, f)))
-    except OSError:
-        return []
-    for f in names:
-        if not f.endswith(".pkl"):
+    names = []
+    for d in _row_dirs(sid, va, opts, "cover"):
+        try:
+            names += [os.path.join(d, f) for f in os.listdir(d) if f.endswith(".pkl")]
+        except OSError:
+            pass
+    names.sort(key=os.path.getmtime)
+    seen = set()
+    for path in names:
+        f = os.path.basename(path)
+        if f in seen:
             continue
+        seen.add(f)
         try:
             inp = Input()
-            inp.__dict__.update(pickle.load(open(os.path.join(d, f), "rb")))
+            inp.__dict__.update(pickle.load(open(path, "rb")))
             inp.__dict__.setdefault("pagegen", 1)
             inp.origin = "cover"
             out.append(("cover/" + f, inp))
