@@ -1518,6 +1518,12 @@ class Worker:
                         big = C.BVV(0x100000, 32)
                         inarea = C.And(C.ULT(x, ahi), C.Or(C.ULT(ahi, big), C.UGE(x, ahi - big)))
                         fresh = C.If(inarea, own, fresh)
+                if len(ent) > 4 and ent[4] is not None:
+                    # (O-up) ours' reachable frame after the call: the original's bytes at the shifted address
+                    dsym_, slo_, shi_ = ent[4]
+                    dd_ = const_diff(x, inesp)
+                    if dd_ is not None and slo_ <= (dd_ - (1 << 32) if dd_ >= 0x80000000 else dd_) < shi_:
+                        fresh = self.base_byte(ep, x + dsym_)
                 cur = C.If(C.Or(*inside), cur, fresh) if inside else fresh
         if self.region and epoch == "0" and cur is base0:
             # region mode: memory below the cut's esp is not part of the interface (the regions only compare memory
@@ -2253,6 +2259,14 @@ class Worker:
                     if wd is not None and 0 < wd < 0x100000:
                         prot.append((lo_p, hi_p))
                 wframe = True
+        dsym = None
+        if wframe and self.cur_side == "ours" and all(v is not None for v in (getattr(self, "lowt", None) or {}
+                                                                              ).values()) and getattr(self, "lowt", None):
+            # (O-up, uniform shift) what the callee leaves in ours' reachable frame is the original's bytes at the
+            # address shifted by D, the object shift the call obligation derives from the pointers it receives
+            # (_frame_window_diffs asserts D == that shift): the correlated havoc, so a frame read after the call
+            # relates (read_byte)
+            dsym = C.BVS("dsh%d" % k, 32, explicit_name=True)
         if pframe or wframe:
             # (the callee's own area ends at the bytes pushed for this call: wp may be a merged cleanup that also
             # frees the frame, and must never reach the caller's memory at and above E)
@@ -2270,7 +2284,7 @@ class Worker:
         ev = dict(kind="call", target=tgt, key=key or "", regs=self.snapshot(s), esp=esp_ev, log=s.memory.log,
                   reads=reads, W=W, prot=prot, escaped=esc, name=f.get("name", ""), at=i.address,
                   guess=reads if f.get("guess") else [], pframe=pframe, wp=wp, pwhy=None if pframe else pwhy,
-                  wframe=wframe, chkstk=bool(f.get("chkstk")), apop=assumed_pop)
+                  wframe=wframe, chkstk=bool(f.get("chkstk")), apop=assumed_pop, dsym=dsym)
         s.globals["events"] = s.globals["events"] + (ev,)
         if f.get("noreturn"):
             ev2 = dict(kind="noreturn")
@@ -2298,7 +2312,15 @@ class Worker:
             else:
                 s.regs.fptag = s.regs.fptag & ~(C.BVV(0xff, 64) << (((s.regs.ftop - 1) & 7).zero_extend(32) * 8))
         s.regs.fpreg = fresh("fpreg", 512)
-        s.memory.log = s.memory.log + ((("havoc", str(k + 1), tuple(prot), area) if area else
+        shift_ent = None
+        if dsym is not None and area is not None:
+            zlo, zhi = const_diff(esp_ev + 4 + wp, self.IN["esp"]), const_diff(top, self.IN["esp"])
+            if zlo is not None and zhi is not None:
+                sg = lambda v: v - (1 << 32) if v >= 0x80000000 else v
+                shift_ent = (dsym, sg(zlo), sg(zhi))
+            else:
+                ev["dsym"] = dsym = None
+        s.memory.log = s.memory.log + ((("havoc", str(k + 1), tuple(prot), area, shift_ent) if area else
                                         ("havoc", str(k + 1), tuple(prot))),)
         if f.get("chkstk"):
             s.regs.esp = esp0 - ev["regs"]["eax"]
@@ -2646,7 +2668,7 @@ class Worker:
                                 {"frame": True, "ar": x.get("at"), "ao": y.get("at"),
                                  "pf": (x.get("pframe"), y.get("pframe")), "wp": (x.get("wp"), y.get("wp")),
                                  "pwhy": x.get("pwhy") or y.get("pwhy"), "esp_o": y["esp"],
-                                 "wf": (x.get("wframe"), y.get("wframe")), "fpregs": fpregs,
+                                 "wf": (x.get("wframe"), y.get("wframe")), "fpregs": fpregs, "dsym": y.get("dsym"),
                                  "fpvis": fpvis}))
             elif x["kind"] == "ret":
                 if x["target"] is not None or y["target"] is not None:
@@ -3306,7 +3328,8 @@ def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
                 ptrs.append((pa_, pb_))
         # a frame address that escaped before this call (static provenance, either side; or unknown: the call is
         # not in the analysis) may reach any object at its own address: the window of shift 0
-        shifts, done = ([0] if early else []), set()
+        oup = fr.get("dsym") is not None
+        shifts, done = ([0] if early and not oup else []), set()
         for pa_, pb_ in ptrs:
             if pa_ > top_a or pb_ > top_b:
                 return diffs + [(name + " a frame address into the bytes pushed for the call", z3.BoolVal(True))]
@@ -3317,6 +3340,8 @@ def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
                 # the same address is related
                 return diffs + [(name + " a pointer argument outside the frame on one side", z3.BoolVal(True))]
             shifts.append(pb_ - pa_)
+        if oup and early and not shifts:
+            shifts.append(0)
         dead = (ar is not None and ar in self.frame_dead.get("retail", set())) and \
                (ao is not None and ao in self.frame_dead.get("ours", set()))
         Ua = self.unw.get("retail", {}).get(ar, set()) if ar is not None else set()
@@ -3337,7 +3362,7 @@ def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
             done.add(d)
             if d % 4:
                 return diffs + [(name + " escaped frame objects at offsets not word aligned", z3.BoolVal(True))]
-            if d and not dead:
+            if d and not dead and not oup:
                 return diffs + [(name + " escaped frame objects at different offsets (%+d) while the frame is read "
                                  "after the call" % d, z3.BoolVal(True))]
             for o in sorted(Wa):
@@ -3379,6 +3404,14 @@ def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
                     shifts.append(pb_ - pa_)        # a frame address in the object: followed
                     continue
                 diffs.append((name + " frame -%#x/-%#x" % (o, o + d), self.z(a_) != self.z(b_)))
+        if oup:
+            # (O-up) one uniform shift for every reachable object: the correlated havoc's D is that shift
+            if len(done) > 1:
+                diffs.append((name + " escaped frame objects at several offsets (%s)" % sorted(done),
+                              z3.BoolVal(True)))
+            else:
+                d_ = next(iter(done)) if done else 0
+                q.add(self.z(fr["dsym"] == C.BVV(d_ & 0xffffffff, 32)))
     finally:
         self.qcap = save
     return diffs

@@ -68,3 +68,40 @@ def test_wrong_spilled_value_not_proved():
 def test_spill_reloaded_from_the_object_not_proved():
     # the object (passed to g) may have been written by g: reloading x from it is not x
     assert _prove(*_pair(reload="obj")) != "proved"
+
+
+# the same, but ours' frame is 4 bytes smaller (retail pushes esi): every object sits 4 bytes closer to E in ours
+# (one uniform shift), and the frame is read after the call (ours reloads its spill): the correlated havoc
+def _pair_shift(reload="spill", store_x1=False, obj_x1=False):
+    pre_r = H("56" "8b742408" "83ec08" "89742404" "8d4c2404" "51")
+    pre_o = H("8b442404" "83ec08") + (H("40") if obj_x1 else b"") + H("89442404") + (H("40") if store_x1 else b"") + \
+        H("890424" "8d4c2404" "51")
+    cr, rr = _call_g(len(pre_r))
+    co, ro = _call_g(len(pre_o))
+    tail_r = H("83c404" "89f0" "83c408" "5e" "c3")
+    tail_o = H("83c404") + H({"spill": "8b0424", "obj": "8b442404"}[reload]) + H("83c408" "c3")
+    a = Func(RVA, pre_r + cr + tail_r, {rr: ("abs", RVA + 0x5000)}, "retail", "retail", {"tables": None})
+    b = Func(0, pre_o + co + tail_o, {ro: ("sym", "_g", 0x14, 0)}, "ours", "ours",
+             {"symbol": "?f@@YAHH@Z", "consts": {}, "tables": None})
+    return a, b
+
+
+def test_uniform_shift_with_frame_read_after_the_call_proves():
+    assert _prove(*_pair_shift()) == "proved"
+
+
+def test_uniform_shift_without_oup_not_proved(monkeypatch):
+    monkeypatch.delenv("EQUIV_FRAME_OUP")
+    assert _prove(*_pair_shift()) != "proved"
+
+
+def test_uniform_shift_wrong_spill_not_proved():
+    assert _prove(*_pair_shift(store_x1=True)) != "proved"
+
+
+def test_uniform_shift_spill_reloaded_from_the_object_not_proved():
+    assert _prove(*_pair_shift(reload="obj")) != "proved"
+
+
+def test_uniform_shift_object_contents_differ_not_proved():
+    assert _prove(*_pair_shift(obj_x1=True)) != "proved"
