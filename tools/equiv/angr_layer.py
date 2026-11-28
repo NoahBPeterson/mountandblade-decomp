@@ -1274,6 +1274,15 @@ class Worker:
             # frame at the same addresses as the original's), and the calls after which no frame address can have
             # escaped (regions._noesc_calls: their callee cannot reach the frame above its stack arguments)
             self.entry_F = tuple(tuple(t) for t in rg["F"]) if rg.get("F") is not None else None
+            self.entry_consts = {"retail": {}, "ours": {}}
+            if self.entry_F is not None and any(t[0] <= -100 for t in self.entry_F):
+                real = tuple(t for t in self.entry_F if t[0] > -100)
+                for t in self.entry_F:
+                    if -200 < t[0] <= -100:
+                        self.entry_consts["retail"][("eax", "ecx", "edx", "ebx", "ebp", "esi", "edi")[-100 - t[0]]] = t[1]
+                    elif t[0] <= -200 and t[0] > -300:
+                        self.entry_consts["ours"][("eax", "ecx", "edx", "ebx", "ebp", "esi", "edi")[-200 - t[0]]] = t[1]
+                self.entry_F = None if any(t[0] == -300 for t in self.entry_F) else real
             self.noesc = {"retail": {int(a, 16) for a in job.get("noesc_r") or ()},
                           "ours": {int(a, 16) for a in job.get("noesc_o") or ()}}
             # (stage 2) the prologue's saved-register words per side (regions.Side.saved_slots: offsets o below E)
@@ -1969,6 +1978,9 @@ class Worker:
             own = lambda r: self.IN[r]
         for r in GPR:
             setattr(st.regs, r, own(r))
+        if rg and getattr(self, "entry_consts", None) and side in self.entry_consts:
+            for r, c in self.entry_consts[side].items():
+                setattr(st.regs, r, C.BVV(c, 32))       # (frame model) a register the previous stop pinned to a constant
         st.regs.cc_op, st.regs.cc_dep1, st.regs.cc_dep2, st.regs.cc_ndep = 0, own("flags"), 0, 0
         st.regs.d = 1
         if rg and rg["d"]:
@@ -2830,6 +2842,7 @@ class Worker:
         if self.region:
             self._exit_pi = None
             self._exit_F = None
+            self._exit_consts = []
             if ea and eb and ea[-1]["kind"] == "exit" and eb[-1]["kind"] == "exit" and \
                     [e["kind"] for e in ea] == [e["kind"] for e in eb]:
                 self._exit_pi = self.match_exit(ea[-1], eb[-1], q)
@@ -3836,7 +3849,13 @@ def _note_pair(self, sa, sb):
         pi = self._exit_pi or {}
         ex = (ea[-1]["at"], eb[-1]["at"], (-ft.concrete_value) & 7, tuple(pi.get(r) for r in PI_REGS))
         if self.frame_model:
-            ex = ex + (self._exit_F,)
+            F_ = self._exit_F
+            consts = tuple(getattr(self, "_exit_consts", None) or ())
+            if consts:
+                # the constant markers ride in F: (-100-i, c, 0) the original's register i, (-200-i, c, 0) ours';
+                # (-300, 0, 0) says the frame part is the standard interface (F' = None)
+                F_ = ((((-300, 0, 0),) if F_ is None else tuple(F_)) + consts)
+            ex = ex + (F_,)
         self.exits.add(ex)
 
 
@@ -3937,6 +3956,18 @@ def _match_exit(self, xa, xb, q):
                 break
     if ("flags" in lr or "flags" in lo) and proved_eq(xa["regs"]["eflags"], xb["regs"]["eflags"]):
         pi["flags"] = "flags"
+    self._exit_consts = []
+    if self.frame_model:
+        # (frame model) a live register whose value is a constant at the stop (a zero register, `xor ebp, ebp`, that
+        # only one version has set so far; a pair of equal constants is better kept as constants than as a pi pair,
+        # which would relate the two registers' unknown entry values): the next region starts with that constant (the
+        # concrete value is the same on every path of this stop pair: an exact fact, not a guess)
+        for i_, r in enumerate(g7):
+            if r in lr and ra[r].concrete:
+                self._exit_consts.append((-100 - i_, ra[r].concrete_value, 0))
+        for i_, v in enumerate(g7):
+            if v in lo and rb[v].concrete:
+                self._exit_consts.append((-200 - i_, rb[v].concrete_value, 0))
     if self.frame_model:
         # (stage 2) a live register holding a frame address on both sides, at different offsets (the esp delta,
         # a slot moved): related with its offset, "v@c" (ours' v = the original's r + c; exact, both are in_esp + k)
