@@ -358,13 +358,16 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
                 pt[j] = ((rgl::mesh*)*slot)->add_point(&p);
                 int pi = pt[j];
                 // 0x42b363: the offsets from the frame origin stay unrounded in x87 registers
-                vector4 r = p - fr.o;
-                float ur = fr.s.z * r.z + fr.s.y * r.y + fr.s.x * r.x;
-                float vr = fr.f.z * r.z + fr.f.x * r.x + fr.f.y * r.y;
+                // the three p - fr.o differences stay unrounded on the x87 stack (no vector4 local: its fields are always
+                // stored); the two dot products are rounded because they are the fields of an aggregate (vec2). The
+                // sums keep the original's association (parentheses), the operands of each product are commuted by cl.
+                vec2 uvr;
+                uvr.x = (fr.s.z * (p.z - fr.o.z) + fr.s.y * (p.y - fr.o.y)) + fr.s.x * (p.x - fr.o.x);
+                uvr.y = (fr.f.z * (p.z - fr.o.z) + fr.f.x * (p.x - fr.o.x)) + fr.f.y * (p.y - fr.o.y);
                 float inv = 1.0f / shadow_radius;
                 float ik = inv * 0.5f;
-                float u = ur * ik;
-                float v = vr * ik;
+                float u = uvr.x * ik;
+                float v = uvr.y * ik;
                 if (!flag) {
                     u = u * 1.5f;
                     v = v * 1.5f;
