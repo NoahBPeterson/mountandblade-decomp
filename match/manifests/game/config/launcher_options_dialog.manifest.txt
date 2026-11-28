@@ -1,10 +1,8 @@
-../src/game/config/launcher_options_dialog.cpp  ?bytes_append@@YAXPAUbyte_buf@@PBDI@Z  004b8f40  /O2 /MT /Gy /TP
-../src/game/config/launcher_options_dialog.cpp  ?sock_send_str@@YAXHPBD@Z  004b8fc0  /O2 /MT /Gy /TP
 ../src/game/config/launcher_options_dialog.cpp  ?open_keys_key@@YAXPAPAUHKEY__@@@Z  004b96d0  /O2 /MT /Gy /TP
 ../src/game/config/launcher_options_dialog.cpp  ?read_key_string@@YAXPAPAUHKEY__@@PBDPAUtstring@@@Z  004b9720  /O2 /MT /Gy /TP
 ../src/game/config/launcher_options_dialog.cpp  ?set_active_tab@GameApp@@QAEXH@Z  004b9790  /O2 /MT /Gy /TP
 ../src/game/config/launcher_options_dialog.cpp  ?run_settings_probe@@YAXXZ  004b99c0  /O2 /MT /Gy /TP
 ../src/game/config/launcher_options_dialog.cpp  ?prop_string@GameApp@@QAEJPAUIDxDiagContainer@@PAGPADI@Z  004b9a30  /O2 /MT /Gy /TP
 ../src/game/config/launcher_options_dialog.cpp  ?paint@GameApp@@QAEXXZ  004b9af0  /O2 /MT /Gy /TP
-../src/game/config/launcher_options_dialog.cpp  ?parse_url@@YAXPBDPADH1H1HPAJ@Z  004b8ff0  /O2 /MT /Gy /TP
 ../src/game/config/launcher_options_dialog.cpp  ?choose_dx_settings@GameApp@@QAEXPAUConfig@@_N@Z  004b9b90  /O2 /MT /Gy /TP
+../src/game/config/launcher_options_dialog.cpp  ?get_latest_version@@YAJXZ  004b9aa0  /O2 /MT /Gy /TP

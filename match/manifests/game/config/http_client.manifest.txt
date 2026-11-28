@@ -1,0 +1,3 @@
+../src/game/config/http_client.cpp  ?bytes_append@@YAXPAUbyte_buf@@PBDI@Z  004b8f40  /O2 /MT /Gy /TP
+../src/game/config/http_client.cpp  ?sock_send_str@@YAXHPBD@Z  004b8fc0  /O2 /MT /Gy /TP
+../src/game/config/http_client.cpp  ?parse_url@@YAXPBDPADH1H1HPAJ@Z  004b8ff0  /O2 /MT /Gy /TP

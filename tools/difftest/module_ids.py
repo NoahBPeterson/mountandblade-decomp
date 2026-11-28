@@ -31,7 +31,7 @@ def _moves():
                     lo, hi = int(r["addr_lo"], 16), int(r["addr_hi"], 16)
                 except (TypeError, ValueError):
                     lo = hi = None
-                out.append((_stem(r["old_path"]), _stem(r["new_path"]), r["new_path"], lo, hi))
+                out.append((_stem(r["old_path"]), _stem(r["new_path"]), r["new_path"], lo, hi, r["kind"]))
     except OSError:
         pass
     return out
@@ -42,7 +42,14 @@ def _pick(rows, va):
     hit = [r for r in rows if r[3] is not None and r[3] <= va < r[4]]
     if len(hit) == 1:
         return hit[0]
-    return rows[0] if len(rows) == 1 else None
+    if len(rows) == 1:
+        r = rows[0]
+        # a split moved only its address range: a va outside it stayed in the old file (2026-11-27: 0x4b9aa0 was sent
+        # to http_client.cpp, split out of launcher_options_dialog.cpp for 0x4b8f40..0x4b96d0 only)
+        if r[5] == "cpp-split" and r[3] is not None and not (r[3] <= va < r[4]):
+            return None
+        return r
+    return None
 
 
 def current(old_id, va):

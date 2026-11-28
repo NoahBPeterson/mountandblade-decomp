@@ -946,3 +946,6 @@ notes	src/rgl/scene/MIGRATION.md	docs/migration/rgl_scene.md	1	251			251		per-di
 notes	src/rgl/shapes/MIGRATION.md	docs/migration/rgl_shapes.md	1	212			212		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
 notes	src/rgl/xmlcfg/MIGRATION.md	docs/migration/rgl_xmlcfg.md	1	127			127		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
 notes	src/tinyxml/MIGRATION.md	docs/migration/tinyxml.md	1	178			178		per-directory history / boundary-evidence note; moves under docs/migration/ (its directory dissolves)
+cpp-split	src/game/config/launcher_options_dialog.cpp	src/game/config/http_client.cpp	29	224	0x4b8f40	0x4b96d0	196	1-27	the HTTP client (bytes_append, sock_send_str, parse_url, http_fetch): its own object in the original (0x4b9aa0 keeps the stores cl deletes when http_fetch is visible), 2026-11-27
+sidecar	src/game/config/launcher_options_dialog.manifest.txt	match/manifests/game/config/http_client.manifest.txt			0x4b8f40	0x4b96d0	3		follows its .cpp (rows 0x4b8f40 0x4b8fc0 0x4b8ff0)
+sidecar	src/game/config/launcher_options_dialog.nonmatching.txt	match/manifests/game/config/http_client.nonmatching.txt			0x4b8f40	0x4b96d0	1		follows its .cpp (row 0x4b9110)
